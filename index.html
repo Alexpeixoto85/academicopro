@@ -1236,7 +1236,7 @@
         <!-- Filtros Financeiro -->
         <div class="financeiro-filtros">
             <div class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="financeiro-filtro-status" class="form-label">Status</label>
                     <select class="form-select" id="financeiro-filtro-status">
                         <option value="todos">Todos</option>
@@ -1244,7 +1244,7 @@
                         <option value="pago">Pago</option>
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="financeiro-filtro-tipo" class="form-label">Tipo</label>
                     <select class="form-select" id="financeiro-filtro-tipo">
                         <option value="todos">Todos</option>
@@ -1252,23 +1252,23 @@
                         <option value="despesa">Despesa</option>
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <label for="financeiro-filtro-mes" class="form-label">Mês</label>
-                    <select class="form-select" id="financeiro-filtro-mes">
-                        <option value="todos">Todos</option>
-                        <option value="1">Janeiro</option>
-                        <option value="2">Fevereiro</option>
-                        <option value="3">Março</option>
-                        <option value="4">Abril</option>
-                        <option value="5">Maio</option>
-                        <option value="6">Junho</option>
-                        <option value="7">Julho</option>
-                        <option value="8">Agosto</option>
-                        <option value="9">Setembro</option>
-                        <option value="10">Outubro</option>
-                        <option value="11">Novembro</option>
-                        <option value="12">Dezembro</option>
-                    </select>
+                <div class="col-md-3">
+                    <label for="financeiro-filtro-data-inicio" class="form-label">Data Início</label>
+                    <input type="date" class="form-control" id="financeiro-filtro-data-inicio">
+                </div>
+                <div class="col-md-3">
+                    <label for="financeiro-filtro-data-fim" class="form-label">Data Fim</label>
+                    <input type="date" class="form-control" id="financeiro-filtro-data-fim">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <button class="btn btn-primary" id="financeiro-aplicar-filtro">
+                        <i class="fas fa-filter"></i> Aplicar Filtros
+                    </button>
+                    <button class="btn btn-outline-secondary" id="financeiro-limpar-filtro">
+                        <i class="fas fa-times"></i> Limpar Filtros
+                    </button>
                 </div>
             </div>
         </div>
@@ -2526,7 +2526,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Obter filtros
         const filtroStatus = document.getElementById('financeiro-filtro-status').value;
         const filtroTipo = document.getElementById('financeiro-filtro-tipo').value;
-        const filtroMes = document.getElementById('financeiro-filtro-mes').value;
+        const filtroDataInicio = document.getElementById('financeiro-filtro-data-inicio').value;
+        const filtroDataFim = document.getElementById('financeiro-filtro-data-fim').value;
         
         // Filtrar transações
         let transacoes = [...profileData.financeiro];
@@ -2539,10 +2540,20 @@ document.addEventListener('DOMContentLoaded', function() {
             transacoes = transacoes.filter(t => t.tipo === filtroTipo);
         }
         
-        if (filtroMes !== 'todos') {
+        // Filtrar por período
+        if (filtroDataInicio) {
             transacoes = transacoes.filter(t => {
                 const dataTransacao = new Date(t.data + 'T00:00:00');
-                return (dataTransacao.getMonth() + 1) === parseInt(filtroMes);
+                const dataInicio = new Date(filtroDataInicio + 'T00:00:00');
+                return dataTransacao >= dataInicio;
+            });
+        }
+        
+        if (filtroDataFim) {
+            transacoes = transacoes.filter(t => {
+                const dataTransacao = new Date(t.data + 'T00:00:00');
+                const dataFim = new Date(filtroDataFim + 'T23:59:59');
+                return dataTransacao <= dataFim;
             });
         }
         
@@ -3066,7 +3077,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listeners para filtros do financeiro
     document.getElementById('financeiro-filtro-status').addEventListener('change', renderFinanceiro);
     document.getElementById('financeiro-filtro-tipo').addEventListener('change', renderFinanceiro);
-    document.getElementById('financeiro-filtro-mes').addEventListener('change', renderFinanceiro);
+    document.getElementById('financeiro-aplicar-filtro').addEventListener('click', renderFinanceiro);
+    document.getElementById('financeiro-limpar-filtro').addEventListener('click', () => {
+        document.getElementById('financeiro-filtro-status').value = 'todos';
+        document.getElementById('financeiro-filtro-tipo').value = 'todos';
+        document.getElementById('financeiro-filtro-data-inicio').value = '';
+        document.getElementById('financeiro-filtro-data-fim').value = '';
+        renderFinanceiro();
+    });
 
     // Mostrar/ocultar campo de status baseado no tipo de transação
     document.getElementById('financeiroTipo').addEventListener('change', function() {
