@@ -724,6 +724,47 @@
         word-break: break-all;
     }
 
+    /* Filmes e Vídeo-Aulas - Anotações */
+    .filme-card {
+        cursor: pointer;
+        transition: var(--transition);
+        height: 100%;
+    }
+    .filme-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    .filme-anotacoes-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: var(--accent);
+        color: white;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+    }
+    .filme-tempo-assistido {
+        font-size: 0.85rem;
+        color: var(--text-light);
+    }
+    .filme-progresso {
+        height: 5px;
+        background-color: #e9ecef;
+        border-radius: 5px;
+        margin-top: 5px;
+        overflow: hidden;
+    }
+    .filme-progresso-bar {
+        height: 100%;
+        background-color: var(--accent);
+        border-radius: 5px;
+    }
+
     @media (max-width: 992px) {
       .app-container {
         flex-direction: column;
@@ -915,7 +956,7 @@
             <div class="nav-item">
                 <a class="nav-link" href="#" data-target="filmes">
                     <i class="fas fa-film"></i>
-                    <span>Filmes</span>
+                    <span>Filmes e Vídeo-Aulas</span>
                 </a>
             </div>
             <div class="nav-item">
@@ -1194,10 +1235,10 @@
     </div>
     <div class="content-panel" id="filmes">
       <div class="content-header">
-        <h2>Filmes</h2>
+        <h2>Filmes e Vídeo-Aulas</h2>
         <div class="btn-group">
           <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filmeModal">
-            <i class="fas fa-plus"></i> Adicionar Filme
+            <i class="fas fa-plus"></i> Adicionar Filme/Vídeo
           </button>
         </div>
       </div>
@@ -1774,6 +1815,75 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="filmeModal" tabindex="-1" aria-labelledby="filmeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filmeModalLabel">Novo Filme/Vídeo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="filmeForm">
+                    <input type="hidden" id="filmeId">
+                    <div class="mb-3">
+                        <label for="filmeTitulo" class="form-label">Título do Filme/Vídeo</label>
+                        <input type="text" class="form-control" id="filmeTitulo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="filmeUrl" class="form-label">Link (URL)</label>
+                        <input type="url" class="form-control" id="filmeUrl" placeholder="https://..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="filmeTipo" class="form-label">Tipo</label>
+                        <select class="form-select" id="filmeTipo">
+                            <option value="filme">Filme</option>
+                            <option value="video-aula">Vídeo-Aula</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveFilme">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="anotacaoFilmeModal" tabindex="-1" aria-labelledby="anotacaoFilmeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="anotacaoFilmeModalLabel">Anotação do Filme/Vídeo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="anotacaoFilmeForm">
+                    <input type="hidden" id="anotacaoFilmeId">
+                    <div class="mb-3">
+                        <label for="filmeTempoAtual" class="form-label">Minuto Atual</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="filmeTempoAtual" min="0" placeholder="Minuto onde parou">
+                            <span class="input-group-text">min</span>
+                        </div>
+                        <small class="form-text text-muted">Informe o minuto onde parou de assistir para continuar depois</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="filmeAnotacao" class="form-label">Anotações</label>
+                        <textarea class="form-control" id="filmeAnotacao" rows="4" placeholder="Anotações sobre o conteúdo..."></textarea>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="filmeAssistido">
+                        <label class="form-check-label" for="filmeAssistido">Marcar como assistido</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveAnotacaoFilme">Salvar Anotação</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="modal fade" id="recurringActionModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -1817,33 +1927,6 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary" id="saveLivro">Salvar</button>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="filmeModal" tabindex="-1" aria-labelledby="filmeModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="filmeModalLabel">Novo Filme</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="filmeForm">
-                    <input type="hidden" id="filmeId">
-                    <div class="mb-3">
-                        <label for="filmeTitulo" class="form-label">Título do Filme</label>
-                        <input type="text" class="form-control" id="filmeTitulo" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="filmeUrl" class="form-label">Link (URL)</label>
-                        <input type="url" class="form-control" id="filmeUrl" placeholder="https://..." required>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="saveFilme">Salvar</button>
             </div>
         </div>
     </div>
@@ -2174,7 +2257,6 @@ document.addEventListener('DOMContentLoaded', function() {
         nextEventInterval = setInterval(updateCountdown, 1000);
     }
 
-
     function renderDashboard() {
         const profileData = getCurrentProfileData();
         if (!profileData) return;
@@ -2268,7 +2350,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const notasTrabalhos = profileData.trabalhos.filter(t => t.disciplinaId === d.id && t.nota !== null).map(t => parseFloat(t.nota));
             const notasProvas = profileData.provas.filter(p => p.disciplinaId === d.id && p.nota !== null).map(p => parseFloat(p.nota));
             const notasDisciplina = [...notasTrabalhos, ...notasProvas];
-            const mediaDisciplina = notasDisciplina.length > 0 ? (notasDisciplina.reduce((a, b) => a + b, 0) / notasDisciplina.length).toFixed(1) : "N/A";
+            const mediaDisciplina = notasDisciplina.length > 0 ? (notasDisciplina.reduce((a,b) => a+b, 0) / notasDisciplina.length).toFixed(1) : "N/A";
             const progressWidth = mediaDisciplina !== "N/A" ? (mediaDisciplina / 10 * 100) : 0;
             const barColor = progressWidth >= 70 ? 'bg-success' : progressWidth >= 50 ? 'bg-warning' : 'bg-danger';
 
@@ -2532,19 +2614,49 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('filmes-lista');
         container.innerHTML = '';
         if (!profileData.filmes || profileData.filmes.length === 0) {
-            container.innerHTML = `<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Adicionar Filme" para salvar seus links.</p></div></div>`;
+            container.innerHTML = `<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Adicionar Filme/Vídeo" para salvar seus links.</p></div></div>`;
             return;
         }
         profileData.filmes.forEach(filme => {
+            const hasAnotacao = filme.anotacao && (filme.anotacao.tempoAtual || filme.anotacao.texto);
+            const progresso = filme.anotacao && filme.anotacao.tempoAtual ? Math.min(100, (filme.anotacao.tempoAtual / 120) * 100) : 0; // Assumindo 2h de duração máxima
+            
             const card = `
                 <div class="col-md-6 col-lg-4">
-                  <div class="card card-dashboard">
-                    <div class="card-body text-center">
-                      <i class="fas fa-film fa-3x text-secondary mb-3"></i>
-                      <h5 class="card-title">${filme.titulo}</h5>
+                  <div class="card filme-card card-dashboard">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title">${filme.titulo}</h5>
+                        <div class="dropdown">
+                          <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
+                          <ul class="dropdown-menu">
+                            <li><a class="dropdown-item view-filme" href="#" data-url="${filme.url}"><i class="fas fa-play-circle"></i> Assistir</a></li>
+                            <li><a class="dropdown-item anotacao-filme" href="#" data-id="${filme.id}"><i class="fas fa-edit"></i> Anotação</a></li>
+                            <li><a class="dropdown-item edit-filme" href="#" data-id="${filme.id}"><i class="fas fa-pen"></i> Editar</a></li>
+                            <li><a class="dropdown-item delete-filme" href="#" data-id="${filme.id}"><i class="fas fa-trash"></i> Excluir</a></li>
+                          </ul>
+                        </div>
+                      </div>
+                      <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge ${filme.tipo === 'filme' ? 'bg-primary' : 'bg-info'}">${filme.tipo === 'filme' ? 'Filme' : 'Vídeo-Aula'}</span>
+                        ${hasAnotacao ? '<div class="filme-anotacoes-badge"><i class="fas fa-bookmark"></i></div>' : ''}
+                      </div>
+                      ${filme.anotacao && filme.anotacao.tempoAtual ? `
+                        <div class="filme-tempo-assistido">
+                          <i class="fas fa-clock"></i> Parou no minuto: ${filme.anotacao.tempoAtual}
+                        </div>
+                        <div class="filme-progresso">
+                          <div class="filme-progresso-bar" style="width: ${progresso}%"></div>
+                        </div>
+                      ` : ''}
+                      ${filme.anotacao && filme.anotacao.assistido ? `
+                        <div class="mt-2">
+                          <span class="badge bg-success"><i class="fas fa-check"></i> Assistido</span>
+                        </div>
+                      ` : ''}
                       <div class="mt-3">
-                         <button class="btn btn-sm btn-primary view-filme" data-url="${filme.url}"><i class="fas fa-play-circle"></i> Assistir</button>
-                         <button class="btn btn-sm btn-outline-danger delete-filme" data-id="${filme.id}"><i class="fas fa-trash"></i> Excluir</button>
+                        <a href="${filme.url}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-external-link-alt"></i> Acessar</a>
+                        <button class="btn btn-sm btn-primary view-filme" data-url="${filme.url}"><i class="fas fa-play-circle"></i> Assistir</button>
                       </div>
                     </div>
                   </div>
@@ -3065,7 +3177,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const id = document.getElementById('filmeId').value;
         const filme = {
             titulo: document.getElementById('filmeTitulo').value,
-            url: document.getElementById('filmeUrl').value
+            url: document.getElementById('filmeUrl').value,
+            tipo: document.getElementById('filmeTipo').value
         };
         if (!filme.titulo || !filme.url) {
             alert('Título e URL são obrigatórios.');
@@ -3081,6 +3194,26 @@ document.addEventListener('DOMContentLoaded', function() {
         saveDB();
         renderAll();
         bootstrap.Modal.getInstance(document.getElementById('filmeModal')).hide();
+    });
+
+    document.getElementById('saveAnotacaoFilme').addEventListener('click', () => {
+        const profileData = getCurrentProfileData();
+        const id = document.getElementById('anotacaoFilmeId').value;
+        const anotacao = {
+            tempoAtual: document.getElementById('filmeTempoAtual').value ? parseInt(document.getElementById('filmeTempoAtual').value) : null,
+            texto: document.getElementById('filmeAnotacao').value,
+            assistido: document.getElementById('filmeAssistido').checked
+        };
+        
+        if (id) {
+            const index = profileData.filmes.findIndex(f => f.id == id);
+            if (index !== -1) {
+                profileData.filmes[index].anotacao = anotacao;
+                saveDB();
+                renderAll();
+                bootstrap.Modal.getInstance(document.getElementById('anotacaoFilmeModal')).hide();
+            }
+        }
     });
     
     document.getElementById('backup-btn').addEventListener('click', () => {
@@ -3114,7 +3247,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateMainHeaderTitle() {
         const activePanelId = document.querySelector('.content-panel.active').id;
-        const titleElement = modal.querySelector(`#${activePanelId} h2`);
+        const titleElement = document.querySelector(`#${activePanelId} h2`);
         const titleText = titleElement ? titleElement.textContent : 'Acadêmico Pro';
         document.getElementById('main-header-title').textContent = titleText;
     }
@@ -3247,9 +3380,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(modal.id === 'eventModal') modalTitle.textContent = 'Novo Evento';
                 if(modal.id === 'financeiroModal') modalTitle.textContent = 'Nova Transação';
                 if(modal.id === 'bibliotecaModal') modalTitle.textContent = 'Novo Livro';
-                if(modal.id === 'filmeModal') modalTitle.textContent = 'Novo Filme';
+                if(modal.id === 'filmeModal') modalTitle.textContent = 'Novo Filme/Vídeo';
                 if(modal.id === 'notaModal') modalTitle.textContent = 'Nova Nota';
                 if(modal.id === 'linkModal') modalTitle.textContent = 'Novo Link';
+                if(modal.id === 'anotacaoFilmeModal') modalTitle.textContent = 'Anotação do Filme/Vídeo';
             }
             
             // Resetar visibilidade do campo de status no modal financeiro
@@ -3347,7 +3481,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         viewerModal.show();
     }
-
 
     function getYouTubeEmbedUrl(url) {
         let videoId = null;
@@ -3474,7 +3607,31 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        const target = e.target.closest('.edit-disciplina, .delete-disciplina, .edit-trabalho, .delete-trabalho, .edit-prova, .delete-prova, .schedule-class-item, .delete-horario, .edit-financeiro, .delete-financeiro, .delete-livro, .delete-filme, .edit-nota, .delete-nota, .edit-link, .delete-link');
+        // Anotação de filme
+        const anotacaoFilmeBtn = e.target.closest('.anotacao-filme');
+        if (anotacaoFilmeBtn) {
+            const filmeId = anotacaoFilmeBtn.dataset.id;
+            const filme = profileData.filmes.find(f => f.id == filmeId);
+            if (filme) {
+                document.getElementById('anotacaoFilmeModalLabel').textContent = `Anotação - ${filme.titulo}`;
+                document.getElementById('anotacaoFilmeId').value = filme.id;
+                
+                // Preencher campos se já existir anotação
+                if (filme.anotacao) {
+                    document.getElementById('filmeTempoAtual').value = filme.anotacao.tempoAtual || '';
+                    document.getElementById('filmeAnotacao').value = filme.anotacao.texto || '';
+                    document.getElementById('filmeAssistido').checked = filme.anotacao.assistido || false;
+                } else {
+                    document.getElementById('filmeTempoAtual').value = '';
+                    document.getElementById('filmeAnotacao').value = '';
+                    document.getElementById('filmeAssistido').checked = false;
+                }
+                
+                new bootstrap.Modal(document.getElementById('anotacaoFilmeModal')).show();
+            }
+        }
+        
+        const target = e.target.closest('.edit-disciplina, .delete-disciplina, .edit-trabalho, .delete-trabalho, .edit-prova, .delete-prova, .schedule-class-item, .delete-horario, .edit-financeiro, .delete-financeiro, .delete-livro, .delete-filme, .edit-nota, .delete-nota, .edit-link, .delete-link, .edit-filme');
         if (!target) return;
         const id = target.dataset.id;
 
@@ -3493,6 +3650,7 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (target.matches('.delete-nota')) handleDelete('notas', id, 'Tem certeza que deseja excluir esta nota?');
         else if (target.matches('.edit-link')) handleEdit('links', 'link', id);
         else if (target.matches('.delete-link')) handleDelete('links', id, 'Tem certeza que deseja excluir este link?');
+        else if (target.matches('.edit-filme')) handleEdit('filmes', 'filme', id);
     });
     
     document.getElementById('deleteHorario').addEventListener('click', () => {
