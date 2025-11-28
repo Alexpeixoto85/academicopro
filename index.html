@@ -708,6 +708,22 @@
         background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.9));
     }
 
+    /* Links Importantes */
+    .link-card {
+        cursor: pointer;
+        transition: var(--transition);
+        height: 100%;
+    }
+    .link-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    .link-url {
+        font-size: 0.85rem;
+        color: var(--text-light);
+        word-break: break-all;
+    }
+
     @media (max-width: 992px) {
       .app-container {
         flex-direction: column;
@@ -906,6 +922,12 @@
                 <a class="nav-link" href="#" data-target="notas">
                     <i class="fas fa-sticky-note"></i>
                     <span>Bloco de Notas</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a class="nav-link" href="#" data-target="links">
+                    <i class="fas fa-link"></i>
+                    <span>Links Importantes</span>
                 </a>
             </div>
             <div class="nav-item">
@@ -1192,6 +1214,18 @@
         </div>
       </div>
       <div class="row g-4" id="notas-lista">
+      </div>
+    </div>
+    <div class="content-panel" id="links">
+      <div class="content-header">
+        <h2>Links Importantes</h2>
+        <div class="btn-group">
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#linkModal">
+            <i class="fas fa-plus"></i> Novo Link
+          </button>
+        </div>
+      </div>
+      <div class="row g-4" id="links-lista">
       </div>
     </div>
     <div class="content-panel" id="financeiro">
@@ -1705,6 +1739,41 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="linkModal" tabindex="-1" aria-labelledby="linkModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="linkModalLabel">Novo Link</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="linkForm">
+                    <input type="hidden" id="linkId">
+                    <div class="mb-3">
+                        <label for="linkTitulo" class="form-label">Título</label>
+                        <input type="text" class="form-control" id="linkTitulo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="linkUrl" class="form-label">URL</label>
+                        <input type="url" class="form-control" id="linkUrl" placeholder="https://..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="linkCategoria" class="form-label">Categoria</label>
+                        <input type="text" class="form-control" id="linkCategoria" placeholder="Ex: Aulas, Material, etc.">
+                    </div>
+                    <div class="mb-3">
+                        <label for="linkDescricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="linkDescricao" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveLink">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="modal fade" id="recurringActionModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -1817,7 +1886,8 @@ document.addEventListener('DOMContentLoaded', function() {
         financeiro: [],
         biblioteca: [],
         filmes: [],
-        notas: []
+        notas: [],
+        links: []
     });
 
     function getCurrentProfileData() {
@@ -1852,7 +1922,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 financeiro: [ { id: 1, tipo: "receita", descricao: "Bolsa Auxílio", valor: 500.00, categoria: "Bolsa", data: "2025-09-05", status: "pago" } ],
                 biblioteca: [],
                 filmes: [],
-                notas: []
+                notas: [],
+                links: []
             };
             const firstProfile = { id: 1, name: "Meu Curso", data: initialProfileData };
             db.profiles.push(firstProfile);
@@ -1867,6 +1938,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!profile.data.biblioteca) profile.data.biblioteca = [];
             if (!profile.data.filmes) profile.data.filmes = [];
             if (!profile.data.notas) profile.data.notas = [];
+            if (!profile.data.links) profile.data.links = [];
             // Garantir que todas as transações financeiras tenham status
             if (profile.data.financeiro) {
                 profile.data.financeiro.forEach(transacao => {
@@ -1903,7 +1975,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             financeiro: parsedOldData.financeiro || [],
                             biblioteca: [],
                             filmes: [],
-                            notas: []
+                            notas: [],
+                            links: []
                         }
                     };
                     db.profiles.push(migratedProfile);
@@ -1944,6 +2017,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderBiblioteca();
         renderFilmes();
         renderNotas();
+        renderLinks();
         renderFinanceiro();
         renderRelatorios();
         populateDisciplinaSelects();
@@ -1986,6 +2060,7 @@ document.addEventListener('DOMContentLoaded', function() {
             biblioteca: 'var(--danger)',
             filmes: '#607D8B', // Blue Grey
             notas: '#8E44AD', // Nova cor para o bloco de notas
+            links: '#16A085', // Nova cor para links
             financeiro: 'var(--success)',
             relatorios: 'var(--secondary)'
         };
@@ -2517,6 +2592,42 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    function renderLinks() {
+        const profileData = getCurrentProfileData();
+        const container = document.getElementById('links-lista');
+        container.innerHTML = '';
+        if (!profileData.links || profileData.links.length === 0) {
+            container.innerHTML = `<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Novo Link" para adicionar links importantes.</p></div></div>`;
+            return;
+        }
+        profileData.links.forEach(link => {
+            const card = `
+                <div class="col-md-6 col-lg-4">
+                  <div class="card link-card card-dashboard">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title">${link.titulo}</h5>
+                        <div class="dropdown">
+                          <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
+                          <ul class="dropdown-menu">
+                            <li><a class="dropdown-item edit-link" href="#" data-id="${link.id}">Editar</a></li>
+                            <li><a class="dropdown-item delete-link" href="#" data-id="${link.id}">Excluir</a></li>
+                          </ul>
+                        </div>
+                      </div>
+                      <p class="link-url">${link.url}</p>
+                      ${link.categoria ? `<span class="badge bg-secondary">${link.categoria}</span>` : ''}
+                      ${link.descricao ? `<p class="card-text mt-2 small">${link.descricao}</p>` : ''}
+                      <div class="mt-3">
+                        <a href="${link.url}" target="_blank" class="btn btn-sm btn-primary"><i class="fas fa-external-link-alt"></i> Acessar</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>`;
+            container.innerHTML += card;
+        });
+    }
+
     function renderFinanceiro() {
         const profileData = getCurrentProfileData();
         const tbody = document.getElementById('financeiro-tabela');
@@ -2900,6 +3011,31 @@ document.addEventListener('DOMContentLoaded', function() {
         bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide();
     });
 
+    document.getElementById('saveLink').addEventListener('click', () => {
+        const profileData = getCurrentProfileData();
+        const id = document.getElementById('linkId').value;
+        const link = {
+            titulo: document.getElementById('linkTitulo').value,
+            url: document.getElementById('linkUrl').value,
+            categoria: document.getElementById('linkCategoria').value,
+            descricao: document.getElementById('linkDescricao').value
+        };
+        if (!link.titulo || !link.url) {
+            alert('Título e URL são obrigatórios.');
+            return;
+        }
+        if (id) {
+            const index = profileData.links.findIndex(l => l.id == id);
+            profileData.links[index] = { ...profileData.links[index], ...link };
+        } else {
+            link.id = getNewId('links');
+            profileData.links.push(link);
+        }
+        saveDB();
+        renderAll();
+        bootstrap.Modal.getInstance(document.getElementById('linkModal')).hide();
+    });
+
     document.getElementById('saveLivro').addEventListener('click', () => {
         const profileData = getCurrentProfileData();
         const id = document.getElementById('bibliotecaId').value;
@@ -2978,7 +3114,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateMainHeaderTitle() {
         const activePanelId = document.querySelector('.content-panel.active').id;
-        const titleElement = document.querySelector(`#${activePanelId} h2`);
+        const titleElement = modal.querySelector(`#${activePanelId} h2`);
         const titleText = titleElement ? titleElement.textContent : 'Acadêmico Pro';
         document.getElementById('main-header-title').textContent = titleText;
     }
@@ -3113,6 +3249,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(modal.id === 'bibliotecaModal') modalTitle.textContent = 'Novo Livro';
                 if(modal.id === 'filmeModal') modalTitle.textContent = 'Novo Filme';
                 if(modal.id === 'notaModal') modalTitle.textContent = 'Nova Nota';
+                if(modal.id === 'linkModal') modalTitle.textContent = 'Novo Link';
             }
             
             // Resetar visibilidade do campo de status no modal financeiro
@@ -3337,7 +3474,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        const target = e.target.closest('.edit-disciplina, .delete-disciplina, .edit-trabalho, .delete-trabalho, .edit-prova, .delete-prova, .schedule-class-item, .delete-horario, .edit-financeiro, .delete-financeiro, .delete-livro, .delete-filme, .edit-nota, .delete-nota');
+        const target = e.target.closest('.edit-disciplina, .delete-disciplina, .edit-trabalho, .delete-trabalho, .edit-prova, .delete-prova, .schedule-class-item, .delete-horario, .edit-financeiro, .delete-financeiro, .delete-livro, .delete-filme, .edit-nota, .delete-nota, .edit-link, .delete-link');
         if (!target) return;
         const id = target.dataset.id;
 
@@ -3354,6 +3491,8 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (target.matches('.delete-filme')) handleDelete('filmes', id, 'Tem certeza que deseja excluir este filme?');
         else if (target.matches('.edit-nota')) handleEdit('notas', 'nota', id);
         else if (target.matches('.delete-nota')) handleDelete('notas', id, 'Tem certeza que deseja excluir esta nota?');
+        else if (target.matches('.edit-link')) handleEdit('links', 'link', id);
+        else if (target.matches('.delete-link')) handleDelete('links', id, 'Tem certeza que deseja excluir este link?');
     });
     
     document.getElementById('deleteHorario').addEventListener('click', () => {
