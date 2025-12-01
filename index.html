@@ -683,11 +683,12 @@
         margin-bottom: 20px;
     }
 
-    /* Bloco de Notas */
+    /* Caderno e Notas */
     .nota-card {
         cursor: pointer;
         transition: var(--transition);
         height: 100%;
+        position: relative;
     }
     .nota-card:hover {
         transform: translateY(-5px);
@@ -697,6 +698,7 @@
         max-height: 150px;
         overflow: hidden;
         position: relative;
+        margin-bottom: 10px;
     }
     .nota-conteudo::after {
         content: '';
@@ -706,6 +708,24 @@
         right: 0;
         height: 30px;
         background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.9));
+    }
+    .nota-data {
+        font-size: 0.85rem;
+        color: var(--text-light);
+    }
+    .nota-acoes {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        opacity: 0;
+        transition: var(--transition);
+        background: rgba(255,255,255,0.9);
+        border-radius: 8px;
+        padding: 5px;
+        box-shadow: var(--shadow);
+    }
+    .nota-card:hover .nota-acoes {
+        opacity: 1;
     }
 
     /* Links Importantes */
@@ -862,6 +882,14 @@
         margin-left: 0;
         margin-top: 10px;
       }
+      .nota-acoes {
+        opacity: 1 !important;
+        position: relative;
+        top: 0;
+        right: 0;
+        margin-top: 10px;
+        text-align: center;
+      }
     }
 
     .sidebar-toggle {
@@ -960,9 +988,9 @@
                 </a>
             </div>
             <div class="nav-item">
-                <a class="nav-link" href="#" data-target="notas">
+                <a class="nav-link" href="#" data-target="caderno">
                     <i class="fas fa-sticky-note"></i>
-                    <span>Bloco de Notas</span>
+                    <span>Caderno e Notas</span>
                 </a>
             </div>
             <div class="nav-item">
@@ -1245,9 +1273,9 @@
       <div class="row g-4" id="filmes-lista">
       </div>
     </div>
-    <div class="content-panel" id="notas">
+    <div class="content-panel" id="caderno">
       <div class="content-header">
-        <h2>Bloco de Notas</h2>
+        <h2>Caderno e Notas</h2>
         <div class="btn-group">
           <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#notaModal">
             <i class="fas fa-plus"></i> Nova Nota
@@ -1473,7 +1501,7 @@
                             <option value="1">Segunda-feira</option>
                             <option value="2">Terça-feira</option>
                             <option value="3">Quarta-feira</option>
-                            <option value="4">Quinta-feira</option>
+                            <option value="4">Quarta-feira</option>
                             <option value="5">Sexta-feira</option>
                             <option value="6">Sábado</option>
                         </select>
@@ -1774,6 +1802,7 @@
                 </form>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-danger me-auto" id="deleteNota" style="display: none;">Excluir</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary" id="saveNota">Salvar</button>
             </div>
@@ -2005,7 +2034,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 financeiro: [ { id: 1, tipo: "receita", descricao: "Bolsa Auxílio", valor: 500.00, categoria: "Bolsa", data: "2025-09-05", status: "pago" } ],
                 biblioteca: [],
                 filmes: [],
-                notas: [],
+                notas: [
+                    { 
+                        id: 1, 
+                        titulo: "Minhas primeiras anotações", 
+                        conteudo: "Aqui você pode criar todas as suas anotações importantes para o semestre.\n\nDica: Clique em uma nota para visualizá-la completa ou use os botões para editar/excluir.", 
+                        dataCriacao: new Date().toISOString().split('T')[0] 
+                    }
+                ],
                 links: []
             };
             const firstProfile = { id: 1, name: "Meu Curso", data: initialProfileData };
@@ -2058,7 +2094,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             financeiro: parsedOldData.financeiro || [],
                             biblioteca: [],
                             filmes: [],
-                            notas: [],
+                            notas: parsedOldData.notas || [],
                             links: []
                         }
                     };
@@ -2142,8 +2178,8 @@ document.addEventListener('DOMContentLoaded', function() {
             agenda: 'var(--orange)',
             biblioteca: 'var(--danger)',
             filmes: '#607D8B', // Blue Grey
-            notas: '#8E44AD', // Nova cor para o bloco de notas
-            links: '#16A085', // Nova cor para links
+            caderno: '#8E44AD', // Nova cor para o Caderno e Notas
+            links: '#16A085',
             financeiro: 'var(--success)',
             relatorios: 'var(--secondary)'
         };
@@ -2670,7 +2706,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('notas-lista');
         container.innerHTML = '';
         if (!profileData.notas || profileData.notas.length === 0) {
-            container.innerHTML = `<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Nova Nota" para começar a usar o bloco de notas.</p></div></div>`;
+            container.innerHTML = `<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Nova Nota" para começar a usar o seu caderno.</p></div></div>`;
             return;
         }
         profileData.notas.forEach(nota => {
@@ -2683,19 +2719,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="card-body">
                       <div class="d-flex justify-content-between align-items-start mb-3">
                         <h5 class="card-title">${nota.titulo}</h5>
-                        <div class="dropdown">
-                          <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
-                          <ul class="dropdown-menu">
-                            <li><a class="dropdown-item edit-nota" href="#" data-id="${nota.id}">Editar</a></li>
-                            <li><a class="dropdown-item delete-nota" href="#" data-id="${nota.id}">Excluir</a></li>
-                          </ul>
+                        <div class="nota-acoes">
+                          <button class="btn btn-sm btn-outline-primary edit-nota" data-id="${nota.id}"><i class="fas fa-edit"></i></button>
+                          <button class="btn btn-sm btn-outline-danger delete-nota" data-id="${nota.id}"><i class="fas fa-trash"></i></button>
                         </div>
                       </div>
                       <div class="nota-conteudo">
-                        <p class="card-text">${conteudoPreview}</p>
+                        <p class="card-text">${conteudoPreview.replace(/\n/g, '<br>')}</p>
                       </div>
                       <div class="mt-3">
-                        <small class="text-muted">Criado em: ${dataCriacao}</small>
+                        <small class="nota-data">Criado em: ${dataCriacao}</small>
                       </div>
                     </div>
                   </div>
@@ -3123,6 +3156,23 @@ document.addEventListener('DOMContentLoaded', function() {
         bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide();
     });
 
+    document.getElementById('deleteNota').addEventListener('click', () => {
+        const profileData = getCurrentProfileData();
+        const id = document.getElementById('notaId').value;
+        
+        if (!id) return;
+        
+        if (confirm('Tem certeza que deseja excluir esta nota permanentemente?')) {
+            const index = profileData.notas.findIndex(n => n.id == id);
+            if (index !== -1) {
+                profileData.notas.splice(index, 1);
+                saveDB();
+                renderAll();
+                bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide();
+            }
+        }
+    });
+
     document.getElementById('saveLink').addEventListener('click', () => {
         const profileData = getCurrentProfileData();
         const id = document.getElementById('linkId').value;
@@ -3304,11 +3354,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Clique em uma nota para visualizar
         const notaCard = e.target.closest('.nota-card');
-        if (notaCard) {
+        if (notaCard && !e.target.closest('.nota-acoes')) {
             const notaId = notaCard.dataset.id;
             const profileData = getCurrentProfileData();
             const nota = profileData.notas.find(n => n.id == notaId);
             if (nota) {
+                // Abrir modal em modo visualização (somente leitura)
                 document.getElementById('notaModalLabel').textContent = 'Visualizar Nota';
                 document.getElementById('notaTitulo').value = nota.titulo;
                 document.getElementById('notaConteudo').value = nota.conteudo;
@@ -3316,6 +3367,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('notaTitulo').readOnly = true;
                 document.getElementById('notaConteudo').readOnly = true;
                 document.getElementById('saveNota').style.display = 'none';
+                document.getElementById('deleteNota').style.display = 'none';
                 
                 const modal = new bootstrap.Modal(document.getElementById('notaModal'));
                 modal.show();
@@ -3326,6 +3378,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('notaConteudo').readOnly = false;
                     document.getElementById('saveNota').style.display = 'block';
                     document.getElementById('notaModalLabel').textContent = 'Nova Nota';
+                    document.getElementById('deleteNota').style.display = 'none';
                 }, {once: true});
             }
         }
@@ -3389,6 +3442,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Resetar visibilidade do campo de status no modal financeiro
             if(modal.id === 'financeiroModal') {
                 document.getElementById('financeiroStatusWrapper').style.display = 'none';
+            }
+            
+            // Resetar botão de excluir no modal de notas
+            if(modal.id === 'notaModal') {
+                document.getElementById('deleteNota').style.display = 'none';
+                document.getElementById('saveNota').style.display = 'block';
+                document.getElementById('notaTitulo').readOnly = false;
+                document.getElementById('notaConteudo').readOnly = false;
             }
         });
     });
@@ -3631,7 +3692,39 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        const target = e.target.closest('.edit-disciplina, .delete-disciplina, .edit-trabalho, .delete-trabalho, .edit-prova, .delete-prova, .schedule-class-item, .delete-horario, .edit-financeiro, .delete-financeiro, .delete-livro, .delete-filme, .edit-nota, .delete-nota, .edit-link, .delete-link, .edit-filme');
+        // Editar nota - botão na interface do card
+        const editNotaBtn = e.target.closest('.edit-nota');
+        if (editNotaBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const notaId = editNotaBtn.dataset.id;
+            const nota = profileData.notas.find(n => n.id == notaId);
+            if (nota) {
+                document.getElementById('notaModalLabel').textContent = 'Editar Nota';
+                document.getElementById('notaTitulo').value = nota.titulo;
+                document.getElementById('notaConteudo').value = nota.conteudo;
+                document.getElementById('notaId').value = nota.id;
+                document.getElementById('deleteNota').style.display = 'block';
+                
+                const modal = new bootstrap.Modal(document.getElementById('notaModal'));
+                modal.show();
+            }
+        }
+        
+        // Excluir nota - botão na interface do card
+        const deleteNotaBtn = e.target.closest('.delete-nota');
+        if (deleteNotaBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const notaId = deleteNotaBtn.dataset.id;
+            if (confirm('Tem certeza que deseja excluir esta nota permanentemente?')) {
+                profileData.notas = profileData.notas.filter(n => n.id != notaId);
+                saveDB();
+                renderAll();
+            }
+        }
+        
+        const target = e.target.closest('.edit-disciplina, .delete-disciplina, .edit-trabalho, .delete-trabalho, .edit-prova, .delete-prova, .schedule-class-item, .delete-horario, .edit-financeiro, .delete-financeiro, .delete-livro, .delete-filme, .edit-link, .delete-link, .edit-filme');
         if (!target) return;
         const id = target.dataset.id;
 
@@ -3646,8 +3739,6 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (target.matches('.delete-financeiro')) handleDelete('financeiro', id, 'Tem certeza que deseja excluir esta transação?');
         else if (target.matches('.delete-livro')) handleDelete('biblioteca', id, 'Tem certeza que deseja excluir este livro? O arquivo PDF associado será perdido.');
         else if (target.matches('.delete-filme')) handleDelete('filmes', id, 'Tem certeza que deseja excluir este filme?');
-        else if (target.matches('.edit-nota')) handleEdit('notas', 'nota', id);
-        else if (target.matches('.delete-nota')) handleDelete('notas', id, 'Tem certeza que deseja excluir esta nota?');
         else if (target.matches('.edit-link')) handleEdit('links', 'link', id);
         else if (target.matches('.delete-link')) handleDelete('links', id, 'Tem certeza que deseja excluir este link?');
         else if (target.matches('.edit-filme')) handleEdit('filmes', 'filme', id);
