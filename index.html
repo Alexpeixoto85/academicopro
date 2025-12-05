@@ -35,6 +35,7 @@
       font-family: 'Poppins', sans-serif;
       color: var(--text-dark);
       line-height: 1.6;
+      padding-bottom: 80px; /* Espaço para o rodapé fixo */
     }
 
     h1, h2, h3, h4, h5, h6 {
@@ -767,6 +768,58 @@
         color: white;
     }
 
+    /* RODAPÉ FIXO */
+    .footer-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: white;
+        border-top: 1px solid #dce4e6;
+        padding: 10px 0;
+        box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.08);
+        z-index: 1000;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+    }
+
+    .footer-nav-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        color: var(--text-light);
+        padding: 8px 15px;
+        border-radius: 8px;
+        transition: var(--transition);
+        cursor: pointer;
+        flex: 1;
+        max-width: 120px;
+    }
+
+    .footer-nav-btn:hover {
+        background-color: var(--light-accent);
+        color: var(--primary);
+    }
+
+    .footer-nav-btn.active {
+        background-color: var(--accent);
+        color: white;
+    }
+
+    .footer-nav-btn i {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+    }
+
+    .footer-nav-btn span {
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
     @media (max-width: 768px) {
       .main-header {
         flex-direction: column;
@@ -824,6 +877,19 @@
       .btn-back-home {
           margin-bottom: 10px;
           align-self: flex-start;
+      }
+
+      /* Rodapé em mobile */
+      .footer-nav-btn {
+        padding: 6px 10px;
+      }
+      
+      .footer-nav-btn i {
+        font-size: 1.3rem;
+      }
+      
+      .footer-nav-btn span {
+        font-size: 0.7rem;
       }
     }
   </style>
@@ -1326,6 +1392,22 @@
           </div>
       </div>
   </div>
+</div>
+
+<!-- RODAPÉ FIXO -->
+<div class="footer-nav">
+    <button class="footer-nav-btn" id="footer-perfis">
+        <i class="fas fa-users"></i>
+        <span>Perfis</span>
+    </button>
+    <button class="footer-nav-btn active" id="footer-inicio">
+        <i class="fas fa-home"></i>
+        <span>Início</span>
+    </button>
+    <button class="footer-nav-btn" id="footer-financeiro">
+        <i class="fas fa-dollar-sign"></i>
+        <span>Financeiro</span>
+    </button>
 </div>
 
 <!-- MODAIS -->
@@ -2007,6 +2089,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setupBackToHomeButtons();
         setupProfileSwitching();
         setupEventListeners();
+        setupFooterNavigation();
     }
 
     function migrateOldData() {
@@ -2092,6 +2175,7 @@ document.addEventListener('DOMContentLoaded', function() {
         populateDisciplinaSelects();
         
         updateFixedBackButton();
+        updateFooterNavigation();
     }
 
     function getDisciplinaById(id) {
@@ -3013,12 +3097,58 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('home-links').classList.add('active');
         updateMainHeaderTitle();
         updateFixedBackButton();
+        updateFooterNavigation();
     }
     
     function updateFixedBackButton() {
         const fixedBackBtn = document.getElementById('fixed-back-home');
         const isHomeActive = document.getElementById('home-links').classList.contains('active');
         fixedBackBtn.style.display = isHomeActive ? 'none' : 'block';
+    }
+
+    function setupFooterNavigation() {
+        const footerPerfis = document.getElementById('footer-perfis');
+        const footerInicio = document.getElementById('footer-inicio');
+        const footerFinanceiro = document.getElementById('footer-financeiro');
+        
+        footerPerfis.addEventListener('click', function() {
+            // Abre o modal de gerenciamento de perfis
+            const modal = new bootstrap.Modal(document.getElementById('profileManagementModal'));
+            modal.show();
+        });
+        
+        footerInicio.addEventListener('click', function() {
+            goToHome();
+        });
+        
+        footerFinanceiro.addEventListener('click', function() {
+            // Vai para a tela de financeiro
+            document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('financeiro').classList.add('active');
+            updateMainHeaderTitle();
+            updateFixedBackButton();
+            updateFooterNavigation();
+        });
+    }
+    
+    function updateFooterNavigation() {
+        const activePanel = document.querySelector('.content-panel.active');
+        if (!activePanel) return;
+        
+        const activePanelId = activePanel.id;
+        
+        // Remove a classe active de todos os botões do rodapé
+        document.querySelectorAll('.footer-nav-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Adiciona a classe active no botão correspondente
+        if (activePanelId === 'home-links') {
+            document.getElementById('footer-inicio').classList.add('active');
+        } else if (activePanelId === 'financeiro') {
+            document.getElementById('footer-financeiro').classList.add('active');
+        }
+        // O botão de perfis não fica ativo porque não é um painel de conteúdo
     }
 
     function setupEventListeners() {
@@ -3032,6 +3162,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 updateMainHeaderTitle();
                 updateFixedBackButton();
+                updateFooterNavigation();
             }
             
             const calendarDay = e.target.closest('.calendar-day:not(.empty)');
@@ -3059,6 +3190,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById(targetPanel).classList.add('active');
                     updateMainHeaderTitle();
                     updateFixedBackButton();
+                    updateFooterNavigation();
                 }
             }
 
