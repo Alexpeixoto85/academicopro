@@ -728,28 +728,6 @@
         font-size: 0.9rem;
         margin-right: 15px;
     }
-    .transcription-container {
-        background: white;
-        border-radius: 10px;
-        padding: 20px;
-        margin-top: 20px;
-        box-shadow: var(--shadow);
-        max-height: 400px;
-        overflow-y: auto;
-    }
-    .transcription-text {
-        font-size: 0.95rem;
-        line-height: 1.6;
-    }
-    .transcription-timestamp {
-        color: var(--accent);
-        font-weight: bold;
-        cursor: pointer;
-        margin-right: 10px;
-    }
-    .transcription-timestamp:hover {
-        text-decoration: underline;
-    }
 
     /* Botão Voltar para Início */
     .back-to-home-btn {
@@ -1827,15 +1805,6 @@
                       </div>
                       <button class="btn btn-sm btn-success" id="saveVideoProgressBtn">
                           <i class="fas fa-save"></i> Salvar Progresso
-                      </button>
-                  </div>
-              </div>
-              <div class="transcription-container mt-3" id="transcriptionContainer" style="display: none;">
-                  <h6>Transcrição da Aula</h6>
-                  <div class="transcription-text" id="transcriptionText"></div>
-                  <div class="mt-3">
-                      <button class="btn btn-sm btn-primary" id="saveTranscriptionBtn">
-                          <i class="fas fa-save"></i> Salvar como Nota
                       </button>
                   </div>
               </div>
@@ -3764,14 +3733,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('videoPlayerModalLabel').textContent = `Assistindo: ${filme.titulo}`;
         document.getElementById('videoPlayer').src = embedUrl;
         
-        if (filme.tipo === 'video-aula') {
-            document.getElementById('transcriptionContainer').style.display = 'block';
-            const transcription = gerarTranscricaoSimulada(filme.titulo, currentVideoTime);
-            document.getElementById('transcriptionText').innerHTML = transcription;
-        } else {
-            document.getElementById('transcriptionContainer').style.display = 'none';
-        }
-        
         modal.show();
         
         if (videoInterval) clearInterval(videoInterval);
@@ -3803,31 +3764,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     `${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')} / --:--`;
             }
         }
-    }
-
-    function gerarTranscricaoSimulada(titulo, tempoAtual) {
-        const topicos = [
-            "Introdução ao conteúdo",
-            "Definição de conceitos fundamentais",
-            "Exemplos práticos de aplicação",
-            "Exercícios resolvidos",
-            "Considerações finais e resumo"
-        ];
-        
-        let transcricao = `<h6>${titulo}</h6>`;
-        topicos.forEach((topico, index) => {
-            const tempo = index * 300;
-            const ativo = tempoAtual >= tempo && tempoAtual < (tempo + 300);
-            transcricao += `
-                <div class="${ativo ? 'bg-light p-2 rounded' : ''}">
-                    <span class="transcription-timestamp" data-time="${tempo}">${Math.floor(tempo/60)}:${(tempo%60).toString().padStart(2, '0')}</span>
-                    <strong>${topico}</strong>
-                    <p>Este é um exemplo de conteúdo para o tópico "${topico.toLowerCase()}". Em uma implementação real, esta seria a transcrição real do vídeo obtida através de uma API de reconhecimento de fala.</p>
-                </div>
-            `;
-        });
-        
-        return transcricao;
     }
 
     const viewerModal = new bootstrap.Modal(document.getElementById('viewerModal'));
