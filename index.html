@@ -3099,6 +3099,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const footerFinanceiro = document.getElementById('footer-financeiro');
         
         footerPerfis.addEventListener('click', function() {
+            // Atualiza a lista de perfis no modal
+            renderProfileManagementList();
             // Abre o modal de gerenciamento de perfis
             const modal = new bootstrap.Modal(document.getElementById('profileManagementModal'));
             modal.show();
