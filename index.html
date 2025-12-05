@@ -750,10 +750,10 @@
 
     /* Botão Voltar para Início */
     .back-to-home-btn {
-        position: absolute;
+        position: fixed;
         top: 20px;
         right: 20px;
-        z-index: 100;
+        z-index: 1000;
         background-color: var(--primary);
         color: white;
         border: none;
@@ -771,19 +771,6 @@
     .back-to-home-btn:hover {
         background-color: var(--secondary);
         transform: scale(1.1);
-    }
-
-    /* Botão Voltar no Content Header */
-    .btn-back-home {
-        margin-right: 10px;
-        background-color: var(--light-accent);
-        color: var(--primary);
-        border: 1px solid var(--accent);
-    }
-
-    .btn-back-home:hover {
-        background-color: var(--accent);
-        color: white;
     }
 
     /* RODAPÉ FIXO */
@@ -885,12 +872,6 @@
         height: 250px;
       }
       
-      /* Ajuste para botão voltar em mobile */
-      .btn-back-home {
-          margin-bottom: 10px;
-          align-self: flex-start;
-      }
-
       /* Rodapé em mobile */
       .footer-nav-btn {
         padding: 6px 10px;
@@ -907,6 +888,14 @@
       /* Financeiro mobile */
       .barra-mes {
         height: 150px;
+      }
+      
+      /* Botão home em mobile */
+      .back-to-home-btn {
+        top: 15px;
+        right: 15px;
+        width: 45px;
+        height: 45px;
       }
     }
   </style>
@@ -932,12 +921,7 @@
   </div>
   <div class="content-panel" id="dashboard">
       <div class="content-header">
-          <div style="display: flex; align-items: center;">
-              <button class="btn btn-back-home me-2" id="dashboard-back-home">
-                  <i class="fas fa-arrow-left me-1"></i> Voltar para Início
-              </button>
-              <h2 style="margin: 0;">Dashboard</h2>
-          </div>
+          <h2>Dashboard</h2>
       </div>
       <div class="row g-4 mb-4">
           <div class="col-md-6 col-lg-3">
@@ -1017,12 +1001,7 @@
   </div>
   <div class="content-panel" id="disciplinas">
     <div class="content-header">
-        <div style="display: flex; align-items: center;">
-            <button class="btn btn-back-home me-2" id="disciplinas-back-home">
-                <i class="fas fa-arrow-left me-1"></i> Voltar para Início
-            </button>
-            <h2 style="margin: 0;">Disciplinas</h2>
-        </div>
+        <h2>Disciplinas</h2>
         <div class="btn-group">
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#disciplinaModal">
                 <i class="fas fa-plus"></i> Nova Disciplina
@@ -1034,12 +1013,7 @@
   </div>
   <div class="content-panel" id="horarios">
       <div class="content-header">
-          <div style="display: flex; align-items: center;">
-              <button class="btn btn-back-home me-2" id="horarios-back-home">
-                  <i class="fas fa-arrow-left me-1"></i> Voltar para Início
-              </button>
-              <h2 style="margin: 0;">Quadro de Horários</h2>
-          </div>
+          <h2>Quadro de Horários</h2>
           <div class="btn-group">
               <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#horarioModal">
                   <i class="fas fa-plus"></i> Nova Aula
@@ -1053,12 +1027,7 @@
   </div>
   <div class="content-panel" id="trabalhos">
     <div class="content-header">
-        <div style="display: flex; align-items: center;">
-            <button class="btn btn-back-home me-2" id="trabalhos-back-home">
-                <i class="fas fa-arrow-left me-1"></i> Voltar para Início
-            </button>
-            <h2 style="margin: 0;">Trabalhos</h2>
-        </div>
+        <h2>Trabalhos</h2>
         <div class="btn-group">
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#trabalhoModal">
                 <i class="fas fa-plus"></i> Novo Trabalho
@@ -1087,12 +1056,7 @@
   </div>
   <div class="content-panel" id="provas">
       <div class="content-header">
-          <div style="display: flex; align-items: center;">
-              <button class="btn btn-back-home me-2" id="provas-back-home">
-                  <i class="fas fa-arrow-left me-1"></i> Voltar para Início
-              </button>
-              <h2 style="margin: 0;">Provas</h2>
-          </div>
+          <h2>Provas</h2>
           <div class="btn-group">
               <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#provaModal">
                   <i class="fas fa-plus"></i> Nova Prova
@@ -1122,12 +1086,7 @@
   </div>
   <div class="content-panel" id="agenda">
       <div class="content-header">
-          <div style="display: flex; align-items: center;">
-              <button class="btn btn-back-home me-2" id="agenda-back-home">
-                  <i class="fas fa-arrow-left me-1"></i> Voltar para Início
-              </button>
-              <h2 style="margin: 0;">Agenda</h2>
-          </div>
+          <h2>Agenda</h2>
           <div class="btn-group">
               <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#eventModal" id="novoEventoBtn">
                   <i class="fas fa-plus"></i> Novo Evento
@@ -1164,12 +1123,7 @@
   </div>
    <div class="content-panel" id="biblioteca">
     <div class="content-header">
-        <div style="display: flex; align-items: center;">
-            <button class="btn btn-back-home me-2" id="biblioteca-back-home">
-                <i class="fas fa-arrow-left me-1"></i> Voltar para Início
-            </button>
-            <h2 style="margin: 0;">Biblioteca</h2>
-        </div>
+        <h2>Biblioteca</h2>
         <div class="btn-group">
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#bibliotecaModal">
                 <i class="fas fa-plus"></i> Adicionar Livro
@@ -1181,12 +1135,7 @@
   </div>
   <div class="content-panel" id="filmes">
     <div class="content-header">
-        <div style="display: flex; align-items: center;">
-            <button class="btn btn-back-home me-2" id="filmes-back-home">
-                <i class="fas fa-arrow-left me-1"></i> Voltar para Início
-            </button>
-            <h2 style="margin: 0;">Filmes e Vídeo-Aulas</h2>
-        </div>
+        <h2>Filmes e Vídeo-Aulas</h2>
         <div class="btn-group">
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filmeModal">
                 <i class="fas fa-plus"></i> Adicionar Filme/Vídeo
@@ -1198,12 +1147,7 @@
   </div>
   <div class="content-panel" id="caderno">
     <div class="content-header">
-        <div style="display: flex; align-items: center;">
-            <button class="btn btn-back-home me-2" id="caderno-back-home">
-                <i class="fas fa-arrow-left me-1"></i> Voltar para Início
-            </button>
-            <h2 style="margin: 0;">Caderno e Notas</h2>
-        </div>
+        <h2>Caderno e Notas</h2>
         <div class="btn-group">
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#notaModal">
                 <i class="fas fa-plus"></i> Nova Nota
@@ -1215,12 +1159,7 @@
   </div>
   <div class="content-panel" id="links">
     <div class="content-header">
-        <div style="display: flex; align-items: center;">
-            <button class="btn btn-back-home me-2" id="links-back-home">
-                <i class="fas fa-arrow-left me-1"></i> Voltar para Início
-            </button>
-            <h2 style="margin: 0;">Links Importantes</h2>
-        </div>
+        <h2>Links Importantes</h2>
         <div class="btn-group">
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#linkModal">
                 <i class="fas fa-plus"></i> Novo Link
@@ -1232,12 +1171,7 @@
   </div>
   <div class="content-panel" id="financeiro">
       <div class="content-header">
-          <div style="display: flex; align-items: center;">
-              <button class="btn btn-back-home me-2" id="financeiro-back-home">
-                  <i class="fas fa-arrow-left me-1"></i> Voltar para Início
-              </button>
-              <h2 style="margin: 0;">Controle Financeiro</h2>
-          </div>
+          <h2>Controle Financeiro</h2>
           <div class="btn-group">
               <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#financeiroModal" data-type="receita">
                   <i class="fas fa-plus"></i> Nova Receita
@@ -1367,12 +1301,7 @@
   </div>
   <div class="content-panel" id="relatorios">
       <div class="content-header">
-          <div style="display: flex; align-items: center;">
-              <button class="btn btn-back-home me-2" id="relatorios-back-home">
-                  <i class="fas fa-arrow-left me-1"></i> Voltar para Início
-              </button>
-              <h2 style="margin: 0;">Relatórios</h2>
-          </div>
+          <h2>Relatórios</h2>
       </div>
       <div class="row g-4">
           <div class="col-lg-6">
@@ -1409,12 +1338,7 @@
   </div>
   <div class="content-panel" id="configuracoes">
       <div class="content-header">
-          <div style="display: flex; align-items: center;">
-              <button class="btn btn-back-home me-2" id="configuracoes-back-home">
-                  <i class="fas fa-arrow-left me-1"></i> Voltar para Início
-              </button>
-              <h2 style="margin: 0;">Configurações</h2>
-          </div>
+          <h2>Configurações</h2>
       </div>
       <div class="card card-dashboard">
           <div class="card-body">
@@ -2143,7 +2067,6 @@ document.addEventListener('DOMContentLoaded', function() {
         renderAll();
         updateMainHeaderTitle();
         
-        setupBackToHomeButtons();
         setupEventListeners();
         setupFooterNavigation();
     }
@@ -3155,16 +3078,6 @@ document.addEventListener('DOMContentLoaded', function() {
             ...profileData.eventos.filter(e => e.date === dateStr)
         ].sort((a,b) => (a.time || '23:59').localeCompare(b.time || '23:59'));
     }
-
-    function setupBackToHomeButtons() {
-        const fixedBackBtn = document.getElementById('fixed-back-home');
-        fixedBackBtn.addEventListener('click', goToHome);
-        
-        const backButtons = document.querySelectorAll('[id$="-back-home"]');
-        backButtons.forEach(btn => {
-            btn.addEventListener('click', goToHome);
-        });
-    }
     
     function goToHome() {
         document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('active'));
@@ -3226,6 +3139,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function setupEventListeners() {
+        // Adicionar event listener para o botão fixo de voltar para casa
+        document.getElementById('fixed-back-home').addEventListener('click', goToHome);
+        
         document.body.addEventListener('click', function(e) {
             const cardLink = e.target.closest('.card-link');
             if (cardLink) {
