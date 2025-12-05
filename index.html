@@ -59,47 +59,8 @@
     
     #main-header-title {
         margin: 0;
-    }
-
-    .main-header .profile-switcher .dropdown-toggle {
-        background-color: #fff;
-        border: 1px solid #dde2e3;
-        color: var(--text-dark);
-        width: auto;
-        min-width: 220px;
-        text-align: left;
-        padding: 8px 15px;
-        border-radius: 8px;
-        font-size: 0.9rem;
-    }
-    
-    .main-header .profile-switcher .dropdown-toggle:hover {
-      background-color: #f8f9fa;
-    }
-
-    .main-header .profile-switcher .dropdown-toggle::after {
-        margin-left: auto;
-    }
-
-    .main-header .profile-switcher .dropdown-menu {
-        width: 100%;
-        background-color: white;
-        border: 1px solid #dde2e3;
-        box-shadow: var(--shadow);
-    }
-    
-    .main-header .profile-switcher .dropdown-item {
-        color: var(--text-dark);
-        font-size: 0.9rem;
-    }
-    
-    .main-header .profile-switcher .dropdown-item:hover {
-        background-color: var(--light-accent);
-    }
-    
-    .main-header .profile-switcher .dropdown-item i {
-        margin-right: 8px;
-        color: var(--primary);
+        font-size: 1.8rem;
+        font-weight: 700;
     }
 
     .content-header {
@@ -280,6 +241,10 @@
       background-color: var(--danger);
     }
 
+    .event-dot.financeiro {
+      background-color: var(--purple);
+    }
+
     .event-dot.other {
       background-color: var(--warning);
     }
@@ -401,6 +366,10 @@
 
     .event-item.exam {
       border-left-color: var(--danger);
+    }
+
+    .event-item.financeiro {
+      border-left-color: var(--purple);
     }
 
     .event-item.other, .event-item.class {
@@ -576,32 +545,81 @@
         padding: 0.5em;
     }
 
-    /* --- Flipbook Styles --- */
-    #viewerModalBody .loading-indicator {
-        color: white;
-        font-size: 1.5rem;
+    /* Financeiro - Melhorias */
+    .financeiro-resumo-mensal {
+        background-color: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: var(--shadow);
+        margin-bottom: 20px;
     }
-    #flipbook .page {
-      background-color: white;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    }
-    #flipbook .page img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
-    .turn-page {
-        background-color: #ccc;
-    }
-    /* --- End Flipbook Styles --- */
 
-    /* Financeiro - Filtros */
+    .financeiro-grafico-barras {
+        margin-top: 20px;
+    }
+    
+    .barra-mes {
+        display: flex;
+        align-items: flex-end;
+        height: 200px;
+        border-bottom: 1px solid #ddd;
+        border-left: 1px solid #ddd;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    
+    .barra-mes .barra {
+        flex: 1;
+        margin: 0 10px;
+        transition: height 0.5s;
+    }
+    
+    .barra-mes .receita {
+        background-color: var(--success);
+    }
+    
+    .barra-mes .despesa {
+        background-color: var(--danger);
+    }
+    
+    .legenda {
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+    }
+    
+    .legenda span {
+        margin: 0 10px;
+    }
+    
+    .legenda i.receita {
+        color: var(--success);
+    }
+    
+    .legenda i.despesa {
+        color: var(--danger);
+    }
+
     .financeiro-filtros {
         background-color: white;
         border-radius: 12px;
         padding: 20px;
         box-shadow: var(--shadow);
         margin-bottom: 20px;
+    }
+
+    .categoria-item {
+        padding: 8px 12px;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        margin-bottom: 5px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .categoria-item:hover {
+        background-color: #e9ecef;
     }
 
     /* Caderno e Notas */
@@ -826,12 +844,6 @@
         align-items: flex-start;
         gap: 15px;
       }
-      .main-header .profile-switcher {
-        align-self: flex-end;
-      }
-      .main-header .profile-switcher .dropdown-toggle {
-        min-width: 180px;
-      }
       .content-header {
         flex-direction: column;
         align-items: flex-start;
@@ -891,6 +903,11 @@
       .footer-nav-btn span {
         font-size: 0.7rem;
       }
+
+      /* Financeiro mobile */
+      .barra-mes {
+        height: 150px;
+      }
     }
   </style>
 </head>
@@ -898,15 +915,6 @@
 <div class="app-container">
   <header class="main-header">
       <h2 id="main-header-title">Acadêmico Pro</h2>
-      <div class="profile-switcher">
-          <div class="dropdown">
-              <button class="btn dropdown-toggle d-flex justify-content-between align-items-center" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                  <span id="current-profile-name">Carregando...</span>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown" id="profile-dropdown-menu">
-              </ul>
-          </div>
-      </div>
   </header>
 
   <!-- Botão Fixo para Voltar ao Início (visível apenas fora da tela inicial) -->
@@ -1239,6 +1247,8 @@
               </button>
           </div>
       </div>
+      
+      <!-- Resumo Financeiro -->
       <div class="row g-4 mb-4">
           <div class="col-md-4">
               <div class="card card-dashboard">
@@ -1262,6 +1272,32 @@
                       <h6 class="text-muted">Saldo Atual</h6>
                       <h3 id="financeiro-saldo-atual">R$ 0,00</h3>
                   </div>
+              </div>
+          </div>
+      </div>
+      
+      <!-- Gráfico de Resumo Mensal -->
+      <div class="card card-dashboard mb-4">
+          <div class="card-body">
+              <h5 class="card-title">Resumo do Mês</h5>
+              <div class="financeiro-grafico-barras">
+                  <div class="barra-mes">
+                      <div class="barra receita" id="barra-receita-mes"></div>
+                      <div class="barra despesa" id="barra-despesa-mes"></div>
+                  </div>
+                  <div class="legenda">
+                      <span><i class="fas fa-square receita"></i> Receitas</span>
+                      <span><i class="fas fa-square despesa"></i> Despesas</span>
+                  </div>
+              </div>
+          </div>
+      </div>
+      
+      <!-- Categorias mais comuns -->
+      <div class="card card-dashboard mb-4">
+          <div class="card-body">
+              <h5 class="card-title">Categorias mais utilizadas</h5>
+              <div id="financeiro-categorias">
               </div>
           </div>
       </div>
@@ -1306,6 +1342,7 @@
           </div>
       </div>
       
+      <!-- Histórico de Transações -->
       <div class="card card-dashboard">
           <div class="card-body">
               <h4 class="card-title mb-3">Histórico de Transações</h4>
@@ -1362,6 +1399,12 @@
                   <div class="report-body" id="relatorio-provas"></div>
               </div>
           </div>
+          <div class="col-lg-6">
+              <div class="report-section">
+                  <h4 class="report-header">Análise Financeira</h4>
+                  <div class="report-body" id="relatorio-financeiro"></div>
+              </div>
+          </div>
       </div>
   </div>
   <div class="content-panel" id="configuracoes">
@@ -1375,14 +1418,17 @@
       </div>
       <div class="card card-dashboard">
           <div class="card-body">
-              <h4 class="card-title">Backup e Restauração de Dados</h4>
-              <p class="text-muted">Salve todos os seus perfis e dados em um arquivo para segurança ou para transferir para outro dispositivo.</p>
+              <h4 class="card-title">Perfis e Backup</h4>
+              <p class="text-muted">Gerencie seus perfis acadêmicos e faça backup dos dados.</p>
               <div class="mt-4">
-                  <button class="btn btn-primary" id="backup-btn">
-                      <i class="fas fa-download"></i> Criar Backup (Exportar)
+                  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#profileManagementModal">
+                      <i class="fas fa-users"></i> Gerenciar Perfis
                   </button>
-                  <label for="restore-input" class="btn btn-outline-primary ms-2">
-                      <i class="fas fa-upload"></i> Restaurar Backup (Importar)
+                  <button class="btn btn-outline-primary ms-2" id="backup-btn">
+                      <i class="fas fa-download"></i> Criar Backup
+                  </button>
+                  <label for="restore-input" class="btn btn-outline-secondary ms-2">
+                      <i class="fas fa-upload"></i> Restaurar Backup
                   </label>
                   <input type="file" id="restore-input" class="d-none" accept=".json">
               </div>
@@ -1634,6 +1680,7 @@
                 <option value="assignment">Trabalho</option>
                 <option value="exam">Prova</option>
                 <option value="class">Aula</option>
+                <option value="financeiro">Financeiro</option>
                 </select>
             </div>
             <div class="mb-3">
@@ -1699,7 +1746,17 @@
                   </div>
                   <div class="mb-3">
                       <label for="financeiroCategoria" class="form-label">Categoria</label>
-                      <input type="text" class="form-control" id="financeiroCategoria">
+                      <input type="text" class="form-control" id="financeiroCategoria" list="categorias-list">
+                      <datalist id="categorias-list">
+                          <option value="Material Escolar">
+                          <option value="Transporte">
+                          <option value="Alimentação">
+                          <option value="Moradia">
+                          <option value="Livros">
+                          <option value="Cursos">
+                          <option value="Lazer">
+                          <option value="Saúde">
+                      </datalist>
                   </div>
                   <div class="mb-3">
                       <label for="financeiroData" class="form-label">Data</label>
@@ -1949,7 +2006,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let db;
     let currentCalendarDate = new Date();
-    const DB_KEY = 'academicoProDB_v3';
+    const DB_KEY = 'academicoProDB_v4';
     let nextEventInterval;
     let proximoEventoGlobal = null;
     let currentVideoPlayer = null;
@@ -2021,7 +2078,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 ],
                 financeiro: [ 
                     { id: 1, tipo: "receita", descricao: "Bolsa Auxílio", valor: 500.00, categoria: "Bolsa", data: "2025-09-05", status: "pago" },
-                    { id: 2, tipo: "despesa", descricao: "Livro Direito Civil", valor: 89.90, categoria: "Material", data: "2025-09-10", status: "pendente" }
+                    { id: 2, tipo: "despesa", descricao: "Livro Direito Civil", valor: 89.90, categoria: "Material", data: "2025-09-10", status: "pendente" },
+                    { id: 3, tipo: "despesa", descricao: "Mensalidade Faculdade", valor: 850.00, categoria: "Educação", data: "2025-10-05", status: "pendente" }
                 ],
                 biblioteca: [],
                 filmes: [
@@ -2082,18 +2140,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         saveDB();
         generateQuickLinks();
-        renderProfileSwitcher();
         renderAll();
         updateMainHeaderTitle();
         
         setupBackToHomeButtons();
-        setupProfileSwitching();
         setupEventListeners();
         setupFooterNavigation();
     }
 
     function migrateOldData() {
-        const oldDB_KEYS = ['lexAcademicaDB', 'lexAcademicaDB_v2', 'academicoProDB'];
+        const oldDB_KEYS = ['lexAcademicaDB', 'lexAcademicaDB_v2', 'academicoProDB', 'academicoProDB_v3'];
         
         for (const key of oldDB_KEYS) {
             const oldData = localStorage.getItem(key);
@@ -2282,6 +2338,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 eventType: 'provas',
                 disciplinaId: p.disciplinaId
             })),
+            ...profileData.financeiro.filter(f => f.tipo === 'despesa' && f.status === 'pendente').map(f => ({
+                ...f,
+                type: 'financeiro',
+                date: f.data,
+                title: f.descricao,
+                time: '23:59',
+                eventType: 'financeiro'
+            })),
             ...profileData.eventos.map(e => ({
                 ...e, 
                 time: e.time || '00:00', 
@@ -2335,6 +2399,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const eventTypeMap = {
             assignment: { icon: 'fa-tasks', label: 'Trabalho' },
             exam: { icon: 'fa-file-alt', label: 'Prova' },
+            financeiro: { icon: 'fa-dollar-sign', label: 'Despesa' },
             other: { icon: 'fa-calendar-day', label: 'Evento' },
             class: { icon: 'fa-chalkboard-teacher', label: 'Aula'}
         };
@@ -2350,6 +2415,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+        let valorInfo = '';
+        if (proximoEventoGlobal.valor) {
+            valorInfo = `<p class="mb-2"><i class="fas fa-money-bill me-2"></i><strong>Valor:</strong> R$ ${proximoEventoGlobal.valor.toFixed(2)}</p>`;
+        }
+
         container.innerHTML = `
             <div class="next-event-card" id="next-event-card">
                 <div class="row align-items-center">
@@ -2357,6 +2427,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <h6 class="text-uppercase small" style="opacity: 0.8;">Próximo Evento</h6>
                         <h3 class="mb-1">${proximoEventoGlobal.title}</h3>
                         ${disciplinaInfo}
+                        ${valorInfo}
                         <p class="mb-2"><i class="fas ${eventInfo.icon} me-2"></i><strong>${eventInfo.label}:</strong> ${formattedDate}</p>
                     </div>
                     <div class="col-lg-7">
@@ -2424,6 +2495,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const todosEventos = [
             ...profileData.trabalhos.filter(t => t.status === 'Pendente').map(t => ({...t, type: 'assignment', date: t.entrega, title: t.titulo})),
             ...profileData.provas.filter(p => p.status === 'Agendada').map(p => ({...p, type: 'exam', date: p.data, title: p.conteudo})),
+            ...profileData.financeiro.filter(f => f.tipo === 'despesa' && f.status === 'pendente').map(f => ({
+                ...f, type: 'financeiro', date: f.data, title: f.descricao
+            })),
             ...profileData.eventos.map(e => ({...e}))
         ];
         
@@ -2442,11 +2516,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     const priorityText = evento.prioridade === 'high' ? 'Alta' : evento.prioridade === 'medium' ? 'Média' : 'Baixa';
                     badge = `<span class="badge ${priorityClass}">${priorityText}</span>`;
                 }
+                let valorBadge = '';
+                if(evento.valor) {
+                    valorBadge = `<span class="badge ${evento.tipo === 'despesa' ? 'bg-danger' : 'bg-success'}">R$ ${evento.valor.toFixed(2)}</span>`;
+                }
                 eventosContainer.innerHTML += `
                     <div class="event-item ${evento.type}">
                         <div class="d-flex justify-content-between align-items-center">
                             <h6 class="mb-0 small">${evento.title}</h6>
-                            ${badge}
+                            ${badge} ${valorBadge}
                         </div>
                         <p class="mb-0 small text-muted">Data: ${new Date(evento.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
                     </div>
@@ -2644,6 +2722,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 eventIndicator = '<div class="event-indicator">';
                 if (dayEvents.some(e => e.type === 'assignment')) eventIndicator += '<span class="event-dot assignment"></span>';
                 if (dayEvents.some(e => e.type === 'exam')) eventIndicator += '<span class="event-dot exam"></span>';
+                if (dayEvents.some(e => e.type === 'financeiro')) eventIndicator += '<span class="event-dot financeiro"></span>';
                 if (dayEvents.some(e => ['other', 'class'].includes(e.type))) eventIndicator += '<span class="event-dot other"></span>';
                 eventIndicator += '</div>';
             }
@@ -2683,18 +2762,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 const disciplina = getDisciplinaById(evento.disciplinaId);
                 disciplinaNome = disciplina ? `<p class="mb-0 small text-muted">${disciplina.nome}</p>` : '';
             }
+            
+            let valorInfo = '';
+            if (evento.valor) {
+                valorInfo = `<p class="mb-0 small text-muted">Valor: R$ ${evento.valor.toFixed(2)}</p>`;
+            }
+            
             let dataType = '';
             if (evento.type === 'assignment') dataType = 'trabalhos';
             else if (evento.type === 'exam') dataType = 'provas';
+            else if (evento.type === 'financeiro') dataType = 'financeiro';
             else if (['other', 'class'].includes(evento.type)) dataType = 'eventos';
 
             container.innerHTML += `
                 <div class="event-item ${evento.type}" data-event-type="${dataType}" data-event-id="${evento.id}">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0 small">${evento.title || evento.conteudo}</h6>
+                        <h6 class="mb-0 small">${evento.title || evento.conteudo || evento.descricao}</h6>
                         <span class="small text-muted">${evento.time || ''}</span>
                     </div>
                     ${disciplinaNome}
+                    ${valorInfo}
                 </div>
             `;
         });
@@ -2933,6 +3020,81 @@ document.addEventListener('DOMContentLoaded', function() {
         const saldoEl = document.getElementById('financeiro-saldo-atual');
         saldoEl.textContent = saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         saldoEl.className = saldo >= 0 ? 'text-success' : 'text-danger';
+        
+        // Atualizar gráfico
+        renderFinanceiroGrafico(profileData);
+        
+        // Atualizar categorias
+        renderCategoriasFinanceiro(profileData);
+    }
+
+    function renderFinanceiroGrafico(profileData) {
+        const hoje = new Date();
+        const mesAtual = hoje.getMonth();
+        const anoAtual = hoje.getFullYear();
+        
+        const receitasMes = profileData.financeiro
+            .filter(t => t.tipo === 'receita' && 
+                new Date(t.data).getMonth() === mesAtual && 
+                new Date(t.data).getFullYear() === anoAtual)
+            .reduce((sum, t) => sum + t.valor, 0);
+            
+        const despesasMes = profileData.financeiro
+            .filter(t => t.tipo === 'despesa' && 
+                new Date(t.data).getMonth() === mesAtual && 
+                new Date(t.data).getFullYear() === anoAtual)
+            .reduce((sum, t) => sum + t.valor, 0);
+        
+        const maxValor = Math.max(receitasMes, despesasMes, 1);
+        const alturaReceita = (receitasMes / maxValor) * 180;
+        const alturaDespesa = (despesasMes / maxValor) * 180;
+        
+        const barraReceita = document.getElementById('barra-receita-mes');
+        const barraDespesa = document.getElementById('barra-despesa-mes');
+        
+        if (barraReceita) barraReceita.style.height = `${alturaReceita}px`;
+        if (barraDespesa) barraDespesa.style.height = `${alturaDespesa}px`;
+    }
+
+    function renderCategoriasFinanceiro(profileData) {
+        const container = document.getElementById('financeiro-categorias');
+        container.innerHTML = '';
+        
+        const categorias = {};
+        
+        profileData.financeiro.forEach(transacao => {
+            const categoria = transacao.categoria || 'Sem categoria';
+            if (!categorias[categoria]) {
+                categorias[categoria] = { receita: 0, despesa: 0 };
+            }
+            
+            if (transacao.tipo === 'receita') {
+                categorias[categoria].receita += transacao.valor;
+            } else {
+                categorias[categoria].despesa += transacao.valor;
+            }
+        });
+        
+        const categoriasArray = Object.keys(categorias).map(categoria => ({
+            nome: categoria,
+            receita: categorias[categoria].receita,
+            despesa: categorias[categoria].despesa,
+            total: categorias[categoria].receita + categorias[categoria].despesa
+        }));
+        
+        categoriasArray.sort((a, b) => b.total - a.total);
+        
+        categoriasArray.slice(0, 5).forEach(cat => {
+            container.innerHTML += `
+                <div class="categoria-item">
+                    <span>${cat.nome}</span>
+                    <div>
+                        ${cat.receita > 0 ? `<span class="badge bg-success me-1">R$ ${cat.receita.toFixed(2)}</span>` : ''}
+                        ${cat.despesa > 0 ? `<span class="badge bg-danger">R$ ${cat.despesa.toFixed(2)}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        });
     }
 
     function renderRelatorios() {
@@ -2966,6 +3128,21 @@ document.addEventListener('DOMContentLoaded', function() {
                  relatorioProvas.innerHTML += `<div class="report-item"><span>${disciplina.nome} - ${p.conteudo}</span><span class="badge ${nota === "N/A" ? 'bg-secondary' : nota >= 7 ? 'bg-success' : 'bg-danger'}">${nota}</span></div>`;
             });
         }
+        
+        const relatorioFinanceiro = document.getElementById('relatorio-financeiro');
+        relatorioFinanceiro.innerHTML = '';
+        
+        const receitas = profileData.financeiro.filter(f => f.tipo === 'receita').reduce((sum, f) => sum + f.valor, 0);
+        const despesas = profileData.financeiro.filter(f => f.tipo === 'despesa').reduce((sum, f) => sum + f.valor, 0);
+        const saldo = receitas - despesas;
+        const despesasPendentes = profileData.financeiro.filter(f => f.tipo === 'despesa' && f.status === 'pendente').length;
+        
+        relatorioFinanceiro.innerHTML += `
+            <div class="report-item"><span>Total Receitas</span><span class="badge bg-success">R$ ${receitas.toFixed(2)}</span></div>
+            <div class="report-item"><span>Total Despesas</span><span class="badge bg-danger">R$ ${despesas.toFixed(2)}</span></div>
+            <div class="report-item"><span>Saldo Atual</span><span class="badge ${saldo >= 0 ? 'bg-success' : 'bg-danger'}">R$ ${saldo.toFixed(2)}</span></div>
+            <div class="report-item"><span>Despesas Pendentes</span><span class="badge bg-warning text-dark">${despesasPendentes}</span></div>
+        `;
     }
 
     function getEventsForDate(dateStr) {
@@ -2973,113 +3150,10 @@ document.addEventListener('DOMContentLoaded', function() {
         return [
             ...profileData.trabalhos.filter(t => t.entrega === dateStr).map(t => ({...t, type: 'assignment', date: t.entrega, title: t.titulo})),
             ...profileData.provas.filter(p => p.data === dateStr).map(p => ({...p, type: 'exam', date: p.data, title: p.conteudo})),
+            ...profileData.financeiro.filter(f => f.data === dateStr && f.tipo === 'despesa' && f.status === 'pendente')
+                .map(f => ({...f, type: 'financeiro', date: f.data, title: f.descricao})),
             ...profileData.eventos.filter(e => e.date === dateStr)
         ].sort((a,b) => (a.time || '23:59').localeCompare(b.time || '23:59'));
-    }
-
-    function renderProfileSwitcher() {
-        const currentProfile = db.profiles.find(p => p.id === db.currentProfileId);
-        const dropdownMenu = document.getElementById('profile-dropdown-menu');
-        const managementList = document.getElementById('profile-management-list');
-        
-        document.getElementById('current-profile-name').textContent = currentProfile ? currentProfile.name : 'Nenhum Perfil';
-        dropdownMenu.innerHTML = '';
-        managementList.innerHTML = '';
-
-        db.profiles.forEach(profile => {
-            const isActive = profile.id === db.currentProfileId;
-            dropdownMenu.innerHTML += `<li><a class="dropdown-item switch-profile ${isActive ? 'active' : ''}" href="#" data-id="${profile.id}">${isActive ? '<i class="fas fa-check me-2"></i>' : '<i class="fas fa-user me-2"></i>'}${profile.name}</a></li>`;
-            managementList.innerHTML += `
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <button type="button" class="btn btn-link text-start flex-grow-1 switch-profile ${isActive ? 'fw-bold' : ''}" data-id="${profile.id}">${profile.name}</button>
-                    <div>
-                        <button class="btn btn-sm btn-outline-primary edit-profile" data-id="${profile.id}"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-sm btn-outline-danger delete-profile" data-id="${profile.id}" ${db.profiles.length === 1 ? 'disabled' : ''}><i class="fas fa-trash"></i></button>
-                    </div>
-                </li>`;
-        });
-
-        dropdownMenu.innerHTML += '<li><hr class="dropdown-divider"></li><li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#profileManagementModal"><i class="fas fa-cog"></i> Gerenciar Perfis</a></li>';
-    }
-    
-    document.getElementById('profileForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const profileNameInput = document.getElementById('profileName');
-        const profileIdInput = document.getElementById('profileId');
-        const name = profileNameInput.value.trim();
-        const id = parseInt(profileIdInput.value);
-
-        if (!name) { alert("O nome do perfil é obrigatório."); return; }
-
-        if (id) {
-            db.profiles.find(p => p.id === id).name = name;
-        } else {
-            const newProfile = {
-                id: db.profiles.length > 0 ? Math.max(...db.profiles.map(p => p.id)) + 1 : 1,
-                name: name,
-                data: createNewProfileData()
-            };
-            db.profiles.push(newProfile);
-            switchProfile(newProfile.id);
-        }
-
-        profileNameInput.value = '';
-        profileIdInput.value = '';
-        document.getElementById('saveProfileBtn').innerHTML = '<i class="fas fa-plus"></i> Adicionar';
-        
-        saveDB();
-        renderProfileSwitcher();
-    });
-
-    function switchProfile(profileId) {
-        db.currentProfileId = parseInt(profileId);
-        saveDB();
-        renderAll();
-        renderProfileSwitcher();
-        updateMainHeaderTitle();
-        updateFixedBackButton();
-    }
-
-    function setupProfileSwitching() {
-        document.addEventListener('click', function(e) {
-            const switchProfileBtn = e.target.closest('.switch-profile');
-            if (switchProfileBtn) {
-                e.preventDefault();
-                const profileId = parseInt(switchProfileBtn.dataset.id);
-                if (profileId !== db.currentProfileId) {
-                    switchProfile(profileId);
-                }
-            }
-            
-            const deleteProfileBtn = e.target.closest('.delete-profile');
-            if (deleteProfileBtn && !deleteProfileBtn.disabled) {
-                e.preventDefault();
-                const profileId = parseInt(deleteProfileBtn.dataset.id);
-                if (confirm('Tem certeza que deseja excluir este perfil? Todos os dados serão perdidos.')) {
-                    db.profiles = db.profiles.filter(p => p.id !== profileId);
-                    if (db.currentProfileId === profileId && db.profiles.length > 0) {
-                        db.currentProfileId = db.profiles[0].id;
-                    } else if (db.profiles.length === 0) {
-                        db.currentProfileId = null;
-                    }
-                    saveDB();
-                    renderProfileSwitcher();
-                    renderAll();
-                }
-            }
-            
-            const editProfileBtn = e.target.closest('.edit-profile');
-            if (editProfileBtn) {
-                e.preventDefault();
-                const profileId = parseInt(editProfileBtn.dataset.id);
-                const profile = db.profiles.find(p => p.id === profileId);
-                if (profile) {
-                    document.getElementById('profileName').value = profile.name;
-                    document.getElementById('profileId').value = profile.id;
-                    document.getElementById('saveProfileBtn').innerHTML = '<i class="fas fa-save"></i> Atualizar';
-                }
-            }
-        });
     }
 
     function setupBackToHomeButtons() {
@@ -3180,6 +3254,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     case 'provas':
                         targetPanel = 'provas';
                         break;
+                    case 'financeiro':
+                        targetPanel = 'financeiro';
+                        break;
                     case 'eventos':
                         targetPanel = 'agenda';
                         break;
@@ -3272,6 +3349,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         saveDB();
                         renderFinanceiro();
                         renderDashboard();
+                        renderProximoEventoCard();
+                        renderAgenda();
                     }
                 }
             }
@@ -3281,7 +3360,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const eventType = eventItem.dataset.eventType;
                 const eventId = eventItem.dataset.eventId;
                 if(eventType && eventId) {
-                    const modalMap = {'trabalhos': 'trabalho', 'provas': 'prova', 'eventos': 'event'};
+                    const modalMap = {'trabalhos': 'trabalho', 'provas': 'prova', 'financeiro': 'financeiro', 'eventos': 'event'};
                     handleEdit(eventType, modalMap[eventType], eventId);
                 }
             }
@@ -3362,6 +3441,36 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 statusWrapper.style.display = 'none';
             }
+        });
+
+        // Gerenciamento de Perfis
+        document.getElementById('profileForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const profileNameInput = document.getElementById('profileName');
+            const profileIdInput = document.getElementById('profileId');
+            const name = profileNameInput.value.trim();
+            const id = parseInt(profileIdInput.value);
+
+            if (!name) { alert("O nome do perfil é obrigatório."); return; }
+
+            if (id) {
+                db.profiles.find(p => p.id === id).name = name;
+            } else {
+                const newProfile = {
+                    id: db.profiles.length > 0 ? Math.max(...db.profiles.map(p => p.id)) + 1 : 1,
+                    name: name,
+                    data: createNewProfileData()
+                };
+                db.profiles.push(newProfile);
+                switchProfile(newProfile.id);
+            }
+
+            profileNameInput.value = '';
+            profileIdInput.value = '';
+            document.getElementById('saveProfileBtn').innerHTML = '<i class="fas fa-plus"></i> Adicionar';
+            
+            saveDB();
+            renderProfileManagementList();
         });
 
         document.querySelectorAll('.modal').forEach(modal => {
@@ -4009,6 +4118,75 @@ document.addEventListener('DOMContentLoaded', function() {
         const titleElement = activePanel.querySelector('h2');
         const titleText = titleElement ? titleElement.textContent : 'Acadêmico Pro';
         document.getElementById('main-header-title').textContent = titleText;
+    }
+
+    function switchProfile(profileId) {
+        db.currentProfileId = parseInt(profileId);
+        saveDB();
+        renderAll();
+        renderProfileManagementList();
+        updateMainHeaderTitle();
+        updateFixedBackButton();
+    }
+
+    function renderProfileManagementList() {
+        const managementList = document.getElementById('profile-management-list');
+        managementList.innerHTML = '';
+
+        db.profiles.forEach(profile => {
+            const isActive = profile.id === db.currentProfileId;
+            managementList.innerHTML += `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-link text-start flex-grow-1 switch-profile ${isActive ? 'fw-bold' : ''}" data-id="${profile.id}">${profile.name}</button>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary edit-profile" data-id="${profile.id}"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-outline-danger delete-profile" data-id="${profile.id}" ${db.profiles.length === 1 ? 'disabled' : ''}><i class="fas fa-trash"></i></button>
+                    </div>
+                </li>`;
+        });
+
+        // Adicionar event listeners para os botões
+        document.querySelectorAll('.switch-profile').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const profileId = parseInt(this.dataset.id);
+                if (profileId !== db.currentProfileId) {
+                    switchProfile(profileId);
+                    bootstrap.Modal.getInstance(document.getElementById('profileManagementModal')).hide();
+                }
+            });
+        });
+
+        document.querySelectorAll('.edit-profile').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const profileId = parseInt(this.dataset.id);
+                const profile = db.profiles.find(p => p.id === profileId);
+                if (profile) {
+                    document.getElementById('profileName').value = profile.name;
+                    document.getElementById('profileId').value = profile.id;
+                    document.getElementById('saveProfileBtn').innerHTML = '<i class="fas fa-save"></i> Atualizar';
+                }
+            });
+        });
+
+        document.querySelectorAll('.delete-profile').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const profileId = parseInt(this.dataset.id);
+                if (db.profiles.length === 1) return;
+                
+                if (confirm('Tem certeza que deseja excluir este perfil? Todos os dados serão perdidos.')) {
+                    db.profiles = db.profiles.filter(p => p.id !== profileId);
+                    if (db.currentProfileId === profileId && db.profiles.length > 0) {
+                        db.currentProfileId = db.profiles[0].id;
+                    }
+                    saveDB();
+                    renderProfileManagementList();
+                    renderAll();
+                }
+            });
+        });
     }
 
     init();
