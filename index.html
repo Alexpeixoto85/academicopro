@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -35,7 +34,7 @@
       font-family: 'Poppins', sans-serif;
       color: var(--text-dark);
       line-height: 1.6;
-      padding-bottom: 80px; /* Espaço para o rodapé fixo */
+      padding-bottom: 80px;
     }
 
     h1, h2, h3, h4, h5, h6 {
@@ -622,7 +621,7 @@
         background-color: #e9ecef;
     }
 
-    /* Caderno e Notas */
+    /* Caderno e Notas - Melhorias */
     .nota-card {
         cursor: pointer;
         transition: var(--transition);
@@ -825,6 +824,178 @@
         font-weight: 500;
     }
 
+    /* Biblioteca - Estilos para nova funcionalidade */
+    .livro-card {
+        height: 100%;
+    }
+    
+    .livro-info {
+        font-size: 0.9rem;
+    }
+    
+    .livro-info-item {
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .livro-info-item i {
+        margin-right: 8px;
+        width: 20px;
+        color: var(--accent);
+    }
+
+    /* Financeiro - Novo estilo para visualização mensal */
+    .financeiro-mes-selector {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        background: white;
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+    }
+    
+    .mes-ativo {
+        font-weight: 600;
+        font-size: 1.2rem;
+        color: var(--primary);
+    }
+    
+    .financeiro-resumo-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow);
+    }
+    
+    .financeiro-transacao-item {
+        border-left: 4px solid;
+        padding: 12px 15px;
+        margin-bottom: 8px;
+        background-color: white;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.2s;
+    }
+    
+    .financeiro-transacao-item:hover {
+        transform: translateX(3px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .financeiro-transacao-item.receita {
+        border-left-color: var(--success);
+    }
+    
+    .financeiro-transacao-item.despesa {
+        border-left-color: var(--danger);
+    }
+    
+    .financeiro-dia {
+        font-size: 0.9rem;
+        color: var(--text-light);
+        margin-bottom: 5px;
+    }
+    
+    .financeiro-dia-valor {
+        font-weight: 600;
+    }
+    
+    .financeiro-dia-valor.receita {
+        color: var(--success);
+    }
+    
+    .financeiro-dia-valor.despesa {
+        color: var(--danger);
+    }
+
+    /* Canvas para desenho no caderno */
+    #desenhoCanvas {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: white;
+        cursor: crosshair;
+        touch-action: none;
+    }
+    
+    .canvas-tools {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .canvas-tool-btn {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        background: white;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+    
+    .canvas-tool-btn.active {
+        background-color: var(--accent);
+        color: white;
+        border-color: var(--accent);
+    }
+    
+    .canvas-tool-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .color-picker {
+        display: flex;
+        gap: 5px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .color-option {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: var(--transition);
+    }
+    
+    .color-option:hover {
+        transform: scale(1.1);
+    }
+    
+    .color-option.active {
+        border-color: #333;
+        transform: scale(1.1);
+    }
+    
+    .brush-size-selector {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .brush-size {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .brush-size-indicator {
+        display: inline-block;
+        background-color: #333;
+        border-radius: 50%;
+    }
+
     @media (max-width: 768px) {
       .main-header {
         flex-direction: column;
@@ -896,6 +1067,18 @@
         right: 15px;
         width: 45px;
         height: 45px;
+      }
+      
+      /* Financeiro mes selector mobile */
+      .financeiro-mes-selector {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      /* Canvas mobile */
+      #desenhoCanvas {
+        width: 100%;
+        height: 300px;
       }
     }
   </style>
@@ -1154,7 +1337,75 @@
             </button>
         </div>
     </div>
-    <div class="row g-4" id="notas-lista">
+    
+    <!-- Abas para alternar entre notas digitadas e desenho -->
+    <div class="mb-4">
+        <div class="nav nav-tabs" id="caderno-tab" role="tablist">
+            <button class="nav-link active" id="notas-tab" data-bs-toggle="tab" data-bs-target="#notas-content" type="button" role="tab">
+                <i class="fas fa-sticky-note"></i> Notas Digitadas
+            </button>
+            <button class="nav-link" id="desenho-tab" data-bs-toggle="tab" data-bs-target="#desenho-content" type="button" role="tab">
+                <i class="fas fa-paint-brush"></i> Desenho
+            </button>
+        </div>
+    </div>
+    
+    <div class="tab-content" id="caderno-content">
+        <!-- Conteúdo das notas digitadas -->
+        <div class="tab-pane fade show active" id="notas-content" role="tabpanel">
+            <div class="row g-4" id="notas-lista">
+            </div>
+        </div>
+        
+        <!-- Conteúdo do desenho -->
+        <div class="tab-pane fade" id="desenho-content" role="tabpanel">
+            <div class="card card-dashboard">
+                <div class="card-body">
+                    <div class="canvas-tools">
+                        <button class="canvas-tool-btn active" id="pencilTool" title="Lápis">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                        <button class="canvas-tool-btn" id="eraserTool" title="Borracha">
+                            <i class="fas fa-eraser"></i>
+                        </button>
+                        <button class="canvas-tool-btn" id="clearCanvas" title="Limpar Tudo">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        <button class="canvas-tool-btn" id="saveDrawing" title="Salvar Desenho">
+                            <i class="fas fa-save"></i>
+                        </button>
+                        <button class="canvas-tool-btn" id="loadDrawing" title="Carregar Desenho">
+                            <i class="fas fa-folder-open"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="color-picker">
+                        <div class="color-option active" style="background-color: #000000;" data-color="#000000"></div>
+                        <div class="color-option" style="background-color: #ff0000;" data-color="#ff0000"></div>
+                        <div class="color-option" style="background-color: #0000ff;" data-color="#0000ff"></div>
+                        <div class="color-option" style="background-color: #008000;" data-color="#008000"></div>
+                        <div class="color-option" style="background-color: #ffa500;" data-color="#ffa500"></div>
+                        <div class="color-option" style="background-color: #800080;" data-color="#800080"></div>
+                        <div class="color-option" style="background-color: #ff1493;" data-color="#ff1493"></div>
+                        <div class="color-option" style="background-color: #a52a2a;" data-color="#a52a2a"></div>
+                    </div>
+                    
+                    <div class="brush-size-selector">
+                        <label>Tamanho do pincel:</label>
+                        <div class="brush-size">
+                            <input type="range" id="brushSize" min="1" max="20" value="3">
+                            <span id="brushSizeValue">3px</span>
+                        </div>
+                    </div>
+                    
+                    <canvas id="desenhoCanvas" width="800" height="500"></canvas>
+                    
+                    <div class="mt-3">
+                        <small class="text-muted">Dica: Use o lápis para desenhar e a borracha para apagar. O desenho é salvo automaticamente no IndexedDB.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
   </div>
   <div class="content-panel" id="links">
@@ -1182,119 +1433,63 @@
           </div>
       </div>
       
-      <!-- Resumo Financeiro -->
+      <!-- Seletor de Mês -->
+      <div class="financeiro-mes-selector">
+          <button class="btn btn-outline-primary" id="prev-month-financeiro">
+              <i class="fas fa-chevron-left"></i> Mês Anterior
+          </button>
+          <div class="mes-ativo" id="financeiro-mes-atual"></div>
+          <button class="btn btn-outline-primary" id="next-month-financeiro">
+              Próximo Mês <i class="fas fa-chevron-right"></i>
+          </button>
+      </div>
+      
+      <!-- Resumo Financeiro do Mês -->
       <div class="row g-4 mb-4">
           <div class="col-md-4">
               <div class="card card-dashboard">
                   <div class="card-body text-center">
-                      <h6 class="text-muted">Receitas</h6>
-                      <h3 class="text-success" id="financeiro-total-receitas">R$ 0,00</h3>
+                      <h6 class="text-muted">Receitas do Mês</h6>
+                      <h3 class="text-success" id="financeiro-total-receitas-mes">R$ 0,00</h3>
                   </div>
               </div>
           </div>
           <div class="col-md-4">
               <div class="card card-dashboard">
                   <div class="card-body text-center">
-                      <h6 class="text-muted">Despesas</h6>
-                      <h3 class="text-danger" id="financeiro-total-despesas">R$ 0,00</h3>
+                      <h6 class="text-muted">Despesas do Mês</h6>
+                      <h3 class="text-danger" id="financeiro-total-despesas-mes">R$ 0,00</h3>
                   </div>
               </div>
           </div>
           <div class="col-md-4">
               <div class="card card-dashboard">
                   <div class="card-body text-center">
-                      <h6 class="text-muted">Saldo Atual</h6>
-                      <h3 id="financeiro-saldo-atual">R$ 0,00</h3>
+                      <h6 class="text-muted">Saldo do Mês</h6>
+                      <h3 id="financeiro-saldo-mes">R$ 0,00</h3>
                   </div>
               </div>
           </div>
       </div>
       
-      <!-- Gráfico de Resumo Mensal -->
-      <div class="card card-dashboard mb-4">
-          <div class="card-body">
-              <h5 class="card-title">Resumo do Mês</h5>
-              <div class="financeiro-grafico-barras">
-                  <div class="barra-mes">
-                      <div class="barra receita" id="barra-receita-mes"></div>
-                      <div class="barra despesa" id="barra-despesa-mes"></div>
-                  </div>
-                  <div class="legenda">
-                      <span><i class="fas fa-square receita"></i> Receitas</span>
-                      <span><i class="fas fa-square despesa"></i> Despesas</span>
-                  </div>
-              </div>
-          </div>
-      </div>
-      
-      <!-- Categorias mais comuns -->
-      <div class="card card-dashboard mb-4">
-          <div class="card-body">
-              <h5 class="card-title">Categorias mais utilizadas</h5>
-              <div id="financeiro-categorias">
-              </div>
-          </div>
-      </div>
-      
-      <!-- Filtros Financeiro -->
-      <div class="financeiro-filtros">
-          <div class="row g-3">
-              <div class="col-md-3">
-                  <label for="financeiro-filtro-status" class="form-label">Status</label>
-                  <select class="form-select" id="financeiro-filtro-status">
-                      <option value="todos">Todos</option>
-                      <option value="pendente">Pendente</option>
-                      <option value="pago">Pago</option>
-                  </select>
-              </div>
-              <div class="col-md-3">
-                  <label for="financeiro-filtro-tipo" class="form-label">Tipo</label>
-                  <select class="form-select" id="financeiro-filtro-tipo">
-                      <option value="todos">Todos</option>
-                      <option value="receita">Receita</option>
-                      <option value="despesa">Despesa</option>
-                  </select>
-              </div>
-              <div class="col-md-3">
-                  <label for="financeiro-filtro-data-inicio" class="form-label">Data Início</label>
-                  <input type="date" class="form-control" id="financeiro-filtro-data-inicio">
-              </div>
-              <div class="col-md-3">
-                  <label for="financeiro-filtro-data-fim" class="form-label">Data Fim</label>
-                  <input type="date" class="form-control" id="financeiro-filtro-data-fim">
-              </div>
-          </div>
-          <div class="row mt-3">
-              <div class="col-md-6">
-                  <button class="btn btn-primary" id="financeiro-aplicar-filtro">
-                      <i class="fas fa-filter"></i> Aplicar Filtros
-                  </button>
-                  <button class="btn btn-outline-secondary" id="financeiro-limpar-filtro">
-                      <i class="fas fa-times"></i> Limpar Filtros
-                  </button>
-              </div>
-          </div>
-      </div>
-      
-      <!-- Histórico de Transações -->
+      <!-- Transações do Mês -->
       <div class="card card-dashboard">
           <div class="card-body">
-              <h4 class="card-title mb-3">Histórico de Transações</h4>
-              <div class="table-responsive">
-                  <table class="table table-hover">
-                      <thead>
-                          <tr>
-                              <th>Data</th>
-                              <th>Descrição</th>
-                              <th>Categoria</th>
-                              <th>Tipo</th>
-                              <th class="text-end">Valor</th>
-                              <th>Status</th>
-                              <th>Ações</th>
-                          </tr>
-                      </thead>
-                      <tbody id="financeiro-tabela"></tbody>
-                  </table>
+              <h4 class="card-title mb-3">Transações do Mês</h4>
+              <div id="financeiro-transacoes-mes">
+                  <div class="empty-state">
+                      <p>Nenhuma transação neste mês.</p>
+                  </div>
+              </div>
+          </div>
+      </div>
+      
+      <!-- Resumo Anual (visão rápida) -->
+      <div class="card card-dashboard mt-4">
+          <div class="card-body">
+              <h4 class="card-title mb-3">Resumo Anual</h4>
+              <div class="row" id="financeiro-resumo-anual">
+                  <!-- Será preenchido via JavaScript -->
               </div>
           </div>
       </div>
@@ -1619,20 +1814,6 @@
                 <label for="eventDescription" class="form-label">Descrição</label>
                 <textarea class="form-control" id="eventDescription" rows="2"></textarea>
             </div>
-            <hr>
-            <div class="mb-3">
-                <label for="eventRecurrence" class="form-label">Recorrência</label>
-                <select class="form-select" id="eventRecurrence">
-                    <option value="none" selected>Não repetir</option>
-                    <option value="daily">Diariamente</option>
-                    <option value="weekly">Semanalmente</option>
-                    <option value="monthly">Mensalmente</option>
-                </select>
-            </div>
-            <div class="mb-3 d-none" id="eventRecurrenceEndDateWrapper">
-                <label for="eventRecurrenceEndDate" class="form-label">Repetir até</label>
-                <input type="date" class="form-control" id="eventRecurrenceEndDate">
-            </div>
         </form>
       </div>
       <div class="modal-footer">
@@ -1670,23 +1851,22 @@
                   </div>
                   <div class="mb-3">
                       <label for="financeiroCategoria" class="form-label">Categoria</label>
-                      <input type="text" class="form-control" id="financeiroCategoria" list="categorias-list">
-                      <datalist id="categorias-list">
-                          <option value="Material Escolar">
-                          <option value="Transporte">
-                          <option value="Alimentação">
-                          <option value="Moradia">
-                          <option value="Livros">
-                          <option value="Cursos">
-                          <option value="Lazer">
-                          <option value="Saúde">
-                      </datalist>
+                      <select class="form-select" id="financeiroCategoria">
+                          <option value="">Selecione uma categoria</option>
+                          <option value="Alimentação">Alimentação</option>
+                          <option value="Transporte">Transporte</option>
+                          <option value="Moradia">Moradia</option>
+                          <option value="Educação">Educação</option>
+                          <option value="Lazer">Lazer</option>
+                          <option value="Saúde">Saúde</option>
+                          <option value="Vestuário">Vestuário</option>
+                          <option value="Outros">Outros</option>
+                      </select>
                   </div>
                   <div class="mb-3">
                       <label for="financeiroData" class="form-label">Data</label>
                       <input type="date" class="form-control" id="financeiroData" required>
                   </div>
-                  <!-- Adicionando campo de status para despesas -->
                   <div class="mb-3" id="financeiroStatusWrapper" style="display: none;">
                       <label for="financeiroStatus" class="form-label">Status</label>
                       <select class="form-select" id="financeiroStatus">
@@ -1890,11 +2070,24 @@
                       <input type="text" class="form-control" id="bibliotecaTitulo" required>
                   </div>
                   <div class="mb-3">
-                      <label for="bibliotecaArquivo" class="form-label">Arquivo PDF</label>
-                      <input type="file" class="form-control" id="bibliotecaArquivo" accept=".pdf" required>
+                      <label for="bibliotecaAutor" class="form-label">Autor</label>
+                      <input type="text" class="form-control" id="bibliotecaAutor" required>
                   </div>
-                   <div class="alert alert-info small">
-                      <strong>Nota:</strong> O arquivo PDF será salvo localmente no seu navegador. Evite arquivos muito grandes para garantir o bom funcionamento.
+                  <div class="mb-3">
+                      <label for="bibliotecaAssunto" class="form-label">Assunto/Tema</label>
+                      <input type="text" class="form-control" id="bibliotecaAssunto" required>
+                  </div>
+                  <div class="mb-3">
+                      <label for="bibliotecaEditora" class="form-label">Editora</label>
+                      <input type="text" class="form-control" id="bibliotecaEditora">
+                  </div>
+                  <div class="mb-3">
+                      <label for="bibliotecaAno" class="form-label">Ano de Publicação</label>
+                      <input type="number" class="form-control" id="bibliotecaAno" min="1900" max="2030">
+                  </div>
+                  <div class="mb-3">
+                      <label for="bibliotecaObservacoes" class="form-label">Observações</label>
+                      <textarea class="form-control" id="bibliotecaObservacoes" rows="2"></textarea>
                   </div>
               </form>
           </div>
@@ -1920,254 +2113,375 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     
-    // PDF.js worker configuration
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
-
+    // Configuração do IndexedDB
+    const DB_NAME = 'academicoProDB';
+    const DB_VERSION = 1;
     let db;
+    
+    // Variáveis globais
     let currentCalendarDate = new Date();
-    const DB_KEY = 'academicoProDB_v4';
     let nextEventInterval;
     let proximoEventoGlobal = null;
     let currentVideoPlayer = null;
     let currentVideoId = null;
     let videoInterval = null;
     let currentVideoTime = 0;
+    
+    // Variáveis para desenho
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+    let currentTool = 'pencil';
+    let currentColor = '#000000';
+    let currentBrushSize = 3;
+    let canvas, ctx;
+    
+    // Mês atual para o financeiro
+    let currentFinanceMonth = new Date().getMonth();
+    let currentFinanceYear = new Date().getFullYear();
 
-    const createNewProfileData = () => ({
-        disciplinas: [],
-        horarios: [],
-        trabalhos: [],
-        provas: [],
-        eventos: [],
-        financeiro: [],
-        biblioteca: [],
-        filmes: [],
-        notas: [],
-        links: []
-    });
-
-    function getCurrentProfileData() {
-        if (!db || !db.profiles || !db.currentProfileId) return null;
-        const currentProfile = db.profiles.find(p => p.id === db.currentProfileId);
-        return currentProfile ? currentProfile.data : null;
+    // Abrir/Criar o banco de dados IndexedDB
+    function openDatabase() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            
+            request.onerror = (event) => {
+                console.error("Erro ao abrir o banco de dados:", event.target.error);
+                reject(event.target.error);
+            };
+            
+            request.onsuccess = (event) => {
+                db = event.target.result;
+                console.log("Banco de dados aberto com sucesso");
+                resolve(db);
+            };
+            
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                
+                // Criar object stores para cada tipo de dado
+                if (!db.objectStoreNames.contains('profiles')) {
+                    const profileStore = db.createObjectStore('profiles', { keyPath: 'id', autoIncrement: true });
+                    profileStore.createIndex('currentProfileId', 'currentProfileId', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains('disciplinas')) {
+                    const disciplinaStore = db.createObjectStore('disciplinas', { keyPath: 'id' });
+                    disciplinaStore.createIndex('profileId', 'profileId', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains('horarios')) {
+                    const horarioStore = db.createObjectStore('horarios', { keyPath: 'id' });
+                    horarioStore.createIndex('profileId', 'profileId', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains('trabalhos')) {
+                    const trabalhoStore = db.createObjectStore('trabalhos', { keyPath: 'id' });
+                    trabalhoStore.createIndex('profileId', 'profileId', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains('provas')) {
+                    const provaStore = db.createObjectStore('provas', { keyPath: 'id' });
+                    provaStore.createIndex('profileId', 'profileId', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains('eventos')) {
+                    const eventoStore = db.createObjectStore('eventos', { keyPath: 'id' });
+                    eventoStore.createIndex('profileId', 'profileId', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains('financeiro')) {
+                    const financeiroStore = db.createObjectStore('financeiro', { keyPath: 'id' });
+                    financeiroStore.createIndex('profileId', 'profileId', { unique: false });
+                    financeiroStore.createIndex('mesAno', 'mesAno', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains('biblioteca')) {
+                    const bibliotecaStore = db.createObjectStore('biblioteca', { keyPath: 'id' });
+                    bibliotecaStore.createIndex('profileId', 'profileId', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains('filmes')) {
+                    const filmeStore = db.createObjectStore('filmes', { keyPath: 'id' });
+                    filmeStore.createIndex('profileId', 'profileId', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains('notas')) {
+                    const notaStore = db.createObjectStore('notas', { keyPath: 'id' });
+                    notaStore.createIndex('profileId', 'profileId', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains('links')) {
+                    const linkStore = db.createObjectStore('links', { keyPath: 'id' });
+                    linkStore.createIndex('profileId', 'profileId', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains('desenhos')) {
+                    const desenhoStore = db.createObjectStore('desenhos', { keyPath: 'id' });
+                    desenhoStore.createIndex('profileId', 'profileId', { unique: false });
+                }
+            };
+        });
     }
 
-    function init() {
-        const storedData = localStorage.getItem(DB_KEY);
-        if (storedData) {
-            try {
-                db = JSON.parse(storedData);
-            } catch(e) {
-                console.error("Erro ao parsear dados:", e);
-                db = {
-                    profiles: [],
-                    currentProfileId: null
-                };
-            }
-        } else {
-            db = {
-                profiles: [],
-                currentProfileId: null
+    // Funções para manipular dados no IndexedDB
+    async function saveData(storeName, data) {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const request = store.put(data);
+            
+            request.onerror = (event) => {
+                console.error(`Erro ao salvar dados em ${storeName}:`, event.target.error);
+                reject(event.target.error);
             };
-            migrateOldData();
-        }
-
-        if (db.profiles.length === 0) {
-            const initialProfileData = {
-                disciplinas: [
-                    { id: 1, nome: "Direito Civil", professor: "Prof. Dr. Carlos Albuquerque", frequencia: 85 },
-                    { id: 2, nome: "Direito Constitucional", professor: "Prof. Dra. Maria Santos", frequencia: 92 },
-                    { id: 3, nome: "Direito Penal", professor: "Prof. Dr. Roberto Ferreira", frequencia: 88 }
-                ],
-                horarios: [ 
-                    { id: 1, disciplinaId: 1, diaSemana: 1, inicio: "08:00", fim: "10:00", local: "Sala 101" },
-                    { id: 2, disciplinaId: 2, diaSemana: 3, inicio: "10:00", fim: "12:00", local: "Sala 205" }
-                ],
-                trabalhos: [ 
-                    { id: 1, disciplinaId: 1, titulo: "Estudo de Caso - Contratos", entrega: "2025-09-25", status: "Pendente", prioridade: "high", nota: null },
-                    { id: 2, disciplinaId: 2, titulo: "Análise Constitucional", entrega: "2025-10-10", status: "Entregue", prioridade: "medium", nota: 8.5 }
-                ],
-                provas: [ 
-                    { id: 1, disciplinaId: 3, conteudo: "Teoria Geral do Crime", data: "2025-10-15", hora: "14:00", status: "Agendada", nota: null },
-                    { id: 2, disciplinaId: 1, conteudo: "Contratos Civis", data: "2025-09-30", hora: "10:00", status: "Realizada", nota: 7.8 }
-                ],
-                eventos: [ 
-                    { id: 1, title: "Seminário Internacional", type: 'other', date: "2025-09-30", time: "09:00", description: "Auditório Central" },
-                    { id: 2, title: "Reunião de Grupo", type: 'class', date: "2025-10-05", time: "15:00", description: "Sala de Estudos" }
-                ],
-                financeiro: [ 
-                    { id: 1, tipo: "receita", descricao: "Bolsa Auxílio", valor: 500.00, categoria: "Bolsa", data: "2025-09-05", status: "pago" },
-                    { id: 2, tipo: "despesa", descricao: "Livro Direito Civil", valor: 89.90, categoria: "Material", data: "2025-09-10", status: "pendente" },
-                    { id: 3, tipo: "despesa", descricao: "Mensalidade Faculdade", valor: 850.00, categoria: "Educação", data: "2025-10-05", status: "pendente" }
-                ],
-                biblioteca: [],
-                filmes: [
-                    { 
-                        id: 1, 
-                        titulo: "Introdução ao Direito Constitucional", 
-                        url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", 
-                        tipo: "video-aula",
-                        anotacao: { tempoAtual: 15, texto: "Conceitos básicos revisados", assistido: false }
-                    }
-                ],
-                notas: [
-                    { 
-                        id: 1, 
-                        titulo: "Minhas primeiras anotações", 
-                        conteudo: "Aqui você pode criar todas as suas anotações importantes para o semestre.\n\nDica: Clique em uma nota para visualizá-la completa ou use os botões para editar/excluir.", 
-                        dataCriacao: new Date().toISOString().split('T')[0] 
-                    },
-                    { 
-                        id: 2, 
-                        titulo: "Lista de Tarefas", 
-                        conteudo: "1. Revisar matéria de Direito Civil\n2. Preparar apresentação do grupo\n3. Estudar para prova de Penal", 
-                        dataCriacao: new Date().toISOString().split('T')[0] 
-                    }
-                ],
-                links: [
-                    { 
-                        id: 1, 
-                        titulo: "Biblioteca Virtual", 
-                        url: "https://www.example.com/biblioteca", 
-                        categoria: "Recursos",
-                        descricao: "Acesso a livros e artigos"
-                    }
-                ]
+            
+            request.onsuccess = (event) => {
+                resolve(event.target.result);
             };
-            const firstProfile = { id: 1, name: "Direito - 5º Período", data: initialProfileData };
-            db.profiles.push(firstProfile);
-            db.currentProfileId = 1;
-        }
-        
-        if (!db.currentProfileId && db.profiles.length > 0) {
-            db.currentProfileId = db.profiles[0].id;
-        }
-        
-        db.profiles.forEach(profile => {
-            if (!profile.data.biblioteca) profile.data.biblioteca = [];
-            if (!profile.data.filmes) profile.data.filmes = [];
-            if (!profile.data.notas) profile.data.notas = [];
-            if (!profile.data.links) profile.data.links = [];
-            if (profile.data.financeiro) {
-                profile.data.financeiro.forEach(transacao => {
-                    if (!transacao.status) {
-                        transacao.status = transacao.tipo === 'despesa' ? 'pendente' : 'pago';
-                    }
-                });
-            }
         });
+    }
 
-        saveDB();
-        generateQuickLinks();
+    async function getData(storeName, id) {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([storeName], 'readonly');
+            const store = transaction.objectStore(storeName);
+            const request = store.get(id);
+            
+            request.onerror = (event) => {
+                console.error(`Erro ao obter dados de ${storeName}:`, event.target.error);
+                reject(event.target.error);
+            };
+            
+            request.onsuccess = (event) => {
+                resolve(event.target.result);
+            };
+        });
+    }
+
+    async function getAllData(storeName, indexName = null, indexValue = null) {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([storeName], 'readonly');
+            const store = transaction.objectStore(storeName);
+            let request;
+            
+            if (indexName && indexValue !== null) {
+                const index = store.index(indexName);
+                request = index.getAll(indexValue);
+            } else {
+                request = store.getAll();
+            }
+            
+            request.onerror = (event) => {
+                console.error(`Erro ao obter todos os dados de ${storeName}:`, event.target.error);
+                reject(event.target.error);
+            };
+            
+            request.onsuccess = (event) => {
+                resolve(event.target.result);
+            };
+        });
+    }
+
+    async function deleteData(storeName, id) {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const request = store.delete(id);
+            
+            request.onerror = (event) => {
+                console.error(`Erro ao excluir dados de ${storeName}:`, event.target.error);
+                reject(event.target.error);
+            };
+            
+            request.onsuccess = (event) => {
+                resolve(true);
+            };
+        });
+    }
+
+    async function getNewId(storeName) {
+        const allData = await getAllData(storeName);
+        return allData.length > 0 ? Math.max(...allData.map(item => item.id)) + 1 : 1;
+    }
+
+    // Perfis
+    let currentProfileId = 1;
+    
+    async function getCurrentProfileId() {
+        const profiles = await getAllData('profiles');
+        if (profiles.length === 0) {
+            // Criar perfil padrão
+            const defaultProfile = {
+                id: 1,
+                name: "Perfil Principal",
+                currentProfileId: 1
+            };
+            await saveData('profiles', defaultProfile);
+            return 1;
+        }
+        
+        const currentProfile = profiles.find(p => p.currentProfileId === p.id) || profiles[0];
+        currentProfileId = currentProfile.id;
+        return currentProfileId;
+    }
+    
+    async function switchProfile(profileId) {
+        currentProfileId = profileId;
+        
+        // Atualizar o perfil atual no objeto profile
+        const profiles = await getAllData('profiles');
+        for (const profile of profiles) {
+            profile.currentProfileId = (profile.id === profileId) ? profileId : null;
+            await saveData('profiles', profile);
+        }
+        
         renderAll();
+        renderProfileManagementList();
+        updateMainHeaderTitle();
+        updateFixedBackButton();
+    }
+
+    async function getProfileData() {
+        const profileId = await getCurrentProfileId();
+        
+        const disciplinas = await getAllData('disciplinas', 'profileId', profileId);
+        const horarios = await getAllData('horarios', 'profileId', profileId);
+        const trabalhos = await getAllData('trabalhos', 'profileId', profileId);
+        const provas = await getAllData('provas', 'profileId', profileId);
+        const eventos = await getAllData('eventos', 'profileId', profileId);
+        const financeiro = await getAllData('financeiro', 'profileId', profileId);
+        const biblioteca = await getAllData('biblioteca', 'profileId', profileId);
+        const filmes = await getAllData('filmes', 'profileId', profileId);
+        const notas = await getAllData('notas', 'profileId', profileId);
+        const links = await getAllData('links', 'profileId', profileId);
+        
+        return {
+            disciplinas: disciplinas || [],
+            horarios: horarios || [],
+            trabalhos: trabalhos || [],
+            provas: provas || [],
+            eventos: eventos || [],
+            financeiro: financeiro || [],
+            biblioteca: biblioteca || [],
+            filmes: filmes || [],
+            notas: notas || [],
+            links: links || []
+        };
+    }
+
+    // Inicialização
+    async function init() {
+        await openDatabase();
+        
+        // Verificar se há dados iniciais
+        const profileId = await getCurrentProfileId();
+        const disciplinas = await getAllData('disciplinas', 'profileId', profileId);
+        
+        if (disciplinas.length === 0) {
+            // Criar dados iniciais
+            await createInitialData();
+        }
+        
+        generateQuickLinks();
+        await renderAll();
         updateMainHeaderTitle();
         
         setupEventListeners();
         setupFooterNavigation();
-    }
-
-    function migrateOldData() {
-        const oldDB_KEYS = ['lexAcademicaDB', 'lexAcademicaDB_v2', 'academicoProDB', 'academicoProDB_v3'];
-        
-        for (const key of oldDB_KEYS) {
-            const oldData = localStorage.getItem(key);
-            if (oldData) {
-                try {
-                    const parsedOldData = JSON.parse(oldData);
-                    if (parsedOldData.disciplinas || parsedOldData.profiles) {
-                        let migratedProfile;
-                        
-                        if (parsedOldData.profiles) {
-                            // Já está no formato de perfis
-                            db = parsedOldData;
-                            saveDB();
-                        } else {
-                            // Formato antigo - criar perfil
-                            migratedProfile = {
-                                id: 1,
-                                name: "Perfil Principal (Migrado)",
-                                data: {
-                                    disciplinas: parsedOldData.disciplinas || [],
-                                    horarios: parsedOldData.horarios || [],
-                                    trabalhos: parsedOldData.trabalhos || [],
-                                    provas: parsedOldData.provas || [],
-                                    eventos: parsedOldData.eventos || [],
-                                    financeiro: parsedOldData.financeiro || [],
-                                    biblioteca: parsedOldData.biblioteca || [],
-                                    filmes: parsedOldData.filmes || [],
-                                    notas: parsedOldData.notas || [],
-                                    links: parsedOldData.links || []
-                                }
-                            };
-                            db.profiles.push(migratedProfile);
-                            db.currentProfileId = 1;
-                            saveDB();
-                        }
-                        
-                        localStorage.removeItem(key);
-                        console.log("Dados migrados de", key);
-                        break;
-                    }
-                } catch (e) { 
-                    console.error("Erro ao migrar dados de", key, e); 
-                }
-            }
-        }
-    }
-
-    function saveDB() {
-        localStorage.setItem(DB_KEY, JSON.stringify(db));
+        setupDrawingCanvas();
     }
     
-    function renderAll() {
-        const profileData = getCurrentProfileData();
-        if (!profileData) {
-            document.querySelector('.app-container').innerHTML = `
-                <div class="d-flex flex-column align-items-center justify-content-center" style="height: 80vh;">
-                    <h2>Bem-vindo ao Acadêmico Pro!</h2>
-                    <p class="lead text-muted">Crie seu primeiro perfil para começar a organizar sua vida acadêmica.</p>
-                    <button class="btn btn-primary btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#profileManagementModal">
-                        <i class="fas fa-plus"></i> Criar Perfil
-                    </button>
-                </div>
-            `;
-            return;
-        }
-        renderProximoEventoCard();
-        renderDashboard();
-        renderDisciplinas();
-        renderHorarios();
-        renderTrabalhos();
-        renderProvas();
-        renderAgenda();
-        renderBiblioteca();
-        renderFilmes();
-        renderNotas();
-        renderLinks();
-        renderFinanceiro();
-        renderRelatorios();
-        populateDisciplinaSelects();
+    async function createInitialData() {
+        const profileId = await getCurrentProfileId();
+        
+        const initialDisciplinas = [
+            { id: 1, profileId, nome: "Direito Civil", professor: "Prof. Dr. Carlos Albuquerque", frequencia: 85 },
+            { id: 2, profileId, nome: "Direito Constitucional", professor: "Prof. Dra. Maria Santos", frequencia: 92 },
+            { id: 3, profileId, nome: "Direito Penal", professor: "Prof. Dr. Roberto Ferreira", frequencia: 88 }
+        ];
+        
+        const initialHorarios = [
+            { id: 1, profileId, disciplinaId: 1, diaSemana: 1, inicio: "08:00", fim: "10:00", local: "Sala 101" },
+            { id: 2, profileId, disciplinaId: 2, diaSemana: 3, inicio: "10:00", fim: "12:00", local: "Sala 205" }
+        ];
+        
+        const initialTrabalhos = [
+            { id: 1, profileId, disciplinaId: 1, titulo: "Estudo de Caso - Contratos", entrega: "2025-09-25", status: "Pendente", prioridade: "high", nota: null },
+            { id: 2, profileId, disciplinaId: 2, titulo: "Análise Constitucional", entrega: "2025-10-10", status: "Entregue", prioridade: "medium", nota: 8.5 }
+        ];
+        
+        const initialProvas = [
+            { id: 1, profileId, disciplinaId: 3, conteudo: "Teoria Geral do Crime", data: "2025-10-15", hora: "14:00", status: "Agendada", nota: null },
+            { id: 2, profileId, disciplinaId: 1, conteudo: "Contratos Civis", data: "2025-09-30", hora: "10:00", status: "Realizada", nota: 7.8 }
+        ];
+        
+        const initialEventos = [
+            { id: 1, profileId, title: "Seminário Internacional", type: 'other', date: "2025-09-30", time: "09:00", description: "Auditório Central" },
+            { id: 2, profileId, title: "Reunião de Grupo", type: 'class', date: "2025-10-05", time: "15:00", description: "Sala de Estudos" }
+        ];
+        
+        const initialFinanceiro = [
+            { id: 1, profileId, tipo: "receita", descricao: "Bolsa Auxílio", valor: 500.00, categoria: "Educação", data: new Date().toISOString().split('T')[0], status: "pago", mesAno: `${new Date().getMonth()+1}-${new Date().getFullYear()}` },
+            { id: 2, profileId, tipo: "despesa", descricao: "Livro Direito Civil", valor: 89.90, categoria: "Educação", data: new Date().toISOString().split('T')[0], status: "pendente", mesAno: `${new Date().getMonth()+1}-${new Date().getFullYear()}` }
+        ];
+        
+        const initialBiblioteca = [
+            { id: 1, profileId, titulo: "Direito Civil - Parte Geral", autor: "Carlos Roberto Gonçalves", assunto: "Direito Civil", editora: "Saraiva", ano: 2023, observacoes: "Livro básico para a disciplina" }
+        ];
+        
+        const initialFilmes = [
+            { id: 1, profileId, titulo: "Introdução ao Direito Constitucional", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", tipo: "video-aula", anotacao: { tempoAtual: 15, texto: "Conceitos básicos revisados", assistido: false } }
+        ];
+        
+        const initialNotas = [
+            { id: 1, profileId, titulo: "Minhas primeiras anotações", conteudo: "Aqui você pode criar todas as suas anotações importantes para o semestre.\n\nDica: Clique em uma nota para visualizá-la completa ou use os botões para editar/excluir.", dataCriacao: new Date().toISOString().split('T')[0] },
+            { id: 2, profileId, titulo: "Lista de Tarefas", conteudo: "1. Revisar matéria de Direito Civil\n2. Preparar apresentação do grupo\n3. Estudar para prova de Penal", dataCriacao: new Date().toISOString().split('T')[0] }
+        ];
+        
+        const initialLinks = [
+            { id: 1, profileId, titulo: "Biblioteca Virtual", url: "https://www.example.com/biblioteca", categoria: "Recursos", descricao: "Acesso a livros e artigos" }
+        ];
+        
+        // Salvar todos os dados iniciais
+        for (const item of initialDisciplinas) await saveData('disciplinas', item);
+        for (const item of initialHorarios) await saveData('horarios', item);
+        for (const item of initialTrabalhos) await saveData('trabalhos', item);
+        for (const item of initialProvas) await saveData('provas', item);
+        for (const item of initialEventos) await saveData('eventos', item);
+        for (const item of initialFinanceiro) await saveData('financeiro', item);
+        for (const item of initialBiblioteca) await saveData('biblioteca', item);
+        for (const item of initialFilmes) await saveData('filmes', item);
+        for (const item of initialNotas) await saveData('notas', item);
+        for (const item of initialLinks) await saveData('links', item);
+    }
+    
+    async function renderAll() {
+        await renderProximoEventoCard();
+        await renderDashboard();
+        await renderDisciplinas();
+        await renderHorarios();
+        await renderTrabalhos();
+        await renderProvas();
+        await renderAgenda();
+        await renderBiblioteca();
+        await renderFilmes();
+        await renderNotas();
+        await renderLinks();
+        await renderFinanceiro();
+        await renderRelatorios();
+        await populateDisciplinaSelects();
         
         updateFixedBackButton();
         updateFooterNavigation();
     }
 
-    function getDisciplinaById(id) {
-        const profileData = getCurrentProfileData();
-        if (!profileData) return null;
+    async function getDisciplinaById(id) {
+        const profileData = await getProfileData();
         return profileData.disciplinas.find(d => d.id === parseInt(id));
-    }
-
-    function getNewId(dbKey) {
-        const profileData = getCurrentProfileData();
-        if (!profileData || !profileData[dbKey]) return 1;
-        const items = profileData[dbKey];
-        return items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
     }
 
     const disciplinaColors = {};
@@ -2235,9 +2549,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function renderProximoEventoCard() {
-        const profileData = getCurrentProfileData();
-        if (!profileData) return;
+    async function renderProximoEventoCard() {
+        const profileData = await getProfileData();
         const container = document.getElementById('next-event-container');
         if (nextEventInterval) clearInterval(nextEventInterval);
 
@@ -2332,7 +2645,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let disciplinaInfo = '';
         if (proximoEventoGlobal.disciplinaId) {
-            const disciplina = getDisciplinaById(proximoEventoGlobal.disciplinaId);
+            const disciplina = await getDisciplinaById(proximoEventoGlobal.disciplinaId);
             if (disciplina) {
                 disciplinaInfo = `<p class="mb-2"><i class="fas fa-book me-2"></i><strong>Disciplina:</strong> ${disciplina.nome}</p>`;
             }
@@ -2368,9 +2681,8 @@ document.addEventListener('DOMContentLoaded', function() {
         nextEventInterval = setInterval(updateCountdown, 1000);
     }
 
-    function renderDashboard() {
-        const profileData = getCurrentProfileData();
-        if (!profileData) return;
+    async function renderDashboard() {
+        const profileData = await getProfileData();
         
         const trabalhosPendentes = profileData.trabalhos.filter(t => t.status === 'Pendente').length;
         const provasAgendadas = profileData.provas.filter(p => p.status === 'Agendada').length;
@@ -2456,8 +2768,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function renderDisciplinas() {
-        const profileData = getCurrentProfileData();
+    async function renderDisciplinas() {
+        const profileData = await getProfileData();
         const container = document.getElementById('disciplinas-lista');
         container.innerHTML = '';
         if (profileData.disciplinas.length === 0) {
@@ -2511,8 +2823,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function renderHorarios() {
-        const profileData = getCurrentProfileData();
+    async function renderHorarios() {
+        const profileData = await getProfileData();
         const container = document.getElementById('schedule-grid-container');
         container.innerHTML = '';
         
@@ -2530,7 +2842,7 @@ document.addEventListener('DOMContentLoaded', function() {
             container.innerHTML += `<div class="empty-state" style="grid-column: 2 / 8; grid-row: 2 / 6;">Nenhuma aula cadastrada.</div>`;
         } else {
             profileData.horarios.forEach(aula => {
-                const disciplina = getDisciplinaById(aula.disciplinaId);
+                const disciplina = profileData.disciplinas.find(d => d.id === aula.disciplinaId);
                 if (!disciplina) return;
                 
                 const inicioParts = aula.inicio.split(':');
@@ -2558,8 +2870,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    function renderTrabalhos() {
-        const profileData = getCurrentProfileData();
+    async function renderTrabalhos() {
+        const profileData = await getProfileData();
         const tbody = document.getElementById('trabalhos-tabela');
         tbody.innerHTML = '';
         if (profileData.trabalhos.length === 0) {
@@ -2567,7 +2879,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         profileData.trabalhos.sort((a, b) => new Date(a.entrega) - new Date(b.entrega)).forEach(t => {
-            const disciplina = getDisciplinaById(t.disciplinaId);
+            const disciplina = profileData.disciplinas.find(d => d.id === t.disciplinaId);
             const statusClass = t.status === 'Pendente' ? 'bg-warning text-dark' : 'bg-success';
             const priorityClass = t.prioridade === 'high' ? 'priority-high' : t.prioridade === 'medium' ? 'priority-medium' : 'priority-low';
             const priorityText = t.prioridade === 'high' ? 'Alta' : t.prioridade === 'medium' ? 'Média' : 'Baixa';
@@ -2588,8 +2900,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function renderProvas() {
-        const profileData = getCurrentProfileData();
+    async function renderProvas() {
+        const profileData = await getProfileData();
         const tbody = document.getElementById('provas-tabela');
         tbody.innerHTML = '';
         if (profileData.provas.length === 0) {
@@ -2597,7 +2909,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         profileData.provas.sort((a,b) => new Date(a.data) - new Date(b.data)).forEach(p => {
-            const disciplina = getDisciplinaById(p.disciplinaId);
+            const disciplina = profileData.disciplinas.find(d => d.id === p.disciplinaId);
             tbody.innerHTML += `
                 <tr>
                     <td>${disciplina ? disciplina.nome : 'N/A'}</td>
@@ -2615,7 +2927,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    function renderAgenda() {
+    async function renderAgenda() {
         const month = currentCalendarDate.getMonth();
         const year = currentCalendarDate.getFullYear();
         document.getElementById('calendar-month-year').textContent = `${["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][month]} ${year}`;
@@ -2639,7 +2951,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         for (let day = 1; day <= daysInMonth; day++) {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const dayEvents = getEventsForDate(dateStr);
+            const dayEvents = await getEventsForDate(dateStr);
             let eventIndicator = '';
             if (dayEvents.length > 0) {
                 eventIndicator = '<div class="event-indicator">';
@@ -2663,13 +2975,13 @@ document.addEventListener('DOMContentLoaded', function() {
         renderEventsForDay(todayStr);
     }
 
-    function renderEventsForDay(dateStr) {
+    async function renderEventsForDay(dateStr) {
         document.querySelectorAll('.calendar-day.active').forEach(el => el.classList.remove('active'));
         const selectedDay = document.querySelector(`.calendar-day[data-date="${dateStr}"]`);
         if(selectedDay) selectedDay.classList.add('active');
 
         const container = document.getElementById('agenda-eventos-dia');
-        const events = getEventsForDate(dateStr);
+        const events = await getEventsForDate(dateStr);
         const formattedDate = new Date(dateStr + 'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
         
         container.innerHTML = `<h5 class="card-title mb-3">${formattedDate}</h5>`;
@@ -2682,7 +2994,7 @@ document.addEventListener('DOMContentLoaded', function() {
         events.forEach(evento => {
             let disciplinaNome = '';
             if (evento.disciplinaId) {
-                const disciplina = getDisciplinaById(evento.disciplinaId);
+                const disciplina = profileData.disciplinas.find(d => d.id === evento.disciplinaId);
                 disciplinaNome = disciplina ? `<p class="mb-0 small text-muted">${disciplina.nome}</p>` : '';
             }
             
@@ -2710,8 +3022,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function renderBiblioteca() {
-        const profileData = getCurrentProfileData();
+    async function renderBiblioteca() {
+        const profileData = await getProfileData();
         const container = document.getElementById('biblioteca-lista');
         container.innerHTML = '';
         if (!profileData.biblioteca || profileData.biblioteca.length === 0) {
@@ -2721,13 +3033,45 @@ document.addEventListener('DOMContentLoaded', function() {
         profileData.biblioteca.forEach(livro => {
             const card = `
                 <div class="col-md-6 col-lg-4">
-                  <div class="card card-dashboard">
-                    <div class="card-body text-center">
-                      <i class="fas fa-book-open fa-3x text-primary mb-3"></i>
-                      <h5 class="card-title">${livro.titulo}</h5>
-                      <div class="mt-3">
-                         <button class="btn btn-sm btn-outline-primary view-livro" data-id="${livro.id}"><i class="fas fa-eye"></i> Visualizar</button>
-                         <button class="btn btn-sm btn-outline-danger delete-livro" data-id="${livro.id}"><i class="fas fa-trash"></i> Excluir</button>
+                  <div class="card livro-card card-dashboard">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title">${livro.titulo}</h5>
+                        <div class="dropdown">
+                          <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button>
+                          <ul class="dropdown-menu">
+                            <li><a class="dropdown-item edit-livro" href="#" data-id="${livro.id}">Editar</a></li>
+                            <li><a class="dropdown-item delete-livro" href="#" data-id="${livro.id}">Excluir</a></li>
+                          </ul>
+                        </div>
+                      </div>
+                      <div class="livro-info">
+                        <div class="livro-info-item">
+                          <i class="fas fa-user"></i>
+                          <span><strong>Autor:</strong> ${livro.autor}</span>
+                        </div>
+                        <div class="livro-info-item">
+                          <i class="fas fa-tag"></i>
+                          <span><strong>Assunto:</strong> ${livro.assunto}</span>
+                        </div>
+                        ${livro.editora ? `
+                        <div class="livro-info-item">
+                          <i class="fas fa-building"></i>
+                          <span><strong>Editora:</strong> ${livro.editora}</span>
+                        </div>
+                        ` : ''}
+                        ${livro.ano ? `
+                        <div class="livro-info-item">
+                          <i class="fas fa-calendar"></i>
+                          <span><strong>Ano:</strong> ${livro.ano}</span>
+                        </div>
+                        ` : ''}
+                        ${livro.observacoes ? `
+                        <div class="livro-info-item">
+                          <i class="fas fa-sticky-note"></i>
+                          <span><strong>Observações:</strong> ${livro.observacoes}</span>
+                        </div>
+                        ` : ''}
                       </div>
                     </div>
                   </div>
@@ -2736,8 +3080,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function renderFilmes() {
-        const profileData = getCurrentProfileData();
+    async function renderFilmes() {
+        const profileData = await getProfileData();
         const container = document.getElementById('filmes-lista');
         container.innerHTML = '';
         if (!profileData.filmes || profileData.filmes.length === 0) {
@@ -2791,8 +3135,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function renderNotas() {
-        const profileData = getCurrentProfileData();
+    async function renderNotas() {
+        const profileData = await getProfileData();
         const container = document.getElementById('notas-lista');
         container.innerHTML = '';
         if (!profileData.notas || profileData.notas.length === 0) {
@@ -2827,8 +3171,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function renderLinks() {
-        const profileData = getCurrentProfileData();
+    async function renderLinks() {
+        const profileData = await getProfileData();
         const container = document.getElementById('links-lista');
         container.innerHTML = '';
         if (!profileData.links || profileData.links.length === 0) {
@@ -2863,165 +3207,173 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function renderFinanceiro() {
-        const profileData = getCurrentProfileData();
-        const tbody = document.getElementById('financeiro-tabela');
-        tbody.innerHTML = '';
-        let totalReceitas = 0, totalDespesas = 0;
+    async function renderFinanceiro() {
+        // Atualizar exibição do mês atual
+        const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        document.getElementById('financeiro-mes-atual').textContent = `${meses[currentFinanceMonth]} ${currentFinanceYear}`;
         
-        const filtroStatus = document.getElementById('financeiro-filtro-status').value;
-        const filtroTipo = document.getElementById('financeiro-filtro-tipo').value;
-        const filtroDataInicio = document.getElementById('financeiro-filtro-data-inicio').value;
-        const filtroDataFim = document.getElementById('financeiro-filtro-data-fim').value;
-        
-        let transacoes = [...profileData.financeiro];
-        
-        if (filtroStatus !== 'todos') {
-            transacoes = transacoes.filter(t => t.status === filtroStatus);
-        }
-        
-        if (filtroTipo !== 'todos') {
-            transacoes = transacoes.filter(t => t.tipo === filtroTipo);
-        }
-        
-        if (filtroDataInicio) {
-            transacoes = transacoes.filter(t => {
-                const dataTransacao = new Date(t.data + 'T00:00:00');
-                const dataInicio = new Date(filtroDataInicio + 'T00:00:00');
-                return dataTransacao >= dataInicio;
-            });
-        }
-        
-        if (filtroDataFim) {
-            transacoes = transacoes.filter(t => {
-                const dataTransacao = new Date(t.data + 'T00:00:00');
-                const dataFim = new Date(filtroDataFim + 'T23:59:59');
-                return dataTransacao <= dataFim;
-            });
-        }
-        
-        transacoes.sort((a,b) => new Date(b.data) - new Date(a.data));
-
-        if (transacoes.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center">Nenhuma transação encontrada com os filtros aplicados.</td></tr>`;
-        } else {
-            transacoes.forEach(t => {
-                if (t.tipo === 'receita') totalReceitas += t.valor; else totalDespesas += t.valor;
-                
-                let statusBadgeClass = '';
-                let statusText = '';
-                if (t.tipo === 'receita') {
-                    statusBadgeClass = 'bg-success';
-                    statusText = 'Recebido';
-                } else {
-                    statusBadgeClass = t.status === 'pago' ? 'bg-success' : 'bg-warning text-dark';
-                    statusText = t.status === 'pago' ? 'Pago' : 'Pendente';
-                }
-                
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${new Date(t.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                        <td>${t.descricao} ${t.recurringId ? '<i class="fas fa-sync-alt fa-xs text-muted ms-1"></i>' : ''}</td>
-                        <td><span class="badge bg-secondary">${t.categoria || 'N/A'}</span></td>
-                        <td><span class="badge ${t.tipo === 'receita' ? 'bg-success' : 'bg-danger'}">${t.tipo === 'receita' ? 'Receita' : 'Despesa'}</span></td>
-                        <td class="text-end fw-bold text-${t.tipo === 'receita' ? 'success' : 'danger'}">${t.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                        <td><span class="badge ${statusBadgeClass}">${statusText}</span></td>
-                        <td>
-                           <button class="btn btn-sm btn-outline-primary edit-financeiro" data-id="${t.id}"><i class="fas fa-edit"></i></button>
-                           ${t.tipo === 'despesa' && t.status === 'pendente' ? 
-                           `<button class="btn btn-sm btn-outline-success baixa-financeiro" data-id="${t.id}"><i class="fas fa-check"></i></button>` : ''}
-                           <button class="btn btn-sm btn-outline-danger delete-financeiro" data-id="${t.id}"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-        
-        const saldo = totalReceitas - totalDespesas;
-        document.getElementById('financeiro-total-receitas').textContent = totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        document.getElementById('financeiro-total-despesas').textContent = totalDespesas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        const saldoEl = document.getElementById('financeiro-saldo-atual');
-        saldoEl.textContent = saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        saldoEl.className = saldo >= 0 ? 'text-success' : 'text-danger';
-        
-        // Atualizar gráfico
-        renderFinanceiroGrafico(profileData);
-        
-        // Atualizar categorias
-        renderCategoriasFinanceiro(profileData);
-    }
-
-    function renderFinanceiroGrafico(profileData) {
-        const hoje = new Date();
-        const mesAtual = hoje.getMonth();
-        const anoAtual = hoje.getFullYear();
-        
-        const receitasMes = profileData.financeiro
-            .filter(t => t.tipo === 'receita' && 
-                new Date(t.data).getMonth() === mesAtual && 
-                new Date(t.data).getFullYear() === anoAtual)
-            .reduce((sum, t) => sum + t.valor, 0);
-            
-        const despesasMes = profileData.financeiro
-            .filter(t => t.tipo === 'despesa' && 
-                new Date(t.data).getMonth() === mesAtual && 
-                new Date(t.data).getFullYear() === anoAtual)
-            .reduce((sum, t) => sum + t.valor, 0);
-        
-        const maxValor = Math.max(receitasMes, despesasMes, 1);
-        const alturaReceita = (receitasMes / maxValor) * 180;
-        const alturaDespesa = (despesasMes / maxValor) * 180;
-        
-        const barraReceita = document.getElementById('barra-receita-mes');
-        const barraDespesa = document.getElementById('barra-despesa-mes');
-        
-        if (barraReceita) barraReceita.style.height = `${alturaReceita}px`;
-        if (barraDespesa) barraDespesa.style.height = `${alturaDespesa}px`;
-    }
-
-    function renderCategoriasFinanceiro(profileData) {
-        const container = document.getElementById('financeiro-categorias');
+        const profileData = await getProfileData();
+        const container = document.getElementById('financeiro-transacoes-mes');
         container.innerHTML = '';
         
-        const categorias = {};
+        // Filtrar transações do mês atual
+        const mesAnoAtual = `${currentFinanceMonth + 1}-${currentFinanceYear}`;
+        const transacoesMes = profileData.financeiro.filter(t => t.mesAno === mesAnoAtual);
         
-        profileData.financeiro.forEach(transacao => {
-            const categoria = transacao.categoria || 'Sem categoria';
-            if (!categorias[categoria]) {
-                categorias[categoria] = { receita: 0, despesa: 0 };
-            }
-            
-            if (transacao.tipo === 'receita') {
-                categorias[categoria].receita += transacao.valor;
+        // Calcular totais
+        let totalReceitas = 0;
+        let totalDespesas = 0;
+        
+        transacoesMes.forEach(t => {
+            if (t.tipo === 'receita') {
+                totalReceitas += t.valor;
             } else {
-                categorias[categoria].despesa += transacao.valor;
+                totalDespesas += t.valor;
             }
         });
         
-        const categoriasArray = Object.keys(categorias).map(categoria => ({
-            nome: categoria,
-            receita: categorias[categoria].receita,
-            despesa: categorias[categoria].despesa,
-            total: categorias[categoria].receita + categorias[categoria].despesa
-        }));
+        const saldoMes = totalReceitas - totalDespesas;
         
-        categoriasArray.sort((a, b) => b.total - a.total);
+        // Atualizar totais
+        document.getElementById('financeiro-total-receitas-mes').textContent = totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        document.getElementById('financeiro-total-despesas-mes').textContent = totalDespesas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const saldoEl = document.getElementById('financeiro-saldo-mes');
+        saldoEl.textContent = saldoMes.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        saldoEl.className = saldoMes >= 0 ? 'text-success' : 'text-danger';
         
-        categoriasArray.slice(0, 5).forEach(cat => {
+        // Agrupar transações por dia
+        const transacoesPorDia = {};
+        transacoesMes.forEach(t => {
+            const dia = new Date(t.data).getDate();
+            if (!transacoesPorDia[dia]) {
+                transacoesPorDia[dia] = [];
+            }
+            transacoesPorDia[dia].push(t);
+        });
+        
+        // Ordenar dias
+        const diasOrdenados = Object.keys(transacoesPorDia).sort((a, b) => b - a);
+        
+        if (diasOrdenados.length === 0) {
+            container.innerHTML = `<div class="empty-state"><p>Nenhuma transação neste mês.</p></div>`;
+        } else {
+            diasOrdenados.forEach(dia => {
+                // Calcular total do dia
+                let totalDiaReceitas = 0;
+                let totalDiaDespesas = 0;
+                
+                transacoesPorDia[dia].forEach(t => {
+                    if (t.tipo === 'receita') {
+                        totalDiaReceitas += t.valor;
+                    } else {
+                        totalDiaDespesas += t.valor;
+                    }
+                });
+                
+                container.innerHTML += `
+                    <div class="financeiro-dia mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>Dia ${dia}</strong>
+                            <div>
+                                ${totalDiaReceitas > 0 ? `<span class="financeiro-dia-valor receita">+R$ ${totalDiaReceitas.toFixed(2)}</span>` : ''}
+                                ${totalDiaDespesas > 0 ? `<span class="financeiro-dia-valor despesa ms-2">-R$ ${totalDiaDespesas.toFixed(2)}</span>` : ''}
+                            </div>
+                        </div>
+                `;
+                
+                // Adicionar transações do dia
+                transacoesPorDia[dia].sort((a, b) => new Date(b.data) - new Date(a.data)).forEach(t => {
+                    let statusBadge = '';
+                    if (t.tipo === 'despesa') {
+                        statusBadge = `<span class="badge ${t.status === 'pago' ? 'bg-success' : 'bg-warning text-dark'} ms-2">${t.status === 'pago' ? 'Pago' : 'Pendente'}</span>`;
+                    }
+                    
+                    container.innerHTML += `
+                        <div class="financeiro-transacao-item ${t.tipo}" data-id="${t.id}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${t.descricao}</strong>
+                                    <div class="small text-muted">${t.categoria || 'Sem categoria'}</div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <span class="fw-bold ${t.tipo === 'receita' ? 'text-success' : 'text-danger'}">
+                                        ${t.tipo === 'receita' ? '+' : '-'}R$ ${t.valor.toFixed(2)}
+                                    </span>
+                                    ${statusBadge}
+                                    <button class="btn btn-sm btn-outline-primary ms-2 edit-financeiro" data-id="${t.id}"><i class="fas fa-edit"></i></button>
+                                    ${t.tipo === 'despesa' && t.status === 'pendente' ? 
+                                    `<button class="btn btn-sm btn-outline-success ms-1 baixa-financeiro" data-id="${t.id}"><i class="fas fa-check"></i></button>` : ''}
+                                    <button class="btn btn-sm btn-outline-danger ms-1 delete-financeiro" data-id="${t.id}"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML += `</div>`;
+            });
+        }
+        
+        // Renderizar resumo anual
+        await renderResumoAnual();
+    }
+    
+    async function renderResumoAnual() {
+        const profileData = await getProfileData();
+        const container = document.getElementById('financeiro-resumo-anual');
+        container.innerHTML = '';
+        
+        // Agrupar por mês
+        const transacoesPorMes = {};
+        profileData.financeiro.forEach(t => {
+            if (!transacoesPorMes[t.mesAno]) {
+                transacoesPorMes[t.mesAno] = { receitas: 0, despesas: 0 };
+            }
+            
+            if (t.tipo === 'receita') {
+                transacoesPorMes[t.mesAno].receitas += t.valor;
+            } else {
+                transacoesPorMes[t.mesAno].despesas += t.valor;
+            }
+        });
+        
+        // Ordenar meses (mais recente primeiro)
+        const mesesOrdenados = Object.keys(transacoesPorMes).sort((a, b) => {
+            const [mesA, anoA] = a.split('-').map(Number);
+            const [mesB, anoB] = b.split('-').map(Number);
+            if (anoA !== anoB) return anoB - anoA;
+            return mesB - mesA;
+        }).slice(0, 6); // Últimos 6 meses
+        
+        const mesesNomes = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        
+        mesesOrdenados.forEach(mesAno => {
+            const [mes, ano] = mesAno.split('-').map(Number);
+            const dados = transacoesPorMes[mesAno];
+            const saldo = dados.receitas - dados.despesas;
+            const isMesAtual = mes === currentFinanceMonth + 1 && ano === currentFinanceYear;
+            
             container.innerHTML += `
-                <div class="categoria-item">
-                    <span>${cat.nome}</span>
-                    <div>
-                        ${cat.receita > 0 ? `<span class="badge bg-success me-1">R$ ${cat.receita.toFixed(2)}</span>` : ''}
-                        ${cat.despesa > 0 ? `<span class="badge bg-danger">R$ ${cat.despesa.toFixed(2)}</span>` : ''}
+                <div class="col-md-4 col-lg-2 mb-3">
+                    <div class="card ${isMesAtual ? 'border-primary' : ''}">
+                        <div class="card-body text-center p-2">
+                            <h6 class="card-title mb-1">${mesesNomes[mes-1]}/${ano.toString().slice(2)}</h6>
+                            <div class="small">
+                                <div class="text-success">+R$ ${dados.receitas.toFixed(0)}</div>
+                                <div class="text-danger">-R$ ${dados.despesas.toFixed(0)}</div>
+                                <div class="${saldo >= 0 ? 'text-success' : 'text-danger'} fw-bold">
+                                    R$ ${saldo.toFixed(0)}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
         });
     }
 
-    function renderRelatorios() {
-        const profileData = getCurrentProfileData();
+    async function renderRelatorios() {
+        const profileData = await getProfileData();
         const relatorioDesempenho = document.getElementById('relatorio-desempenho');
         relatorioDesempenho.innerHTML = '';
         profileData.disciplinas.forEach(d => {
@@ -3046,9 +3398,9 @@ document.addEventListener('DOMContentLoaded', function() {
             relatorioProvas.innerHTML = `<div class="empty-state"><p>Nenhuma prova realizada.</p></div>`;
         } else {
             provasRealizadas.forEach(p => {
-                 const disciplina = getDisciplinaById(p.disciplinaId);
+                 const disciplina = profileData.disciplinas.find(d => d.id === p.disciplinaId);
                  const nota = p.nota !== null ? p.nota.toFixed(1) : "N/A";
-                 relatorioProvas.innerHTML += `<div class="report-item"><span>${disciplina.nome} - ${p.conteudo}</span><span class="badge ${nota === "N/A" ? 'bg-secondary' : nota >= 7 ? 'bg-success' : 'bg-danger'}">${nota}</span></div>`;
+                 relatorioProvas.innerHTML += `<div class="report-item"><span>${disciplina ? disciplina.nome : 'N/A'} - ${p.conteudo}</span><span class="badge ${nota === "N/A" ? 'bg-secondary' : nota >= 7 ? 'bg-success' : 'bg-danger'}">${nota}</span></div>`;
             });
         }
         
@@ -3068,8 +3420,8 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
-    function getEventsForDate(dateStr) {
-        const profileData = getCurrentProfileData();
+    async function getEventsForDate(dateStr) {
+        const profileData = await getProfileData();
         return [
             ...profileData.trabalhos.filter(t => t.entrega === dateStr).map(t => ({...t, type: 'assignment', date: t.entrega, title: t.titulo})),
             ...profileData.provas.filter(p => p.data === dateStr).map(p => ({...p, type: 'exam', date: p.data, title: p.conteudo})),
@@ -3099,9 +3451,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const footerFinanceiro = document.getElementById('footer-financeiro');
         
         footerPerfis.addEventListener('click', function() {
-            // Atualiza a lista de perfis no modal
             renderProfileManagementList();
-            // Abre o modal de gerenciamento de perfis
             const modal = new bootstrap.Modal(document.getElementById('profileManagementModal'));
             modal.show();
         });
@@ -3111,7 +3461,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         footerFinanceiro.addEventListener('click', function() {
-            // Vai para a tela de financeiro
             document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('active'));
             document.getElementById('financeiro').classList.add('active');
             updateMainHeaderTitle();
@@ -3126,25 +3475,232 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const activePanelId = activePanel.id;
         
-        // Remove a classe active de todos os botões do rodapé
         document.querySelectorAll('.footer-nav-btn').forEach(btn => {
             btn.classList.remove('active');
         });
         
-        // Adiciona a classe active no botão correspondente
         if (activePanelId === 'home-links') {
             document.getElementById('footer-inicio').classList.add('active');
         } else if (activePanelId === 'financeiro') {
             document.getElementById('footer-financeiro').classList.add('active');
         }
-        // O botão de perfis não fica ativo porque não é um painel de conteúdo
     }
 
+    function setupDrawingCanvas() {
+        canvas = document.getElementById('desenhoCanvas');
+        ctx = canvas.getContext('2d');
+        
+        // Configurar canvas
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        
+        // Configurações iniciais
+        ctx.lineWidth = currentBrushSize;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = currentColor;
+        
+        // Event listeners para desenho
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+        
+        // Suporte a toque
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+        
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            const mouseEvent = new MouseEvent('mouseup', {});
+            canvas.dispatchEvent(mouseEvent);
+        });
+        
+        // Ferramentas
+        document.getElementById('pencilTool').addEventListener('click', () => {
+            setActiveTool('pencil');
+            currentTool = 'pencil';
+            ctx.globalCompositeOperation = 'source-over';
+        });
+        
+        document.getElementById('eraserTool').addEventListener('click', () => {
+            setActiveTool('eraser');
+            currentTool = 'eraser';
+            ctx.globalCompositeOperation = 'destination-out';
+        });
+        
+        document.getElementById('clearCanvas').addEventListener('click', clearCanvas);
+        document.getElementById('saveDrawing').addEventListener('click', saveDrawing);
+        document.getElementById('loadDrawing').addEventListener('click', loadDrawing);
+        
+        // Seletor de cores
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+                currentColor = this.dataset.color;
+                if (currentTool === 'pencil') {
+                    ctx.strokeStyle = currentColor;
+                }
+            });
+        });
+        
+        // Tamanho do pincel
+        const brushSizeSlider = document.getElementById('brushSize');
+        const brushSizeValue = document.getElementById('brushSizeValue');
+        
+        brushSizeSlider.addEventListener('input', function() {
+            currentBrushSize = parseInt(this.value);
+            brushSizeValue.textContent = `${currentBrushSize}px`;
+            ctx.lineWidth = currentBrushSize;
+        });
+        
+        // Carregar desenho salvo
+        loadSavedDrawing();
+    }
+    
+    function setActiveTool(tool) {
+        document.querySelectorAll('.canvas-tool-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`${tool}Tool`).classList.add('active');
+    }
+    
+    function startDrawing(e) {
+        isDrawing = true;
+        [lastX, lastY] = [e.offsetX, e.offsetY];
+    }
+    
+    function draw(e) {
+        if (!isDrawing) return;
+        
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(e.offsetX, e.offsetY);
+        ctx.stroke();
+        
+        [lastX, lastY] = [e.offsetX, e.offsetY];
+    }
+    
+    function stopDrawing() {
+        isDrawing = false;
+    }
+    
+    function clearCanvas() {
+        if (confirm('Tem certeza que deseja limpar o desenho?')) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            saveDrawingToDB(); // Salvar canvas vazio
+        }
+    }
+    
+    async function saveDrawing() {
+        const profileId = await getCurrentProfileId();
+        const drawingData = canvas.toDataURL('image/png');
+        
+        const drawing = {
+            id: 1,
+            profileId: profileId,
+            data: drawingData,
+            dataCriacao: new Date().toISOString()
+        };
+        
+        await saveData('desenhos', drawing);
+        alert('Desenho salvo com sucesso!');
+    }
+    
+    async function loadDrawing() {
+        const profileId = await getCurrentProfileId();
+        const drawings = await getAllData('desenhos', 'profileId', profileId);
+        
+        if (drawings.length > 0) {
+            const drawing = drawings[0];
+            const img = new Image();
+            img.onload = function() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+            };
+            img.src = drawing.data;
+            alert('Desenho carregado com sucesso!');
+        } else {
+            alert('Nenhum desenho salvo encontrado.');
+        }
+    }
+    
+    async function loadSavedDrawing() {
+        const profileId = await getCurrentProfileId();
+        const drawings = await getAllData('desenhos', 'profileId', profileId);
+        
+        if (drawings.length > 0) {
+            const drawing = drawings[0];
+            const img = new Image();
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0);
+            };
+            img.src = drawing.data;
+        }
+    }
+    
+    async function saveDrawingToDB() {
+        const profileId = await getCurrentProfileId();
+        const drawingData = canvas.toDataURL('image/png');
+        
+        const drawing = {
+            id: 1,
+            profileId: profileId,
+            data: drawingData,
+            dataCriacao: new Date().toISOString()
+        };
+        
+        await saveData('desenhos', drawing);
+    }
+    
+    // Auto-save do desenho a cada 30 segundos
+    setInterval(async () => {
+        if (document.getElementById('desenho-content').classList.contains('active')) {
+            await saveDrawingToDB();
+        }
+    }, 30000);
+
     function setupEventListeners() {
-        // Adicionar event listener para o botão fixo de voltar para casa
         document.getElementById('fixed-back-home').addEventListener('click', goToHome);
         
-        document.body.addEventListener('click', function(e) {
+        // Navegação entre meses no financeiro
+        document.getElementById('prev-month-financeiro').addEventListener('click', () => {
+            if (currentFinanceMonth === 0) {
+                currentFinanceMonth = 11;
+                currentFinanceYear--;
+            } else {
+                currentFinanceMonth--;
+            }
+            renderFinanceiro();
+        });
+        
+        document.getElementById('next-month-financeiro').addEventListener('click', () => {
+            if (currentFinanceMonth === 11) {
+                currentFinanceMonth = 0;
+                currentFinanceYear++;
+            } else {
+                currentFinanceMonth++;
+            }
+            renderFinanceiro();
+        });
+        
+        document.body.addEventListener('click', async function(e) {
             const cardLink = e.target.closest('.card-link');
             if (cardLink) {
                 e.preventDefault();
@@ -3155,6 +3711,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateMainHeaderTitle();
                 updateFixedBackButton();
                 updateFooterNavigation();
+                
+                // Se for para o caderno, carregar desenho salvo
+                if (targetId === 'caderno') {
+                    setTimeout(loadSavedDrawing, 100);
+                }
             }
             
             const calendarDay = e.target.closest('.calendar-day:not(.empty)');
@@ -3192,7 +3753,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const notaCard = e.target.closest('.nota-card');
             if (notaCard && !e.target.closest('.nota-acoes')) {
                 const notaId = notaCard.dataset.id;
-                const profileData = getCurrentProfileData();
+                const profileData = await getProfileData();
                 const nota = profileData.notas.find(n => n.id == notaId);
                 if (nota) {
                     document.getElementById('notaModalLabel').textContent = 'Visualizar Nota';
@@ -3213,7 +3774,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (watchFilmeBtn) {
                 e.preventDefault();
                 const filmeId = watchFilmeBtn.dataset.id;
-                const profileData = getCurrentProfileData();
+                const profileData = await getProfileData();
                 const filme = profileData.filmes.find(f => f.id == filmeId);
                 if (filme) {
                     openVideoPlayer(filme);
@@ -3224,7 +3785,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (anotacaoFilmeBtn) {
                 e.preventDefault();
                 const filmeId = anotacaoFilmeBtn.dataset.id;
-                const profileData = getCurrentProfileData();
+                const profileData = await getProfileData();
                 const filme = profileData.filmes.find(f => f.id == filmeId);
                 if (filme) {
                     document.getElementById('anotacaoFilmeModalLabel').textContent = `Anotação - ${filme.titulo}`;
@@ -3244,31 +3805,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            const viewLivroBtn = e.target.closest('.view-livro');
-            if (viewLivroBtn) {
-                e.preventDefault();
-                const livroId = viewLivroBtn.dataset.id;
-                const profileData = getCurrentProfileData();
-                const livro = profileData.biblioteca.find(l => l.id == livroId);
-                if (livro) {
-                    openBookViewer(livro);
-                }
-            }
-            
             const baixaFinanceiroBtn = e.target.closest('.baixa-financeiro');
             if (baixaFinanceiroBtn) {
                 e.preventDefault();
                 const transacaoId = baixaFinanceiroBtn.dataset.id;
-                const profileData = getCurrentProfileData();
+                const profileData = await getProfileData();
                 const transacao = profileData.financeiro.find(t => t.id == transacaoId);
                 if (transacao && transacao.tipo === 'despesa' && transacao.status === 'pendente') {
                     if (confirm('Deseja marcar esta despesa como paga?')) {
                         transacao.status = 'pago';
-                        saveDB();
-                        renderFinanceiro();
-                        renderDashboard();
-                        renderProximoEventoCard();
-                        renderAgenda();
+                        const profileId = await getCurrentProfileId();
+                        transacao.profileId = profileId;
+                        await saveData('financeiro', transacao);
+                        await renderFinanceiro();
+                        await renderDashboard();
+                        await renderProximoEventoCard();
+                        await renderAgenda();
                     }
                 }
             }
@@ -3283,7 +3835,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            const target = e.target.closest('.edit-disciplina, .delete-disciplina, .edit-trabalho, .delete-trabalho, .edit-prova, .delete-prova, .schedule-class-item, .delete-horario, .edit-financeiro, .delete-financeiro, .delete-livro, .delete-filme, .edit-link, .delete-link, .edit-filme, .edit-nota, .delete-nota');
+            const target = e.target.closest('.edit-disciplina, .delete-disciplina, .edit-trabalho, .delete-trabalho, .edit-prova, .delete-prova, .schedule-class-item, .delete-horario, .edit-financeiro, .delete-financeiro, .delete-livro, .edit-livro, .delete-filme, .edit-link, .delete-link, .edit-filme, .edit-nota, .delete-nota');
             if (!target) return;
             const id = target.dataset.id;
 
@@ -3296,7 +3848,8 @@ document.addEventListener('DOMContentLoaded', function() {
             else if (target.matches('.schedule-class-item')) editHorario(id);
             else if (target.matches('.edit-financeiro')) handleEdit('financeiro', 'financeiro', id);
             else if (target.matches('.delete-financeiro')) handleDelete('financeiro', id, 'Tem certeza que deseja excluir esta transação?');
-            else if (target.matches('.delete-livro')) handleDelete('biblioteca', id, 'Tem certeza que deseja excluir este livro? O arquivo PDF associado será perdido.');
+            else if (target.matches('.delete-livro')) handleDelete('biblioteca', id, 'Tem certeza que deseja excluir este livro?');
+            else if (target.matches('.edit-livro')) handleEdit('biblioteca', 'biblioteca', id);
             else if (target.matches('.delete-filme')) handleDelete('filmes', id, 'Tem certeza que deseja excluir este filme?');
             else if (target.matches('.edit-link')) handleEdit('links', 'link', id);
             else if (target.matches('.delete-link')) handleDelete('links', id, 'Tem certeza que deseja excluir este link?');
@@ -3305,7 +3858,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 e.stopPropagation();
                 const notaId = target.dataset.id;
-                const profileData = getCurrentProfileData();
+                const profileData = await getProfileData();
                 const nota = profileData.notas.find(n => n.id == notaId);
                 if (nota) {
                     document.getElementById('notaModalLabel').textContent = 'Editar Nota';
@@ -3323,9 +3876,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.stopPropagation();
                 const notaId = target.dataset.id;
                 if (confirm('Tem certeza que deseja excluir esta nota permanentemente?')) {
-                    const profileData = getCurrentProfileData();
-                    profileData.notas = profileData.notas.filter(n => n.id != notaId);
-                    saveDB();
+                    await deleteData('notas', parseInt(notaId));
                     renderAll();
                 }
             }
@@ -3341,17 +3892,6 @@ document.addEventListener('DOMContentLoaded', function() {
             renderAgenda();
         });
 
-        document.getElementById('financeiro-filtro-status').addEventListener('change', renderFinanceiro);
-        document.getElementById('financeiro-filtro-tipo').addEventListener('change', renderFinanceiro);
-        document.getElementById('financeiro-aplicar-filtro').addEventListener('click', renderFinanceiro);
-        document.getElementById('financeiro-limpar-filtro').addEventListener('click', () => {
-            document.getElementById('financeiro-filtro-status').value = 'todos';
-            document.getElementById('financeiro-filtro-tipo').value = 'todos';
-            document.getElementById('financeiro-filtro-data-inicio').value = '';
-            document.getElementById('financeiro-filtro-data-fim').value = '';
-            renderFinanceiro();
-        });
-
         document.getElementById('financeiroTipo').addEventListener('change', function() {
             const statusWrapper = document.getElementById('financeiroStatusWrapper');
             if (this.value === 'despesa') {
@@ -3360,9 +3900,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 statusWrapper.style.display = 'none';
             }
         });
+        
+        document.getElementById('financeiroRecurrence').addEventListener('change', function() {
+            const endDateWrapper = document.getElementById('financeiroRecurrenceEndDateWrapper');
+            if (this.value !== 'none') {
+                endDateWrapper.classList.remove('d-none');
+            } else {
+                endDateWrapper.classList.add('d-none');
+            }
+        });
 
         // Gerenciamento de Perfis
-        document.getElementById('profileForm').addEventListener('submit', function(e) {
+        document.getElementById('profileForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const profileNameInput = document.getElementById('profileName');
             const profileIdInput = document.getElementById('profileId');
@@ -3372,23 +3921,29 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!name) { alert("O nome do perfil é obrigatório."); return; }
 
             if (id) {
-                db.profiles.find(p => p.id === id).name = name;
+                // Editar perfil existente
+                const profile = await getData('profiles', id);
+                if (profile) {
+                    profile.name = name;
+                    await saveData('profiles', profile);
+                }
             } else {
+                // Criar novo perfil
+                const profiles = await getAllData('profiles');
                 const newProfile = {
-                    id: db.profiles.length > 0 ? Math.max(...db.profiles.map(p => p.id)) + 1 : 1,
+                    id: profiles.length > 0 ? Math.max(...profiles.map(p => p.id)) + 1 : 1,
                     name: name,
-                    data: createNewProfileData()
+                    currentProfileId: null
                 };
-                db.profiles.push(newProfile);
-                switchProfile(newProfile.id);
+                await saveData('profiles', newProfile);
+                await switchProfile(newProfile.id);
             }
 
             profileNameInput.value = '';
             profileIdInput.value = '';
             document.getElementById('saveProfileBtn').innerHTML = '<i class="fas fa-plus"></i> Adicionar';
             
-            saveDB();
-            renderProfileManagementList();
+            await renderProfileManagementList();
         });
 
         document.querySelectorAll('.modal').forEach(modal => {
@@ -3418,6 +3973,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if(modal.id === 'financeiroModal') {
                     document.getElementById('financeiroStatusWrapper').style.display = 'none';
+                    document.getElementById('financeiroRecurrenceEndDateWrapper').classList.add('d-none');
+                    document.getElementById('financeiroRecurrence').value = 'none';
                 }
                 
                 if(modal.id === 'notaModal') {
@@ -3454,8 +4011,24 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('saveLivro').addEventListener('click', saveLivro);
         document.getElementById('deleteHorario').addEventListener('click', deleteHorario);
         
-        document.getElementById('backup-btn').addEventListener('click', () => {
-            const dataStr = JSON.stringify(db, null, 2);
+        document.getElementById('backup-btn').addEventListener('click', async () => {
+            // Coletar todos os dados do IndexedDB
+            const backupData = {
+                profiles: await getAllData('profiles'),
+                disciplinas: await getAllData('disciplinas'),
+                horarios: await getAllData('horarios'),
+                trabalhos: await getAllData('trabalhos'),
+                provas: await getAllData('provas'),
+                eventos: await getAllData('eventos'),
+                financeiro: await getAllData('financeiro'),
+                biblioteca: await getAllData('biblioteca'),
+                filmes: await getAllData('filmes'),
+                notas: await getAllData('notas'),
+                links: await getAllData('links'),
+                desenhos: await getAllData('desenhos')
+            };
+            
+            const dataStr = JSON.stringify(backupData, null, 2);
             const link = document.createElement('a');
             link.href = URL.createObjectURL(new Blob([dataStr], { type: 'application/json' }));
             link.download = `academico_pro_backup_${new Date().toISOString().slice(0, 10)}.json`;
@@ -3464,26 +4037,47 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Backup de todos os perfis criado com sucesso!');
         });
 
-        document.getElementById('restore-input').addEventListener('change', (event) => {
+        document.getElementById('restore-input').addEventListener('change', async (event) => {
             const file = event.target.files[0];
-            if (!file || !confirm('Restaurar este backup substituirá TODOS os perfis e dados atuais. Continuar?')) { 
+            if (!file || !confirm('Restaurar este backup substituirá TODOS os dados atuais. Continuar?')) { 
                 event.target.value = ''; 
                 return; 
             }
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 try {
-                    const restoredDb = JSON.parse(e.target.result);
-                    if (restoredDb.profiles && restoredDb.hasOwnProperty('currentProfileId')) {
-                        db = restoredDb;
-                        saveDB();
-                        alert('Backup restaurado com sucesso! A página será recarregada.');
-                        location.reload();
-                    } else { 
-                        alert('Arquivo de backup inválido ou em formato antigo.'); 
+                    const restoredData = JSON.parse(e.target.result);
+                    
+                    // Limpar todos os dados atuais
+                    const objectStoreNames = [
+                        'profiles', 'disciplinas', 'horarios', 'trabalhos', 'provas', 
+                        'eventos', 'financeiro', 'biblioteca', 'filmes', 'notas', 'links', 'desenhos'
+                    ];
+                    
+                    for (const storeName of objectStoreNames) {
+                        const transaction = db.transaction([storeName], 'readwrite');
+                        const store = transaction.objectStore(storeName);
+                        const clearRequest = store.clear();
+                        
+                        await new Promise((resolve, reject) => {
+                            clearRequest.onsuccess = resolve;
+                            clearRequest.onerror = reject;
+                        });
                     }
+                    
+                    // Restaurar dados
+                    for (const storeName in restoredData) {
+                        if (restoredData.hasOwnProperty(storeName)) {
+                            for (const item of restoredData[storeName]) {
+                                await saveData(storeName, item);
+                            }
+                        }
+                    }
+                    
+                    alert('Backup restaurado com sucesso! A página será recarregada.');
+                    location.reload();
                 } catch (error) { 
-                    alert('Erro ao ler o arquivo de backup.'); 
+                    alert('Erro ao ler o arquivo de backup: ' + error.message); 
                 } 
                 finally { 
                     event.target.value = ''; 
@@ -3493,9 +4087,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function handleEdit(itemType, modalPrefix, itemId) {
-        const profileData = getCurrentProfileData();
-        const item = profileData[itemType].find(i => i.id == itemId);
+    async function handleEdit(itemType, modalPrefix, itemId) {
+        const item = await getData(itemType, parseInt(itemId));
         if (!item) return;
         
         const modalId = `${modalPrefix}Modal`;
@@ -3510,7 +4103,13 @@ document.addEventListener('DOMContentLoaded', function() {
         for (const key in item) {
             let inputKey = key.charAt(0).toUpperCase() + key.slice(1);
             const input = form.querySelector(`#${modalPrefix}${inputKey}`);
-            if (input) input.value = item[key];
+            if (input) {
+                if (input.type === 'checkbox') {
+                    input.checked = item[key];
+                } else {
+                    input.value = item[key];
+                }
+            }
         }
         
         const idInput = form.querySelector(`#${modalPrefix}Id`);
@@ -3531,23 +4130,37 @@ document.addEventListener('DOMContentLoaded', function() {
         new bootstrap.Modal(modalElement).show();
     }
 
-    function handleDelete(itemType, itemId, confirmMsg) {
+    async function handleDelete(itemType, itemId, confirmMsg) {
         if (confirm(confirmMsg)) {
-            const profileData = getCurrentProfileData();
-            profileData[itemType] = profileData[itemType].filter(i => i.id != itemId);
+            const profileId = await getCurrentProfileId();
+            
             if (itemType === 'disciplinas') {
-                 profileData.trabalhos = profileData.trabalhos.filter(t => t.disciplinaId != itemId);
-                 profileData.provas = profileData.provas.filter(p => p.disciplinaId != itemId);
-                 profileData.horarios = profileData.horarios.filter(h => h.disciplinaId != itemId);
+                // Excluir também trabalhos, provas e horários relacionados
+                const profileData = await getProfileData();
+                const trabalhosRelacionados = profileData.trabalhos.filter(t => t.disciplinaId == itemId);
+                const provasRelacionadas = profileData.provas.filter(p => p.disciplinaId == itemId);
+                const horariosRelacionados = profileData.horarios.filter(h => h.disciplinaId == itemId);
+                
+                for (const trabalho of trabalhosRelacionados) {
+                    await deleteData('trabalhos', trabalho.id);
+                }
+                
+                for (const prova of provasRelacionadas) {
+                    await deleteData('provas', prova.id);
+                }
+                
+                for (const horario of horariosRelacionados) {
+                    await deleteData('horarios', horario.id);
+                }
             }
-            saveDB();
-            renderAll();
+            
+            await deleteData(itemType, parseInt(itemId));
+            await renderAll();
         }
     }
 
-    function editHorario(id) {
-        const profileData = getCurrentProfileData();
-        const aula = profileData.horarios.find(h => h.id == id);
+    async function editHorario(id) {
+        const aula = await getData('horarios', parseInt(id));
         if (!aula) return;
         document.getElementById('horarioModalLabel').textContent = 'Editar Aula';
         document.getElementById('horarioId').value = aula.id;
@@ -3560,31 +4173,29 @@ document.addEventListener('DOMContentLoaded', function() {
         new bootstrap.Modal(document.getElementById('horarioModal')).show();
     }
 
-    function saveDisciplina() {
-        const profileData = getCurrentProfileData();
+    async function saveDisciplina() {
+        const profileId = await getCurrentProfileId();
         const id = document.getElementById('disciplinaId').value;
         const disciplina = {
+            id: id ? parseInt(id) : await getNewId('disciplinas'),
+            profileId: profileId,
             nome: document.getElementById('disciplinaNome').value,
             professor: document.getElementById('disciplinaProfessor').value,
             frequencia: parseInt(document.getElementById('disciplinaFrequencia').value)
         };
         if (!disciplina.nome) { alert('O nome da disciplina é obrigatório.'); return; }
-        if (id) {
-            const index = profileData.disciplinas.findIndex(d => d.id == id);
-            profileData.disciplinas[index] = { ...profileData.disciplinas[index], ...disciplina };
-        } else {
-            disciplina.id = getNewId('disciplinas');
-            profileData.disciplinas.push(disciplina);
-        }
-        saveDB(); 
-        renderAll(); 
+        
+        await saveData('disciplinas', disciplina);
+        await renderAll(); 
         bootstrap.Modal.getInstance(document.getElementById('disciplinaModal')).hide();
     }
 
-    function saveTrabalho() {
-        const profileData = getCurrentProfileData();
+    async function saveTrabalho() {
+        const profileId = await getCurrentProfileId();
         const id = document.getElementById('trabalhoId').value;
         const trabalho = {
+            id: id ? parseInt(id) : await getNewId('trabalhos'),
+            profileId: profileId,
             disciplinaId: parseInt(document.getElementById('trabalhoDisciplina').value),
             titulo: document.getElementById('trabalhoTitulo').value,
             entrega: document.getElementById('trabalhoEntrega').value,
@@ -3593,22 +4204,18 @@ document.addEventListener('DOMContentLoaded', function() {
             nota: document.getElementById('trabalhoNota').value === '' ? null : parseFloat(document.getElementById('trabalhoNota').value)
         };
         if (!trabalho.disciplinaId || !trabalho.titulo || !trabalho.entrega) { alert('Preencha os campos obrigatórios.'); return; }
-        if (id) {
-            const index = profileData.trabalhos.findIndex(t => t.id == id);
-            profileData.trabalhos[index] = { ...profileData.trabalhos[index], ...trabalho };
-        } else {
-            trabalho.id = getNewId('trabalhos');
-            profileData.trabalhos.push(trabalho);
-        }
-        saveDB(); 
-        renderAll(); 
+        
+        await saveData('trabalhos', trabalho);
+        await renderAll(); 
         bootstrap.Modal.getInstance(document.getElementById('trabalhoModal')).hide();
     }
 
-    function saveProva() {
-        const profileData = getCurrentProfileData();
+    async function saveProva() {
+        const profileId = await getCurrentProfileId();
         const id = document.getElementById('provaId').value;
         const prova = {
+            id: id ? parseInt(id) : await getNewId('provas'),
+            profileId: profileId,
             disciplinaId: parseInt(document.getElementById('provaDisciplina').value),
             conteudo: document.getElementById('provaConteudo').value,
             data: document.getElementById('provaData').value,
@@ -3617,22 +4224,18 @@ document.addEventListener('DOMContentLoaded', function() {
             nota: document.getElementById('provaNota').value === '' ? null : parseFloat(document.getElementById('provaNota').value)
         };
         if (!prova.disciplinaId || !prova.conteudo || !prova.data) { alert('Preencha os campos obrigatórios.'); return; }
-        if (id) {
-            const index = profileData.provas.findIndex(p => p.id == id);
-            profileData.provas[index] = { ...profileData.provas[index], ...prova };
-        } else {
-            prova.id = getNewId('provas');
-            profileData.provas.push(prova);
-        }
-        saveDB(); 
-        renderAll(); 
+        
+        await saveData('provas', prova);
+        await renderAll(); 
         bootstrap.Modal.getInstance(document.getElementById('provaModal')).hide();
     }
 
-    function saveHorario() {
-        const profileData = getCurrentProfileData();
+    async function saveHorario() {
+        const profileId = await getCurrentProfileId();
         const id = document.getElementById('horarioId').value;
         const aula = {
+            id: id ? parseInt(id) : await getNewId('horarios'),
+            profileId: profileId,
             disciplinaId: parseInt(document.getElementById('horarioDisciplina').value),
             diaSemana: document.getElementById('horarioDiaSemana').value,
             inicio: document.getElementById('horarioInicio').value,
@@ -3640,35 +4243,29 @@ document.addEventListener('DOMContentLoaded', function() {
             local: document.getElementById('horarioLocal').value
         };
         if (!aula.disciplinaId || !aula.inicio || !aula.fim) { alert('Preencha os campos obrigatórios.'); return; }
-        if (id) {
-            const index = profileData.horarios.findIndex(h => h.id == id);
-            profileData.horarios[index] = { ...profileData.horarios[index], ...aula };
-        } else {
-            aula.id = getNewId('horarios');
-            profileData.horarios.push(aula);
-        }
-        saveDB(); 
-        renderAll(); 
+        
+        await saveData('horarios', aula);
+        await renderAll(); 
         bootstrap.Modal.getInstance(document.getElementById('horarioModal')).hide();
     }
 
-    function deleteHorario() {
-        const profileData = getCurrentProfileData();
+    async function deleteHorario() {
         const id = document.getElementById('horarioId').value;
         if (!id) return;
 
         if (confirm('Tem certeza que deseja excluir esta aula?')) {
-            profileData.horarios = profileData.horarios.filter(h => h.id != id);
-            saveDB();
-            renderAll();
+            await deleteData('horarios', parseInt(id));
+            await renderAll();
             bootstrap.Modal.getInstance(document.getElementById('horarioModal')).hide();
         }
     }
 
-    function saveEvent() {
-        const profileData = getCurrentProfileData();
+    async function saveEvent() {
+        const profileId = await getCurrentProfileId();
         const id = document.getElementById('eventId').value;
         const evento = {
+            id: id ? parseInt(id) : await getNewId('eventos'),
+            profileId: profileId,
             title: document.getElementById('eventTitle').value,
             type: document.getElementById('eventType').value,
             date: document.getElementById('eventDate').value,
@@ -3676,46 +4273,91 @@ document.addEventListener('DOMContentLoaded', function() {
             description: document.getElementById('eventDescription').value
         };
         if (!evento.title || !evento.date) { alert('Título e data são obrigatórios.'); return; }
-        if(id) {
-            const index = profileData.eventos.findIndex(e => e.id == id);
-            profileData.eventos[index] = { ...profileData.eventos[index], ...evento };
-        } else {
-            evento.id = getNewId('eventos');
-            profileData.eventos.push(evento);
-        }
-        saveDB(); 
-        renderAll(); 
+        
+        await saveData('eventos', evento);
+        await renderAll(); 
         bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
     }
 
-    function saveFinanceiro() {
-        const profileData = getCurrentProfileData();
+    async function saveFinanceiro() {
+        const profileId = await getCurrentProfileId();
         const id = document.getElementById('financeiroId').value;
+        const dataInput = document.getElementById('financeiroData').value;
+        const data = new Date(dataInput);
+        const mes = data.getMonth() + 1;
+        const ano = data.getFullYear();
+        const mesAno = `${mes}-${ano}`;
+        
         const transacao = {
+            id: id ? parseInt(id) : await getNewId('financeiro'),
+            profileId: profileId,
             tipo: document.getElementById('financeiroTipo').value,
             descricao: document.getElementById('financeiroDescricao').value,
             valor: parseFloat(document.getElementById('financeiroValor').value),
             categoria: document.getElementById('financeiroCategoria').value,
-            data: document.getElementById('financeiroData').value,
-            status: document.getElementById('financeiroTipo').value === 'despesa' ? document.getElementById('financeiroStatus').value : 'pago'
+            data: dataInput,
+            status: document.getElementById('financeiroTipo').value === 'despesa' ? document.getElementById('financeiroStatus').value : 'pago',
+            mesAno: mesAno
         };
-        if (!transacao.descricao || isNaN(transacao.valor) || !transacao.data) { alert('Descrição, valor e data são obrigatórios.'); return; }
-        if (id) {
-            const index = profileData.financeiro.findIndex(f => f.id == id);
-            profileData.financeiro[index] = { ...profileData.financeiro[index], ...transacao };
-        } else {
-            transacao.id = getNewId('financeiro');
-            profileData.financeiro.push(transacao);
+        
+        if (!transacao.descricao || isNaN(transacao.valor) || !transacao.data) { 
+            alert('Descrição, valor e data são obrigatórios.'); 
+            return; 
         }
-        saveDB(); 
-        renderAll(); 
+        
+        // Verificar recorrência
+        const recurrence = document.getElementById('financeiroRecurrence').value;
+        const recurrenceEndDate = document.getElementById('financeiroRecurrenceEndDate').value;
+        
+        if (recurrence !== 'none' && recurrenceEndDate) {
+            const endDate = new Date(recurrenceEndDate);
+            let currentDate = new Date(dataInput);
+            const transacoesRecorrentes = [];
+            
+            while (currentDate <= endDate) {
+                const currentMes = currentDate.getMonth() + 1;
+                const currentAno = currentDate.getFullYear();
+                const currentMesAno = `${currentMes}-${currentAno}`;
+                
+                if (currentDate.getTime() !== data.getTime()) { // Não duplicar a primeira transação
+                    const transacaoRecorrente = {
+                        ...transacao,
+                        id: await getNewId('financeiro') + transacoesRecorrentes.length,
+                        data: currentDate.toISOString().split('T')[0],
+                        mesAno: currentMesAno
+                    };
+                    transacoesRecorrentes.push(transacaoRecorrente);
+                }
+                
+                // Avançar data conforme recorrência
+                if (recurrence === 'weekly') {
+                    currentDate.setDate(currentDate.getDate() + 7);
+                } else if (recurrence === 'monthly') {
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                }
+            }
+            
+            // Salvar todas as transações recorrentes
+            await saveData('financeiro', transacao);
+            for (const transacaoRecorrente of transacoesRecorrentes) {
+                await saveData('financeiro', transacaoRecorrente);
+            }
+            
+            alert(`Transação salva com ${transacoesRecorrentes.length + 1} ocorrências!`);
+        } else {
+            await saveData('financeiro', transacao);
+        }
+        
+        await renderAll(); 
         bootstrap.Modal.getInstance(document.getElementById('financeiroModal')).hide();
     }
 
-    function saveNota() {
-        const profileData = getCurrentProfileData();
+    async function saveNota() {
+        const profileId = await getCurrentProfileId();
         const id = document.getElementById('notaId').value;
         const nota = {
+            id: id ? parseInt(id) : await getNewId('notas'),
+            profileId: profileId,
             titulo: document.getElementById('notaTitulo').value,
             conteudo: document.getElementById('notaConteudo').value,
             dataCriacao: new Date().toISOString().split('T')[0]
@@ -3724,39 +4366,30 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Título e conteúdo são obrigatórios.');
             return;
         }
-        if (id) {
-            const index = profileData.notas.findIndex(n => n.id == id);
-            profileData.notas[index] = { ...profileData.notas[index], ...nota };
-        } else {
-            nota.id = getNewId('notas');
-            profileData.notas.push(nota);
-        }
-        saveDB();
-        renderAll();
+        
+        await saveData('notas', nota);
+        await renderAll();
         bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide();
     }
 
-    function deleteNota() {
-        const profileData = getCurrentProfileData();
+    async function deleteNota() {
         const id = document.getElementById('notaId').value;
         
         if (!id) return;
         
         if (confirm('Tem certeza que deseja excluir esta nota permanentemente?')) {
-            const index = profileData.notas.findIndex(n => n.id == id);
-            if (index !== -1) {
-                profileData.notas.splice(index, 1);
-                saveDB();
-                renderAll();
-                bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide();
-            }
+            await deleteData('notas', parseInt(id));
+            await renderAll();
+            bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide();
         }
     }
 
-    function saveLink() {
-        const profileData = getCurrentProfileData();
+    async function saveLink() {
+        const profileId = await getCurrentProfileId();
         const id = document.getElementById('linkId').value;
         const link = {
+            id: id ? parseInt(id) : await getNewId('links'),
+            profileId: profileId,
             titulo: document.getElementById('linkTitulo').value,
             url: document.getElementById('linkUrl').value,
             categoria: document.getElementById('linkCategoria').value,
@@ -3766,22 +4399,18 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Título e URL são obrigatórios.');
             return;
         }
-        if (id) {
-            const index = profileData.links.findIndex(l => l.id == id);
-            profileData.links[index] = { ...profileData.links[index], ...link };
-        } else {
-            link.id = getNewId('links');
-            profileData.links.push(link);
-        }
-        saveDB();
-        renderAll();
+        
+        await saveData('links', link);
+        await renderAll();
         bootstrap.Modal.getInstance(document.getElementById('linkModal')).hide();
     }
 
-    function saveFilme() {
-        const profileData = getCurrentProfileData();
+    async function saveFilme() {
+        const profileId = await getCurrentProfileId();
         const id = document.getElementById('filmeId').value;
         const filme = {
+            id: id ? parseInt(id) : await getNewId('filmes'),
+            profileId: profileId,
             titulo: document.getElementById('filmeTitulo').value,
             url: document.getElementById('filmeUrl').value,
             tipo: document.getElementById('filmeTipo').value
@@ -3790,74 +4419,52 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Título e URL são obrigatórios.');
             return;
         }
-        if (id) {
-            const index = profileData.filmes.findIndex(f => f.id == id);
-            profileData.filmes[index] = { ...profileData.filmes[index], ...filme };
-        } else {
-            filme.id = getNewId('filmes');
-            profileData.filmes.push(filme);
-        }
-        saveDB();
-        renderAll();
+        
+        await saveData('filmes', filme);
+        await renderAll();
         bootstrap.Modal.getInstance(document.getElementById('filmeModal')).hide();
     }
 
-    function saveAnotacaoFilme() {
-        const profileData = getCurrentProfileData();
+    async function saveAnotacaoFilme() {
+        const profileId = await getCurrentProfileId();
         const id = document.getElementById('anotacaoFilmeId').value;
-        const anotacao = {
-            tempoAtual: document.getElementById('filmeTempoAtual').value ? parseInt(document.getElementById('filmeTempoAtual').value) : null,
-            texto: document.getElementById('filmeAnotacao').value,
-            assistido: document.getElementById('filmeAssistido').checked
-        };
+        const filme = await getData('filmes', parseInt(id));
         
-        if (id) {
-            const index = profileData.filmes.findIndex(f => f.id == id);
-            if (index !== -1) {
-                profileData.filmes[index].anotacao = anotacao;
-                saveDB();
-                renderAll();
-                bootstrap.Modal.getInstance(document.getElementById('anotacaoFilmeModal')).hide();
-            }
+        if (filme) {
+            filme.anotacao = {
+                tempoAtual: document.getElementById('filmeTempoAtual').value ? parseInt(document.getElementById('filmeTempoAtual').value) : null,
+                texto: document.getElementById('filmeAnotacao').value,
+                assistido: document.getElementById('filmeAssistido').checked
+            };
+            
+            await saveData('filmes', filme);
+            await renderAll();
+            bootstrap.Modal.getInstance(document.getElementById('anotacaoFilmeModal')).hide();
         }
     }
 
-    function saveLivro() {
-        const profileData = getCurrentProfileData();
+    async function saveLivro() {
+        const profileId = await getCurrentProfileId();
         const id = document.getElementById('bibliotecaId').value;
-        const titulo = document.getElementById('bibliotecaTitulo').value;
-        const arquivoInput = document.getElementById('bibliotecaArquivo');
-        const file = arquivoInput.files[0];
-
-        if (!titulo || !file) {
-            alert('Título e arquivo PDF são obrigatórios.');
+        const livro = {
+            id: id ? parseInt(id) : await getNewId('biblioteca'),
+            profileId: profileId,
+            titulo: document.getElementById('bibliotecaTitulo').value,
+            autor: document.getElementById('bibliotecaAutor').value,
+            assunto: document.getElementById('bibliotecaAssunto').value,
+            editora: document.getElementById('bibliotecaEditora').value,
+            ano: document.getElementById('bibliotecaAno').value || null,
+            observacoes: document.getElementById('bibliotecaObservacoes').value
+        };
+        
+        if (!livro.titulo || !livro.autor || !livro.assunto) {
+            alert('Título, autor e assunto são obrigatórios.');
             return;
         }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const pdfData = e.target.result;
-            
-            if (id) {
-                const index = profileData.biblioteca.findIndex(l => l.id == id);
-                if (index !== -1) {
-                    profileData.biblioteca[index].titulo = titulo;
-                    profileData.biblioteca[index].pdfData = pdfData;
-                }
-            } else {
-                const livro = { 
-                    id: getNewId('biblioteca'), 
-                    titulo, 
-                    pdfData 
-                };
-                profileData.biblioteca.push(livro);
-            }
-            
-            saveDB();
-            renderAll();
-            bootstrap.Modal.getInstance(document.getElementById('bibliotecaModal')).hide();
-        };
-        reader.readAsDataURL(file);
+        
+        await saveData('biblioteca', livro);
+        await renderAll();
+        bootstrap.Modal.getInstance(document.getElementById('bibliotecaModal')).hide();
     }
 
     function getYouTubeEmbedUrl(url, startTime = 0) {
@@ -3898,22 +4505,21 @@ document.addEventListener('DOMContentLoaded', function() {
         videoInterval = setInterval(saveVideoProgress, 30000);
     }
 
-    function saveVideoProgress() {
+    async function saveVideoProgress() {
         if (!currentVideoId) return;
         
-        const profileData = getCurrentProfileData();
-        const filmeIndex = profileData.filmes.findIndex(f => f.id == currentVideoId);
+        const filme = await getData('filmes', currentVideoId);
         
-        if (filmeIndex !== -1) {
-            if (!profileData.filmes[filmeIndex].anotacao) {
-                profileData.filmes[filmeIndex].anotacao = {};
+        if (filme) {
+            if (!filme.anotacao) {
+                filme.anotacao = {};
             }
             
-            profileData.filmes[filmeIndex].anotacao.tempoAtual = currentVideoTime;
-            profileData.filmes[filmeIndex].anotacao.dataUltimaVisualizacao = new Date().toISOString();
+            filme.anotacao.tempoAtual = currentVideoTime;
+            filme.anotacao.dataUltimaVisualizacao = new Date().toISOString();
             
-            saveDB();
-            renderFilmes();
+            await saveData('filmes', filme);
+            await renderFilmes();
             
             const minutos = Math.floor(currentVideoTime / 60);
             const segundos = currentVideoTime % 60;
@@ -3925,97 +4531,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    const viewerModal = new bootstrap.Modal(document.getElementById('viewerModal'));
-    
-    document.getElementById('viewerModal').addEventListener('hidden.bs.modal', () => {
-        const flipbook = $('#flipbook');
-        if (flipbook.length && flipbook.turn('is')) {
-            flipbook.turn('destroy');
-        }
-        document.getElementById('viewerModalBody').innerHTML = '';
-    });
-
-    async function displayFlipbook(pdfDataUrl, container) {
-        try {
-            const pdfData = atob(pdfDataUrl.substring(pdfDataUrl.indexOf(',') + 1));
-            const flipbookContainer = document.createElement('div');
-            flipbookContainer.id = 'flipbook';
-
-            const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-            const numPages = pdf.numPages;
-
-            const firstPage = await pdf.getPage(1);
-            const viewportForRatio = firstPage.getViewport({ scale: 1.0 });
-            const aspectRatio = viewportForRatio.width / viewportForRatio.height;
-            
-            const renderScale = 2; 
-            const renderViewport = firstPage.getViewport({ scale: renderScale });
-            
-            const pagePromises = [];
-            for (let i = 1; i <= numPages; i++) {
-                pagePromises.push(pdf.getPage(i).then(page => {
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.height = renderViewport.height;
-                    canvas.width = renderViewport.width;
-
-                    return page.render({ canvasContext: context, viewport: renderViewport }).promise.then(() => {
-                        const pageElement = document.createElement('div');
-                        const img = document.createElement('img');
-                        img.src = canvas.toDataURL('image/jpeg', 0.9);
-                        img.style.width = '100%';
-                        img.style.height = '100%';
-                        pageElement.appendChild(img);
-                        return pageElement;
-                    });
-                }));
-            }
-            
-            const pageElements = await Promise.all(pagePromises);
-            pageElements.forEach(el => flipbookContainer.appendChild(el));
-
-            container.innerHTML = '';
-            container.appendChild(flipbookContainer);
-            
-            const modalHeight = container.clientHeight * 0.95;
-            const modalWidth = container.clientWidth * 0.95;
-
-            let bookHeight = modalHeight;
-            let bookWidth = (bookHeight * aspectRatio) * 2;
-
-            if (bookWidth > modalWidth) {
-                bookWidth = modalWidth;
-                bookHeight = (bookWidth / 2) / aspectRatio;
-            }
-
-            $(flipbookContainer).turn({
-                width: bookWidth,
-                height: bookHeight,
-                elevation: 50,
-                gradients: true,
-                autoCenter: true,
-            });
-
-        } catch (error) {
-            console.error('Error rendering PDF:', error);
-            container.innerHTML = `<div class="alert alert-danger m-3">Não foi possível carregar o livro. O arquivo pode estar corrompido ou em um formato não suportado.</div>`;
-        }
-    }
-
-    function openBookViewer(livro) {
-        const viewerModalEl = document.getElementById('viewerModal');
-        const viewerModalBody = document.getElementById('viewerModalBody');
-        viewerModalBody.innerHTML = `<div class="d-flex align-items-center justify-content-center h-100"><div class="loading-indicator">Carregando livro...</div></div>`;
-
-        $(viewerModalEl).one('shown.bs.modal', async function () {
-            await displayFlipbook(livro.pdfData, viewerModalBody);
-        });
-
-        viewerModal.show();
-    }
-
-    function populateDisciplinaSelects() {
-        const profileData = getCurrentProfileData();
+    async function populateDisciplinaSelects() {
+        const profileData = await getProfileData();
         const selects = document.querySelectorAll('#trabalhoDisciplina, #provaDisciplina, #horarioDisciplina');
         
         if (!profileData || profileData.disciplinas.length === 0) {
@@ -4025,7 +4542,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const options = profileData.disciplinas.map(d => `<option value="${d.id}">${d.nome}</option>`).join('');
         selects.forEach(s => { 
-            s.innerHTML = options; 
+            s.innerHTML = `<option value="">Selecione uma disciplina</option>` + options; 
         });
     }
 
@@ -4038,48 +4555,42 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('main-header-title').textContent = titleText;
     }
 
-    function switchProfile(profileId) {
-        db.currentProfileId = parseInt(profileId);
-        saveDB();
-        renderAll();
-        renderProfileManagementList();
-        updateMainHeaderTitle();
-        updateFixedBackButton();
-    }
-
-    function renderProfileManagementList() {
+    async function renderProfileManagementList() {
         const managementList = document.getElementById('profile-management-list');
         managementList.innerHTML = '';
 
-        db.profiles.forEach(profile => {
-            const isActive = profile.id === db.currentProfileId;
+        const profiles = await getAllData('profiles');
+        const currentProfileId = await getCurrentProfileId();
+
+        profiles.forEach(profile => {
+            const isActive = profile.id === currentProfileId;
             managementList.innerHTML += `
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <button type="button" class="btn btn-link text-start flex-grow-1 switch-profile ${isActive ? 'fw-bold' : ''}" data-id="${profile.id}">${profile.name}</button>
                     <div>
                         <button class="btn btn-sm btn-outline-primary edit-profile" data-id="${profile.id}"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-sm btn-outline-danger delete-profile" data-id="${profile.id}" ${db.profiles.length === 1 ? 'disabled' : ''}><i class="fas fa-trash"></i></button>
+                        <button class="btn btn-sm btn-outline-danger delete-profile" data-id="${profile.id}" ${profiles.length === 1 ? 'disabled' : ''}><i class="fas fa-trash"></i></button>
                     </div>
                 </li>`;
         });
 
         // Adicionar event listeners para os botões
         document.querySelectorAll('.switch-profile').forEach(btn => {
-            btn.addEventListener('click', function(e) {
+            btn.addEventListener('click', async function(e) {
                 e.preventDefault();
                 const profileId = parseInt(this.dataset.id);
-                if (profileId !== db.currentProfileId) {
-                    switchProfile(profileId);
+                if (profileId !== currentProfileId) {
+                    await switchProfile(profileId);
                     bootstrap.Modal.getInstance(document.getElementById('profileManagementModal')).hide();
                 }
             });
         });
 
         document.querySelectorAll('.edit-profile').forEach(btn => {
-            btn.addEventListener('click', function(e) {
+            btn.addEventListener('click', async function(e) {
                 e.preventDefault();
                 const profileId = parseInt(this.dataset.id);
-                const profile = db.profiles.find(p => p.id === profileId);
+                const profile = await getData('profiles', profileId);
                 if (profile) {
                     document.getElementById('profileName').value = profile.name;
                     document.getElementById('profileId').value = profile.id;
@@ -4089,19 +4600,28 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         document.querySelectorAll('.delete-profile').forEach(btn => {
-            btn.addEventListener('click', function(e) {
+            btn.addEventListener('click', async function(e) {
                 e.preventDefault();
                 const profileId = parseInt(this.dataset.id);
-                if (db.profiles.length === 1) return;
+                const profiles = await getAllData('profiles');
+                if (profiles.length === 1) return;
                 
                 if (confirm('Tem certeza que deseja excluir este perfil? Todos os dados serão perdidos.')) {
-                    db.profiles = db.profiles.filter(p => p.id !== profileId);
-                    if (db.currentProfileId === profileId && db.profiles.length > 0) {
-                        db.currentProfileId = db.profiles[0].id;
+                    // Excluir perfil
+                    await deleteData('profiles', profileId);
+                    
+                    // Excluir todos os dados relacionados a este perfil
+                    const stores = ['disciplinas', 'horarios', 'trabalhos', 'provas', 'eventos', 'financeiro', 'biblioteca', 'filmes', 'notas', 'links', 'desenhos'];
+                    
+                    for (const storeName of stores) {
+                        const items = await getAllData(storeName, 'profileId', profileId);
+                        for (const item of items) {
+                            await deleteData(storeName, item.id);
+                        }
                     }
-                    saveDB();
-                    renderProfileManagementList();
-                    renderAll();
+                    
+                    await renderProfileManagementList();
+                    await renderAll();
                 }
             });
         });
