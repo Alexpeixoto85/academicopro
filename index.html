@@ -919,6 +919,8 @@
         background-color: white;
         cursor: crosshair;
         touch-action: none;
+        width: 100%;
+        display: block;
     }
     
     .canvas-tools {
@@ -2138,6 +2140,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentColor = '#000000';
     let currentBrushSize = 3;
     let canvas, ctx;
+    let canvasOffsetX = 0;
+    let canvasOffsetY = 0;
     
     // Mês atual para o financeiro
     let currentFinanceMonth = new Date().getMonth();
@@ -3490,9 +3494,22 @@ document.addEventListener('DOMContentLoaded', function() {
         canvas = document.getElementById('desenhoCanvas');
         ctx = canvas.getContext('2d');
         
-        // Configurar canvas
-        canvas.width = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
+        // Obter posição do canvas
+        const canvasRect = canvas.getBoundingClientRect();
+        canvasOffsetX = canvasRect.left;
+        canvasOffsetY = canvasRect.top;
+        
+        // Ajustar tamanho do canvas para a tela
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const containerWidth = container.clientWidth - 30; // Margens
+            
+            canvas.width = containerWidth;
+            canvas.height = Math.min(500, containerWidth * 0.625); // Altura proporcional
+            
+            // Recarregar desenho salvo após redimensionar
+            loadSavedDrawing();
+        }
         
         // Configurações iniciais
         ctx.lineWidth = currentBrushSize;
@@ -3500,7 +3517,60 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.lineJoin = 'round';
         ctx.strokeStyle = currentColor;
         
-        // Event listeners para desenho
+        // Redimensionar canvas quando a janela mudar de tamanho
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // Função para obter coordenadas corretas do mouse/touch
+        function getCanvasCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            let clientX, clientY;
+            
+            if (e.type.includes('touch')) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+        
+        function startDrawing(e) {
+            isDrawing = true;
+            const coords = getCanvasCoordinates(e);
+            [lastX, lastY] = [coords.x, coords.y];
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+        }
+        
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const coords = getCanvasCoordinates(e);
+            const currentX = coords.x;
+            const currentY = coords.y;
+            
+            ctx.lineTo(currentX, currentY);
+            ctx.stroke();
+            
+            [lastX, lastY] = [currentX, currentY];
+        }
+        
+        function stopDrawing() {
+            isDrawing = false;
+            ctx.closePath();
+            saveDrawingToDB(); // Salvar automaticamente ao parar de desenhar
+        }
+        
+        // Event listeners para desenho com mouse
         canvas.addEventListener('mousedown', startDrawing);
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('mouseup', stopDrawing);
@@ -3538,6 +3608,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setActiveTool('pencil');
             currentTool = 'pencil';
             ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = currentColor;
         });
         
         document.getElementById('eraserTool').addEventListener('click', () => {
@@ -3579,26 +3650,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function setActiveTool(tool) {
         document.querySelectorAll('.canvas-tool-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById(`${tool}Tool`).classList.add('active');
-    }
-    
-    function startDrawing(e) {
-        isDrawing = true;
-        [lastX, lastY] = [e.offsetX, e.offsetY];
-    }
-    
-    function draw(e) {
-        if (!isDrawing) return;
-        
-        ctx.beginPath();
-        ctx.moveTo(lastX, lastY);
-        ctx.lineTo(e.offsetX, e.offsetY);
-        ctx.stroke();
-        
-        [lastX, lastY] = [e.offsetX, e.offsetY];
-    }
-    
-    function stopDrawing() {
-        isDrawing = false;
     }
     
     function clearCanvas() {
@@ -4283,51 +4334,53 @@ document.addEventListener('DOMContentLoaded', function() {
         const profileId = await getCurrentProfileId();
         const id = document.getElementById('financeiroId').value;
         const dataInput = document.getElementById('financeiroData').value;
-        const data = new Date(dataInput);
-        const mes = data.getMonth() + 1;
-        const ano = data.getFullYear();
-        const mesAno = `${mes}-${ano}`;
         
-        const transacao = {
-            id: id ? parseInt(id) : await getNewId('financeiro'),
-            profileId: profileId,
-            tipo: document.getElementById('financeiroTipo').value,
-            descricao: document.getElementById('financeiroDescricao').value,
-            valor: parseFloat(document.getElementById('financeiroValor').value),
-            categoria: document.getElementById('financeiroCategoria').value,
-            data: dataInput,
-            status: document.getElementById('financeiroTipo').value === 'despesa' ? document.getElementById('financeiroStatus').value : 'pago',
-            mesAno: mesAno
-        };
-        
-        if (!transacao.descricao || isNaN(transacao.valor) || !transacao.data) { 
-            alert('Descrição, valor e data são obrigatórios.'); 
-            return; 
+        if (!dataInput) {
+            alert('A data é obrigatória.');
+            return;
         }
         
-        // Verificar recorrência
         const recurrence = document.getElementById('financeiroRecurrence').value;
         const recurrenceEndDate = document.getElementById('financeiroRecurrenceEndDate').value;
         
+        let transacoes = [];
+        
         if (recurrence !== 'none' && recurrenceEndDate) {
-            const endDate = new Date(recurrenceEndDate);
+            // Criar múltiplas transações recorrentes
             let currentDate = new Date(dataInput);
-            const transacoesRecorrentes = [];
+            const endDate = new Date(recurrenceEndDate);
+            
+            if (currentDate > endDate) {
+                alert('A data final deve ser maior que a data inicial.');
+                return;
+            }
             
             while (currentDate <= endDate) {
-                const currentMes = currentDate.getMonth() + 1;
-                const currentAno = currentDate.getFullYear();
-                const currentMesAno = `${currentMes}-${currentAno}`;
+                const dataStr = currentDate.toISOString().split('T')[0];
+                const mes = currentDate.getMonth() + 1;
+                const ano = currentDate.getFullYear();
+                const mesAno = `${mes}-${ano}`;
                 
-                if (currentDate.getTime() !== data.getTime()) { // Não duplicar a primeira transação
-                    const transacaoRecorrente = {
-                        ...transacao,
-                        id: await getNewId('financeiro') + transacoesRecorrentes.length,
-                        data: currentDate.toISOString().split('T')[0],
-                        mesAno: currentMesAno
-                    };
-                    transacoesRecorrentes.push(transacaoRecorrente);
+                const transacao = {
+                    id: await getNewId('financeiro') + transacoes.length,
+                    profileId: profileId,
+                    tipo: document.getElementById('financeiroTipo').value,
+                    descricao: document.getElementById('financeiroDescricao').value,
+                    valor: parseFloat(document.getElementById('financeiroValor').value),
+                    categoria: document.getElementById('financeiroCategoria').value,
+                    data: dataStr,
+                    status: document.getElementById('financeiroTipo').value === 'despesa' ? document.getElementById('financeiroStatus').value : 'pago',
+                    mesAno: mesAno,
+                    recorrente: true,
+                    recorrencia: recurrence
+                };
+                
+                if (!transacao.descricao || isNaN(transacao.valor)) { 
+                    alert('Descrição e valor são obrigatórios.'); 
+                    return; 
                 }
+                
+                transacoes.push(transacao);
                 
                 // Avançar data conforme recorrência
                 if (recurrence === 'weekly') {
@@ -4336,16 +4389,43 @@ document.addEventListener('DOMContentLoaded', function() {
                     currentDate.setMonth(currentDate.getMonth() + 1);
                 }
             }
+        } else {
+            // Transação única
+            const data = new Date(dataInput);
+            const mes = data.getMonth() + 1;
+            const ano = data.getFullYear();
+            const mesAno = `${mes}-${ano}`;
             
-            // Salvar todas as transações recorrentes
-            await saveData('financeiro', transacao);
-            for (const transacaoRecorrente of transacoesRecorrentes) {
-                await saveData('financeiro', transacaoRecorrente);
+            const transacao = {
+                id: id ? parseInt(id) : await getNewId('financeiro'),
+                profileId: profileId,
+                tipo: document.getElementById('financeiroTipo').value,
+                descricao: document.getElementById('financeiroDescricao').value,
+                valor: parseFloat(document.getElementById('financeiroValor').value),
+                categoria: document.getElementById('financeiroCategoria').value,
+                data: dataInput,
+                status: document.getElementById('financeiroTipo').value === 'despesa' ? document.getElementById('financeiroStatus').value : 'pago',
+                mesAno: mesAno,
+                recorrente: false
+            };
+            
+            if (!transacao.descricao || isNaN(transacao.valor)) { 
+                alert('Descrição e valor são obrigatórios.'); 
+                return; 
             }
             
-            alert(`Transação salva com ${transacoesRecorrentes.length + 1} ocorrências!`);
-        } else {
+            transacoes.push(transacao);
+        }
+        
+        // Salvar todas as transações
+        for (const transacao of transacoes) {
             await saveData('financeiro', transacao);
+        }
+        
+        if (transacoes.length > 1) {
+            alert(`${transacoes.length} transações recorrentes salvas com sucesso!`);
+        } else {
+            alert('Transação salva com sucesso!');
         }
         
         await renderAll(); 
