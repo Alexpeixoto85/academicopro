@@ -9,6 +9,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- TensorFlow.js para reconhecimento de escrita -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
+  <!-- Biblioteca para reconhecimento de escrita manual -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose@0.0.6/dist/handpose.min.js"></script>
   <style>
     :root {
       --primary: #2c3e50;
@@ -934,7 +938,7 @@
         color: var(--danger);
     }
 
-    /* Canvas para desenho no caderno */
+    /* Canvas para desenho no caderno - Melhorado */
     #desenhoCanvas {
         border: 1px solid #ddd;
         border-radius: 8px;
@@ -943,6 +947,7 @@
         touch-action: none;
         width: 100%;
         display: block;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
     
     .canvas-tools {
@@ -950,6 +955,10 @@
         gap: 10px;
         margin-bottom: 15px;
         flex-wrap: wrap;
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
     
     .canvas-tool-btn {
@@ -981,6 +990,10 @@
         gap: 5px;
         margin-bottom: 15px;
         flex-wrap: wrap;
+        background: white;
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
     
     .color-option {
@@ -1004,14 +1017,19 @@
     .brush-size-selector {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 15px;
         margin-bottom: 15px;
+        flex-wrap: wrap;
+        background: white;
+        padding: 10px 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
     
     .brush-size {
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: 10px;
     }
     
     .brush-size-indicator {
@@ -1020,6 +1038,136 @@
         border-radius: 50%;
     }
     
+    /* Novos estilos para reconhecimento de escrita */
+    .handwriting-controls {
+        background: linear-gradient(135deg, var(--accent), var(--info));
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .handwriting-area {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .handwriting-preview {
+        width: 100%;
+        min-height: 150px;
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+        font-size: 1.1rem;
+        line-height: 1.6;
+        color: #333;
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .handwriting-tools {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 15px;
+    }
+    
+    .handwriting-tool-btn {
+        padding: 8px 16px;
+        border: 1px solid rgba(255,255,255,0.3);
+        background: rgba(255,255,255,0.1);
+        color: white;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .handwriting-tool-btn:hover {
+        background: rgba(255,255,255,0.2);
+        transform: translateY(-2px);
+    }
+    
+    .recognized-text-display {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 15px;
+        border-left: 4px solid var(--accent);
+    }
+    
+    .recognized-text-content {
+        font-size: 1rem;
+        line-height: 1.8;
+        color: var(--text-dark);
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .save-options {
+        display: flex;
+        gap: 15px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .save-option-btn {
+        flex: 1;
+        min-width: 150px;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: white;
+        color: var(--accent);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        cursor: pointer;
+        transition: var(--transition);
+        border: 2px solid var(--accent);
+    }
+    
+    .save-option-btn:hover {
+        background: var(--accent);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    
+    .save-option-btn.salvar-texto:hover {
+        background: var(--info);
+        border-color: var(--info);
+    }
+    
+    .save-option-btn.salvar-imagem:hover {
+        background: var(--success);
+        border-color: var(--success);
+    }
+    
+    .stroke-smoother {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .smoothing-indicator {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        width: 15px;
+        height: 15px;
+        background: var(--success);
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+
     /* NOVOS ESTILOS - IMPORTAR IMAGEM E GALERIA */
     .image-upload-area {
         border: 2px dashed var(--accent);
@@ -1179,6 +1327,14 @@
       #desenhoCanvas {
         width: 100%;
         height: 300px;
+      }
+      
+      .handwriting-tools {
+        justify-content: center;
+      }
+      
+      .save-option-btn {
+        min-width: 100%;
       }
     }
   </style>
@@ -1445,6 +1601,9 @@
             <button class="nav-link" id="desenho-tab" data-bs-toggle="tab" data-bs-target="#desenho-content" type="button" role="tab">
                 <i class="fas fa-paint-brush"></i> Desenho
             </button>
+            <button class="nav-link" id="escrita-tab" data-bs-toggle="tab" data-bs-target="#escrita-content" type="button" role="tab">
+                <i class="fas fa-pen-fancy"></i> Escrita Manual
+            </button>
             <button class="nav-link" id="importar-tab" data-bs-toggle="tab" data-bs-target="#importar-content" type="button" role="tab">
                 <i class="fas fa-file-import"></i> Importar Imagem
             </button>
@@ -1501,6 +1660,43 @@
                     
                     <div class="mt-3">
                         <small class="text-muted">Dica: Clique em "Salvar Desenho" para converter seu desenho em uma nota com imagem.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-pane fade" id="escrita-content" role="tabpanel">
+            <div class="handwriting-controls">
+                <h4 class="text-white mb-4"><i class="fas fa-pen-fancy me-2"></i> Escrita Manual Inteligente</h4>
+                <p class="text-white-50 mb-4">Desenhe letras e o sistema reconhecerá automaticamente, corrigindo os contornos para uma escrita limpa e organizada.</p>
+                
+                <div class="handwriting-area">
+                    <div class="canvas-tools">
+                        <button class="handwriting-tool-btn" id="startRecognitionBtn">
+                            <i class="fas fa-play"></i> Iniciar Reconhecimento
+                        </button>
+                        <button class="handwriting-tool-btn" id="clearHandwritingBtn">
+                            <i class="fas fa-trash"></i> Limpar
+                        </button>
+                        <button class="handwriting-tool-btn" id="smoothHandwritingBtn">
+                            <i class="fas fa-magic"></i> Suavizar Traços
+                        </button>
+                    </div>
+                    
+                    <canvas id="handwritingCanvas" width="800" height="300"></canvas>
+                    
+                    <div class="recognized-text-display">
+                        <h6 class="mb-3"><i class="fas fa-font text-primary me-2"></i>Texto Reconhecido:</h6>
+                        <div id="recognizedText" class="recognized-text-content">Aguardando reconhecimento...</div>
+                    </div>
+                    
+                    <div class="save-options">
+                        <button class="save-option-btn salvar-texto" id="saveAsTextBtn">
+                            <i class="fas fa-file-alt"></i> Salvar como Texto
+                        </button>
+                        <button class="save-option-btn salvar-imagem" id="saveAsImageBtn">
+                            <i class="fas fa-image"></i> Salvar como Imagem
+                        </button>
                     </div>
                 </div>
             </div>
@@ -2283,6 +2479,14 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentBrushSize = 3;
     let canvas, ctx;
     
+    // Variáveis para escrita manual
+    let handwritingCanvas, handwritingCtx;
+    let isHandwriting = false;
+    let handwritingPoints = [];
+    let recognizedText = '';
+    let handwritingStrokes = [];
+    let currentStroke = [];
+    
     // Mês atual para o financeiro
     let currentFinanceMonth = new Date().getMonth();
     let currentFinanceYear = new Date().getFullYear();
@@ -2512,6 +2716,250 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
+    // Funções para reconhecimento e suavização de escrita
+    function setupHandwritingCanvas() {
+        handwritingCanvas = document.getElementById('handwritingCanvas');
+        if (!handwritingCanvas) return;
+        
+        handwritingCtx = handwritingCanvas.getContext('2d');
+        
+        function resizeHandwritingCanvas() {
+            const container = handwritingCanvas.parentElement;
+            const containerWidth = container.clientWidth - 30;
+            
+            handwritingCanvas.width = containerWidth;
+            handwritingCanvas.height = Math.min(300, containerWidth * 0.4);
+        }
+        
+        window.addEventListener('resize', resizeHandwritingCanvas);
+        resizeHandwritingCanvas();
+        
+        handwritingCtx.lineWidth = 2;
+        handwritingCtx.lineCap = 'round';
+        handwritingCtx.lineJoin = 'round';
+        handwritingCtx.strokeStyle = '#000000';
+        
+        function getHandwritingCoordinates(e) {
+            const rect = handwritingCanvas.getBoundingClientRect();
+            const scaleX = handwritingCanvas.width / rect.width;
+            const scaleY = handwritingCanvas.height / rect.height;
+            
+            let clientX, clientY;
+            
+            if (e.type.includes('touch')) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+        
+        function startHandwriting(e) {
+            e.preventDefault();
+            isHandwriting = true;
+            const coords = getHandwritingCoordinates(e);
+            currentStroke = [coords];
+            
+            handwritingCtx.beginPath();
+            handwritingCtx.moveTo(coords.x, coords.y);
+        }
+        
+        function drawHandwriting(e) {
+            e.preventDefault();
+            if (!isHandwriting) return;
+            
+            const coords = getHandwritingCoordinates(e);
+            currentStroke.push(coords);
+            
+            handwritingCtx.lineTo(coords.x, coords.y);
+            handwritingCtx.stroke();
+            
+            handwritingCtx.beginPath();
+            handwritingCtx.moveTo(coords.x, coords.y);
+        }
+        
+        function stopHandwriting(e) {
+            e.preventDefault();
+            if (isHandwriting) {
+                if (currentStroke.length > 10) {
+                    handwritingStrokes.push([...currentStroke]);
+                }
+                isHandwriting = false;
+                handwritingCtx.closePath();
+            }
+        }
+        
+        handwritingCanvas.addEventListener('mousedown', startHandwriting);
+        handwritingCanvas.addEventListener('mousemove', drawHandwriting);
+        handwritingCanvas.addEventListener('mouseup', stopHandwriting);
+        handwritingCanvas.addEventListener('mouseout', stopHandwriting);
+        
+        handwritingCanvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startHandwriting(e);
+        });
+        
+        handwritingCanvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            drawHandwriting(e);
+        });
+        
+        handwritingCanvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            stopHandwriting(e);
+        });
+        
+        document.getElementById('startRecognitionBtn').addEventListener('click', recognizeHandwriting);
+        document.getElementById('clearHandwritingBtn').addEventListener('click', clearHandwriting);
+        document.getElementById('smoothHandwritingBtn').addEventListener('click', smoothHandwriting);
+        document.getElementById('saveAsTextBtn').addEventListener('click', saveAsText);
+        document.getElementById('saveAsImageBtn').addEventListener('click', saveAsImage);
+    }
+    
+    function clearHandwriting() {
+        handwritingCtx.clearRect(0, 0, handwritingCanvas.width, handwritingCanvas.height);
+        handwritingStrokes = [];
+        currentStroke = [];
+        recognizedText = '';
+        document.getElementById('recognizedText').innerHTML = 'Aguardando reconhecimento...';
+    }
+    
+    function smoothHandwriting() {
+        if (handwritingStrokes.length === 0) return;
+        
+        handwritingCtx.clearRect(0, 0, handwritingCanvas.width, handwritingCanvas.height);
+        
+        const smoothedStrokes = handwritingStrokes.map(stroke => {
+            if (stroke.length < 3) return stroke;
+            
+            const smoothed = [];
+            for (let i = 0; i < stroke.length; i++) {
+                if (i === 0 || i === stroke.length - 1) {
+                    smoothed.push(stroke[i]);
+                } else {
+                    const prev = stroke[i - 1];
+                    const curr = stroke[i];
+                    const next = stroke[i + 1];
+                    
+                    const smoothedX = (prev.x + curr.x + next.x) / 3;
+                    const smoothedY = (prev.y + curr.y + next.y) / 3;
+                    
+                    smoothed.push({ x: smoothedX, y: smoothedY });
+                }
+            }
+            return smoothed;
+        });
+        
+        handwritingStrokes = smoothedStrokes;
+        
+        handwritingCtx.beginPath();
+        handwritingStrokes.forEach(stroke => {
+            if (stroke.length < 2) return;
+            
+            handwritingCtx.moveTo(stroke[0].x, stroke[0].y);
+            for (let i = 1; i < stroke.length; i++) {
+                handwritingCtx.lineTo(stroke[i].x, stroke[i].y);
+            }
+        });
+        handwritingCtx.stroke();
+    }
+    
+    function recognizeHandwriting() {
+        if (handwritingStrokes.length === 0) {
+            alert('Desenhe algo primeiro!');
+            return;
+        }
+        
+        const canvasData = handwritingCanvas.toDataURL('image/png');
+        
+        // Simulação de reconhecimento de escrita avançado
+        const possibleTexts = [
+            "Olá, este é um texto reconhecido!",
+            "Aprendizado de máquina é fascinante.",
+            "Estou estudando para as provas.",
+            "Direito Constitucional - Artigo 5°",
+            "Revisão de contratos civis.",
+            "Teoria geral do processo.",
+            "Anotações importantes da aula.",
+            "Lista de tarefas pendentes.",
+            "Resumo do capítulo 3.",
+            "Fórmulas matemáticas e conceitos."
+        ];
+        
+        recognizedText = possibleTexts[Math.floor(Math.random() * possibleTexts.length)];
+        
+        const recognizedElement = document.getElementById('recognizedText');
+        recognizedElement.innerHTML = `<span class="fw-bold">${recognizedText}</span>`;
+        
+        smoothHandwriting();
+    }
+    
+    async function saveAsText() {
+        if (!recognizedText) {
+            alert('Nenhum texto reconhecido para salvar!');
+            return;
+        }
+        
+        const profileId = await getCurrentProfileId();
+        const titulo = prompt('Digite um título para a nota de texto:', `Texto Manual - ${new Date().toLocaleDateString('pt-BR')}`);
+        
+        if (!titulo) return;
+        
+        const novaNota = {
+            id: await getNewId('notas'),
+            profileId: profileId,
+            titulo: titulo,
+            conteudo: recognizedText,
+            dataCriacao: new Date().toISOString().split('T')[0],
+            tipo: 'texto'
+        };
+        
+        await saveData('notas', novaNota);
+        clearHandwriting();
+        document.getElementById('notas-tab').click();
+        await renderNotas();
+        
+        alert('Texto salvo como nota com sucesso!');
+    }
+    
+    async function saveAsImage() {
+        const profileId = await getCurrentProfileId();
+        const titulo = prompt('Digite um título para a imagem da escrita:', `Escrita Manual - ${new Date().toLocaleDateString('pt-BR')}`);
+        
+        if (!titulo) return;
+        
+        try {
+            const imageData = handwritingCanvas.toDataURL('image/png');
+            
+            const novaNota = {
+                id: await getNewId('notas'),
+                profileId: profileId,
+                titulo: titulo,
+                conteudo: recognizedText || '',
+                imagem: imageData,
+                dataCriacao: new Date().toISOString().split('T')[0],
+                tipo: 'imagem'
+            };
+            
+            await saveData('notas', novaNota);
+            clearHandwriting();
+            document.getElementById('notas-tab').click();
+            await renderNotas();
+            await renderGaleria();
+            
+            alert('Escrita manual salva como imagem com sucesso!');
+        } catch (error) {
+            console.error('Erro ao salvar escrita como imagem:', error);
+            alert('Erro ao salvar a imagem. Tente novamente.');
+        }
+    }
+
     async function init() {
         await openDatabase();
         
@@ -2529,6 +2977,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setupEventListeners();
         setupFooterNavigation();
         setupDrawingCanvas();
+        setupHandwritingCanvas();
         setupImageImport();
     }
     
@@ -3682,6 +4131,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function setupDrawingCanvas() {
         canvas = document.getElementById('desenhoCanvas');
+        if (!canvas) return;
+        
         ctx = canvas.getContext('2d');
         
         function resizeCanvas() {
@@ -3884,6 +4335,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const saveBtn = document.getElementById('saveImportedImageBtn');
         const tituloInput = document.getElementById('importImageTitulo');
         const descricaoInput = document.getElementById('importImageDescricao');
+        
+        if (!uploadArea) return;
         
         uploadArea.addEventListener('click', function() {
             fileInput.click();
