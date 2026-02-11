@@ -544,7 +544,6 @@
         padding: 0.5em;
     }
 
-    /* Financeiro - Melhorias */
     .financeiro-resumo-mensal {
         background-color: white;
         border-radius: 12px;
@@ -664,6 +663,29 @@
     }
     .nota-card:hover .nota-acoes {
         opacity: 1;
+    }
+    
+    .nota-imagem-preview {
+        max-height: 120px;
+        max-width: 100%;
+        border-radius: 8px;
+        margin-top: 10px;
+        box-shadow: var(--shadow);
+    }
+
+    .image-note-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background-color: var(--accent);
+        color: white;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
     }
 
     /* Links Importantes */
@@ -997,6 +1019,87 @@
         background-color: #333;
         border-radius: 50%;
     }
+    
+    /* NOVOS ESTILOS - IMPORTAR IMAGEM E GALERIA */
+    .image-upload-area {
+        border: 2px dashed var(--accent);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        background-color: #f8f9fa;
+        cursor: pointer;
+        transition: var(--transition);
+        margin-bottom: 15px;
+    }
+    
+    .image-upload-area:hover {
+        background-color: #e9ecef;
+        border-color: var(--primary);
+    }
+    
+    .image-preview-container {
+        position: relative;
+        display: inline-block;
+        max-width: 100%;
+    }
+    
+    .image-preview {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 8px;
+        margin-top: 10px;
+        box-shadow: var(--shadow);
+    }
+    
+    .remove-image-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background-color: rgba(220, 53, 69, 0.9);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+    
+    .remove-image-btn:hover {
+        transform: scale(1.1);
+        background-color: var(--danger);
+    }
+    
+    .galeria-container {
+        margin-top: 20px;
+    }
+    
+    .galeria-item {
+        margin-bottom: 10px;
+    }
+    
+    .galeria-imagem {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+    
+    .galeria-imagem:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    
+    .nota-imagem-full {
+        max-width: 100%;
+        max-height: 70vh;
+        object-fit: contain;
+    }
 
     @media (max-width: 768px) {
       .main-header {
@@ -1045,7 +1148,6 @@
         height: 250px;
       }
       
-      /* Rodapé em mobile */
       .footer-nav-btn {
         padding: 6px 10px;
       }
@@ -1058,12 +1160,10 @@
         font-size: 0.7rem;
       }
 
-      /* Financeiro mobile */
       .barra-mes {
         height: 150px;
       }
       
-      /* Botão home em mobile */
       .back-to-home-btn {
         top: 15px;
         right: 15px;
@@ -1071,13 +1171,11 @@
         height: 45px;
       }
       
-      /* Financeiro mes selector mobile */
       .financeiro-mes-selector {
         flex-direction: column;
         gap: 10px;
       }
       
-      /* Canvas mobile */
       #desenhoCanvas {
         width: 100%;
         height: 300px;
@@ -1091,7 +1189,6 @@
       <h2 id="main-header-title">Acadêmico Pro</h2>
   </header>
 
-  <!-- Botão Fixo para Voltar ao Início (visível apenas fora da tela inicial) -->
   <button class="back-to-home-btn" id="fixed-back-home" style="display: none;">
       <i class="fas fa-home"></i>
   </button>
@@ -1340,26 +1437,29 @@
         </div>
     </div>
     
-    <!-- Abas para alternar entre notas digitadas e desenho -->
     <div class="mb-4">
         <div class="nav nav-tabs" id="caderno-tab" role="tablist">
             <button class="nav-link active" id="notas-tab" data-bs-toggle="tab" data-bs-target="#notas-content" type="button" role="tab">
-                <i class="fas fa-sticky-note"></i> Notas Digitadas
+                <i class="fas fa-sticky-note"></i> Notas
             </button>
             <button class="nav-link" id="desenho-tab" data-bs-toggle="tab" data-bs-target="#desenho-content" type="button" role="tab">
                 <i class="fas fa-paint-brush"></i> Desenho
+            </button>
+            <button class="nav-link" id="importar-tab" data-bs-toggle="tab" data-bs-target="#importar-content" type="button" role="tab">
+                <i class="fas fa-file-import"></i> Importar Imagem
+            </button>
+            <button class="nav-link" id="galeria-tab" data-bs-toggle="tab" data-bs-target="#galeria-content" type="button" role="tab">
+                <i class="fas fa-images"></i> Galeria
             </button>
         </div>
     </div>
     
     <div class="tab-content" id="caderno-content">
-        <!-- Conteúdo das notas digitadas -->
         <div class="tab-pane fade show active" id="notas-content" role="tabpanel">
             <div class="row g-4" id="notas-lista">
             </div>
         </div>
         
-        <!-- Conteúdo do desenho -->
         <div class="tab-pane fade" id="desenho-content" role="tabpanel">
             <div class="card card-dashboard">
                 <div class="card-body">
@@ -1373,11 +1473,8 @@
                         <button class="canvas-tool-btn" id="clearCanvas" title="Limpar Tudo">
                             <i class="fas fa-trash-alt"></i>
                         </button>
-                        <button class="canvas-tool-btn" id="saveDrawing" title="Salvar Desenho como Nota">
+                        <button class="canvas-tool-btn" id="saveDrawing" title="Salvar Desenho como Imagem">
                             <i class="fas fa-save"></i>
-                        </button>
-                        <button class="canvas-tool-btn" id="loadDrawing" title="Carregar Desenho">
-                            <i class="fas fa-folder-open"></i>
                         </button>
                     </div>
                     
@@ -1403,8 +1500,57 @@
                     <canvas id="desenhoCanvas" width="800" height="500"></canvas>
                     
                     <div class="mt-3">
-                        <small class="text-muted">Dica: Clique em "Salvar Desenho" para converter seu desenho em uma nota e limpar o canvas automaticamente.</small>
+                        <small class="text-muted">Dica: Clique em "Salvar Desenho" para converter seu desenho em uma nota com imagem.</small>
                     </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-pane fade" id="importar-content" role="tabpanel">
+            <div class="card card-dashboard">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Importar Imagem para Nota</h4>
+                    
+                    <div id="imageUploadArea" class="image-upload-area">
+                        <i class="fas fa-cloud-upload-alt fa-3x mb-3" style="color: var(--accent);"></i>
+                        <h5>Clique para selecionar uma imagem</h5>
+                        <p class="text-muted mb-0">ou arraste e solte aqui</p>
+                        <input type="file" id="imageFileInput" accept="image/*" class="d-none">
+                    </div>
+                    
+                    <div id="imagePreviewContainer" style="display: none;">
+                        <div class="text-center mb-3">
+                            <div class="image-preview-container">
+                                <img id="imagePreview" class="image-preview" src="" alt="Preview">
+                                <button type="button" id="removeImageBtn" class="remove-image-btn">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <form id="importImageForm">
+                            <div class="mb-3">
+                                <label for="importImageTitulo" class="form-label">Título da Imagem</label>
+                                <input type="text" class="form-control" id="importImageTitulo" placeholder="Ex: Mapa Mental - Direito Civil" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="importImageDescricao" class="form-label">Descrição (opcional)</label>
+                                <textarea class="form-control" id="importImageDescricao" rows="3" placeholder="Adicione uma descrição para esta imagem..."></textarea>
+                            </div>
+                            <button type="button" class="btn btn-primary" id="saveImportedImageBtn">
+                                <i class="fas fa-save"></i> Salvar Imagem como Nota
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-pane fade" id="galeria-content" role="tabpanel">
+            <div class="card card-dashboard">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Galeria de Imagens</h4>
+                    <div class="row galeria-container" id="galeria-imagens-container"></div>
                 </div>
             </div>
         </div>
@@ -1435,7 +1581,6 @@
           </div>
       </div>
       
-      <!-- Seletor de Mês -->
       <div class="financeiro-mes-selector">
           <button class="btn btn-outline-primary" id="prev-month-financeiro">
               <i class="fas fa-chevron-left"></i> Mês Anterior
@@ -1446,7 +1591,6 @@
           </button>
       </div>
       
-      <!-- Resumo Financeiro do Mês -->
       <div class="row g-4 mb-4">
           <div class="col-md-4">
               <div class="card card-dashboard">
@@ -1474,7 +1618,6 @@
           </div>
       </div>
       
-      <!-- Transações do Mês -->
       <div class="card card-dashboard">
           <div class="card-body">
               <h4 class="card-title mb-3">Transações do Mês</h4>
@@ -1486,12 +1629,10 @@
           </div>
       </div>
       
-      <!-- Resumo Anual (visão rápida) -->
       <div class="card card-dashboard mt-4">
           <div class="card-body">
               <h4 class="card-title mb-3">Resumo Anual</h4>
               <div class="row" id="financeiro-resumo-anual">
-                  <!-- Será preenchido via JavaScript -->
               </div>
           </div>
       </div>
@@ -1561,7 +1702,6 @@
   </div>
 </div>
 
-<!-- RODAPÉ FIXO -->
 <div class="footer-nav">
     <button class="footer-nav-btn" id="footer-perfis">
         <i class="fas fa-users"></i>
@@ -1593,7 +1733,7 @@
               <form id="profileForm">
                   <input type="hidden" id="profileId">
                   <div class="input-group">
-                      <input type="text" class="form-control" id="profileName" placeholder="Nome do novo perfil (Ex: Direito - UFAL)" required>
+                      <input type="text" class="form-control" id="profileName" placeholder="Nome do novo perfil" required>
                       <button class="btn btn-primary" type="submit" id="saveProfileBtn">
                           <i class="fas fa-plus"></i> Adicionar
                       </button>
@@ -1900,7 +2040,7 @@
   </div>
 </div>
 <div class="modal fade" id="notaModal" tabindex="-1" aria-labelledby="notaModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
       <div class="modal-content">
           <div class="modal-header">
               <h5 class="modal-title" id="notaModalLabel">Nova Nota</h5>
@@ -1915,7 +2055,7 @@
                   </div>
                   <div class="mb-3">
                       <label for="notaConteudo" class="form-label">Conteúdo</label>
-                      <textarea class="form-control" id="notaConteudo" rows="6" required></textarea>
+                      <textarea class="form-control" id="notaConteudo" rows="6"></textarea>
                   </div>
               </form>
           </div>
@@ -2012,7 +2152,6 @@
                           <input type="number" class="form-control" id="filmeTempoAtual" min="0" placeholder="Minuto onde parou">
                           <span class="input-group-text">min</span>
                       </div>
-                      <small class="form-text text-muted">Informe o minuto onde parou de assistir para continuar depois</small>
                   </div>
                   <div class="mb-3">
                       <label for="filmeAnotacao" class="form-label">Anotações</label>
@@ -2101,14 +2240,17 @@
   </div>
 </div>
 
-<div class="modal fade viewer-modal" id="viewerModal" tabindex="-1" aria-labelledby="viewerModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+<div class="modal fade" id="viewImageModal" tabindex="-1" aria-labelledby="viewImageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <div class="modal-header">
+        <h5 class="modal-title" id="viewImageModalLabel">Visualizar Imagem</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body" id="viewerModalBody">
-        </div>
+      <div class="modal-body text-center">
+        <img id="modalImage" class="nota-imagem-full" src="" alt="Imagem da Nota">
+        <p id="modalImageDescription" class="mt-3"></p>
+      </div>
     </div>
   </div>
 </div>
@@ -2140,12 +2282,13 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentColor = '#000000';
     let currentBrushSize = 3;
     let canvas, ctx;
-    let canvasOffsetX = 0;
-    let canvasOffsetY = 0;
     
     // Mês atual para o financeiro
     let currentFinanceMonth = new Date().getMonth();
     let currentFinanceYear = new Date().getFullYear();
+    
+    // Imagem importada
+    let importedImageData = null;
 
     // Abrir/Criar o banco de dados IndexedDB
     function openDatabase() {
@@ -2166,7 +2309,6 @@ document.addEventListener('DOMContentLoaded', function() {
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
                 
-                // Criar object stores para cada tipo de dado
                 if (!db.objectStoreNames.contains('profiles')) {
                     const profileStore = db.createObjectStore('profiles', { keyPath: 'id', autoIncrement: true });
                     profileStore.createIndex('currentProfileId', 'currentProfileId', { unique: false });
@@ -2216,22 +2358,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!db.objectStoreNames.contains('notas')) {
                     const notaStore = db.createObjectStore('notas', { keyPath: 'id' });
                     notaStore.createIndex('profileId', 'profileId', { unique: false });
+                    notaStore.createIndex('tipo', 'tipo', { unique: false });
                 }
                 
                 if (!db.objectStoreNames.contains('links')) {
                     const linkStore = db.createObjectStore('links', { keyPath: 'id' });
                     linkStore.createIndex('profileId', 'profileId', { unique: false });
                 }
-                
-                if (!db.objectStoreNames.contains('desenhos')) {
-                    const desenhoStore = db.createObjectStore('desenhos', { keyPath: 'id' });
-                    desenhoStore.createIndex('profileId', 'profileId', { unique: false });
-                }
             };
         });
     }
 
-    // Funções para manipular dados no IndexedDB
     async function saveData(storeName, data) {
         return new Promise((resolve, reject) => {
             const transaction = db.transaction([storeName], 'readwrite');
@@ -2318,7 +2455,6 @@ document.addEventListener('DOMContentLoaded', function() {
     async function getCurrentProfileId() {
         const profiles = await getAllData('profiles');
         if (profiles.length === 0) {
-            // Criar perfil padrão
             const defaultProfile = {
                 id: 1,
                 name: "Perfil Principal",
@@ -2336,7 +2472,6 @@ document.addEventListener('DOMContentLoaded', function() {
     async function switchProfile(profileId) {
         currentProfileId = profileId;
         
-        // Atualizar o perfil atual no objeto profile
         const profiles = await getAllData('profiles');
         for (const profile of profiles) {
             profile.currentProfileId = (profile.id === profileId) ? profileId : null;
@@ -2377,16 +2512,13 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
-    // Inicialização
     async function init() {
         await openDatabase();
         
-        // Verificar se há dados iniciais
         const profileId = await getCurrentProfileId();
         const disciplinas = await getAllData('disciplinas', 'profileId', profileId);
         
         if (disciplinas.length === 0) {
-            // Criar dados iniciais
             await createInitialData();
         }
         
@@ -2397,6 +2529,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setupEventListeners();
         setupFooterNavigation();
         setupDrawingCanvas();
+        setupImageImport();
     }
     
     async function createInitialData() {
@@ -2442,15 +2575,14 @@ document.addEventListener('DOMContentLoaded', function() {
         ];
         
         const initialNotas = [
-            { id: 1, profileId, titulo: "Minhas primeiras anotações", conteudo: "Aqui você pode criar todas as suas anotações importantes para o semestre.\n\nDica: Clique em uma nota para visualizá-la completa ou use os botões para editar/excluir.", dataCriacao: new Date().toISOString().split('T')[0] },
-            { id: 2, profileId, titulo: "Lista de Tarefas", conteudo: "1. Revisar matéria de Direito Civil\n2. Preparar apresentação do grupo\n3. Estudar para prova de Penal", dataCriacao: new Date().toISOString().split('T')[0] }
+            { id: 1, profileId, titulo: "Minhas primeiras anotações", conteudo: "Aqui você pode criar todas as suas anotações importantes para o semestre.", dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto' },
+            { id: 2, profileId, titulo: "Lista de Tarefas", conteudo: "1. Revisar matéria de Direito Civil\n2. Preparar apresentação do grupo\n3. Estudar para prova de Penal", dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto' }
         ];
         
         const initialLinks = [
             { id: 1, profileId, titulo: "Biblioteca Virtual", url: "https://www.example.com/biblioteca", categoria: "Recursos", descricao: "Acesso a livros e artigos" }
         ];
         
-        // Salvar todos os dados iniciais
         for (const item of initialDisciplinas) await saveData('disciplinas', item);
         for (const item of initialHorarios) await saveData('horarios', item);
         for (const item of initialTrabalhos) await saveData('trabalhos', item);
@@ -2478,6 +2610,7 @@ document.addEventListener('DOMContentLoaded', function() {
         await renderFinanceiro();
         await renderRelatorios();
         await populateDisciplinaSelects();
+        await renderGaleria();
         
         updateFixedBackButton();
         updateFooterNavigation();
@@ -2995,6 +3128,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        const profileData = await getProfileData();
         events.forEach(evento => {
             let disciplinaNome = '';
             if (evento.disciplinaId) {
@@ -3143,35 +3277,102 @@ document.addEventListener('DOMContentLoaded', function() {
         const profileData = await getProfileData();
         const container = document.getElementById('notas-lista');
         container.innerHTML = '';
-        if (!profileData.notas || profileData.notas.length === 0) {
-            container.innerHTML = `<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Nova Nota" para começar a usar o seu caderno.</p></div></div>`;
+        
+        const notasOrdenadas = profileData.notas.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
+        
+        if (notasOrdenadas.length === 0) {
+            container.innerHTML = `<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Nova Nota", desenhe algo ou importe uma imagem para começar.</p></div></div>`;
             return;
         }
-        profileData.notas.forEach(nota => {
+        
+        notasOrdenadas.forEach(nota => {
             const dataCriacao = new Date(nota.dataCriacao || Date.now()).toLocaleDateString('pt-BR');
-            const conteudoPreview = nota.conteudo.length > 150 ? nota.conteudo.substring(0, 150) + '...' : nota.conteudo;
+            const isImagem = nota.tipo === 'imagem' || nota.tipo === 'desenho' || nota.imagem;
             
-            const card = `
-                <div class="col-md-6 col-lg-4">
-                  <div class="card nota-card card-dashboard" data-id="${nota.id}">
-                    <div class="card-body">
-                      <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h5 class="card-title">${nota.titulo}</h5>
-                        <div class="nota-acoes">
-                          <button class="btn btn-sm btn-outline-primary edit-nota" data-id="${nota.id}"><i class="fas fa-edit"></i></button>
-                          <button class="btn btn-sm btn-outline-danger delete-nota" data-id="${nota.id}"><i class="fas fa-trash"></i></button>
+            if (isImagem) {
+                const card = `
+                    <div class="col-md-6 col-lg-4">
+                      <div class="card nota-card card-dashboard" data-id="${nota.id}" data-tipo="imagem">
+                        <div class="card-body">
+                          <div class="image-note-badge">
+                            <i class="fas fa-image"></i>
+                          </div>
+                          <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="card-title">${nota.titulo}</h5>
+                            <div class="nota-acoes">
+                              <button class="btn btn-sm btn-outline-primary edit-nota" data-id="${nota.id}"><i class="fas fa-edit"></i></button>
+                              <button class="btn btn-sm btn-outline-danger delete-nota" data-id="${nota.id}"><i class="fas fa-trash"></i></button>
+                            </div>
+                          </div>
+                          <div class="text-center">
+                            <img src="${nota.imagem}" class="nota-imagem-preview" alt="${nota.titulo}">
+                          </div>
+                          ${nota.conteudo ? `<p class="card-text mt-2 small">${nota.conteudo}</p>` : ''}
+                          <div class="mt-3">
+                            <small class="nota-data">Criado em: ${dataCriacao}</small>
+                          </div>
+                          <button class="btn btn-sm btn-primary mt-2 view-image-btn" data-imagem="${nota.imagem}" data-titulo="${nota.titulo}">
+                            <i class="fas fa-eye"></i> Visualizar Imagem
+                          </button>
                         </div>
                       </div>
-                      <div class="nota-conteudo">
-                        <p class="card-text">${conteudoPreview.replace(/\n/g, '<br>')}</p>
+                    </div>`;
+                container.innerHTML += card;
+            } else {
+                const conteudoPreview = nota.conteudo.length > 150 ? nota.conteudo.substring(0, 150) + '...' : nota.conteudo;
+                
+                const card = `
+                    <div class="col-md-6 col-lg-4">
+                      <div class="card nota-card card-dashboard" data-id="${nota.id}" data-tipo="texto">
+                        <div class="card-body">
+                          <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="card-title">${nota.titulo}</h5>
+                            <div class="nota-acoes">
+                              <button class="btn btn-sm btn-outline-primary edit-nota" data-id="${nota.id}"><i class="fas fa-edit"></i></button>
+                              <button class="btn btn-sm btn-outline-danger delete-nota" data-id="${nota.id}"><i class="fas fa-trash"></i></button>
+                            </div>
+                          </div>
+                          <div class="nota-conteudo">
+                            <p class="card-text">${conteudoPreview.replace(/\n/g, '<br>')}</p>
+                          </div>
+                          <div class="mt-3">
+                            <small class="nota-data">Criado em: ${dataCriacao}</small>
+                          </div>
+                        </div>
                       </div>
-                      <div class="mt-3">
-                        <small class="nota-data">Criado em: ${dataCriacao}</small>
-                      </div>
+                    </div>`;
+                container.innerHTML += card;
+            }
+        });
+    }
+
+    async function renderGaleria() {
+        const profileData = await getProfileData();
+        const container = document.getElementById('galeria-imagens-container');
+        container.innerHTML = '';
+        
+        const imagens = profileData.notas.filter(n => n.tipo === 'imagem' || n.tipo === 'desenho' || n.imagem);
+        
+        if (imagens.length === 0) {
+            container.innerHTML = `<div class="col-12"><p class="text-center text-muted">Nenhuma imagem na galeria ainda. Importe uma imagem ou faça um desenho!</p></div>`;
+            return;
+        }
+        
+        imagens.forEach(imagem => {
+            container.innerHTML += `
+                <div class="col-md-4 col-lg-3 galeria-item">
+                    <div class="card">
+                        <img src="${imagem.imagem}" class="galeria-imagem" alt="${imagem.titulo}" 
+                             onclick="document.getElementById('modalImage').src='${imagem.imagem}'; 
+                                      document.getElementById('modalImageDescription').innerText='${imagem.titulo}'; 
+                                      new bootstrap.Modal(document.getElementById('viewImageModal')).show();">
+                        <div class="card-body p-2">
+                            <p class="card-text small mb-0">${imagem.titulo}</p>
+                            <small class="text-muted">${new Date(imagem.dataCriacao).toLocaleDateString('pt-BR')}</small>
+                        </div>
                     </div>
-                  </div>
-                </div>`;
-            container.innerHTML += card;
+                </div>
+            `;
         });
     }
 
@@ -3212,7 +3413,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function renderFinanceiro() {
-        // Atualizar exibição do mês atual
         const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         document.getElementById('financeiro-mes-atual').textContent = `${meses[currentFinanceMonth]} ${currentFinanceYear}`;
         
@@ -3220,11 +3420,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('financeiro-transacoes-mes');
         container.innerHTML = '';
         
-        // Filtrar transações do mês atual
         const mesAnoAtual = `${currentFinanceMonth + 1}-${currentFinanceYear}`;
         const transacoesMes = profileData.financeiro.filter(t => t.mesAno === mesAnoAtual);
         
-        // Calcular totais
         let totalReceitas = 0;
         let totalDespesas = 0;
         
@@ -3238,14 +3436,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const saldoMes = totalReceitas - totalDespesas;
         
-        // Atualizar totais
         document.getElementById('financeiro-total-receitas-mes').textContent = totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         document.getElementById('financeiro-total-despesas-mes').textContent = totalDespesas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const saldoEl = document.getElementById('financeiro-saldo-mes');
         saldoEl.textContent = saldoMes.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         saldoEl.className = saldoMes >= 0 ? 'text-success' : 'text-danger';
         
-        // Agrupar transações por dia
         const transacoesPorDia = {};
         transacoesMes.forEach(t => {
             const dia = new Date(t.data).getDate();
@@ -3255,14 +3451,12 @@ document.addEventListener('DOMContentLoaded', function() {
             transacoesPorDia[dia].push(t);
         });
         
-        // Ordenar dias
         const diasOrdenados = Object.keys(transacoesPorDia).sort((a, b) => b - a);
         
         if (diasOrdenados.length === 0) {
             container.innerHTML = `<div class="empty-state"><p>Nenhuma transação neste mês.</p></div>`;
         } else {
             diasOrdenados.forEach(dia => {
-                // Calcular total do dia
                 let totalDiaReceitas = 0;
                 let totalDiaDespesas = 0;
                 
@@ -3285,7 +3479,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                 `;
                 
-                // Adicionar transações do dia
                 transacoesPorDia[dia].sort((a, b) => new Date(b.data) - new Date(a.data)).forEach(t => {
                     let statusBadge = '';
                     if (t.tipo === 'despesa') {
@@ -3318,7 +3511,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Renderizar resumo anual
         await renderResumoAnual();
     }
     
@@ -3327,7 +3519,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('financeiro-resumo-anual');
         container.innerHTML = '';
         
-        // Agrupar por mês
         const transacoesPorMes = {};
         profileData.financeiro.forEach(t => {
             if (!transacoesPorMes[t.mesAno]) {
@@ -3341,13 +3532,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Ordenar meses (mais recente primeiro)
         const mesesOrdenados = Object.keys(transacoesPorMes).sort((a, b) => {
             const [mesA, anoA] = a.split('-').map(Number);
             const [mesB, anoB] = b.split('-').map(Number);
             if (anoA !== anoB) return anoB - anoA;
             return mesB - mesA;
-        }).slice(0, 6); // Últimos 6 meses
+        }).slice(0, 6);
         
         const mesesNomes = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
         
@@ -3494,34 +3684,22 @@ document.addEventListener('DOMContentLoaded', function() {
         canvas = document.getElementById('desenhoCanvas');
         ctx = canvas.getContext('2d');
         
-        // Obter posição do canvas
-        const canvasRect = canvas.getBoundingClientRect();
-        canvasOffsetX = canvasRect.left;
-        canvasOffsetY = canvasRect.top;
-        
-        // Ajustar tamanho do canvas para a tela
         function resizeCanvas() {
             const container = canvas.parentElement;
-            const containerWidth = container.clientWidth - 30; // Margens
+            const containerWidth = container.clientWidth - 30;
             
             canvas.width = containerWidth;
-            canvas.height = Math.min(500, containerWidth * 0.625); // Altura proporcional
-            
-            // Recarregar desenho salvo após redimensionar
-            loadSavedDrawing();
+            canvas.height = Math.min(500, containerWidth * 0.625);
         }
         
-        // Configurações iniciais
         ctx.lineWidth = currentBrushSize;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.strokeStyle = currentColor;
         
-        // Redimensionar canvas quando a janela mudar de tamanho
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
         
-        // Função para obter coordenadas corretas do mouse/touch
         function getCanvasCoordinates(e) {
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
@@ -3569,13 +3747,11 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.closePath();
         }
         
-        // Event listeners para desenho com mouse
         canvas.addEventListener('mousedown', startDrawing);
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('mouseup', stopDrawing);
         canvas.addEventListener('mouseout', stopDrawing);
         
-        // Suporte a toque
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
             const touch = e.touches[0];
@@ -3602,7 +3778,6 @@ document.addEventListener('DOMContentLoaded', function() {
             canvas.dispatchEvent(mouseEvent);
         });
         
-        // Ferramentas
         document.getElementById('pencilTool').addEventListener('click', () => {
             setActiveTool('pencil');
             currentTool = 'pencil';
@@ -3617,10 +3792,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         document.getElementById('clearCanvas').addEventListener('click', clearCanvas);
-        document.getElementById('saveDrawing').addEventListener('click', saveDrawingAsNota); // Função modificada
-        document.getElementById('loadDrawing').addEventListener('click', loadDrawing);
+        document.getElementById('saveDrawing').addEventListener('click', saveDrawingAsImage);
         
-        // Seletor de cores
         document.querySelectorAll('.color-option').forEach(option => {
             option.addEventListener('click', function() {
                 document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('active'));
@@ -3632,7 +3805,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         
-        // Tamanho do pincel
         const brushSizeSlider = document.getElementById('brushSize');
         const brushSizeValue = document.getElementById('brushSizeValue');
         
@@ -3641,9 +3813,6 @@ document.addEventListener('DOMContentLoaded', function() {
             brushSizeValue.textContent = `${currentBrushSize}px`;
             ctx.lineWidth = currentBrushSize;
         });
-        
-        // Carregar desenho salvo
-        loadSavedDrawing();
     }
     
     function setActiveTool(tool) {
@@ -3657,14 +3826,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // NOVA FUNÇÃO: Salvar desenho como nota e limpar canvas
-    async function saveDrawingAsNota() {
+    async function saveDrawingAsImage() {
         if (!canvas || canvas.width === 0 || canvas.height === 0) {
             alert('Não há desenho para salvar.');
             return;
         }
         
-        // Verificar se o canvas não está vazio
         const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
         const isCanvasEmpty = pixelData.every(pixel => pixel === 0);
         
@@ -3676,86 +3843,156 @@ document.addEventListener('DOMContentLoaded', function() {
         const profileId = await getCurrentProfileId();
         const titulo = prompt('Digite um título para o desenho:', `Desenho - ${new Date().toLocaleDateString('pt-BR')}`);
         
-        if (!titulo) return; // Usuário cancelou
+        if (!titulo) return;
         
         try {
-            // Converter o canvas para imagem
             const drawingData = canvas.toDataURL('image/png');
             
-            // Criar uma nova nota com a imagem
             const novaNota = {
                 id: await getNewId('notas'),
                 profileId: profileId,
                 titulo: titulo,
-                conteudo: `[DESENHO SALVO]\n\nClique no link abaixo para visualizar o desenho completo:\n${drawingData}`,
+                conteudo: '',
+                imagem: drawingData,
                 dataCriacao: new Date().toISOString().split('T')[0],
-                tipo: 'desenho',
-                imagem: drawingData
+                tipo: 'desenho'
             };
             
             await saveData('notas', novaNota);
             
-            // Limpar o canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Remover o desenho salvo do IndexedDB (opcional - para não acumular)
-            try {
-                const desenhos = await getAllData('desenhos', 'profileId', profileId);
-                if (desenhos.length > 0) {
-                    await deleteData('desenhos', desenhos[0].id);
-                }
-            } catch (e) {
-                console.log('Nenhum desenho salvo para remover');
-            }
-            
-            // Alternar para a aba de notas para mostrar o resultado
             document.getElementById('notas-tab').click();
             
             await renderNotas();
-            alert('Desenho salvo como nota com sucesso!');
+            await renderGaleria();
+            
+            alert('Desenho salvo como imagem com sucesso!');
             
         } catch (error) {
-            console.error('Erro ao salvar desenho como nota:', error);
+            console.error('Erro ao salvar desenho como imagem:', error);
             alert('Erro ao salvar o desenho. Tente novamente.');
         }
     }
-    
-    async function loadDrawing() {
-        const profileId = await getCurrentProfileId();
-        const drawings = await getAllData('desenhos', 'profileId', profileId);
+
+    function setupImageImport() {
+        const uploadArea = document.getElementById('imageUploadArea');
+        const fileInput = document.getElementById('imageFileInput');
+        const previewContainer = document.getElementById('imagePreviewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const removeBtn = document.getElementById('removeImageBtn');
+        const saveBtn = document.getElementById('saveImportedImageBtn');
+        const tituloInput = document.getElementById('importImageTitulo');
+        const descricaoInput = document.getElementById('importImageDescricao');
         
-        if (drawings.length > 0) {
-            const drawing = drawings[0];
-            const img = new Image();
-            img.onload = function() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0);
-            };
-            img.src = drawing.data;
-            alert('Desenho carregado com sucesso!');
-        } else {
-            alert('Nenhum desenho salvo encontrado.');
-        }
-    }
-    
-    async function loadSavedDrawing() {
-        const profileId = await getCurrentProfileId();
-        const drawings = await getAllData('desenhos', 'profileId', profileId);
+        uploadArea.addEventListener('click', function() {
+            fileInput.click();
+        });
         
-        if (drawings.length > 0) {
-            const drawing = drawings[0];
-            const img = new Image();
-            img.onload = function() {
-                ctx.drawImage(img, 0, 0);
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.backgroundColor = '#e9ecef';
+            this.style.borderColor = 'var(--primary)';
+        });
+        
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.backgroundColor = '#f8f9fa';
+            this.style.borderColor = 'var(--accent)';
+        });
+        
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.backgroundColor = '#f8f9fa';
+            this.style.borderColor = 'var(--accent)';
+            
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                handleImageFile(e.dataTransfer.files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                handleImageFile(this.files[0]);
+            }
+        });
+        
+        function handleImageFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Por favor, selecione um arquivo de imagem válido.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                importedImageData = e.target.result;
+                imagePreview.src = importedImageData;
+                previewContainer.style.display = 'block';
+                uploadArea.style.display = 'none';
+                
+                const hoje = new Date().toLocaleDateString('pt-BR');
+                tituloInput.value = `Imagem - ${hoje}`;
+                descricaoInput.value = '';
             };
-            img.src = drawing.data;
+            reader.readAsDataURL(file);
         }
+        
+        removeBtn.addEventListener('click', function() {
+            importedImageData = null;
+            imagePreview.src = '';
+            previewContainer.style.display = 'none';
+            uploadArea.style.display = 'block';
+            fileInput.value = '';
+            tituloInput.value = '';
+            descricaoInput.value = '';
+        });
+        
+        saveBtn.addEventListener('click', async function() {
+            if (!importedImageData) {
+                alert('Nenhuma imagem selecionada.');
+                return;
+            }
+            
+            const titulo = tituloInput.value.trim();
+            if (!titulo) {
+                alert('O título da imagem é obrigatório.');
+                return;
+            }
+            
+            const profileId = await getCurrentProfileId();
+            
+            const novaNota = {
+                id: await getNewId('notas'),
+                profileId: profileId,
+                titulo: titulo,
+                conteudo: descricaoInput.value.trim(),
+                imagem: importedImageData,
+                dataCriacao: new Date().toISOString().split('T')[0],
+                tipo: 'imagem'
+            };
+            
+            await saveData('notas', novaNota);
+            
+            importedImageData = null;
+            imagePreview.src = '';
+            previewContainer.style.display = 'none';
+            uploadArea.style.display = 'block';
+            fileInput.value = '';
+            tituloInput.value = '';
+            descricaoInput.value = '';
+            
+            document.getElementById('notas-tab').click();
+            
+            await renderNotas();
+            await renderGaleria();
+            
+            alert('Imagem importada e salva como nota com sucesso!');
+        });
     }
 
     function setupEventListeners() {
         document.getElementById('fixed-back-home').addEventListener('click', goToHome);
         
-        // Navegação entre meses no financeiro
         document.getElementById('prev-month-financeiro').addEventListener('click', () => {
             if (currentFinanceMonth === 0) {
                 currentFinanceMonth = 11;
@@ -3788,9 +4025,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateFixedBackButton();
                 updateFooterNavigation();
                 
-                // Se for para o caderno, carregar desenho salvo
                 if (targetId === 'caderno') {
-                    setTimeout(loadSavedDrawing, 100);
+                    setTimeout(() => {
+                        const desenhoTab = document.getElementById('desenho-tab');
+                        if (desenhoTab && canvas) {
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        }
+                    }, 100);
                 }
             }
             
@@ -3827,44 +4068,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const notaCard = e.target.closest('.nota-card');
-            if (notaCard && !e.target.closest('.nota-acoes')) {
+            if (notaCard && !e.target.closest('.nota-acoes') && !e.target.closest('.view-image-btn')) {
                 const notaId = notaCard.dataset.id;
                 const profileData = await getProfileData();
                 const nota = profileData.notas.find(n => n.id == notaId);
+                
                 if (nota) {
-                    // Verificar se a nota contém um desenho
                     if (nota.imagem) {
-                        // Abrir modal com visualizador de imagem
-                        alert('Esta nota contém um desenho salvo como imagem.');
-                        
-                        // Opcional: criar um modal para visualizar a imagem
-                        const modalHtml = `
-                            <div class="modal fade" id="viewDrawingModal" tabindex="-1">
-                                <div class="modal-dialog modal-lg">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">${nota.titulo}</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body text-center">
-                                            <img src="${nota.imagem}" style="max-width: 100%; height: auto;">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        
-                        // Remover modal existente se houver
-                        const existingModal = document.getElementById('viewDrawingModal');
-                        if (existingModal) existingModal.remove();
-                        
-                        // Adicionar ao DOM
-                        document.body.insertAdjacentHTML('beforeend', modalHtml);
-                        
-                        // Mostrar modal
-                        const modal = new bootstrap.Modal(document.getElementById('viewDrawingModal'));
-                        modal.show();
-                        
+                        document.getElementById('modalImage').src = nota.imagem;
+                        document.getElementById('modalImageDescription').innerText = nota.titulo;
+                        new bootstrap.Modal(document.getElementById('viewImageModal')).show();
                     } else {
                         document.getElementById('notaModalLabel').textContent = 'Visualizar Nota';
                         document.getElementById('notaTitulo').value = nota.titulo;
@@ -3879,6 +4092,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         modal.show();
                     }
                 }
+            }
+            
+            const viewImageBtn = e.target.closest('.view-image-btn');
+            if (viewImageBtn) {
+                e.preventDefault();
+                const imagem = viewImageBtn.dataset.imagem;
+                const titulo = viewImageBtn.dataset.titulo;
+                document.getElementById('modalImage').src = imagem;
+                document.getElementById('modalImageDescription').innerText = titulo;
+                new bootstrap.Modal(document.getElementById('viewImageModal')).show();
             }
 
             const watchFilmeBtn = e.target.closest('.watch-filme');
@@ -3972,14 +4195,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 const profileData = await getProfileData();
                 const nota = profileData.notas.find(n => n.id == notaId);
                 if (nota) {
-                    document.getElementById('notaModalLabel').textContent = 'Editar Nota';
-                    document.getElementById('notaTitulo').value = nota.titulo;
-                    document.getElementById('notaConteudo').value = nota.conteudo;
-                    document.getElementById('notaId').value = nota.id;
-                    document.getElementById('deleteNota').style.display = 'block';
-                    
-                    const modal = new bootstrap.Modal(document.getElementById('notaModal'));
-                    modal.show();
+                    if (nota.imagem) {
+                        document.getElementById('modalImage').src = nota.imagem;
+                        document.getElementById('modalImageDescription').innerText = nota.titulo;
+                        new bootstrap.Modal(document.getElementById('viewImageModal')).show();
+                    } else {
+                        document.getElementById('notaModalLabel').textContent = 'Editar Nota';
+                        document.getElementById('notaTitulo').value = nota.titulo;
+                        document.getElementById('notaConteudo').value = nota.conteudo;
+                        document.getElementById('notaId').value = nota.id;
+                        document.getElementById('notaTitulo').readOnly = false;
+                        document.getElementById('notaConteudo').readOnly = false;
+                        document.getElementById('saveNota').style.display = 'block';
+                        document.getElementById('deleteNota').style.display = 'block';
+                        
+                        const modal = new bootstrap.Modal(document.getElementById('notaModal'));
+                        modal.show();
+                    }
                 }
             }
             else if (target.matches('.delete-nota')) {
@@ -3988,7 +4220,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const notaId = target.dataset.id;
                 if (confirm('Tem certeza que deseja excluir esta nota permanentemente?')) {
                     await deleteData('notas', parseInt(notaId));
-                    renderAll();
+                    await renderAll();
                 }
             }
         });
@@ -4021,7 +4253,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Gerenciamento de Perfis
         document.getElementById('profileForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const profileNameInput = document.getElementById('profileName');
@@ -4032,14 +4263,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!name) { alert("O nome do perfil é obrigatório."); return; }
 
             if (id) {
-                // Editar perfil existente
                 const profile = await getData('profiles', id);
                 if (profile) {
                     profile.name = name;
                     await saveData('profiles', profile);
                 }
             } else {
-                // Criar novo perfil
                 const profiles = await getAllData('profiles');
                 const newProfile = {
                     id: profiles.length > 0 ? Math.max(...profiles.map(p => p.id)) + 1 : 1,
@@ -4123,7 +4352,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('deleteHorario').addEventListener('click', deleteHorario);
         
         document.getElementById('backup-btn').addEventListener('click', async () => {
-            // Coletar todos os dados do IndexedDB
             const backupData = {
                 profiles: await getAllData('profiles'),
                 disciplinas: await getAllData('disciplinas'),
@@ -4135,8 +4363,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 biblioteca: await getAllData('biblioteca'),
                 filmes: await getAllData('filmes'),
                 notas: await getAllData('notas'),
-                links: await getAllData('links'),
-                desenhos: await getAllData('desenhos')
+                links: await getAllData('links')
             };
             
             const dataStr = JSON.stringify(backupData, null, 2);
@@ -4159,10 +4386,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 try {
                     const restoredData = JSON.parse(e.target.result);
                     
-                    // Limpar todos os dados atuais
                     const objectStoreNames = [
                         'profiles', 'disciplinas', 'horarios', 'trabalhos', 'provas', 
-                        'eventos', 'financeiro', 'biblioteca', 'filmes', 'notas', 'links', 'desenhos'
+                        'eventos', 'financeiro', 'biblioteca', 'filmes', 'notas', 'links'
                     ];
                     
                     for (const storeName of objectStoreNames) {
@@ -4176,7 +4402,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                     }
                     
-                    // Restaurar dados
                     for (const storeName in restoredData) {
                         if (restoredData.hasOwnProperty(storeName)) {
                             for (const item of restoredData[storeName]) {
@@ -4246,7 +4471,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const profileId = await getCurrentProfileId();
             
             if (itemType === 'disciplinas') {
-                // Excluir também trabalhos, provas e horários relacionados
                 const profileData = await getProfileData();
                 const trabalhosRelacionados = profileData.trabalhos.filter(t => t.disciplinaId == itemId);
                 const provasRelacionadas = profileData.provas.filter(p => p.disciplinaId == itemId);
@@ -4406,7 +4630,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let transacoes = [];
         
         if (recurrence !== 'none' && recurrenceEndDate) {
-            // Criar múltiplas transações recorrentes
             let currentDate = new Date(dataInput);
             const endDate = new Date(recurrenceEndDate);
             
@@ -4442,7 +4665,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 transacoes.push(transacao);
                 
-                // Avançar data conforme recorrência
                 if (recurrence === 'weekly') {
                     currentDate.setDate(currentDate.getDate() + 7);
                 } else if (recurrence === 'monthly') {
@@ -4450,7 +4672,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         } else {
-            // Transação única
             const data = new Date(dataInput);
             const mes = data.getMonth() + 1;
             const ano = data.getFullYear();
@@ -4477,7 +4698,6 @@ document.addEventListener('DOMContentLoaded', function() {
             transacoes.push(transacao);
         }
         
-        // Salvar todas as transações
         for (const transacao of transacoes) {
             await saveData('financeiro', transacao);
         }
@@ -4500,10 +4720,11 @@ document.addEventListener('DOMContentLoaded', function() {
             profileId: profileId,
             titulo: document.getElementById('notaTitulo').value,
             conteudo: document.getElementById('notaConteudo').value,
-            dataCriacao: new Date().toISOString().split('T')[0]
+            dataCriacao: new Date().toISOString().split('T')[0],
+            tipo: 'texto'
         };
-        if (!nota.titulo || !nota.conteudo) {
-            alert('Título e conteúdo são obrigatórios.');
+        if (!nota.titulo) {
+            alert('O título é obrigatório.');
             return;
         }
         
@@ -4714,7 +4935,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </li>`;
         });
 
-        // Adicionar event listeners para os botões
         document.querySelectorAll('.switch-profile').forEach(btn => {
             btn.addEventListener('click', async function(e) {
                 e.preventDefault();
@@ -4747,11 +4967,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (profiles.length === 1) return;
                 
                 if (confirm('Tem certeza que deseja excluir este perfil? Todos os dados serão perdidos.')) {
-                    // Excluir perfil
                     await deleteData('profiles', profileId);
                     
-                    // Excluir todos os dados relacionados a este perfil
-                    const stores = ['disciplinas', 'horarios', 'trabalhos', 'provas', 'eventos', 'financeiro', 'biblioteca', 'filmes', 'notas', 'links', 'desenhos'];
+                    const stores = ['disciplinas', 'horarios', 'trabalhos', 'provas', 'eventos', 'financeiro', 'biblioteca', 'filmes', 'notas', 'links'];
                     
                     for (const storeName of stores) {
                         const items = await getAllData(storeName, 'profileId', profileId);
