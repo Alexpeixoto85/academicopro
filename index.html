@@ -1373,7 +1373,7 @@
                         <button class="canvas-tool-btn" id="clearCanvas" title="Limpar Tudo">
                             <i class="fas fa-trash-alt"></i>
                         </button>
-                        <button class="canvas-tool-btn" id="saveDrawing" title="Salvar Desenho">
+                        <button class="canvas-tool-btn" id="saveDrawing" title="Salvar Desenho como Nota">
                             <i class="fas fa-save"></i>
                         </button>
                         <button class="canvas-tool-btn" id="loadDrawing" title="Carregar Desenho">
@@ -1403,7 +1403,7 @@
                     <canvas id="desenhoCanvas" width="800" height="500"></canvas>
                     
                     <div class="mt-3">
-                        <small class="text-muted">Dica: Use o lápis para desenhar e a borracha para apagar. O desenho é salvo automaticamente no IndexedDB.</small>
+                        <small class="text-muted">Dica: Clique em "Salvar Desenho" para converter seu desenho em uma nota e limpar o canvas automaticamente.</small>
                     </div>
                 </div>
             </div>
@@ -3567,7 +3567,6 @@ document.addEventListener('DOMContentLoaded', function() {
         function stopDrawing() {
             isDrawing = false;
             ctx.closePath();
-            saveDrawingToDB(); // Salvar automaticamente ao parar de desenhar
         }
         
         // Event listeners para desenho com mouse
@@ -3618,7 +3617,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         document.getElementById('clearCanvas').addEventListener('click', clearCanvas);
-        document.getElementById('saveDrawing').addEventListener('click', saveDrawing);
+        document.getElementById('saveDrawing').addEventListener('click', saveDrawingAsNota); // Função modificada
         document.getElementById('loadDrawing').addEventListener('click', loadDrawing);
         
         // Seletor de cores
@@ -3655,23 +3654,70 @@ document.addEventListener('DOMContentLoaded', function() {
     function clearCanvas() {
         if (confirm('Tem certeza que deseja limpar o desenho?')) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            saveDrawingToDB(); // Salvar canvas vazio
         }
     }
     
-    async function saveDrawing() {
+    // NOVA FUNÇÃO: Salvar desenho como nota e limpar canvas
+    async function saveDrawingAsNota() {
+        if (!canvas || canvas.width === 0 || canvas.height === 0) {
+            alert('Não há desenho para salvar.');
+            return;
+        }
+        
+        // Verificar se o canvas não está vazio
+        const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        const isCanvasEmpty = pixelData.every(pixel => pixel === 0);
+        
+        if (isCanvasEmpty) {
+            alert('O canvas está vazio. Faça um desenho antes de salvar.');
+            return;
+        }
+        
         const profileId = await getCurrentProfileId();
-        const drawingData = canvas.toDataURL('image/png');
+        const titulo = prompt('Digite um título para o desenho:', `Desenho - ${new Date().toLocaleDateString('pt-BR')}`);
         
-        const drawing = {
-            id: 1,
-            profileId: profileId,
-            data: drawingData,
-            dataCriacao: new Date().toISOString()
-        };
+        if (!titulo) return; // Usuário cancelou
         
-        await saveData('desenhos', drawing);
-        alert('Desenho salvo com sucesso!');
+        try {
+            // Converter o canvas para imagem
+            const drawingData = canvas.toDataURL('image/png');
+            
+            // Criar uma nova nota com a imagem
+            const novaNota = {
+                id: await getNewId('notas'),
+                profileId: profileId,
+                titulo: titulo,
+                conteudo: `[DESENHO SALVO]\n\nClique no link abaixo para visualizar o desenho completo:\n${drawingData}`,
+                dataCriacao: new Date().toISOString().split('T')[0],
+                tipo: 'desenho',
+                imagem: drawingData
+            };
+            
+            await saveData('notas', novaNota);
+            
+            // Limpar o canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Remover o desenho salvo do IndexedDB (opcional - para não acumular)
+            try {
+                const desenhos = await getAllData('desenhos', 'profileId', profileId);
+                if (desenhos.length > 0) {
+                    await deleteData('desenhos', desenhos[0].id);
+                }
+            } catch (e) {
+                console.log('Nenhum desenho salvo para remover');
+            }
+            
+            // Alternar para a aba de notas para mostrar o resultado
+            document.getElementById('notas-tab').click();
+            
+            await renderNotas();
+            alert('Desenho salvo como nota com sucesso!');
+            
+        } catch (error) {
+            console.error('Erro ao salvar desenho como nota:', error);
+            alert('Erro ao salvar o desenho. Tente novamente.');
+        }
     }
     
     async function loadDrawing() {
@@ -3705,27 +3751,6 @@ document.addEventListener('DOMContentLoaded', function() {
             img.src = drawing.data;
         }
     }
-    
-    async function saveDrawingToDB() {
-        const profileId = await getCurrentProfileId();
-        const drawingData = canvas.toDataURL('image/png');
-        
-        const drawing = {
-            id: 1,
-            profileId: profileId,
-            data: drawingData,
-            dataCriacao: new Date().toISOString()
-        };
-        
-        await saveData('desenhos', drawing);
-    }
-    
-    // Auto-save do desenho a cada 30 segundos
-    setInterval(async () => {
-        if (document.getElementById('desenho-content').classList.contains('active')) {
-            await saveDrawingToDB();
-        }
-    }, 30000);
 
     function setupEventListeners() {
         document.getElementById('fixed-back-home').addEventListener('click', goToHome);
@@ -3807,17 +3832,52 @@ document.addEventListener('DOMContentLoaded', function() {
                 const profileData = await getProfileData();
                 const nota = profileData.notas.find(n => n.id == notaId);
                 if (nota) {
-                    document.getElementById('notaModalLabel').textContent = 'Visualizar Nota';
-                    document.getElementById('notaTitulo').value = nota.titulo;
-                    document.getElementById('notaConteudo').value = nota.conteudo;
-                    document.getElementById('notaId').value = nota.id;
-                    document.getElementById('notaTitulo').readOnly = true;
-                    document.getElementById('notaConteudo').readOnly = true;
-                    document.getElementById('saveNota').style.display = 'none';
-                    document.getElementById('deleteNota').style.display = 'none';
-                    
-                    const modal = new bootstrap.Modal(document.getElementById('notaModal'));
-                    modal.show();
+                    // Verificar se a nota contém um desenho
+                    if (nota.imagem) {
+                        // Abrir modal com visualizador de imagem
+                        alert('Esta nota contém um desenho salvo como imagem.');
+                        
+                        // Opcional: criar um modal para visualizar a imagem
+                        const modalHtml = `
+                            <div class="modal fade" id="viewDrawingModal" tabindex="-1">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">${nota.titulo}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body text-center">
+                                            <img src="${nota.imagem}" style="max-width: 100%; height: auto;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Remover modal existente se houver
+                        const existingModal = document.getElementById('viewDrawingModal');
+                        if (existingModal) existingModal.remove();
+                        
+                        // Adicionar ao DOM
+                        document.body.insertAdjacentHTML('beforeend', modalHtml);
+                        
+                        // Mostrar modal
+                        const modal = new bootstrap.Modal(document.getElementById('viewDrawingModal'));
+                        modal.show();
+                        
+                    } else {
+                        document.getElementById('notaModalLabel').textContent = 'Visualizar Nota';
+                        document.getElementById('notaTitulo').value = nota.titulo;
+                        document.getElementById('notaConteudo').value = nota.conteudo;
+                        document.getElementById('notaId').value = nota.id;
+                        document.getElementById('notaTitulo').readOnly = true;
+                        document.getElementById('notaConteudo').readOnly = true;
+                        document.getElementById('saveNota').style.display = 'none';
+                        document.getElementById('deleteNota').style.display = 'none';
+                        
+                        const modal = new bootstrap.Modal(document.getElementById('notaModal'));
+                        modal.show();
+                    }
                 }
             }
 
