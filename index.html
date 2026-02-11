@@ -1249,6 +1249,100 @@
         object-fit: contain;
     }
 
+    /* MODAL ESCRITA MANUAL EM TELA CHEIA */
+    .handwriting-fullscreen-modal .modal-dialog {
+        max-width: 100%;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .handwriting-fullscreen-modal .modal-content {
+        height: 100vh;
+        border-radius: 0;
+        border: none;
+        background: linear-gradient(135deg, var(--accent), var(--info));
+    }
+    
+    .handwriting-fullscreen-modal .modal-header {
+        border-radius: 0;
+        background-color: rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+    }
+    
+    .handwriting-fullscreen-modal .modal-body {
+        height: calc(100vh - 70px);
+        overflow-y: auto;
+        padding: 30px;
+    }
+    
+    .handwriting-fullscreen-modal .handwriting-controls {
+        margin-bottom: 0;
+        background: transparent;
+        box-shadow: none;
+        padding: 0;
+    }
+    
+    .handwriting-fullscreen-modal .handwriting-area {
+        min-height: 500px;
+    }
+    
+    .handwriting-fullscreen-modal #handwritingCanvas {
+        width: 100%;
+        height: 500px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+    
+    .handwriting-fullscreen-modal .handwriting-tools {
+        justify-content: center;
+    }
+    
+    .handwriting-fullscreen-modal .handwriting-tool-btn {
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.5);
+        font-size: 1.1rem;
+        padding: 12px 24px;
+    }
+    
+    .handwriting-fullscreen-modal .handwriting-tool-btn:hover {
+        background: rgba(255,255,255,0.3);
+    }
+    
+    .handwriting-fullscreen-modal .recognized-text-display {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-top: 25px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .handwriting-fullscreen-modal .save-option-btn {
+        min-width: 200px;
+        padding: 15px;
+        font-size: 1.1rem;
+    }
+    
+    .btn-fullscreen {
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: 15px;
+    }
+    
+    .btn-fullscreen:hover {
+        background: rgba(255,255,255,0.3);
+        transform: translateY(-2px);
+    }
+
     @media (max-width: 768px) {
       .main-header {
         flex-direction: column;
@@ -1335,6 +1429,26 @@
       
       .save-option-btn {
         min-width: 100%;
+      }
+      
+      .handwriting-fullscreen-modal .handwriting-area {
+        min-height: 300px;
+      }
+      
+      .handwriting-fullscreen-modal #handwritingCanvas {
+        height: 300px;
+      }
+      
+      .handwriting-fullscreen-modal .handwriting-tool-btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+      }
+      
+      .btn-fullscreen {
+        margin-left: 0;
+        margin-top: 10px;
+        width: 100%;
+        justify-content: center;
       }
     }
   </style>
@@ -1667,7 +1781,12 @@
         
         <div class="tab-pane fade" id="escrita-content" role="tabpanel">
             <div class="handwriting-controls">
-                <h4 class="text-white mb-4"><i class="fas fa-pen-fancy me-2"></i> Escrita Manual Inteligente</h4>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="text-white mb-0"><i class="fas fa-pen-fancy me-2"></i> Escrita Manual Inteligente</h4>
+                    <button class="btn-fullscreen" id="fullscreenHandwritingBtn">
+                        <i class="fas fa-expand"></i> Tela Cheia
+                    </button>
+                </div>
                 <p class="text-white-50 mb-4">Desenhe letras e o sistema reconhecerá automaticamente, corrigindo os contornos para uma escrita limpa e organizada.</p>
                 
                 <div class="handwriting-area">
@@ -2451,6 +2570,53 @@
   </div>
 </div>
 
+<!-- MODAL DE ESCRITA MANUAL EM TELA CHEIA -->
+<div class="modal fade handwriting-fullscreen-modal" id="handwritingFullscreenModal" tabindex="-1" aria-labelledby="handwritingFullscreenModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-white" id="handwritingFullscreenModalLabel">
+          <i class="fas fa-pen-fancy me-2"></i> Escrita Manual - Tela Cheia
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="handwriting-controls h-100">
+          <div class="handwriting-area h-100 d-flex flex-column">
+            <div class="canvas-tools">
+              <button class="handwriting-tool-btn" id="fullscreenStartRecognitionBtn">
+                <i class="fas fa-play"></i> Reconhecer
+              </button>
+              <button class="handwriting-tool-btn" id="fullscreenClearHandwritingBtn">
+                <i class="fas fa-trash"></i> Limpar
+              </button>
+              <button class="handwriting-tool-btn" id="fullscreenSmoothHandwritingBtn">
+                <i class="fas fa-magic"></i> Suavizar
+              </button>
+            </div>
+            
+            <canvas id="fullscreenHandwritingCanvas" width="1200" height="600" style="width: 100%; height: 60vh; background: white; border-radius: 12px;"></canvas>
+            
+            <div class="recognized-text-display mt-3">
+              <h6 class="mb-3"><i class="fas fa-font text-primary me-2"></i>Texto Reconhecido:</h6>
+              <div id="fullscreenRecognizedText" class="recognized-text-content">Aguardando reconhecimento...</div>
+            </div>
+            
+            <div class="save-options mt-3">
+              <button class="save-option-btn salvar-texto" id="fullscreenSaveAsTextBtn">
+                <i class="fas fa-file-alt"></i> Salvar como Texto
+              </button>
+              <button class="save-option-btn salvar-imagem" id="fullscreenSaveAsImageBtn">
+                <i class="fas fa-image"></i> Salvar como Imagem
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
@@ -2481,11 +2647,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Variáveis para escrita manual
     let handwritingCanvas, handwritingCtx;
+    let fullscreenHandwritingCanvas, fullscreenHandwritingCtx;
     let isHandwriting = false;
+    let isFullscreenHandwriting = false;
     let handwritingPoints = [];
     let recognizedText = '';
+    let fullscreenRecognizedText = '';
     let handwritingStrokes = [];
+    let fullscreenHandwritingStrokes = [];
     let currentStroke = [];
+    let currentFullscreenStroke = [];
     
     // Mês atual para o financeiro
     let currentFinanceMonth = new Date().getMonth();
@@ -2718,6 +2889,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Funções para reconhecimento e suavização de escrita
     function setupHandwritingCanvas() {
+        // Canvas principal
         handwritingCanvas = document.getElementById('handwritingCanvas');
         if (!handwritingCanvas) return;
         
@@ -2729,6 +2901,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             handwritingCanvas.width = containerWidth;
             handwritingCanvas.height = Math.min(300, containerWidth * 0.4);
+            
+            // Redesenhar strokes após resize
+            redrawHandwritingStrokes();
         }
         
         window.addEventListener('resize', resizeHandwritingCanvas);
@@ -2739,10 +2914,10 @@ document.addEventListener('DOMContentLoaded', function() {
         handwritingCtx.lineJoin = 'round';
         handwritingCtx.strokeStyle = '#000000';
         
-        function getHandwritingCoordinates(e) {
-            const rect = handwritingCanvas.getBoundingClientRect();
-            const scaleX = handwritingCanvas.width / rect.width;
-            const scaleY = handwritingCanvas.height / rect.height;
+        function getHandwritingCoordinates(e, canvasElement) {
+            const rect = canvasElement.getBoundingClientRect();
+            const scaleX = canvasElement.width / rect.width;
+            const scaleY = canvasElement.height / rect.height;
             
             let clientX, clientY;
             
@@ -2763,7 +2938,7 @@ document.addEventListener('DOMContentLoaded', function() {
         function startHandwriting(e) {
             e.preventDefault();
             isHandwriting = true;
-            const coords = getHandwritingCoordinates(e);
+            const coords = getHandwritingCoordinates(e, handwritingCanvas);
             currentStroke = [coords];
             
             handwritingCtx.beginPath();
@@ -2774,7 +2949,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             if (!isHandwriting) return;
             
-            const coords = getHandwritingCoordinates(e);
+            const coords = getHandwritingCoordinates(e, handwritingCanvas);
             currentStroke.push(coords);
             
             handwritingCtx.lineTo(coords.x, coords.y);
@@ -2820,6 +2995,164 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('smoothHandwritingBtn').addEventListener('click', smoothHandwriting);
         document.getElementById('saveAsTextBtn').addEventListener('click', saveAsText);
         document.getElementById('saveAsImageBtn').addEventListener('click', saveAsImage);
+        
+        // Configurar canvas em tela cheia
+        setupFullscreenHandwritingCanvas();
+    }
+    
+    function setupFullscreenHandwritingCanvas() {
+        fullscreenHandwritingCanvas = document.getElementById('fullscreenHandwritingCanvas');
+        if (!fullscreenHandwritingCanvas) return;
+        
+        fullscreenHandwritingCtx = fullscreenHandwritingCanvas.getContext('2d');
+        
+        function resizeFullscreenHandwritingCanvas() {
+            const container = fullscreenHandwritingCanvas.parentElement;
+            const containerWidth = container.clientWidth - 40;
+            const containerHeight = container.clientHeight - 200;
+            
+            fullscreenHandwritingCanvas.width = containerWidth;
+            fullscreenHandwritingCanvas.height = Math.min(600, containerHeight);
+            
+            fullscreenHandwritingCtx.lineWidth = 2;
+            fullscreenHandwritingCtx.lineCap = 'round';
+            fullscreenHandwritingCtx.lineJoin = 'round';
+            fullscreenHandwritingCtx.strokeStyle = '#000000';
+            
+            // Redesenhar strokes após resize
+            redrawFullscreenHandwritingStrokes();
+        }
+        
+        window.addEventListener('resize', resizeFullscreenHandwritingCanvas);
+        
+        function getFullscreenHandwritingCoordinates(e) {
+            const rect = fullscreenHandwritingCanvas.getBoundingClientRect();
+            const scaleX = fullscreenHandwritingCanvas.width / rect.width;
+            const scaleY = fullscreenHandwritingCanvas.height / rect.height;
+            
+            let clientX, clientY;
+            
+            if (e.type.includes('touch')) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+        
+        function startFullscreenHandwriting(e) {
+            e.preventDefault();
+            isFullscreenHandwriting = true;
+            const coords = getFullscreenHandwritingCoordinates(e);
+            currentFullscreenStroke = [coords];
+            
+            fullscreenHandwritingCtx.beginPath();
+            fullscreenHandwritingCtx.moveTo(coords.x, coords.y);
+        }
+        
+        function drawFullscreenHandwriting(e) {
+            e.preventDefault();
+            if (!isFullscreenHandwriting) return;
+            
+            const coords = getFullscreenHandwritingCoordinates(e);
+            currentFullscreenStroke.push(coords);
+            
+            fullscreenHandwritingCtx.lineTo(coords.x, coords.y);
+            fullscreenHandwritingCtx.stroke();
+            
+            fullscreenHandwritingCtx.beginPath();
+            fullscreenHandwritingCtx.moveTo(coords.x, coords.y);
+        }
+        
+        function stopFullscreenHandwriting(e) {
+            e.preventDefault();
+            if (isFullscreenHandwriting) {
+                if (currentFullscreenStroke.length > 10) {
+                    fullscreenHandwritingStrokes.push([...currentFullscreenStroke]);
+                }
+                isFullscreenHandwriting = false;
+                fullscreenHandwritingCtx.closePath();
+            }
+        }
+        
+        fullscreenHandwritingCanvas.addEventListener('mousedown', startFullscreenHandwriting);
+        fullscreenHandwritingCanvas.addEventListener('mousemove', drawFullscreenHandwriting);
+        fullscreenHandwritingCanvas.addEventListener('mouseup', stopFullscreenHandwriting);
+        fullscreenHandwritingCanvas.addEventListener('mouseout', stopFullscreenHandwriting);
+        
+        fullscreenHandwritingCanvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startFullscreenHandwriting(e);
+        });
+        
+        fullscreenHandwritingCanvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            drawFullscreenHandwriting(e);
+        });
+        
+        fullscreenHandwritingCanvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            stopFullscreenHandwriting(e);
+        });
+        
+        document.getElementById('fullscreenStartRecognitionBtn').addEventListener('click', recognizeFullscreenHandwriting);
+        document.getElementById('fullscreenClearHandwritingBtn').addEventListener('click', clearFullscreenHandwriting);
+        document.getElementById('fullscreenSmoothHandwritingBtn').addEventListener('click', smoothFullscreenHandwriting);
+        document.getElementById('fullscreenSaveAsTextBtn').addEventListener('click', saveFullscreenAsText);
+        document.getElementById('fullscreenSaveAsImageBtn').addEventListener('click', saveFullscreenAsImage);
+        
+        document.getElementById('fullscreenHandwritingBtn').addEventListener('click', function() {
+            // Sincronizar strokes do canvas principal para o fullscreen
+            fullscreenHandwritingStrokes = handwritingStrokes.map(stroke => 
+                stroke.map(point => ({...point}))
+            );
+            redrawFullscreenHandwritingStrokes();
+            
+            const modal = new bootstrap.Modal(document.getElementById('handwritingFullscreenModal'));
+            modal.show();
+            
+            setTimeout(() => {
+                resizeFullscreenHandwritingCanvas();
+            }, 100);
+        });
+    }
+    
+    function redrawHandwritingStrokes() {
+        handwritingCtx.clearRect(0, 0, handwritingCanvas.width, handwritingCanvas.height);
+        
+        handwritingCtx.beginPath();
+        handwritingStrokes.forEach(stroke => {
+            if (stroke.length < 2) return;
+            
+            handwritingCtx.moveTo(stroke[0].x, stroke[0].y);
+            for (let i = 1; i < stroke.length; i++) {
+                handwritingCtx.lineTo(stroke[i].x, stroke[i].y);
+            }
+        });
+        handwritingCtx.stroke();
+    }
+    
+    function redrawFullscreenHandwritingStrokes() {
+        if (!fullscreenHandwritingCtx) return;
+        
+        fullscreenHandwritingCtx.clearRect(0, 0, fullscreenHandwritingCanvas.width, fullscreenHandwritingCanvas.height);
+        
+        fullscreenHandwritingCtx.beginPath();
+        fullscreenHandwritingStrokes.forEach(stroke => {
+            if (stroke.length < 2) return;
+            
+            fullscreenHandwritingCtx.moveTo(stroke[0].x, stroke[0].y);
+            for (let i = 1; i < stroke.length; i++) {
+                fullscreenHandwritingCtx.lineTo(stroke[i].x, stroke[i].y);
+            }
+        });
+        fullscreenHandwritingCtx.stroke();
     }
     
     function clearHandwriting() {
@@ -2828,6 +3161,14 @@ document.addEventListener('DOMContentLoaded', function() {
         currentStroke = [];
         recognizedText = '';
         document.getElementById('recognizedText').innerHTML = 'Aguardando reconhecimento...';
+    }
+    
+    function clearFullscreenHandwriting() {
+        fullscreenHandwritingCtx.clearRect(0, 0, fullscreenHandwritingCanvas.width, fullscreenHandwritingCanvas.height);
+        fullscreenHandwritingStrokes = [];
+        currentFullscreenStroke = [];
+        fullscreenRecognizedText = '';
+        document.getElementById('fullscreenRecognizedText').innerHTML = 'Aguardando reconhecimento...';
     }
     
     function smoothHandwriting() {
@@ -2870,13 +3211,51 @@ document.addEventListener('DOMContentLoaded', function() {
         handwritingCtx.stroke();
     }
     
+    function smoothFullscreenHandwriting() {
+        if (fullscreenHandwritingStrokes.length === 0) return;
+        
+        fullscreenHandwritingCtx.clearRect(0, 0, fullscreenHandwritingCanvas.width, fullscreenHandwritingCanvas.height);
+        
+        const smoothedStrokes = fullscreenHandwritingStrokes.map(stroke => {
+            if (stroke.length < 3) return stroke;
+            
+            const smoothed = [];
+            for (let i = 0; i < stroke.length; i++) {
+                if (i === 0 || i === stroke.length - 1) {
+                    smoothed.push(stroke[i]);
+                } else {
+                    const prev = stroke[i - 1];
+                    const curr = stroke[i];
+                    const next = stroke[i + 1];
+                    
+                    const smoothedX = (prev.x + curr.x + next.x) / 3;
+                    const smoothedY = (prev.y + curr.y + next.y) / 3;
+                    
+                    smoothed.push({ x: smoothedX, y: smoothedY });
+                }
+            }
+            return smoothed;
+        });
+        
+        fullscreenHandwritingStrokes = smoothedStrokes;
+        
+        fullscreenHandwritingCtx.beginPath();
+        fullscreenHandwritingStrokes.forEach(stroke => {
+            if (stroke.length < 2) return;
+            
+            fullscreenHandwritingCtx.moveTo(stroke[0].x, stroke[0].y);
+            for (let i = 1; i < stroke.length; i++) {
+                fullscreenHandwritingCtx.lineTo(stroke[i].x, stroke[i].y);
+            }
+        });
+        fullscreenHandwritingCtx.stroke();
+    }
+    
     function recognizeHandwriting() {
         if (handwritingStrokes.length === 0) {
             alert('Desenhe algo primeiro!');
             return;
         }
-        
-        const canvasData = handwritingCanvas.toDataURL('image/png');
         
         // Simulação de reconhecimento de escrita avançado
         const possibleTexts = [
@@ -2898,6 +3277,34 @@ document.addEventListener('DOMContentLoaded', function() {
         recognizedElement.innerHTML = `<span class="fw-bold">${recognizedText}</span>`;
         
         smoothHandwriting();
+    }
+    
+    function recognizeFullscreenHandwriting() {
+        if (fullscreenHandwritingStrokes.length === 0) {
+            alert('Desenhe algo primeiro!');
+            return;
+        }
+        
+        // Simulação de reconhecimento de escrita avançado
+        const possibleTexts = [
+            "Olá, este é um texto reconhecido em tela cheia!",
+            "Aprendizado de máquina é fascinante.",
+            "Estou estudando para as provas.",
+            "Direito Constitucional - Artigo 5°",
+            "Revisão de contratos civis.",
+            "Teoria geral do processo.",
+            "Anotações importantes da aula.",
+            "Lista de tarefas pendentes.",
+            "Resumo do capítulo 3.",
+            "Fórmulas matemáticas e conceitos."
+        ];
+        
+        fullscreenRecognizedText = possibleTexts[Math.floor(Math.random() * possibleTexts.length)];
+        
+        const recognizedElement = document.getElementById('fullscreenRecognizedText');
+        recognizedElement.innerHTML = `<span class="fw-bold">${fullscreenRecognizedText}</span>`;
+        
+        smoothFullscreenHandwriting();
     }
     
     async function saveAsText() {
@@ -2928,6 +3335,45 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('Texto salvo como nota com sucesso!');
     }
     
+    async function saveFullscreenAsText() {
+        if (!fullscreenRecognizedText) {
+            alert('Nenhum texto reconhecido para salvar!');
+            return;
+        }
+        
+        const profileId = await getCurrentProfileId();
+        const titulo = prompt('Digite um título para a nota de texto:', `Texto Manual - ${new Date().toLocaleDateString('pt-BR')}`);
+        
+        if (!titulo) return;
+        
+        const novaNota = {
+            id: await getNewId('notas'),
+            profileId: profileId,
+            titulo: titulo,
+            conteudo: fullscreenRecognizedText,
+            dataCriacao: new Date().toISOString().split('T')[0],
+            tipo: 'texto'
+        };
+        
+        await saveData('notas', novaNota);
+        
+        // Sincronizar strokes do fullscreen para o canvas principal
+        handwritingStrokes = fullscreenHandwritingStrokes.map(stroke => 
+            stroke.map(point => ({...point}))
+        );
+        redrawHandwritingStrokes();
+        recognizedText = fullscreenRecognizedText;
+        document.getElementById('recognizedText').innerHTML = `<span class="fw-bold">${fullscreenRecognizedText}</span>`;
+        
+        clearFullscreenHandwriting();
+        
+        bootstrap.Modal.getInstance(document.getElementById('handwritingFullscreenModal')).hide();
+        document.getElementById('notas-tab').click();
+        await renderNotas();
+        
+        alert('Texto salvo como nota com sucesso!');
+    }
+    
     async function saveAsImage() {
         const profileId = await getCurrentProfileId();
         const titulo = prompt('Digite um título para a imagem da escrita:', `Escrita Manual - ${new Date().toLocaleDateString('pt-BR')}`);
@@ -2949,6 +3395,49 @@ document.addEventListener('DOMContentLoaded', function() {
             
             await saveData('notas', novaNota);
             clearHandwriting();
+            document.getElementById('notas-tab').click();
+            await renderNotas();
+            await renderGaleria();
+            
+            alert('Escrita manual salva como imagem com sucesso!');
+        } catch (error) {
+            console.error('Erro ao salvar escrita como imagem:', error);
+            alert('Erro ao salvar a imagem. Tente novamente.');
+        }
+    }
+    
+    async function saveFullscreenAsImage() {
+        const profileId = await getCurrentProfileId();
+        const titulo = prompt('Digite um título para a imagem da escrita:', `Escrita Manual - ${new Date().toLocaleDateString('pt-BR')}`);
+        
+        if (!titulo) return;
+        
+        try {
+            const imageData = fullscreenHandwritingCanvas.toDataURL('image/png');
+            
+            const novaNota = {
+                id: await getNewId('notas'),
+                profileId: profileId,
+                titulo: titulo,
+                conteudo: fullscreenRecognizedText || '',
+                imagem: imageData,
+                dataCriacao: new Date().toISOString().split('T')[0],
+                tipo: 'imagem'
+            };
+            
+            await saveData('notas', novaNota);
+            
+            // Sincronizar strokes do fullscreen para o canvas principal
+            handwritingStrokes = fullscreenHandwritingStrokes.map(stroke => 
+                stroke.map(point => ({...point}))
+            );
+            redrawHandwritingStrokes();
+            recognizedText = fullscreenRecognizedText;
+            document.getElementById('recognizedText').innerHTML = `<span class="fw-bold">${fullscreenRecognizedText}</span>`;
+            
+            clearFullscreenHandwriting();
+            
+            bootstrap.Modal.getInstance(document.getElementById('handwritingFullscreenModal')).hide();
             document.getElementById('notas-tab').click();
             await renderNotas();
             await renderGaleria();
@@ -4762,6 +5251,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if(modal.id === 'linkModal') modalTitle.textContent = 'Novo Link';
                     if(modal.id === 'anotacaoFilmeModal') modalTitle.textContent = 'Anotação do Filme/Vídeo';
                     if(modal.id === 'videoPlayerModal') modalTitle.textContent = 'Visualizador de Vídeo';
+                    if(modal.id === 'handwritingFullscreenModal') modalTitle.textContent = 'Escrita Manual - Tela Cheia';
                 }
                 
                 if(modal.id === 'financeiroModal') {
@@ -4786,6 +5276,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     currentVideoTime = 0;
                     const videoPlayer = document.getElementById('videoPlayer');
                     if (videoPlayer) videoPlayer.src = '';
+                }
+                
+                if(modal.id === 'handwritingFullscreenModal') {
+                    // Limpar strokes do fullscreen ao fechar o modal
+                    clearFullscreenHandwriting();
                 }
             });
         });
