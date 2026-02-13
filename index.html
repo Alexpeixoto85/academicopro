@@ -2250,6 +2250,11 @@
                       <label for="trabalhoNota" class="form-label">Nota (0 a 10)</label>
                       <input type="number" step="0.1" class="form-control" id="trabalhoNota" min="0" max="10">
                   </div>
+                  <!-- NOVO CAMPO OBSERVAÇÕES -->
+                  <div class="mb-3">
+                      <label for="trabalhoObservacoes" class="form-label">Observações</label>
+                      <textarea class="form-control" id="trabalhoObservacoes" rows="3" placeholder="Observações adicionais..."></textarea>
+                  </div>
               </form>
           </div>
           <div class="modal-footer">
@@ -3710,8 +3715,8 @@ document.addEventListener('DOMContentLoaded', function() {
         ];
         
         const initialTrabalhos = [
-            { id: 1, profileId, disciplinaId: 1, titulo: "Estudo de Caso - Contratos", entrega: "2025-09-25", status: "Pendente", prioridade: "high", nota: null },
-            { id: 2, profileId, disciplinaId: 2, titulo: "Análise Constitucional", entrega: "2025-10-10", status: "Entregue", prioridade: "medium", nota: 8.5 }
+            { id: 1, profileId, disciplinaId: 1, titulo: "Estudo de Caso - Contratos", entrega: "2025-09-25", status: "Pendente", prioridade: "high", nota: null, observacoes: "Entregar no e-mail do professor" },
+            { id: 2, profileId, disciplinaId: 2, titulo: "Análise Constitucional", entrega: "2025-10-10", status: "Entregue", prioridade: "medium", nota: 8.5, observacoes: "Trabalho em grupo, nota compartilhada" }
         ];
         
         const initialProvas = [
@@ -5828,7 +5833,8 @@ document.addEventListener('DOMContentLoaded', function() {
             entrega: document.getElementById('trabalhoEntrega').value,
             status: document.getElementById('trabalhoStatus').value,
             prioridade: document.getElementById('trabalhoPrioridade').value,
-            nota: document.getElementById('trabalhoNota').value === '' ? null : parseFloat(document.getElementById('trabalhoNota').value)
+            nota: document.getElementById('trabalhoNota').value === '' ? null : parseFloat(document.getElementById('trabalhoNota').value),
+            observacoes: document.getElementById('trabalhoObservacoes').value  // NOVO CAMPO
         };
         if (!trabalho.disciplinaId || !trabalho.titulo || !trabalho.entrega) { alert('Preencha os campos obrigatórios.'); return; }
         
