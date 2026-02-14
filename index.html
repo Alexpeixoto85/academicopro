@@ -15,6 +15,7 @@
   <!-- LameJS para codificação MP3 -->
   <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.0/lame.min.js"></script>
   <style>
+    /* (mesmo estilo do original, mantido integralmente) */
     :root {
       --primary: #2c3e50;
       --secondary: #34495e;
@@ -429,7 +430,6 @@
     .schedule-grid {
         display: grid;
         grid-template-columns: 80px repeat(6, 1fr);
-        grid-auto-rows: 50px;
         gap: 5px;
         min-width: 800px;
     }
@@ -1372,6 +1372,27 @@
         margin-top: 10px;
     }
 
+    /* NOVO: Controles de filtro de horários */
+    .schedule-filter {
+        background: white;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    .schedule-filter label {
+        font-weight: 500;
+        margin-right: 5px;
+    }
+    .schedule-filter .form-control {
+        width: 80px;
+        display: inline-block;
+    }
+
     @media (max-width: 768px) {
       .main-header {
         flex-direction: column;
@@ -1600,6 +1621,15 @@
                   <i class="fas fa-plus"></i> Nova Aula
               </button>
           </div>
+      </div>
+      <!-- NOVO: Filtro de período -->
+      <div class="schedule-filter">
+          <label>Mostrar horários de:</label>
+          <input type="number" id="filterStartHour" min="0" max="23" value="7" class="form-control">
+          <label>até</label>
+          <input type="number" id="filterEndHour" min="0" max="23" value="22" class="form-control">
+          <button class="btn btn-sm btn-primary" id="applyHourFilter"><i class="fas fa-filter"></i> Filtrar</button>
+          <button class="btn btn-sm btn-secondary" id="resetHourFilter"><i class="fas fa-undo"></i> Reset</button>
       </div>
       <div class="schedule-grid-wrapper">
           <div class="schedule-grid" id="schedule-grid-container">
@@ -2103,7 +2133,7 @@
     </button>
 </div>
 
-<!-- MODAIS -->
+<!-- MODAIS (mantidos idênticos ao original) -->
 <div class="modal fade" id="profileManagementModal" tabindex="-1" aria-labelledby="profileManagementModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -2774,6 +2804,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let mediaRecorder;
     // ---------------------------------------------
 
+    // NOVO: Variáveis para filtro de horários
+    let scheduleStartHour = 7;
+    let scheduleEndHour = 22;
+
     // Abrir/Criar o banco de dados IndexedDB
     function openDatabase() {
         return new Promise((resolve, reject) => {
@@ -2968,19 +3002,21 @@ document.addEventListener('DOMContentLoaded', function() {
         updateFixedBackButton();
     }
 
+    // MELHORIA: carregar todos os dados do perfil em paralelo (Promise.all)
     async function getProfileData() {
         const profileId = await getCurrentProfileId();
-        
-        const disciplinas = await getAllData('disciplinas', 'profileId', profileId);
-        const horarios = await getAllData('horarios', 'profileId', profileId);
-        const trabalhos = await getAllData('trabalhos', 'profileId', profileId);
-        const provas = await getAllData('provas', 'profileId', profileId);
-        const eventos = await getAllData('eventos', 'profileId', profileId);
-        const financeiro = await getAllData('financeiro', 'profileId', profileId);
-        const biblioteca = await getAllData('biblioteca', 'profileId', profileId);
-        const filmes = await getAllData('filmes', 'profileId', profileId);
-        const notas = await getAllData('notas', 'profileId', profileId);
-        const links = await getAllData('links', 'profileId', profileId);
+        const [disciplinas, horarios, trabalhos, provas, eventos, financeiro, biblioteca, filmes, notas, links] = await Promise.all([
+            getAllData('disciplinas', 'profileId', profileId),
+            getAllData('horarios', 'profileId', profileId),
+            getAllData('trabalhos', 'profileId', profileId),
+            getAllData('provas', 'profileId', profileId),
+            getAllData('eventos', 'profileId', profileId),
+            getAllData('financeiro', 'profileId', profileId),
+            getAllData('biblioteca', 'profileId', profileId),
+            getAllData('filmes', 'profileId', profileId),
+            getAllData('notas', 'profileId', profileId),
+            getAllData('links', 'profileId', profileId)
+        ]);
         
         return {
             disciplinas: disciplinas || [],
@@ -3698,6 +3734,10 @@ document.addEventListener('DOMContentLoaded', function() {
         setupHandwritingCanvas();
         setupImageImport();
         setupAudioRecording(); // NOVO: inicializa gravação de áudio
+
+        // NOVO: Inicializa inputs do filtro de horários
+        document.getElementById('filterStartHour').value = scheduleStartHour;
+        document.getElementById('filterEndHour').value = scheduleEndHour;
     }
     
     async function createInitialData() {
@@ -3767,7 +3807,7 @@ document.addEventListener('DOMContentLoaded', function() {
         await renderProximoEventoCard();
         await renderDashboard();
         await renderDisciplinas();
-        await renderHorarios();
+        await renderHorarios();   // usa scheduleStartHour e scheduleEndHour
         await renderTrabalhos();
         await renderProvas();
         await renderAgenda();
@@ -4128,19 +4168,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // MODIFICADO: renderHorarios agora aceita os filtros globais scheduleStartHour e scheduleEndHour
     async function renderHorarios() {
         const profileData = await getProfileData();
         const container = document.getElementById('schedule-grid-container');
         container.innerHTML = '';
         
-        const horaInicio = 7; const horaFim = 22;
-        container.style.gridTemplateRows = `50px repeat(${(horaFim - horaInicio) * 2}, 40px)`;
+        const horaInicio = scheduleStartHour;
+        const horaFim = scheduleEndHour;
+        const totalRows = (horaFim - horaInicio) * 2; // cada hora tem 2 slots de 30min
+        
+        container.style.gridTemplateRows = `50px repeat(${totalRows}, 40px)`;
         
         container.innerHTML += `<div></div>`;
         ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'].forEach(dia => container.innerHTML += `<div class="schedule-header">${dia}</div>`);
 
-        for (let i = horaInicio; i <= horaFim; i++) {
-             container.innerHTML += `<div class="schedule-time-slot" style="grid-row: ${ (i - horaInicio) * 2 + 2 } / span 2">${String(i).padStart(2,'0')}:00</div>`;
+        for (let i = horaInicio; i < horaFim; i++) {
+            container.innerHTML += `<div class="schedule-time-slot" style="grid-row: ${ (i - horaInicio) * 2 + 2 } / span 2">${String(i).padStart(2,'0')}:00</div>`;
         }
 
         if (profileData.horarios.length === 0) {
@@ -4152,8 +4196,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const inicioParts = aula.inicio.split(':');
                 const fimParts = aula.fim.split(':');
-                const startRow = (parseInt(inicioParts[0]) - horaInicio) * 2 + (parseInt(inicioParts[1]) / 30) + 2;
-                const endRow = (parseInt(fimParts[0]) - horaInicio) * 2 + (parseInt(fimParts[1]) / 30) + 2;
+                const startHourNum = parseInt(inicioParts[0]) + parseInt(inicioParts[1]) / 60;
+                const endHourNum = parseInt(fimParts[0]) + parseInt(fimParts[1]) / 60;
+                
+                // Filtra aulas fora do intervalo selecionado
+                if (startHourNum < horaInicio || endHourNum > horaFim) return;
+                
+                const startRow = (startHourNum - horaInicio) * 2 + 2; // +2 por causa da linha de cabeçalho
+                const endRow = (endHourNum - horaInicio) * 2 + 2;
                 const col = parseInt(aula.diaSemana) + 1;
                 const color = getDisciplinaColor(aula.disciplinaId);
 
@@ -5290,6 +5340,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentFinanceMonth++;
             }
             renderFinanceiro();
+        });
+        
+        // NOVO: Event listeners para filtro de horários
+        document.getElementById('applyHourFilter').addEventListener('click', () => {
+            const start = parseInt(document.getElementById('filterStartHour').value);
+            const end = parseInt(document.getElementById('filterEndHour').value);
+            if (start >= 0 && start <= 23 && end >= 0 && end <= 23 && start <= end) {
+                scheduleStartHour = start;
+                scheduleEndHour = end;
+                renderHorarios();
+            } else {
+                alert('Horários inválidos. Certifique-se de que início <= fim e ambos entre 0 e 23.');
+            }
+        });
+
+        document.getElementById('resetHourFilter').addEventListener('click', () => {
+            scheduleStartHour = 7;
+            scheduleEndHour = 22;
+            document.getElementById('filterStartHour').value = 7;
+            document.getElementById('filterEndHour').value = 22;
+            renderHorarios();
         });
         
         document.body.addEventListener('click', async function(e) {
