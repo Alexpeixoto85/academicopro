@@ -1339,7 +1339,7 @@
         transform: translateY(-2px);
     }
 
-    /* Estilos para gravação de áudio */
+    /* Estilos aprimorados para gravação de áudio */
     .audio-recorder-container {
         background: white;
         border-radius: 12px;
@@ -1359,6 +1359,18 @@
         0% { opacity: 1; transform: scale(1); }
         50% { opacity: 0.5; transform: scale(1.2); }
         100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Botões de processamento de áudio */
+    .process-audio-btn {
+        background: linear-gradient(135deg, var(--info), var(--purple));
+        color: white;
+        border: none;
+        transition: var(--transition);
+    }
+    .process-audio-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
     }
 
     /* Notas de áudio */
@@ -1927,11 +1939,11 @@
             </div>
         </div>
         
-        <!-- NOVO: Aba de Gravação de Áudio -->
+        <!-- Aba de Gravação de Áudio com processamento profissional -->
         <div class="tab-pane fade" id="audio-content" role="tabpanel">
             <div class="card card-dashboard">
                 <div class="card-body">
-                    <h4 class="card-title mb-4">Gravação de Áudio</h4>
+                    <h4 class="card-title mb-4">Gravação de Áudio com Tratamento Profissional</h4>
                     <div class="audio-recorder-container">
                         <div class="text-center mb-4">
                             <button class="btn btn-danger btn-lg" id="startRecordBtn">
@@ -1944,22 +1956,41 @@
                                 <i class="fas fa-play"></i> Reproduzir
                             </button>
                         </div>
-                        <div class="mb-3">
-                            <audio id="audioPlayback" controls style="width: 100%;"></audio>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-8">
                                 <label for="audioTitulo" class="form-label">Título da Gravação</label>
                                 <input type="text" class="form-control" id="audioTitulo" placeholder="Ex: Aula de Direito Civil">
                             </div>
                         </div>
+
+                        <div class="mb-3">
+                            <audio id="audioPlayback" controls style="width: 100%;"></audio>
+                        </div>
+
+                        <!-- NOVOS BOTÕES DE PROCESSAMENTO -->
+                        <div class="d-flex justify-content-center gap-3 mb-3">
+                            <button class="btn btn-info btn-lg process-audio-btn" id="processAudioBtn" disabled>
+                                <i class="fas fa-magic"></i> Melhorar Áudio (Reduz ruído, equaliza)
+                            </button>
+                        </div>
+
                         <div class="d-flex justify-content-center gap-3">
                             <button class="btn btn-primary" id="saveAudioNoteBtn" disabled>
-                                <i class="fas fa-save"></i> Salvar como Nota
+                                <i class="fas fa-save"></i> Salvar como Nota (Original)
+                            </button>
+                            <button class="btn btn-primary" id="saveProcessedAudioNoteBtn" disabled>
+                                <i class="fas fa-save"></i> Salvar como Nota (Processado)
                             </button>
                             <button class="btn btn-secondary" id="downloadAudioBtn" disabled>
-                                <i class="fas fa-download"></i> Baixar MP3
+                                <i class="fas fa-download"></i> Baixar MP3 (Original)
                             </button>
+                            <button class="btn btn-secondary" id="downloadProcessedAudioBtn" disabled>
+                                <i class="fas fa-download"></i> Baixar MP3 (Processado)
+                            </button>
+                        </div>
+                        <div class="mt-3 text-muted small">
+                            <i class="fas fa-info-circle"></i> O processamento aplica filtro passa-altas (remove ruídos graves), compressão dinâmica e realce de médios (voz) para um resultado mais profissional.
                         </div>
                     </div>
                 </div>
@@ -2785,7 +2816,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Imagem importada
     let importedImageData = null;
 
-    // ----- Variáveis para gravação de áudio -----
+    // ----- Variáveis para gravação de áudio (aprimorado) -----
     let audioContext;
     let audioStream;
     let audioSource;
@@ -2793,10 +2824,13 @@ document.addEventListener('DOMContentLoaded', function() {
     let lameEncoder;
     let mp3Data = [];
     let isRecordingAudio = false;
-    let audioBlob;
+    let audioBlob;                // blob original (webm/mp3)
+    let audioBlobProcessed;       // blob processado (WAV)
     let audioUrl;
+    let audioUrlProcessed;
     let audioChunks = [];
     let mediaRecorder;
+
     // ---------------------------------------------
 
     // NOVO: Variáveis para filtro de horários
@@ -3589,13 +3623,123 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ----- Funções para gravação de áudio (MP3) -----
+    // ----- Funções para processamento profissional de áudio (redução de ruído, compressão, equalização) -----
+    async function processAudio(blob) {
+        // Converte blob para ArrayBuffer
+        const arrayBuffer = await blob.arrayBuffer();
+        
+        // Cria AudioContext para decodificar
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        
+        const numberOfChannels = audioBuffer.numberOfChannels;
+        const sampleRate = audioBuffer.sampleRate;
+        const length = audioBuffer.length;
+        
+        // Cria OfflineAudioContext para processamento e renderização
+        const offlineCtx = new OfflineAudioContext(numberOfChannels, length, sampleRate);
+        
+        // Cria buffer source
+        const source = offlineCtx.createBufferSource();
+        source.buffer = audioBuffer;
+        
+        // --- Cadeia de processamento ---
+        
+        // 1. Filtro passa-altas (elimina ruídos graves, ex: vento, motor)
+        const highpass = offlineCtx.createBiquadFilter();
+        highpass.type = 'highpass';
+        highpass.frequency.value = 80; // 80 Hz
+        highpass.Q.value = 0.7;
+        
+        // 2. Compressor (uniformiza volume)
+        const compressor = offlineCtx.createDynamicsCompressor();
+        compressor.threshold.value = -20;    // dB
+        compressor.knee.value = 10;          // dB
+        compressor.ratio.value = 3;
+        compressor.attack.value = 0.003;     // segundos
+        compressor.release.value = 0.25;      // segundos
+        
+        // 3. Equalizador para realçar médios (voz)
+        const peaking = offlineCtx.createBiquadFilter();
+        peaking.type = 'peaking';
+        peaking.frequency.value = 2000; // 2 kHz
+        peaking.Q.value = 0.7;
+        peaking.gain.value = 6; // +6 dB
+        
+        // Conecta: source -> highpass -> compressor -> peaking -> destination
+        source.connect(highpass);
+        highpass.connect(compressor);
+        compressor.connect(peaking);
+        peaking.connect(offlineCtx.destination);
+        
+        // Inicia a renderização
+        source.start();
+        
+        // Renderiza o buffer processado
+        const renderedBuffer = await offlineCtx.startRendering();
+        
+        // Converte o buffer para WAV blob
+        const wavBlob = bufferToWave(renderedBuffer);
+        return wavBlob;
+    }
+    
+    function bufferToWave(audioBuffer) {
+        const numOfChannels = audioBuffer.numberOfChannels;
+        const length = audioBuffer.length;
+        const sampleRate = audioBuffer.sampleRate;
+        const bitsPerSample = 16; // PCM 16 bits
+        const byteRate = sampleRate * numOfChannels * bitsPerSample / 8;
+        const blockAlign = numOfChannels * bitsPerSample / 8;
+        
+        // Criar buffer para o arquivo WAV
+        const wavBuffer = new ArrayBuffer(44 + length * numOfChannels * 2);
+        const view = new DataView(wavBuffer);
+        
+        // Escrever cabeçalho RIFF
+        writeString(view, 0, 'RIFF');
+        view.setUint32(4, 36 + length * numOfChannels * 2, true);
+        writeString(view, 8, 'WAVE');
+        writeString(view, 12, 'fmt ');
+        view.setUint32(16, 16, true); // tamanho do fmt chunk
+        view.setUint16(20, 1, true); // formato PCM
+        view.setUint16(22, numOfChannels, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, byteRate, true);
+        view.setUint16(32, blockAlign, true);
+        view.setUint16(34, bitsPerSample, true);
+        writeString(view, 36, 'data');
+        view.setUint32(40, length * numOfChannels * 2, true);
+        
+        // Escrever dados PCM (16 bits)
+        const offset = 44;
+        for (let i = 0; i < length; i++) {
+            for (let channel = 0; channel < numOfChannels; channel++) {
+                const sample = audioBuffer.getChannelData(channel)[i];
+                // converter de float (-1..1) para int16 (-32768..32767)
+                const int16 = Math.max(-32768, Math.min(32767, sample * 32768));
+                view.setInt16(offset + (i * numOfChannels + channel) * 2, int16, true);
+            }
+        }
+        
+        return new Blob([wavBuffer], { type: 'audio/wav' });
+    }
+    
+    function writeString(view, offset, string) {
+        for (let i = 0; i < string.length; i++) {
+            view.setUint8(offset + i, string.charCodeAt(i));
+        }
+    }
+
+    // ----- Funções para gravação de áudio (aprimorado) -----
     function setupAudioRecording() {
         const startBtn = document.getElementById('startRecordBtn');
         const stopBtn = document.getElementById('stopRecordBtn');
         const playBtn = document.getElementById('playRecordBtn');
         const saveBtn = document.getElementById('saveAudioNoteBtn');
+        const saveProcessedBtn = document.getElementById('saveProcessedAudioNoteBtn');
         const downloadBtn = document.getElementById('downloadAudioBtn');
+        const downloadProcessedBtn = document.getElementById('downloadProcessedAudioBtn');
+        const processBtn = document.getElementById('processAudioBtn');
         const audioElement = document.getElementById('audioPlayback');
         const tituloInput = document.getElementById('audioTitulo');
 
@@ -3605,7 +3749,10 @@ document.addEventListener('DOMContentLoaded', function() {
         stopBtn.addEventListener('click', stopRecording);
         playBtn.addEventListener('click', playRecording);
         saveBtn.addEventListener('click', saveAudioNote);
+        saveProcessedBtn.addEventListener('click', saveProcessedAudioNote);
         downloadBtn.addEventListener('click', downloadMP3);
+        downloadProcessedBtn.addEventListener('click', downloadProcessedMP3);
+        processBtn.addEventListener('click', applyProcessing);
 
         async function startRecording() {
             try {
@@ -3618,12 +3765,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
 
                 mediaRecorder.onstop = () => {
-                    audioBlob = new Blob(audioChunks, { type: 'audio/mp3' }); // O tipo real depende do codec; o navegador pode gravar como webm, mas renomeamos para mp3 para download.
+                    audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); // webm padrão
                     audioUrl = URL.createObjectURL(audioBlob);
                     audioElement.src = audioUrl;
+                    
+                    // Limpa processado anterior
+                    audioBlobProcessed = null;
+                    if (audioUrlProcessed) URL.revokeObjectURL(audioUrlProcessed);
+                    audioUrlProcessed = null;
+                    
                     playBtn.disabled = false;
                     saveBtn.disabled = false;
+                    saveProcessedBtn.disabled = true; // só habilita após processar
                     downloadBtn.disabled = false;
+                    downloadProcessedBtn.disabled = true;
+                    processBtn.disabled = false;
                     startBtn.disabled = false;
                     stopBtn.disabled = true;
                 };
@@ -3634,7 +3790,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 stopBtn.disabled = false;
                 playBtn.disabled = true;
                 saveBtn.disabled = true;
+                saveProcessedBtn.disabled = true;
                 downloadBtn.disabled = true;
+                downloadProcessedBtn.disabled = true;
+                processBtn.disabled = true;
                 tituloInput.value = `Gravação - ${new Date().toLocaleString('pt-BR')}`;
             } catch (err) {
                 alert('Não foi possível acessar o microfone. Verifique as permissões.');
@@ -3654,14 +3813,55 @@ document.addEventListener('DOMContentLoaded', function() {
             audioElement.play();
         }
 
+        async function applyProcessing() {
+            if (!audioBlob) return;
+            
+            processBtn.disabled = true;
+            processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+            
+            try {
+                const processedBlob = await processAudio(audioBlob);
+                audioBlobProcessed = processedBlob;
+                if (audioUrlProcessed) URL.revokeObjectURL(audioUrlProcessed);
+                audioUrlProcessed = URL.createObjectURL(processedBlob);
+                
+                // Toca o processado para preview
+                audioElement.src = audioUrlProcessed;
+                audioElement.play();
+                
+                saveProcessedBtn.disabled = false;
+                downloadProcessedBtn.disabled = false;
+                
+                alert('Áudio processado com sucesso! Agora você pode ouvir o resultado e salvar.');
+            } catch (error) {
+                console.error('Erro no processamento:', error);
+                alert('Erro ao processar o áudio. Tente novamente.');
+            } finally {
+                processBtn.disabled = false;
+                processBtn.innerHTML = '<i class="fas fa-magic"></i> Melhorar Áudio (Reduz ruído, equaliza)';
+            }
+        }
+
         async function saveAudioNote() {
             if (!audioBlob) return;
+            await saveNoteFromBlob(audioBlob, false);
+        }
+
+        async function saveProcessedAudioNote() {
+            if (!audioBlobProcessed) {
+                alert('Nenhum áudio processado disponível. Clique em "Melhorar Áudio" primeiro.');
+                return;
+            }
+            await saveNoteFromBlob(audioBlobProcessed, true);
+        }
+
+        async function saveNoteFromBlob(blob, isProcessed) {
             const profileId = await getCurrentProfileId();
-            const titulo = tituloInput.value.trim() || `Gravação - ${new Date().toLocaleDateString('pt-BR')}`;
+            const titulo = tituloInput.value.trim() || `Gravação - ${new Date().toLocaleDateString('pt-BR')}${isProcessed ? ' (Processado)' : ''}`;
             
             // Converter blob para base64
             const reader = new FileReader();
-            reader.readAsDataURL(audioBlob);
+            reader.readAsDataURL(blob);
             reader.onloadend = async function() {
                 const base64data = reader.result;
                 
@@ -3669,7 +3869,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     id: await getNewId('notas'),
                     profileId: profileId,
                     titulo: titulo,
-                    conteudo: 'Gravação de áudio',
+                    conteudo: isProcessed ? 'Áudio processado profissionalmente (redução de ruído, compressão e equalização)' : 'Gravação de áudio original',
                     audioData: base64data,
                     dataCriacao: new Date().toISOString().split('T')[0],
                     tipo: 'audio'
@@ -3679,7 +3879,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 resetAudioUI();
                 document.getElementById('notas-tab').click();
                 await renderNotas();
-                alert('Gravação salva como nota de áudio!');
+                alert(isProcessed ? 'Gravação processada salva como nota de áudio!' : 'Gravação original salva como nota de áudio!');
             };
         }
 
@@ -3688,7 +3888,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const url = URL.createObjectURL(audioBlob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `gravação_${new Date().getTime()}.mp3`;
+            a.download = `gravação_original_${new Date().getTime()}.webm`; // extensão .webm, mas pode ser renomeado
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadProcessedMP3() {
+            if (!audioBlobProcessed) return;
+            const url = URL.createObjectURL(audioBlobProcessed);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `gravação_processada_${new Date().getTime()}.wav`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -3698,13 +3910,20 @@ document.addEventListener('DOMContentLoaded', function() {
         function resetAudioUI() {
             audioChunks = [];
             audioBlob = null;
+            audioBlobProcessed = null;
+            if (audioUrl) URL.revokeObjectURL(audioUrl);
+            if (audioUrlProcessed) URL.revokeObjectURL(audioUrlProcessed);
             audioUrl = null;
+            audioUrlProcessed = null;
             audioElement.src = '';
             startBtn.disabled = false;
             stopBtn.disabled = true;
             playBtn.disabled = true;
             saveBtn.disabled = true;
+            saveProcessedBtn.disabled = true;
             downloadBtn.disabled = true;
+            downloadProcessedBtn.disabled = true;
+            processBtn.disabled = true;
             tituloInput.value = '';
         }
     }
@@ -3728,7 +3947,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setupDrawingCanvas();
         setupHandwritingCanvas();
         setupImageImport();
-        setupAudioRecording(); // NOVO: inicializa gravação de áudio
+        setupAudioRecording(); // Inicializa gravação de áudio com processamento
 
         // NOVO: Inicializa inputs do filtro de horários
         document.getElementById('filterStartHour').value = scheduleStartHour;
@@ -4521,13 +4740,13 @@ document.addEventListener('DOMContentLoaded', function() {
                           </div>
                           <div class="mt-2">
                             <audio controls style="width: 100%;">
-                              <source src="${nota.audioData}" type="audio/mp3">
+                              <source src="${nota.audioData}" type="audio/wav">
                               Seu navegador não suporta áudio.
                             </audio>
                           </div>
                           <div class="mt-3">
-                            <a href="${nota.audioData}" download="audio_${nota.id}.mp3" class="btn btn-sm btn-secondary">
-                              <i class="fas fa-download"></i> Baixar MP3
+                            <a href="${nota.audioData}" download="audio_${nota.id}.wav" class="btn btn-sm btn-secondary">
+                              <i class="fas fa-download"></i> Baixar Áudio
                             </a>
                           </div>
                           <div class="mt-3">
@@ -5256,7 +5475,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="text-center">
                     <h3>${nota.titulo}</h3>
                     <audio controls style="width: 100%; max-width: 600px;">
-                        <source src="${nota.audioData}" type="audio/mp3">
+                        <source src="${nota.audioData}" type="audio/wav">
                     </audio>
                     <p class="mt-4">${nota.conteudo || ''}</p>
                     <small class="text-muted">Criado em: ${new Date(nota.dataCriacao).toLocaleDateString('pt-BR')}</small>
