@@ -2890,6 +2890,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const financeiroStore = db.createObjectStore('financeiro', { keyPath: 'id' });
                     financeiroStore.createIndex('profileId', 'profileId', { unique: false });
                     financeiroStore.createIndex('mesAno', 'mesAno', { unique: false });
+                    financeiroStore.createIndex('recorrenteId', 'recorrenteId', { unique: false }); // NOVO ÍNDICE
                 }
                 
                 if (!db.objectStoreNames.contains('biblioteca')) {
@@ -3031,7 +3032,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updateFixedBackButton();
     }
 
-    // MELHORIA: carregar todos os dados do perfil em paralelo (Promise.all)
     async function getProfileData() {
         const profileId = await getCurrentProfileId();
         const [disciplinas, horarios, trabalhos, provas, eventos, financeiro, biblioteca, filmes, notas, links] = await Promise.all([
@@ -4133,7 +4133,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 eventType: 'provas',
                 disciplinaId: p.disciplinaId
             })),
-            ...profileData.financeiro.filter(f => f.tipo === 'despesa' && f.status === 'pendente').map(f => ({
+            ...profileData.financeiro.filter(f => f.tipo === 'despesa' && f.status === 'pendente').map(f => ({  // FILTRO: apenas pendentes
                 ...f,
                 type: 'financeiro',
                 date: f.data,
@@ -4382,7 +4382,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // MODIFICADO: renderHorarios agora aceita os filtros globais scheduleStartHour e scheduleEndHour
     async function renderHorarios() {
         const profileData = await getProfileData();
         const container = document.getElementById('schedule-grid-container');
@@ -5086,7 +5085,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return [
             ...profileData.trabalhos.filter(t => t.entrega === dateStr).map(t => ({...t, type: 'assignment', date: t.entrega, title: t.titulo})),
             ...profileData.provas.filter(p => p.data === dateStr).map(p => ({...p, type: 'exam', date: p.data, title: p.conteudo})),
-            ...profileData.financeiro.filter(f => f.data === dateStr && f.tipo === 'despesa' && f.status === 'pendente')
+            ...profileData.financeiro.filter(f => f.data === dateStr && f.tipo === 'despesa' && f.status === 'pendente')  // FILTRO: apenas pendentes
                 .map(f => ({...f, type: 'financeiro', date: f.data, title: f.descricao})),
             ...profileData.eventos.filter(e => e.date === dateStr)
         ].sort((a,b) => (a.time || '23:59').localeCompare(b.time || '23:59'));
@@ -5753,8 +5752,64 @@ document.addEventListener('DOMContentLoaded', function() {
             else if (target.matches('.edit-prova')) handleEdit('provas', 'prova', id);
             else if (target.matches('.delete-prova')) handleDelete('provas', id, 'Tem certeza que deseja excluir esta prova?');
             else if (target.matches('.schedule-class-item')) editHorario(id);
-            else if (target.matches('.edit-financeiro')) handleEdit('financeiro', 'financeiro', id);
-            else if (target.matches('.delete-financeiro')) handleDelete('financeiro', id, 'Tem certeza que deseja excluir esta transação?');
+            else if (target.matches('.edit-financeiro')) {
+                e.preventDefault();
+                e.stopPropagation();
+                const transacao = await getData('financeiro', parseInt(id));
+                if (!transacao) return;
+                // Verifica se é recorrente
+                if (transacao.recorrente && transacao.recorrenteId) {
+                    if (confirm('Esta é uma transação recorrente. Deseja editar todas as ocorrências? Clique OK para todas, Cancelar para apenas esta.')) {
+                        // Editar todas: buscar todas com mesmo recorrenteId
+                        const todas = await getAllData('financeiro', 'recorrenteId', transacao.recorrenteId);
+                        // Abrir modal de edição (aplicar alterações em todas será feito no save)
+                        // Vamos armazenar o recorrenteId no formulário
+                        document.getElementById('financeiroRecurrenceGroupId').value = transacao.recorrenteId;
+                        // Preencher modal com dados da transação atual
+                        document.getElementById('financeiroModalLabel').textContent = 'Editar Transação (todas ocorrências)';
+                        document.getElementById('financeiroId').value = transacao.id;
+                        document.getElementById('financeiroTipo').value = transacao.tipo;
+                        document.getElementById('financeiroDescricao').value = transacao.descricao;
+                        document.getElementById('financeiroValor').value = transacao.valor;
+                        document.getElementById('financeiroCategoria').value = transacao.categoria || '';
+                        document.getElementById('financeiroData').value = transacao.data;
+                        if (transacao.tipo === 'despesa') {
+                            document.getElementById('financeiroStatusWrapper').style.display = 'block';
+                            document.getElementById('financeiroStatus').value = transacao.status;
+                        }
+                        // Desabilitar campos de recorrência
+                        document.getElementById('financeiroRecurrence').disabled = true;
+                        document.getElementById('financeiroRecurrenceEndDate').disabled = true;
+                        new bootstrap.Modal(document.getElementById('financeiroModal')).show();
+                    } else {
+                        // Editar apenas esta
+                        await handleEdit('financeiro', 'financeiro', id);
+                    }
+                } else {
+                    await handleEdit('financeiro', 'financeiro', id);
+                }
+            }
+            else if (target.matches('.delete-financeiro')) {
+                e.preventDefault();
+                e.stopPropagation();
+                const transacao = await getData('financeiro', parseInt(id));
+                if (!transacao) return;
+                if (transacao.recorrente && transacao.recorrenteId) {
+                    if (confirm('Esta é uma transação recorrente. Deseja excluir todas as ocorrências? Clique OK para todas, Cancelar para apenas esta.')) {
+                        const todas = await getAllData('financeiro', 'recorrenteId', transacao.recorrenteId);
+                        for (const t of todas) {
+                            await deleteData('financeiro', t.id);
+                        }
+                        await renderAll();
+                    } else {
+                        await deleteData('financeiro', parseInt(id));
+                        await renderAll();
+                    }
+                } else {
+                    await deleteData('financeiro', parseInt(id));
+                    await renderAll();
+                }
+            }
             else if (target.matches('.delete-livro')) handleDelete('biblioteca', id, 'Tem certeza que deseja excluir este livro?');
             else if (target.matches('.edit-livro')) handleEdit('biblioteca', 'biblioteca', id);
             else if (target.matches('.delete-filme')) handleDelete('filmes', id, 'Tem certeza que deseja excluir este filme?');
@@ -5892,6 +5947,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('financeiroStatusWrapper').style.display = 'none';
                     document.getElementById('financeiroRecurrenceEndDateWrapper').classList.add('d-none');
                     document.getElementById('financeiroRecurrence').value = 'none';
+                    document.getElementById('financeiroRecurrence').disabled = false;
+                    document.getElementById('financeiroRecurrenceEndDate').disabled = false;
                 }
                 
                 if(modal.id === 'notaModal') {
@@ -6119,7 +6176,7 @@ document.addEventListener('DOMContentLoaded', function() {
             status: document.getElementById('trabalhoStatus').value,
             prioridade: document.getElementById('trabalhoPrioridade').value,
             nota: document.getElementById('trabalhoNota').value === '' ? null : parseFloat(document.getElementById('trabalhoNota').value),
-            observacoes: document.getElementById('trabalhoObservacoes').value  // NOVO CAMPO
+            observacoes: document.getElementById('trabalhoObservacoes').value
         };
         if (!trabalho.disciplinaId || !trabalho.titulo || !trabalho.entrega) { alert('Preencha os campos obrigatórios.'); return; }
         
@@ -6211,8 +6268,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const recurrenceEndDate = document.getElementById('financeiroRecurrenceEndDate').value;
         
         let transacoes = [];
+        let recorrenteId = null;
         
         if (recurrence !== 'none' && recurrenceEndDate) {
+            // Gerar ID de grupo para recorrência
+            recorrenteId = Date.now() + Math.random(); // ID único simples
+            
             let currentDate = new Date(dataInput);
             const endDate = new Date(recurrenceEndDate);
             
@@ -6221,6 +6282,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            // Ajusta para o início do dia
+            currentDate.setHours(0,0,0,0);
+            endDate.setHours(0,0,0,0);
+            
             while (currentDate <= endDate) {
                 const dataStr = currentDate.toISOString().split('T')[0];
                 const mes = currentDate.getMonth() + 1;
@@ -6228,7 +6293,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const mesAno = `${mes}-${ano}`;
                 
                 const transacao = {
-                    id: await getNewId('financeiro') + transacoes.length,
+                    id: await getNewId('financeiro'),
                     profileId: profileId,
                     tipo: document.getElementById('financeiroTipo').value,
                     descricao: document.getElementById('financeiroDescricao').value,
@@ -6238,7 +6303,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     status: document.getElementById('financeiroTipo').value === 'despesa' ? document.getElementById('financeiroStatus').value : 'pago',
                     mesAno: mesAno,
                     recorrente: true,
-                    recorrencia: recurrence
+                    recorrencia: recurrence,
+                    recorrenteId: recorrenteId
                 };
                 
                 if (!transacao.descricao || isNaN(transacao.valor)) { 
