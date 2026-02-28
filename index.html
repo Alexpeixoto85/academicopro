@@ -1631,7 +1631,7 @@
 
 <div class="modal fade" id="horarioModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Aula</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="horarioForm"><input type="hidden" id="horarioId"><div class="mb-3"><label for="horarioDisciplina" class="form-label">Disciplina</label><select class="form-select" id="horarioDisciplina" required></select></div><div class="mb-3"><label for="horarioDiaSemana" class="form-label">Dia da Semana</label><select class="form-select" id="horarioDiaSemana"><option value="1">Segunda</option><option value="2">Terça</option><option value="3">Quarta</option><option value="4">Quinta</option><option value="5">Sexta</option><option value="6">Sábado</option></select></div><div class="row"><div class="col-6 mb-3"><label for="horarioInicio" class="form-label">Início</label><input type="time" class="form-control" id="horarioInicio" step="1800" required></div><div class="col-6 mb-3"><label for="horarioFim" class="form-label">Fim</label><input type="time" class="form-control" id="horarioFim" step="1800" required></div></div><div class="mb-3"><label for="horarioLocal" class="form-label">Local</label><input type="text" class="form-control" id="horarioLocal"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto d-none" id="deleteHorario">Excluir</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveHorario">Salvar</button></div></div></div></div>
 
-<div class="modal fade" id="disciplinaModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Disciplina</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="disciplinaForm"><input type="hidden" id="disciplinaId"><div class="mb-3"><label for="disciplinaNome" class="form-label">Nome</label><input type="text" class="form-control" id="disciplinaNome" required></div><div class="mb-3"><label for="disciplinaProfessor" class="form-label">Professor</label><input type="text" class="form-control" id="disciplinaProfessor"></div><div class="mb-3"><label for="disciplinaFrequencia" class="form-label">Frequência (%)</label><input type="number" class="form-control" id="disciplinaFrequencia" min="0" max="100" value="100"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveDisciplina">Salvar</button></div></div></div></div>
+<div class="modal fade" id="disciplinaModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Disciplina</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="disciplinaForm"><input type="hidden" id="disciplinaId"><div class="mb-3"><label for="disciplinaNome" class="form-label">Nome</label><input type="text" class="form-control" id="disciplinaNome" required></div><div class="mb-3"><label for="disciplinaProfessor" class="form-label">Professor</label><input type="text" class="form-control" id="disciplinaProfessor"></div><div class="mb-3"><label for="disciplinaEmail" class="form-label">E-mail do Professor</label><input type="email" class="form-control" id="disciplinaEmail"></div><div class="mb-3"><label for="disciplinaFrequencia" class="form-label">Frequência (%)</label><input type="number" class="form-control" id="disciplinaFrequencia" min="0" max="100" value="100"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveDisciplina">Salvar</button></div></div></div></div>
 
 <div class="modal fade" id="trabalhoModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Trabalho</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="trabalhoForm"><input type="hidden" id="trabalhoId"><div class="mb-3"><label for="trabalhoDisciplina" class="form-label">Disciplina</label><select class="form-select" id="trabalhoDisciplina" required></select></div><div class="mb-3"><label for="trabalhoTitulo" class="form-label">Título</label><input type="text" class="form-control" id="trabalhoTitulo" required></div><div class="mb-3"><label for="trabalhoEntrega" class="form-label">Data de Entrega</label><input type="date" class="form-control" id="trabalhoEntrega" required></div><div class="mb-3"><label for="trabalhoStatus" class="form-label">Status</label><select class="form-select" id="trabalhoStatus"><option value="Pendente">Pendente</option><option value="Entregue">Entregue</option></select></div><div class="mb-3"><label for="trabalhoPrioridade" class="form-label">Prioridade</label><select class="form-select" id="trabalhoPrioridade"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></div><div class="mb-3"><label for="trabalhoNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="trabalhoNota" min="0" max="10"></div><div class="mb-3"><label for="trabalhoObservacoes" class="form-label">Observações</label><textarea class="form-control" id="trabalhoObservacoes" rows="3"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveTrabalho">Salvar</button></div></div></div></div>
 
@@ -1676,6 +1676,21 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentFinanceMonth = new Date().getMonth(), currentFinanceYear = new Date().getFullYear();
     let importedImageData = null;
     let scheduleStartHour = 7, scheduleEndHour = 22;
+
+    // Carregar preferências de filtro do localStorage
+    function loadScheduleFilter() {
+        const savedStart = localStorage.getItem('scheduleStartHour');
+        const savedEnd = localStorage.getItem('scheduleEndHour');
+        if (savedStart !== null) scheduleStartHour = parseInt(savedStart);
+        if (savedEnd !== null) scheduleEndHour = parseInt(savedEnd);
+        document.getElementById('filterStartHour').value = scheduleStartHour;
+        document.getElementById('filterEndHour').value = scheduleEndHour;
+    }
+
+    function saveScheduleFilter() {
+        localStorage.setItem('scheduleStartHour', scheduleStartHour);
+        localStorage.setItem('scheduleEndHour', scheduleEndHour);
+    }
 
     function openDatabase() {
         return new Promise((resolve, reject) => {
@@ -1986,19 +2001,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // ---------- Initialization ----------
     async function init() {
         await openDatabase();
+        loadScheduleFilter(); // carrega preferências de filtro
         const pid = await getCurrentProfileId();
         const disciplinas = await getAllData('disciplinas', 'profileId', pid);
         if (!disciplinas.length) await createInitialData();
         generateQuickLinks(); await renderAll(); updateMainHeaderTitle(); setupEventListeners(); setupFooterNavigation();
         setupDrawingCanvas(); setupHandwritingCanvas(); setupImageImport();
-        document.getElementById('filterStartHour').value = scheduleStartHour;
-        document.getElementById('filterEndHour').value = scheduleEndHour;
+        // não precisa setar os campos do filtro novamente, já foi carregado
     }
 
     async function createInitialData() {
         const pid = await getCurrentProfileId();
         let id = 1;
-        const dis = [ {id:id, profileId:pid, nome:"Direito Civil", professor:"Prof. Dr. Carlos Albuquerque", frequencia:85} ];
+        const dis = [ {id:id, profileId:pid, nome:"Direito Civil", professor:"Prof. Dr. Carlos Albuquerque", professorEmail:"carlos.albuquerque@universidade.edu", frequencia:85} ];
         await saveData('disciplinas', dis[0]); id++;
         const hor = [ {id:id, profileId:pid, disciplinaId:1, diaSemana:1, inicio:"08:00", fim:"10:00", local:"Sala 101"} ];
         await saveData('horarios', hor[0]); id++;
@@ -2147,7 +2162,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let media = ns.length ? (ns.reduce((a,b)=>a+b,0)/ns.length).toFixed(1) : 'N/A';
             let w = media!=='N/A' ? media/10*100 : 0;
             let cls = w>=70?'bg-success': w>=50?'bg-warning':'bg-danger';
-            container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card card-dashboard"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-3"><div><h4 class="card-title mb-0">${d.nome}</h4><p class="text-muted small">${d.professor}</p></div><div class="dropdown"><button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button><ul class="dropdown-menu"><li><a class="dropdown-item edit-disciplina" href="#" data-id="${d.id}">Editar</a></li><li><a class="dropdown-item delete-disciplina" href="#" data-id="${d.id}">Excluir</a></li></ul></div></div><div class="d-flex justify-content-between small text-muted mb-2"><span>Média</span><span class="avg-grade-badge ${cls} text-white">${media}</span></div><div class="progress mb-3"><div class="progress-bar ${cls}" style="width: ${w}%"></div></div><div class="d-flex justify-content-between small text-muted mb-2"><span>Frequência</span><span>${d.frequencia}%</span></div><div class="progress mb-3"><div class="progress-bar bg-primary" style="width: ${d.frequencia}%"></div></div><div class="d-flex justify-content-between"><span class="badge bg-info">${data.trabalhos.filter(t=>t.disciplinaId===d.id).length} Trabalhos</span><span class="badge bg-warning">${data.provas.filter(p=>p.disciplinaId===d.id).length} Provas</span></div></div></div></div>`;
+            container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card card-dashboard"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-3"><div><h4 class="card-title mb-0">${d.nome}</h4><p class="text-muted small">${d.professor}</p>${d.professorEmail?`<p class="text-muted small"><i class="fas fa-envelope"></i> ${d.professorEmail}</p>`:''}</div><div class="dropdown"><button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button><ul class="dropdown-menu"><li><a class="dropdown-item edit-disciplina" href="#" data-id="${d.id}">Editar</a></li><li><a class="dropdown-item delete-disciplina" href="#" data-id="${d.id}">Excluir</a></li></ul></div></div><div class="d-flex justify-content-between small text-muted mb-2"><span>Média</span><span class="avg-grade-badge ${cls} text-white">${media}</span></div><div class="progress mb-3"><div class="progress-bar ${cls}" style="width: ${w}%"></div></div><div class="d-flex justify-content-between small text-muted mb-2"><span>Frequência</span><span>${d.frequencia}%</span></div><div class="progress mb-3"><div class="progress-bar bg-primary" style="width: ${d.frequencia}%"></div></div><div class="d-flex justify-content-between"><span class="badge bg-info">${data.trabalhos.filter(t=>t.disciplinaId===d.id).length} Trabalhos</span><span class="badge bg-warning">${data.provas.filter(p=>p.disciplinaId===d.id).length} Provas</span></div></div></div></div>`;
         });
     }
 
@@ -2175,7 +2190,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 item.dataset.id = a.id;
                 item.style.gridColumn = col; item.style.gridRow = `${startRow} / ${endRow}`;
                 item.style.backgroundColor = getDisciplinaColor(a.disciplinaId);
-                item.innerHTML = `<div class="schedule-class-title">${disc.nome}</div><div class="schedule-class-details"><i class="fas fa-map-marker-alt"></i> ${a.local||''}<br><i class="fas fa-clock"></i> ${a.inicio} - ${a.fim}</div>`;
+                // Adiciona nome do professor e email se houver
+                let professorInfo = disc.professor ? `<br><i class="fas fa-chalkboard-teacher"></i> Prof: ${disc.professor}` : '';
+                professorInfo += disc.professorEmail ? ` (${disc.professorEmail})` : '';
+                item.innerHTML = `<div class="schedule-class-title">${disc.nome}</div><div class="schedule-class-details"><i class="fas fa-map-marker-alt"></i> ${a.local||''}<br><i class="fas fa-clock"></i> ${a.inicio} - ${a.fim}${professorInfo}</div>`;
                 container.appendChild(item);
             });
         } else container.innerHTML += `<div class="empty-state" style="grid-column:2/8;grid-row:2/6;">Nenhuma aula cadastrada.</div>`;
@@ -2504,10 +2522,20 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('next-month-financeiro').addEventListener('click', ()=>{ if (++currentFinanceMonth>11) { currentFinanceMonth=0; currentFinanceYear++; } renderFinanceiro(); });
         document.getElementById('applyHourFilter').addEventListener('click', ()=>{
             let s = +document.getElementById('filterStartHour').value, e = +document.getElementById('filterEndHour').value;
-            if (s>=0 && s<=23 && e>=0 && e<=23 && s<=e) { scheduleStartHour=s; scheduleEndHour=e; renderHorarios(); }
+            if (s>=0 && s<=23 && e>=0 && e<=23 && s<=e) { 
+                scheduleStartHour=s; scheduleEndHour=e; 
+                saveScheduleFilter(); // salva no localStorage
+                renderHorarios(); 
+            }
             else alert('Horários inválidos.');
         });
-        document.getElementById('resetHourFilter').addEventListener('click', ()=>{ scheduleStartHour=7; scheduleEndHour=22; document.getElementById('filterStartHour').value=7; document.getElementById('filterEndHour').value=22; renderHorarios(); });
+        document.getElementById('resetHourFilter').addEventListener('click', ()=>{ 
+            scheduleStartHour=7; scheduleEndHour=22; 
+            document.getElementById('filterStartHour').value=7; 
+            document.getElementById('filterEndHour').value=22; 
+            saveScheduleFilter(); // salva no localStorage
+            renderHorarios(); 
+        });
         document.getElementById('prev-month').addEventListener('click', ()=>{ currentCalendarDate.setMonth(currentCalendarDate.getMonth()-1); renderAgenda(); });
         document.getElementById('next-month').addEventListener('click', ()=>{ currentCalendarDate.setMonth(currentCalendarDate.getMonth()+1); renderAgenda(); });
         document.getElementById('financeiroTipo').addEventListener('change', function(){ document.getElementById('financeiroStatusWrapper').style.display = this.value==='despesa'?'block':'none'; });
@@ -2789,7 +2817,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function saveDisciplina() {
         let pid = await getCurrentProfileId(), id = document.getElementById('disciplinaId').value;
-        let d = { id: id?parseInt(id):await getNewId('disciplinas'), profileId: pid, nome: document.getElementById('disciplinaNome').value, professor: document.getElementById('disciplinaProfessor').value, frequencia: parseInt(document.getElementById('disciplinaFrequencia').value) };
+        let d = { 
+            id: id?parseInt(id):await getNewId('disciplinas'), 
+            profileId: pid, 
+            nome: document.getElementById('disciplinaNome').value, 
+            professor: document.getElementById('disciplinaProfessor').value, 
+            professorEmail: document.getElementById('disciplinaEmail').value, // novo campo
+            frequencia: parseInt(document.getElementById('disciplinaFrequencia').value) 
+        };
         if (!d.nome) return alert('Nome obrigatório.');
         await saveData('disciplinas', d); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('disciplinaModal')).hide();
     }
