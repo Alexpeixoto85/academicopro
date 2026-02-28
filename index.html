@@ -1346,6 +1346,17 @@
         display: inline-block;
     }
 
+    /* Ícone de anexo */
+    .attachment-icon {
+        color: var(--info);
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .attachment-icon:hover {
+        transform: scale(1.2);
+    }
+
     @media (max-width: 768px) {
       .main-header {
         flex-direction: column;
@@ -1508,12 +1519,12 @@
 
   <div class="content-panel" id="trabalhos">
     <div class="content-header"><h2>Trabalhos</h2><div class="btn-group"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#trabalhoModal"><i class="fas fa-plus"></i> Novo Trabalho</button></div></div>
-    <div class="card card-dashboard"><div class="card-body"><div class="table-responsive"><table class="table table-hover"><thead><tr><th>Disciplina</th><th>Título</th><th>Entrega</th><th>Status</th><th>Prioridade</th><th>Ações</th></tr></thead><tbody id="trabalhos-tabela"></tbody></table></div></div></div>
+    <div class="card card-dashboard"><div class="card-body"><div class="table-responsive"><table class="table table-hover"><thead><tr><th>Disciplina</th><th>Título</th><th>Entrega</th><th>Status</th><th>Prioridade</th><th>Anexo</th><th>Ações</th></tr></thead><tbody id="trabalhos-tabela"></tbody></table></div></div></div>
   </div>
 
   <div class="content-panel" id="provas">
       <div class="content-header"><h2>Provas</h2><div class="btn-group"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#provaModal"><i class="fas fa-plus"></i> Nova Prova</button></div></div>
-      <div class="card card-dashboard"><div class="card-body"><div class="table-responsive"><table class="table table-hover"><thead><tr><th>Disciplina</th><th>Conteúdo</th><th>Data</th><th>Hora</th><th>Status</th><th>Nota</th><th>Ações</th></tr></thead><tbody id="provas-tabela"></tbody></table></div></div></div>
+      <div class="card card-dashboard"><div class="card-body"><div class="table-responsive"><table class="table table-hover"><thead><tr><th>Disciplina</th><th>Conteúdo</th><th>Data</th><th>Hora</th><th>Status</th><th>Nota</th><th>Anexo</th><th>Ações</th></tr></thead><tbody id="provas-tabela"></tbody></table></div></div></div>
   </div>
 
   <div class="content-panel" id="agenda">
@@ -1633,11 +1644,38 @@
 
 <div class="modal fade" id="disciplinaModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Disciplina</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="disciplinaForm"><input type="hidden" id="disciplinaId"><div class="mb-3"><label for="disciplinaNome" class="form-label">Nome</label><input type="text" class="form-control" id="disciplinaNome" required></div><div class="mb-3"><label for="disciplinaProfessor" class="form-label">Professor</label><input type="text" class="form-control" id="disciplinaProfessor"></div><div class="mb-3"><label for="disciplinaEmail" class="form-label">E-mail do Professor</label><input type="email" class="form-control" id="disciplinaEmail"></div><div class="mb-3"><label for="disciplinaFrequencia" class="form-label">Frequência (%)</label><input type="number" class="form-control" id="disciplinaFrequencia" min="0" max="100" value="100"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveDisciplina">Salvar</button></div></div></div></div>
 
-<div class="modal fade" id="trabalhoModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Trabalho</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="trabalhoForm"><input type="hidden" id="trabalhoId"><div class="mb-3"><label for="trabalhoDisciplina" class="form-label">Disciplina</label><select class="form-select" id="trabalhoDisciplina" required></select></div><div class="mb-3"><label for="trabalhoTitulo" class="form-label">Título</label><input type="text" class="form-control" id="trabalhoTitulo" required></div><div class="mb-3"><label for="trabalhoEntrega" class="form-label">Data de Entrega</label><input type="date" class="form-control" id="trabalhoEntrega" required></div><div class="mb-3"><label for="trabalhoStatus" class="form-label">Status</label><select class="form-select" id="trabalhoStatus"><option value="Pendente">Pendente</option><option value="Entregue">Entregue</option></select></div><div class="mb-3"><label for="trabalhoPrioridade" class="form-label">Prioridade</label><select class="form-select" id="trabalhoPrioridade"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></div><div class="mb-3"><label for="trabalhoNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="trabalhoNota" min="0" max="10"></div><div class="mb-3"><label for="trabalhoObservacoes" class="form-label">Observações</label><textarea class="form-control" id="trabalhoObservacoes" rows="3"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveTrabalho">Salvar</button></div></div></div></div>
+<!-- Modal Trabalho com anexo -->
+<div class="modal fade" id="trabalhoModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Trabalho</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="trabalhoForm"><input type="hidden" id="trabalhoId"><div class="mb-3"><label for="trabalhoDisciplina" class="form-label">Disciplina</label><select class="form-select" id="trabalhoDisciplina" required></select></div><div class="mb-3"><label for="trabalhoTitulo" class="form-label">Título</label><input type="text" class="form-control" id="trabalhoTitulo" required></div><div class="mb-3"><label for="trabalhoEntrega" class="form-label">Data de Entrega</label><input type="date" class="form-control" id="trabalhoEntrega" required></div><div class="mb-3"><label for="trabalhoStatus" class="form-label">Status</label><select class="form-select" id="trabalhoStatus"><option value="Pendente">Pendente</option><option value="Entregue">Entregue</option></select></div><div class="mb-3"><label for="trabalhoPrioridade" class="form-label">Prioridade</label><select class="form-select" id="trabalhoPrioridade"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></div><div class="mb-3"><label for="trabalhoNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="trabalhoNota" min="0" max="10"></div><div class="mb-3"><label for="trabalhoObservacoes" class="form-label">Observações</label><textarea class="form-control" id="trabalhoObservacoes" rows="3"></textarea></div>
+<!-- Campo de anexo -->
+<div class="mb-3">
+    <label for="trabalhoAnexo" class="form-label">Anexo (PDF ou imagem)</label>
+    <input type="file" class="form-control" id="trabalhoAnexo" accept=".pdf,image/*">
+    <div id="trabalhoAnexoPreview" class="mt-2"></div>
+    <input type="hidden" id="trabalhoAnexoExistente" value="">
+</div>
+</form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveTrabalho">Salvar</button></div></div></div></div>
 
-<div class="modal fade" id="provaModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Prova</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="provaForm"><input type="hidden" id="provaId"><div class="mb-3"><label for="provaDisciplina" class="form-label">Disciplina</label><select class="form-select" id="provaDisciplina" required></select></div><div class="mb-3"><label for="provaConteudo" class="form-label">Conteúdo</label><input type="text" class="form-control" id="provaConteudo" required></div><div class="mb-3"><label for="provaData" class="form-label">Data</label><input type="date" class="form-control" id="provaData" required></div><div class="mb-3"><label for="provaHora" class="form-label">Hora</label><input type="time" class="form-control" id="provaHora"></div><div class="mb-3"><label for="provaStatus" class="form-label">Status</label><select class="form-select" id="provaStatus"><option value="Agendada">Agendada</option><option value="Realizada">Realizada</option></select></div><div class="mb-3"><label for="provaNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="provaNota" min="0" max="10"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveProva">Salvar</button></div></div></div></div>
+<!-- Modal Prova com anexo -->
+<div class="modal fade" id="provaModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Prova</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="provaForm"><input type="hidden" id="provaId"><div class="mb-3"><label for="provaDisciplina" class="form-label">Disciplina</label><select class="form-select" id="provaDisciplina" required></select></div><div class="mb-3"><label for="provaConteudo" class="form-label">Conteúdo</label><input type="text" class="form-control" id="provaConteudo" required></div><div class="mb-3"><label for="provaData" class="form-label">Data</label><input type="date" class="form-control" id="provaData" required></div><div class="mb-3"><label for="provaHora" class="form-label">Hora</label><input type="time" class="form-control" id="provaHora"></div><div class="mb-3"><label for="provaStatus" class="form-label">Status</label><select class="form-select" id="provaStatus"><option value="Agendada">Agendada</option><option value="Realizada">Realizada</option></select></div><div class="mb-3"><label for="provaNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="provaNota" min="0" max="10"></div>
+<!-- Campo de anexo -->
+<div class="mb-3">
+    <label for="provaAnexo" class="form-label">Anexo (PDF ou imagem)</label>
+    <input type="file" class="form-control" id="provaAnexo" accept=".pdf,image/*">
+    <div id="provaAnexoPreview" class="mt-2"></div>
+    <input type="hidden" id="provaAnexoExistente" value="">
+</div>
+</form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveProva">Salvar</button></div></div></div></div>
 
-<div class="modal fade" id="eventModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Evento</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="eventForm"><input type="hidden" id="eventId"><div class="mb-3"><label for="eventTitle" class="form-label">Título</label><input type="text" class="form-control" id="eventTitle" required></div><div class="mb-3"><label for="eventType" class="form-label">Tipo</label><select class="form-select" id="eventType"><option value="other">Outro</option><option value="assignment">Trabalho</option><option value="exam">Prova</option><option value="class">Aula</option><option value="financeiro">Financeiro</option></select></div><div class="mb-3"><label for="eventDate" class="form-label">Data</label><input type="date" class="form-control" id="eventDate" required></div><div class="mb-3"><label for="eventTime" class="form-label">Hora</label><input type="time" class="form-control" id="eventTime"></div><div class="mb-3"><label for="eventDescription" class="form-label">Descrição</label><textarea class="form-control" id="eventDescription" rows="2"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto d-none" id="deleteEvent">Excluir</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveEvent">Salvar</button></div></div></div></div>
+<!-- Modal Evento com anexo -->
+<div class="modal fade" id="eventModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Evento</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="eventForm"><input type="hidden" id="eventId"><div class="mb-3"><label for="eventTitle" class="form-label">Título</label><input type="text" class="form-control" id="eventTitle" required></div><div class="mb-3"><label for="eventType" class="form-label">Tipo</label><select class="form-select" id="eventType"><option value="other">Outro</option><option value="assignment">Trabalho</option><option value="exam">Prova</option><option value="class">Aula</option><option value="financeiro">Financeiro</option></select></div><div class="mb-3"><label for="eventDate" class="form-label">Data</label><input type="date" class="form-control" id="eventDate" required></div><div class="mb-3"><label for="eventTime" class="form-label">Hora</label><input type="time" class="form-control" id="eventTime"></div><div class="mb-3"><label for="eventDescription" class="form-label">Descrição</label><textarea class="form-control" id="eventDescription" rows="2"></textarea></div>
+<!-- Campo de anexo -->
+<div class="mb-3">
+    <label for="eventAnexo" class="form-label">Anexo (PDF ou imagem)</label>
+    <input type="file" class="form-control" id="eventAnexo" accept=".pdf,image/*">
+    <div id="eventAnexoPreview" class="mt-2"></div>
+    <input type="hidden" id="eventAnexoExistente" value="">
+</div>
+</form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto d-none" id="deleteEvent">Excluir</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveEvent">Salvar</button></div></div></div></div>
 
 <div class="modal fade" id="financeiroModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Transação</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="financeiroForm"><input type="hidden" id="financeiroId"><div class="mb-3"><label for="financeiroTipo" class="form-label">Tipo</label><select class="form-select" id="financeiroTipo"><option value="receita">Receita</option><option value="despesa">Despesa</option></select></div><div class="mb-3"><label for="financeiroDescricao" class="form-label">Descrição</label><input type="text" class="form-control" id="financeiroDescricao" required></div><div class="mb-3"><label for="financeiroValor" class="form-label">Valor</label><input type="number" step="0.01" class="form-control" id="financeiroValor" required></div><div class="mb-3"><label for="financeiroCategoria" class="form-label">Categoria</label><select class="form-select" id="financeiroCategoria"><option value="">Selecione</option><option value="Alimentação">Alimentação</option><option value="Transporte">Transporte</option><option value="Moradia">Moradia</option><option value="Educação">Educação</option><option value="Lazer">Lazer</option><option value="Saúde">Saúde</option><option value="Vestuário">Vestuário</option><option value="Outros">Outros</option></select></div><div class="mb-3"><label for="financeiroData" class="form-label">Data</label><input type="date" class="form-control" id="financeiroData" required></div><div class="mb-3" id="financeiroStatusWrapper" style="display: none;"><label for="financeiroStatus" class="form-label">Status</label><select class="form-select" id="financeiroStatus"><option value="pendente">Pendente</option><option value="pago">Pago</option></select></div><hr><div class="mb-3"><label for="financeiroRecurrence" class="form-label">Recorrência</label><select class="form-select" id="financeiroRecurrence"><option value="none" selected>Não repetir</option><option value="weekly">Semanalmente</option><option value="monthly">Mensalmente</option></select></div><div class="mb-3 d-none" id="financeiroRecurrenceEndDateWrapper"><label for="financeiroRecurrenceEndDate" class="form-label">Repetir até</label><input type="date" class="form-control" id="financeiroRecurrenceEndDate"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto d-none" id="deleteFinanceiro">Excluir</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveFinanceiro">Salvar</button></div></div></div></div>
 
@@ -1654,6 +1692,9 @@
 <div class="modal fade" id="bibliotecaModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Livro</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="bibliotecaForm"><input type="hidden" id="bibliotecaId"><div class="mb-3"><label for="bibliotecaTitulo" class="form-label">Título</label><input type="text" class="form-control" id="bibliotecaTitulo" required></div><div class="mb-3"><label for="bibliotecaAutor" class="form-label">Autor</label><input type="text" class="form-control" id="bibliotecaAutor" required></div><div class="mb-3"><label for="bibliotecaAssunto" class="form-label">Assunto</label><input type="text" class="form-control" id="bibliotecaAssunto" required></div><div class="mb-3"><label for="bibliotecaEditora" class="form-label">Editora</label><input type="text" class="form-control" id="bibliotecaEditora"></div><div class="mb-3"><label for="bibliotecaAno" class="form-label">Ano</label><input type="number" class="form-control" id="bibliotecaAno" min="1900" max="2030"></div><div class="mb-3"><label for="bibliotecaObservacoes" class="form-label">Observações</label><textarea class="form-control" id="bibliotecaObservacoes" rows="2"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveLivro">Salvar</button></div></div></div></div>
 
 <div class="modal fade" id="viewImageModal" tabindex="-1"><div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Visualizar Imagem</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><img id="modalImage" class="nota-imagem-full" src="" alt="Imagem"><p id="modalImageDescription" class="mt-3"></p></div></div></div></div>
+
+<!-- Modal para visualizar PDF -->
+<div class="modal fade" id="viewPdfModal" tabindex="-1"><div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-lg-down"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Visualizar PDF</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" style="height: 80vh;"><iframe id="pdfViewer" style="width:100%; height:100%; border:none;"></iframe></div></div></div></div>
 
 <div class="modal fade handwriting-fullscreen-modal" id="handwritingFullscreenModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title text-white"><i class="fas fa-pen-fancy me-2"></i> Escrita Manual - Tela Cheia</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="handwriting-controls h-100"><div class="handwriting-area h-100 d-flex flex-column"><div class="canvas-tools"><button class="handwriting-tool-btn" id="fullscreenStartRecognitionBtn"><i class="fas fa-play"></i> Reconhecer</button><button class="handwriting-tool-btn" id="fullscreenClearHandwritingBtn"><i class="fas fa-trash"></i> Limpar</button><button class="handwriting-tool-btn" id="fullscreenSmoothHandwritingBtn"><i class="fas fa-magic"></i> Suavizar</button></div><canvas id="fullscreenHandwritingCanvas" width="1200" height="600" style="width: 100%; height: 60vh; background: white; border-radius: 12px;"></canvas><div class="recognized-text-display mt-3"><h6 class="mb-3"><i class="fas fa-font text-primary me-2"></i>Texto Reconhecido:</h6><div id="fullscreenRecognizedText" class="recognized-text-content">Aguardando reconhecimento...</div></div><div class="save-options mt-3"><button class="save-option-btn salvar-texto" id="fullscreenSaveAsTextBtn"><i class="fas fa-file-alt"></i> Salvar como Texto</button><button class="save-option-btn salvar-imagem" id="fullscreenSaveAsImageBtn"><i class="fas fa-image"></i> Salvar como Imagem</button></div></div></div></div></div></div></div>
 
@@ -2199,14 +2240,23 @@ document.addEventListener('DOMContentLoaded', function() {
         } else container.innerHTML += `<div class="empty-state" style="grid-column:2/8;grid-row:2/6;">Nenhuma aula cadastrada.</div>`;
     }
 
+    // Função auxiliar para exibir anexo na tabela
+    function renderAnexoIcon(item) {
+        if (!item.anexo) return '-';
+        const isPdf = item.anexoTipo === 'application/pdf';
+        const icon = isPdf ? 'fa-file-pdf' : 'fa-image';
+        const cor = isPdf ? 'text-danger' : 'text-success';
+        return `<i class="fas ${icon} ${cor} attachment-icon" onclick="visualizarAnexo('${item.anexo}', '${item.anexoTipo}', '${item.anexoNome}')" title="${item.anexoNome}"></i>`;
+    }
+
     async function renderTrabalhos() {
         const data = await getProfileData();
         const tbody = document.getElementById('trabalhos-tabela');
         tbody.innerHTML = '';
-        if (!data.trabalhos.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum trabalho cadastrado.</td></tr>'; return; }
+        if (!data.trabalhos.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum trabalho cadastrado.</td></tr>'; return; }
         data.trabalhos.sort((a,b)=>new Date(a.entrega)-new Date(b.entrega)).forEach(t => {
             const disc = data.disciplinas.find(d=>d.id===t.disciplinaId);
-            tbody.innerHTML += `<tr><td>${disc?disc.nome:'N/A'}</td><td>${t.titulo}</td><td>${new Date(t.entrega+'T00:00').toLocaleDateString('pt-BR')}</td><td><span class="badge ${t.status==='Pendente'?'bg-warning text-dark':'bg-success'}">${t.status}</span></td><td><span class="badge ${t.prioridade==='high'?'priority-high':t.prioridade==='medium'?'priority-medium':'priority-low'}">${t.prioridade==='high'?'Alta':t.prioridade==='medium'?'Média':'Baixa'}</span></td><td><button class="btn btn-sm btn-outline-primary edit-trabalho" data-id="${t.id}"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline-danger delete-trabalho" data-id="${t.id}"><i class="fas fa-trash"></i></button></td></tr>`;
+            tbody.innerHTML += `<tr><td>${disc?disc.nome:'N/A'}</td><td>${t.titulo}</td><td>${new Date(t.entrega+'T00:00').toLocaleDateString('pt-BR')}</td><td><span class="badge ${t.status==='Pendente'?'bg-warning text-dark':'bg-success'}">${t.status}</span></td><td><span class="badge ${t.prioridade==='high'?'priority-high':t.prioridade==='medium'?'priority-medium':'priority-low'}">${t.prioridade==='high'?'Alta':t.prioridade==='medium'?'Média':'Baixa'}</span></td><td>${renderAnexoIcon(t)}</td><td><button class="btn btn-sm btn-outline-primary edit-trabalho" data-id="${t.id}"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline-danger delete-trabalho" data-id="${t.id}"><i class="fas fa-trash"></i></button></td></tr>`;
         });
     }
 
@@ -2214,10 +2264,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = await getProfileData();
         const tbody = document.getElementById('provas-tabela');
         tbody.innerHTML = '';
-        if (!data.provas.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhuma prova cadastrada.</td></tr>'; return; }
+        if (!data.provas.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center">Nenhuma prova cadastrada.</td></tr>'; return; }
         data.provas.sort((a,b)=>new Date(a.data)-new Date(b.data)).forEach(p => {
             const disc = data.disciplinas.find(d=>d.id===p.disciplinaId);
-            tbody.innerHTML += `<tr><td>${disc?disc.nome:'N/A'}</td><td>${p.conteudo}</td><td>${new Date(p.data+'T00:00').toLocaleDateString('pt-BR')}</td><td>${p.hora||'N/A'}</td><td><span class="badge ${p.status==='Agendada'?'bg-warning text-dark':'bg-success'}">${p.status}</span></td><td>${p.nota!==null?p.nota.toFixed(1):'-'}</td><td><button class="btn btn-sm btn-outline-primary edit-prova" data-id="${p.id}"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline-danger delete-prova" data-id="${p.id}"><i class="fas fa-trash"></i></button></td></tr>`;
+            tbody.innerHTML += `<tr><td>${disc?disc.nome:'N/A'}</td><td>${p.conteudo}</td><td>${new Date(p.data+'T00:00').toLocaleDateString('pt-BR')}</td><td>${p.hora||'N/A'}</td><td><span class="badge ${p.status==='Agendada'?'bg-warning text-dark':'bg-success'}">${p.status}</span></td><td>${p.nota!==null?p.nota.toFixed(1):'-'}</td><td>${renderAnexoIcon(p)}</td><td><button class="btn btn-sm btn-outline-primary edit-prova" data-id="${p.id}"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline-danger delete-prova" data-id="${p.id}"><i class="fas fa-trash"></i></button></td></tr>`;
         });
     }
 
@@ -2264,7 +2314,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = await getProfileData();
         events.forEach(e => {
             let disc = e.disciplinaId ? data.disciplinas.find(d=>d.id===e.disciplinaId) : null;
-            container.innerHTML += `<div class="event-item ${e.type}" data-event-type="${e.type==='assignment'?'trabalhos':e.type==='exam'?'provas':e.type==='financeiro'?'financeiro':'eventos'}" data-event-id="${e.id}"><div class="d-flex justify-content-between align-items-center"><h6 class="mb-0 small">${e.title||e.conteudo||e.descricao}</h6><span class="small text-muted">${e.time||''}</span></div>${disc?`<p class="mb-0 small text-muted">${disc.nome}</p>`:''}</div>`;
+            let anexoIcon = e.anexo ? renderAnexoIcon(e) : '';
+            container.innerHTML += `<div class="event-item ${e.type}" data-event-type="${e.type==='assignment'?'trabalhos':e.type==='exam'?'provas':e.type==='financeiro'?'financeiro':'eventos'}" data-event-id="${e.id}"><div class="d-flex justify-content-between align-items-center"><h6 class="mb-0 small">${e.title||e.conteudo||e.descricao}</h6><span class="small text-muted">${e.time||''}</span></div>${disc?`<p class="mb-0 small text-muted">${disc.nome}</p>`:''}${anexoIcon ? `<div class="mt-1">${anexoIcon}</div>` : ''}</div>`;
         });
     }
 
@@ -2564,6 +2615,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (m.id==='notaModal') { document.getElementById('deleteNota').style.display='none'; document.getElementById('saveNota').style.display='block'; document.getElementById('notaTitulo').readOnly=false; document.getElementById('notaConteudo').readOnly=false; }
                 if (m.id==='videoPlayerModal' && videoInterval) { clearInterval(videoInterval); videoInterval=null; currentVideoId=null; document.getElementById('videoPlayer').src=''; }
                 if (m.id==='handwritingFullscreenModal') clearFullscreenHandwriting();
+                // Limpar preview de anexo nos modais
+                ['trabalho', 'prova', 'event'].forEach(prefix => {
+                    const preview = document.getElementById(prefix + 'AnexoPreview');
+                    if (preview) preview.innerHTML = '';
+                    const existente = document.getElementById(prefix + 'AnexoExistente');
+                    if (existente) existente.value = '';
+                });
             });
         });
 
@@ -2771,6 +2829,62 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Função para ler arquivo como base64
+    function readFileAsBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Função para exibir preview do anexo
+    function setupAnexoPreview(inputId, previewId, hiddenId) {
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        const hidden = document.getElementById(hiddenId);
+        if (!input) return;
+        input.addEventListener('change', async function() {
+            preview.innerHTML = '';
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        preview.innerHTML = `<img src="${e.target.result}" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 5px;">`;
+                    };
+                    reader.readAsDataURL(file);
+                } else if (file.type === 'application/pdf') {
+                    preview.innerHTML = '<span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF selecionado</span>';
+                } else {
+                    preview.innerHTML = '<span class="badge bg-secondary">Arquivo selecionado</span>';
+                }
+                // Se houver um anexo existente, ele será substituído, então limpamos o hidden
+                hidden.value = '';
+            }
+        });
+    }
+
+    // Chamar setup dos previews após carregar a página
+    setTimeout(() => {
+        setupAnexoPreview('trabalhoAnexo', 'trabalhoAnexoPreview', 'trabalhoAnexoExistente');
+        setupAnexoPreview('provaAnexo', 'provaAnexoPreview', 'provaAnexoExistente');
+        setupAnexoPreview('eventAnexo', 'eventAnexoPreview', 'eventAnexoExistente');
+    }, 500);
+
+    // Função global para visualizar anexo
+    window.visualizarAnexo = function(base64, tipo, nome) {
+        if (tipo === 'application/pdf') {
+            document.getElementById('pdfViewer').src = base64;
+            new bootstrap.Modal(document.getElementById('viewPdfModal')).show();
+        } else {
+            document.getElementById('modalImage').src = base64;
+            document.getElementById('modalImageDescription').innerText = nome;
+            new bootstrap.Modal(document.getElementById('viewImageModal')).show();
+        }
+    };
+
     async function handleEdit(store, prefix, id) {
         let item = await getData(store, parseInt(id));
         if (!item) return;
@@ -2785,6 +2899,19 @@ document.addEventListener('DOMContentLoaded', function() {
         if (prefix==='financeiro' && item.tipo==='despesa') document.getElementById('financeiroStatusWrapper').style.display='block';
         if (prefix==='horario') document.getElementById('deleteHorario').classList.remove('d-none');
         if (prefix==='nota') document.getElementById('deleteNota').style.display='block';
+        // Carregar anexo existente se houver
+        if (item.anexo) {
+            const preview = document.getElementById(prefix + 'AnexoPreview');
+            const hidden = document.getElementById(prefix + 'AnexoExistente');
+            if (preview && hidden) {
+                hidden.value = item.anexo; // guarda o anexo atual
+                if (item.anexoTipo.startsWith('image/')) {
+                    preview.innerHTML = `<img src="${item.anexo}" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 5px;"><br><small class="text-muted">Anexo atual. Selecione outro para substituir.</small>`;
+                } else {
+                    preview.innerHTML = `<span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF atual. Selecione outro para substituir.</span>`;
+                }
+            }
+        }
         new bootstrap.Modal(modalEl).show();
     }
 
@@ -2822,7 +2949,7 @@ document.addEventListener('DOMContentLoaded', function() {
             profileId: pid, 
             nome: document.getElementById('disciplinaNome').value, 
             professor: document.getElementById('disciplinaProfessor').value, 
-            professorEmail: document.getElementById('disciplinaEmail').value, // novo campo
+            professorEmail: document.getElementById('disciplinaEmail').value,
             frequencia: parseInt(document.getElementById('disciplinaFrequencia').value) 
         };
         if (!d.nome) return alert('Nome obrigatório.');
@@ -2831,15 +2958,74 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function saveTrabalho() {
         let pid = await getCurrentProfileId(), id = document.getElementById('trabalhoId').value;
-        let t = { id: id?parseInt(id):await getNewId('trabalhos'), profileId: pid, disciplinaId: parseInt(document.getElementById('trabalhoDisciplina').value), titulo: document.getElementById('trabalhoTitulo').value, entrega: document.getElementById('trabalhoEntrega').value, status: document.getElementById('trabalhoStatus').value, prioridade: document.getElementById('trabalhoPrioridade').value, nota: document.getElementById('trabalhoNota').value===''?null:parseFloat(document.getElementById('trabalhoNota').value), observacoes: document.getElementById('trabalhoObservacoes').value };
+        let t = { 
+            id: id?parseInt(id):await getNewId('trabalhos'), 
+            profileId: pid, 
+            disciplinaId: parseInt(document.getElementById('trabalhoDisciplina').value), 
+            titulo: document.getElementById('trabalhoTitulo').value, 
+            entrega: document.getElementById('trabalhoEntrega').value, 
+            status: document.getElementById('trabalhoStatus').value, 
+            prioridade: document.getElementById('trabalhoPrioridade').value, 
+            nota: document.getElementById('trabalhoNota').value===''?null:parseFloat(document.getElementById('trabalhoNota').value), 
+            observacoes: document.getElementById('trabalhoObservacoes').value
+        };
         if (!t.disciplinaId || !t.titulo || !t.entrega) return alert('Preencha campos obrigatórios.');
+
+        // Processar anexo
+        const anexoInput = document.getElementById('trabalhoAnexo');
+        const anexoExistente = document.getElementById('trabalhoAnexoExistente').value;
+        if (anexoInput.files && anexoInput.files[0]) {
+            const file = anexoInput.files[0];
+            t.anexo = await readFileAsBase64(file);
+            t.anexoNome = file.name;
+            t.anexoTipo = file.type;
+        } else if (anexoExistente) {
+            t.anexo = anexoExistente;
+            // manter nome e tipo (precisamos recuperar do objeto original se for edição)
+            if (id) {
+                const original = await getData('trabalhos', parseInt(id));
+                if (original) {
+                    t.anexoNome = original.anexoNome;
+                    t.anexoTipo = original.anexoTipo;
+                }
+            }
+        }
+
         await saveData('trabalhos', t); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('trabalhoModal')).hide();
     }
 
     async function saveProva() {
         let pid = await getCurrentProfileId(), id = document.getElementById('provaId').value;
-        let p = { id: id?parseInt(id):await getNewId('provas'), profileId: pid, disciplinaId: parseInt(document.getElementById('provaDisciplina').value), conteudo: document.getElementById('provaConteudo').value, data: document.getElementById('provaData').value, hora: document.getElementById('provaHora').value, status: document.getElementById('provaStatus').value, nota: document.getElementById('provaNota').value===''?null:parseFloat(document.getElementById('provaNota').value) };
+        let p = { 
+            id: id?parseInt(id):await getNewId('provas'), 
+            profileId: pid, 
+            disciplinaId: parseInt(document.getElementById('provaDisciplina').value), 
+            conteudo: document.getElementById('provaConteudo').value, 
+            data: document.getElementById('provaData').value, 
+            hora: document.getElementById('provaHora').value, 
+            status: document.getElementById('provaStatus').value, 
+            nota: document.getElementById('provaNota').value===''?null:parseFloat(document.getElementById('provaNota').value)
+        };
         if (!p.disciplinaId || !p.conteudo || !p.data) return alert('Campos obrigatórios.');
+
+        const anexoInput = document.getElementById('provaAnexo');
+        const anexoExistente = document.getElementById('provaAnexoExistente').value;
+        if (anexoInput.files && anexoInput.files[0]) {
+            const file = anexoInput.files[0];
+            p.anexo = await readFileAsBase64(file);
+            p.anexoNome = file.name;
+            p.anexoTipo = file.type;
+        } else if (anexoExistente) {
+            p.anexo = anexoExistente;
+            if (id) {
+                const original = await getData('provas', parseInt(id));
+                if (original) {
+                    p.anexoNome = original.anexoNome;
+                    p.anexoTipo = original.anexoTipo;
+                }
+            }
+        }
+
         await saveData('provas', p); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('provaModal')).hide();
     }
 
@@ -2857,8 +3043,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function saveEvent() {
         let pid = await getCurrentProfileId(), id = document.getElementById('eventId').value;
-        let e = { id: id?parseInt(id):await getNewId('eventos'), profileId: pid, title: document.getElementById('eventTitle').value, type: document.getElementById('eventType').value, date: document.getElementById('eventDate').value, time: document.getElementById('eventTime').value, description: document.getElementById('eventDescription').value };
+        let e = { 
+            id: id?parseInt(id):await getNewId('eventos'), 
+            profileId: pid, 
+            title: document.getElementById('eventTitle').value, 
+            type: document.getElementById('eventType').value, 
+            date: document.getElementById('eventDate').value, 
+            time: document.getElementById('eventTime').value, 
+            description: document.getElementById('eventDescription').value 
+        };
         if (!e.title || !e.date) return alert('Título e data obrigatórios.');
+
+        const anexoInput = document.getElementById('eventAnexo');
+        const anexoExistente = document.getElementById('eventAnexoExistente').value;
+        if (anexoInput.files && anexoInput.files[0]) {
+            const file = anexoInput.files[0];
+            e.anexo = await readFileAsBase64(file);
+            e.anexoNome = file.name;
+            e.anexoTipo = file.type;
+        } else if (anexoExistente) {
+            e.anexo = anexoExistente;
+            if (id) {
+                const original = await getData('eventos', parseInt(id));
+                if (original) {
+                    e.anexoNome = original.anexoNome;
+                    e.anexoTipo = original.anexoTipo;
+                }
+            }
+        }
+
         await saveData('eventos', e); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
     }
 
