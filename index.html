@@ -908,47 +908,140 @@
         box-shadow: var(--shadow);
     }
     
-    .financeiro-transacao-item {
+    /* Cartão de transação financeira */
+    .financeiro-transacao-card {
         border-left: 4px solid;
-        padding: 12px 15px;
-        margin-bottom: 8px;
+        padding: 0;
+        margin-bottom: 12px;
         background-color: white;
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
     }
     
-    .financeiro-transacao-item:hover {
+    .financeiro-transacao-card:hover {
         transform: translateX(3px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
-    .financeiro-transacao-item.receita {
+    .financeiro-transacao-card.receita {
         border-left-color: var(--success);
     }
     
-    .financeiro-transacao-item.despesa {
+    .financeiro-transacao-card.despesa {
         border-left-color: var(--danger);
     }
     
-    .financeiro-dia {
-        font-size: 0.9rem;
+    .card-header-info {
+        padding: 12px 15px 5px 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .card-descricao {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-right: 10px;
+    }
+    
+    .card-valor {
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+    
+    .card-valor.receita {
+        color: var(--success);
+    }
+    
+    .card-valor.despesa {
+        color: var(--danger);
+    }
+    
+    .card-categoria {
+        padding: 0 15px;
+        font-size: 0.85rem;
         color: var(--text-light);
         margin-bottom: 5px;
     }
     
-    .financeiro-dia-valor {
+    .card-status {
+        padding: 0 15px;
+        margin-bottom: 10px;
+    }
+    
+    .card-actions {
+        border-top: 1px solid #eee;
+        padding: 10px 15px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+        background-color: #fafafa;
+        border-radius: 0 0 12px 12px;
+    }
+    
+    .card-actions .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    /* Filtros financeiros */
+    .financeiro-filtros-bar {
+        background: white;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .filter-group {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        color: var(--text-dark);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        transition: var(--transition);
+        cursor: pointer;
+    }
+    
+    .filter-btn.active {
+        background-color: var(--accent);
+        border-color: var(--accent);
+        color: white;
+    }
+    
+    .filter-btn:hover {
+        background-color: #e9ecef;
+    }
+    
+    .filter-btn.active:hover {
+        background-color: #16a085;
+    }
+    
+    .financeiro-dia-titulo {
         font-weight: 600;
+        color: var(--primary);
+        margin: 20px 0 10px 0;
+        padding-bottom: 5px;
+        border-bottom: 2px solid var(--accent);
+        font-size: 1.1rem;
     }
     
-    .financeiro-dia-valor.receita {
-        color: var(--success);
-    }
-    
-    .financeiro-dia-valor.despesa {
-        color: var(--danger);
-    }
-
     /* Gráfico anual */
     .grafico-anual {
         display: flex;
@@ -1520,6 +1613,19 @@
         width: 100%;
         justify-content: center;
       }
+      
+      /* Ajustes para cartões financeiros em mobile */
+      .card-header-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+      }
+      .card-actions {
+        justify-content: center;
+      }
+      .card-actions .btn {
+        flex: 1 1 auto;
+      }
     }
   </style>
 </head>
@@ -1664,7 +1770,7 @@
     <div class="row g-4" id="links-lista"></div>
   </div>
 
-  <!-- Painel Financeiro Reformulado -->
+  <!-- Painel Financeiro Reformulado com Filtros -->
   <div class="content-panel" id="financeiro">
       <div class="content-header"><h2>Controle Financeiro</h2><div class="btn-group"><button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#financeiroModal" data-type="receita"><i class="fas fa-plus"></i> Nova Receita</button><button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#financeiroModal" data-type="despesa"><i class="fas fa-minus"></i> Nova Despesa</button></div></div>
       <div class="financeiro-mes-selector">
@@ -1682,6 +1788,21 @@
       <div class="card card-dashboard mb-4">
           <div class="card-body">
               <h4 class="card-title mb-3">Transações do Mês</h4>
+              
+              <!-- Filtros rápidos -->
+              <div class="financeiro-filtros-bar">
+                  <div class="filter-group">
+                      <button class="filter-btn active" data-filter-type="all">Todos</button>
+                      <button class="filter-btn" data-filter-type="receita">Receitas</button>
+                      <button class="filter-btn" data-filter-type="despesa">Despesas</button>
+                  </div>
+                  <div class="filter-group">
+                      <button class="filter-btn active" data-filter-status="all">Todos</button>
+                      <button class="filter-btn" data-filter-status="pendente">Pendentes</button>
+                      <button class="filter-btn" data-filter-status="pago">Pagos</button>
+                  </div>
+              </div>
+              
               <div id="financeiro-transacoes-mes"><div class="empty-state"><p>Nenhuma transação neste mês.</p></div></div>
           </div>
       </div>
@@ -1799,6 +1920,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentFinanceMonth = new Date().getMonth(), currentFinanceYear = new Date().getFullYear();
     let importedImageData = null;
     let scheduleStartHour = 7, scheduleEndHour = 22;
+    
+    // Filtros financeiros
+    let financeFilterType = 'all'; // 'all', 'receita', 'despesa'
+    let financeFilterStatus = 'all'; // 'all', 'pendente', 'pago'
 
     // Carregar preferências de filtro do localStorage
     function loadScheduleFilter() {
@@ -2510,6 +2635,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // NOVA FUNÇÃO RENDERFINANCEIRO COM CARTÕES E FILTROS
     async function renderFinanceiro() {
         const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
         document.getElementById('financeiro-mes-atual').textContent = `${meses[currentFinanceMonth]} ${currentFinanceYear}`;
@@ -2517,7 +2643,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('financeiro-transacoes-mes');
         container.innerHTML = '';
         const mesAnoAtual = `${currentFinanceMonth+1}-${currentFinanceYear}`;
-        const trans = data.financeiro.filter(t=>t.mesAno===mesAnoAtual);
+        let trans = data.financeiro.filter(t=>t.mesAno===mesAnoAtual);
+
+        // Aplicar filtros
+        if (financeFilterType !== 'all') {
+            trans = trans.filter(t => t.tipo === financeFilterType);
+        }
+        if (financeFilterStatus !== 'all') {
+            trans = trans.filter(t => t.status === financeFilterStatus);
+        }
+
         let totalReceitas = 0, totalDespesas = 0;
         trans.forEach(t=>{ if (t.tipo==='receita') totalReceitas+=t.valor; else totalDespesas+=t.valor; });
         document.getElementById('financeiro-total-receitas-mes').textContent = totalReceitas.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
@@ -2526,19 +2661,54 @@ document.addEventListener('DOMContentLoaded', function() {
         let saldo = totalReceitas - totalDespesas;
         saldoEl.textContent = saldo.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
         saldoEl.className = saldo>=0 ? 'text-success' : 'text-danger';
+
+        // Agrupar por dia
         let porDia = {};
         trans.forEach(t=>{ let d = new Date(t.data).getDate(); if(!porDia[d]) porDia[d]=[]; porDia[d].push(t); });
-        let dias = Object.keys(porDia).sort((a,b)=>b-a);
-        if (!dias.length) container.innerHTML = '<div class="empty-state"><p>Nenhuma transação neste mês.</p></div>';
-        else {
+        let dias = Object.keys(porDia).sort((a,b)=>b-a); // dias decrescentes
+
+        if (!dias.length) {
+            container.innerHTML = '<div class="empty-state"><p>Nenhuma transação neste mês com os filtros selecionados.</p></div>';
+        } else {
             dias.forEach(dia=>{
-                let r=0, de=0; porDia[dia].forEach(t=>{ if(t.tipo==='receita') r+=t.valor; else de+=t.valor; });
-                container.innerHTML += `<div class="financeiro-dia mb-3"><div class="d-flex justify-content-between mb-2"><strong>Dia ${dia}</strong><div>${r>0?`<span class="financeiro-dia-valor receita">+R$ ${r.toFixed(2)}</span>`:''}${de>0?`<span class="financeiro-dia-valor despesa ms-2">-R$ ${de.toFixed(2)}</span>`:''}</div></div>`;
+                let r=0, de=0; 
+                porDia[dia].forEach(t=>{ if(t.tipo==='receita') r+=t.valor; else de+=t.valor; });
+                container.innerHTML += `<div class="financeiro-dia-titulo">Dia ${dia}</div>`;
                 porDia[dia].sort((a,b)=>new Date(b.data)-new Date(a.data)).forEach(t=>{
-                    let status = t.tipo==='despesa' ? `<span class="badge ${t.status==='pago'?'bg-success':'bg-warning text-dark'} ms-2">${t.status==='pago'?'Pago':'Pendente'}</span>` : '';
-                    container.innerHTML += `<div class="financeiro-transacao-item ${t.tipo}" data-id="${t.id}"><div class="d-flex justify-content-between align-items-center"><div><strong>${t.descricao}</strong><div class="small text-muted">${t.categoria||'Sem categoria'}</div></div><div class="d-flex align-items-center"><span class="fw-bold ${t.tipo==='receita'?'text-success':'text-danger'}">${t.tipo==='receita'?'+':'-'}R$ ${t.valor.toFixed(2)}</span>${status}<button class="btn btn-sm btn-outline-primary ms-2 edit-financeiro" data-id="${t.id}"><i class="fas fa-edit"></i></button>${t.tipo==='despesa' && t.status==='pendente'? `<button class="btn btn-sm btn-outline-success ms-1 baixa-financeiro" data-id="${t.id}"><i class="fas fa-check"></i></button>`:''}<button class="btn btn-sm btn-outline-danger ms-1 delete-financeiro" data-id="${t.id}"><i class="fas fa-trash"></i></button></div></div></div>`;
+                    // Criar cartão
+                    let card = document.createElement('div');
+                    card.className = `financeiro-transacao-card ${t.tipo}`;
+                    card.dataset.id = t.id;
+                    
+                    let statusBadge = t.tipo==='despesa' ? `<span class="badge ${t.status==='pago'?'bg-success':'bg-warning text-dark'} ms-2">${t.status==='pago'?'Pago':'Pendente'}</span>` : '';
+                    
+                    let valorClass = t.tipo==='receita' ? 'receita' : 'despesa';
+                    let valorSinal = t.tipo==='receita' ? '+' : '-';
+                    
+                    // Ações
+                    let actions = `
+                        <button class="btn btn-sm btn-outline-primary edit-financeiro" data-id="${t.id}"><i class="fas fa-edit"></i></button>
+                        ${t.tipo==='despesa' && t.status==='pendente' ? `<button class="btn btn-sm btn-outline-success baixa-financeiro" data-id="${t.id}"><i class="fas fa-check"></i></button>` : ''}
+                        <button class="btn btn-sm btn-outline-danger delete-financeiro" data-id="${t.id}"><i class="fas fa-trash"></i></button>
+                    `;
+                    
+                    card.innerHTML = `
+                        <div class="card-header-info">
+                            <span class="card-descricao">${t.descricao}</span>
+                            <span class="card-valor ${valorClass}">${valorSinal}R$ ${t.valor.toFixed(2)}</span>
+                        </div>
+                        <div class="card-categoria">
+                            ${t.categoria || 'Sem categoria'}
+                        </div>
+                        <div class="card-status">
+                            ${statusBadge}
+                        </div>
+                        <div class="card-actions">
+                            ${actions}
+                        </div>
+                    `;
+                    container.appendChild(card);
                 });
-                container.innerHTML += `</div>`;
             });
         }
         await renderResumoAnual();
@@ -2734,6 +2904,25 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('fixed-back-home').addEventListener('click', goToHome);
         document.getElementById('prev-month-financeiro').addEventListener('click', ()=>{ if (--currentFinanceMonth<0) { currentFinanceMonth=11; currentFinanceYear--; } renderFinanceiro(); });
         document.getElementById('next-month-financeiro').addEventListener('click', ()=>{ if (++currentFinanceMonth>11) { currentFinanceMonth=0; currentFinanceYear++; } renderFinanceiro(); });
+        
+        // Filtros financeiros
+        document.querySelectorAll('[data-filter-type]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('[data-filter-type]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                financeFilterType = this.dataset.filterType;
+                renderFinanceiro();
+            });
+        });
+        document.querySelectorAll('[data-filter-status]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('[data-filter-status]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                financeFilterStatus = this.dataset.filterStatus;
+                renderFinanceiro();
+            });
+        });
+        
         document.getElementById('applyHourFilter').addEventListener('click', ()=>{
             let s = +document.getElementById('filterStartHour').value, e = +document.getElementById('filterEndHour').value;
             if (s>=0 && s<=23 && e>=0 && e<=23 && s<=e) { 
