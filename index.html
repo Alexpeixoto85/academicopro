@@ -177,7 +177,6 @@
       padding: 1.5rem;
     }
 
-    /* Cards para trabalhos e provas */
     .item-card {
       height: 100%;
       display: flex;
@@ -582,7 +581,6 @@
         padding: 0.5em;
     }
 
-    /* Financeiro reformulado */
     .financeiro-resumo-mensal {
         background-color: white;
         border-radius: 12px;
@@ -924,7 +922,6 @@
         box-shadow: var(--shadow);
     }
     
-    /* Cartão de transação financeira */
     .financeiro-transacao-card {
         border-left: 4px solid;
         padding: 0;
@@ -1005,7 +1002,6 @@
         font-size: 0.85rem;
     }
     
-    /* Filtros financeiros */
     .financeiro-filtros-bar {
         background: white;
         border-radius: 12px;
@@ -1058,7 +1054,6 @@
         font-size: 1.1rem;
     }
     
-    /* Gráfico anual */
     .grafico-anual {
         display: flex;
         align-items: flex-end;
@@ -1511,7 +1506,6 @@
         display: inline-block;
     }
 
-    /* Ícone de anexo */
     .attachment-icon {
         color: var(--info);
         font-size: 1.2rem;
@@ -1522,7 +1516,6 @@
         transform: scale(1.2);
     }
 
-    /* Participantes do trabalho */
     .participantes-list {
         margin-top: 8px;
         padding-left: 0;
@@ -1539,6 +1532,24 @@
         margin-right: 5px;
         color: var(--accent);
         font-size: 0.7rem;
+    }
+    
+    .documento-card {
+        cursor: pointer;
+        transition: var(--transition);
+        height: 100%;
+    }
+    .documento-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    .documento-icon {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+    .documento-tamanho {
+        font-size: 0.8rem;
+        color: var(--text-light);
     }
 
     @media (max-width: 768px) {
@@ -1649,7 +1660,6 @@
         justify-content: center;
       }
       
-      /* Ajustes para cartões financeiros em mobile */
       .card-header-info {
         flex-direction: column;
         align-items: flex-start;
@@ -1714,13 +1724,11 @@
       <div class="schedule-grid-wrapper"><div class="schedule-grid" id="schedule-grid-container"></div></div>
   </div>
 
-  <!-- Trabalhos em cards -->
   <div class="content-panel" id="trabalhos">
     <div class="content-header"><h2>Trabalhos</h2><div class="btn-group"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#trabalhoModal"><i class="fas fa-plus"></i> Novo Trabalho</button></div></div>
     <div class="row g-4" id="trabalhos-cards"></div>
   </div>
 
-  <!-- Provas em cards -->
   <div class="content-panel" id="provas">
       <div class="content-header"><h2>Provas</h2><div class="btn-group"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#provaModal"><i class="fas fa-plus"></i> Nova Prova</button></div></div>
       <div class="row g-4" id="provas-cards"></div>
@@ -1753,6 +1761,7 @@
             <button class="nav-link" id="desenho-tab" data-bs-toggle="tab" data-bs-target="#desenho-content" type="button" role="tab"><i class="fas fa-paint-brush"></i> Desenho</button>
             <button class="nav-link" id="escrita-tab" data-bs-toggle="tab" data-bs-target="#escrita-content" type="button" role="tab"><i class="fas fa-pen-fancy"></i> Escrita Manual</button>
             <button class="nav-link" id="importar-tab" data-bs-toggle="tab" data-bs-target="#importar-content" type="button" role="tab"><i class="fas fa-file-import"></i> Importar Imagem</button>
+            <button class="nav-link" id="documentos-tab" data-bs-toggle="tab" data-bs-target="#documentos-content" type="button" role="tab"><i class="fas fa-file-pdf"></i> Documentos</button>
             <button class="nav-link" id="galeria-tab" data-bs-toggle="tab" data-bs-target="#galeria-content" type="button" role="tab"><i class="fas fa-images"></i> Galeria</button>
         </div>
     </div>
@@ -1794,6 +1803,44 @@
             </div></div>
         </div>
         
+        <!-- ABA DOCUMENTOS -->
+        <div class="tab-pane fade" id="documentos-content" role="tabpanel">
+            <div class="card card-dashboard">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Importar Documentos</h4>
+                    <div id="documentUploadArea" class="image-upload-area">
+                        <i class="fas fa-cloud-upload-alt fa-3x mb-3" style="color: var(--accent);"></i>
+                        <h5>Clique para selecionar um documento</h5>
+                        <p class="text-muted mb-0">PDF, Word, PowerPoint (arraste ou clique)</p>
+                        <input type="file" id="documentFileInput" accept=".pdf,.docx,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation" class="d-none">
+                    </div>
+                    <div id="documentPreviewContainer" style="display: none;">
+                        <div class="text-center mb-3">
+                            <div class="image-preview-container">
+                                <i class="fas fa-file-alt fa-3x text-primary"></i>
+                                <p id="documentFileName" class="mt-2"></p>
+                                <button type="button" id="removeDocumentBtn" class="remove-image-btn"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                        <form id="importDocumentForm">
+                            <div class="mb-3">
+                                <label for="importDocumentTitulo" class="form-label">Título do Documento</label>
+                                <input type="text" class="form-control" id="importDocumentTitulo" placeholder="Ex: Resumo Direito Civil" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="importDocumentDescricao" class="form-label">Descrição (opcional)</label>
+                                <textarea class="form-control" id="importDocumentDescricao" rows="3" placeholder="Adicione uma descrição..."></textarea>
+                            </div>
+                            <button type="button" class="btn btn-primary" id="saveImportedDocumentBtn"><i class="fas fa-save"></i> Salvar Documento</button>
+                        </form>
+                    </div>
+                    <hr>
+                    <h5 class="mt-4">Documentos Salvos</h5>
+                    <div class="row g-4" id="documentos-lista"></div>
+                </div>
+            </div>
+        </div>
+        
         <div class="tab-pane fade" id="galeria-content" role="tabpanel">
             <div class="card card-dashboard"><div class="card-body"><h4 class="card-title mb-4">Galeria de Imagens</h4><div class="row galeria-container" id="galeria-imagens-container"></div></div></div>
         </div>
@@ -1805,7 +1852,6 @@
     <div class="row g-4" id="links-lista"></div>
   </div>
 
-  <!-- Painel Financeiro Reformulado com Filtros -->
   <div class="content-panel" id="financeiro">
       <div class="content-header"><h2>Controle Financeiro</h2><div class="btn-group"><button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#financeiroModal" data-type="receita"><i class="fas fa-plus"></i> Nova Receita</button><button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#financeiroModal" data-type="despesa"><i class="fas fa-minus"></i> Nova Despesa</button></div></div>
       <div class="financeiro-mes-selector">
@@ -1824,7 +1870,6 @@
           <div class="card-body">
               <h4 class="card-title mb-3">Transações do Mês</h4>
               
-              <!-- Filtros rápidos -->
               <div class="financeiro-filtros-bar">
                   <div class="filter-group">
                       <button class="filter-btn active" data-filter-type="all">Todos</button>
@@ -1881,9 +1926,8 @@
 
 <div class="modal fade" id="disciplinaModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Disciplina</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="disciplinaForm"><input type="hidden" id="disciplinaId"><div class="mb-3"><label for="disciplinaNome" class="form-label">Nome</label><input type="text" class="form-control" id="disciplinaNome" required></div><div class="mb-3"><label for="disciplinaProfessor" class="form-label">Professor</label><input type="text" class="form-control" id="disciplinaProfessor"></div><div class="mb-3"><label for="disciplinaEmail" class="form-label">E-mail do Professor</label><input type="email" class="form-control" id="disciplinaEmail"></div><div class="mb-3"><label for="disciplinaFrequencia" class="form-label">Frequência (%)</label><input type="number" class="form-control" id="disciplinaFrequencia" min="0" max="100" value="100"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveDisciplina">Salvar</button></div></div></div></div>
 
-<!-- Modal Trabalho com anexo, tipo e participantes -->
+<!-- Modal Trabalho com anexo -->
 <div class="modal fade" id="trabalhoModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Trabalho</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="trabalhoForm"><input type="hidden" id="trabalhoId"><div class="mb-3"><label for="trabalhoDisciplina" class="form-label">Disciplina</label><select class="form-select" id="trabalhoDisciplina" required></select></div><div class="mb-3"><label for="trabalhoTitulo" class="form-label">Título</label><input type="text" class="form-control" id="trabalhoTitulo" required></div>
-<!-- NOVO CAMPO TIPO -->
 <div class="mb-3">
     <label for="trabalhoTipo" class="form-label">Tipo</label>
     <select class="form-select" id="trabalhoTipo">
@@ -1891,13 +1935,11 @@
         <option value="grupo">Em grupo</option>
     </select>
 </div>
-<!-- CAMPO PARTICIPANTES (aparece apenas se grupo) -->
 <div class="mb-3" id="grupoParticipantesWrapper" style="display: none;">
     <label for="trabalhoParticipantes" class="form-label">Participantes (um por linha)</label>
     <textarea class="form-control" id="trabalhoParticipantes" rows="3" placeholder="Nome do aluno 1&#10;Nome do aluno 2&#10;Nome do aluno 3"></textarea>
 </div>
 <div class="mb-3"><label for="trabalhoEntrega" class="form-label">Data de Entrega</label><input type="date" class="form-control" id="trabalhoEntrega" required></div><div class="mb-3"><label for="trabalhoStatus" class="form-label">Status</label><select class="form-select" id="trabalhoStatus"><option value="Pendente">Pendente</option><option value="Entregue">Entregue</option></select></div><div class="mb-3"><label for="trabalhoPrioridade" class="form-label">Prioridade</label><select class="form-select" id="trabalhoPrioridade"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></div><div class="mb-3"><label for="trabalhoNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="trabalhoNota" min="0" max="10"></div><div class="mb-3"><label for="trabalhoObservacoes" class="form-label">Observações</label><textarea class="form-control" id="trabalhoObservacoes" rows="3"></textarea></div>
-<!-- Campo de anexo -->
 <div class="mb-3">
     <label for="trabalhoAnexo" class="form-label">Anexo (PDF ou imagem)</label>
     <input type="file" class="form-control" id="trabalhoAnexo" accept=".pdf,image/*">
@@ -1908,7 +1950,6 @@
 
 <!-- Modal Prova com anexo -->
 <div class="modal fade" id="provaModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Prova</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="provaForm"><input type="hidden" id="provaId"><div class="mb-3"><label for="provaDisciplina" class="form-label">Disciplina</label><select class="form-select" id="provaDisciplina" required></select></div><div class="mb-3"><label for="provaConteudo" class="form-label">Conteúdo</label><input type="text" class="form-control" id="provaConteudo" required></div><div class="mb-3"><label for="provaData" class="form-label">Data</label><input type="date" class="form-control" id="provaData" required></div><div class="mb-3"><label for="provaHora" class="form-label">Hora</label><input type="time" class="form-control" id="provaHora"></div><div class="mb-3"><label for="provaStatus" class="form-label">Status</label><select class="form-select" id="provaStatus"><option value="Agendada">Agendada</option><option value="Realizada">Realizada</option></select></div><div class="mb-3"><label for="provaNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="provaNota" min="0" max="10"></div>
-<!-- Campo de anexo -->
 <div class="mb-3">
     <label for="provaAnexo" class="form-label">Anexo (PDF ou imagem)</label>
     <input type="file" class="form-control" id="provaAnexo" accept=".pdf,image/*">
@@ -1919,7 +1960,6 @@
 
 <!-- Modal Evento com anexo -->
 <div class="modal fade" id="eventModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Evento</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="eventForm"><input type="hidden" id="eventId"><div class="mb-3"><label for="eventTitle" class="form-label">Título</label><input type="text" class="form-control" id="eventTitle" required></div><div class="mb-3"><label for="eventType" class="form-label">Tipo</label><select class="form-select" id="eventType"><option value="other">Outro</option><option value="assignment">Trabalho</option><option value="exam">Prova</option><option value="class">Aula</option><option value="financeiro">Financeiro</option></select></div><div class="mb-3"><label for="eventDate" class="form-label">Data</label><input type="date" class="form-control" id="eventDate" required></div><div class="mb-3"><label for="eventTime" class="form-label">Hora</label><input type="time" class="form-control" id="eventTime"></div><div class="mb-3"><label for="eventDescription" class="form-label">Descrição</label><textarea class="form-control" id="eventDescription" rows="2"></textarea></div>
-<!-- Campo de anexo -->
 <div class="mb-3">
     <label for="eventAnexo" class="form-label">Anexo (PDF ou imagem)</label>
     <input type="file" class="form-control" id="eventAnexo" accept=".pdf,image/*">
@@ -1935,11 +1975,83 @@
 
 <div class="modal fade" id="linkModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Link</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="linkForm"><input type="hidden" id="linkId"><div class="mb-3"><label for="linkTitulo" class="form-label">Título</label><input type="text" class="form-control" id="linkTitulo" required></div><div class="mb-3"><label for="linkUrl" class="form-label">URL</label><input type="url" class="form-control" id="linkUrl" placeholder="https://..." required></div><div class="mb-3"><label for="linkCategoria" class="form-label">Categoria</label><input type="text" class="form-control" id="linkCategoria"></div><div class="mb-3"><label for="linkDescricao" class="form-label">Descrição</label><textarea class="form-control" id="linkDescricao" rows="2"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveLink">Salvar</button></div></div></div></div>
 
-<div class="modal fade" id="filmeModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Filme/Vídeo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="filmeForm"><input type="hidden" id="filmeId"><div class="mb-3"><label for="filmeTitulo" class="form-label">Título</label><input type="text" class="form-control" id="filmeTitulo" required></div><div class="mb-3"><label for="filmeUrl" class="form-label">URL</label><input type="url" class="form-control" id="filmeUrl" placeholder="https://..." required></div><div class="mb-3"><label for="filmeTipo" class="form-label">Tipo</label><select class="form-select" id="filmeTipo"><option value="filme">Filme</option><option value="video-aula">Vídeo-Aula</option></select></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveFilme">Salvar</button></div></div></div></div>
+<!-- Modal Filme modificado -->
+<div class="modal fade" id="filmeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Novo Filme/Vídeo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="filmeForm">
+                    <input type="hidden" id="filmeId">
+                    <div class="mb-3">
+                        <label for="filmeTitulo" class="form-label">Título</label>
+                        <input type="text" class="form-control" id="filmeTitulo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de origem</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="filmeOrigem" id="filmeOrigemUrl" value="url" checked>
+                            <label class="form-check-label" for="filmeOrigemUrl">URL (YouTube)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="filmeOrigem" id="filmeOrigemArquivo" value="arquivo">
+                            <label class="form-check-label" for="filmeOrigemArquivo">Arquivo de vídeo</label>
+                        </div>
+                    </div>
+                    <div class="mb-3" id="filmeUrlGroup">
+                        <label for="filmeUrl" class="form-label">URL</label>
+                        <input type="url" class="form-control" id="filmeUrl" placeholder="https://...">
+                    </div>
+                    <div class="mb-3" id="filmeArquivoGroup" style="display: none;">
+                        <label for="filmeArquivo" class="form-label">Selecione o arquivo de vídeo</label>
+                        <input type="file" class="form-control" id="filmeArquivo" accept="video/*">
+                        <small class="text-muted">Formatos suportados: MP4, WebM, etc.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="filmeTipo" class="form-label">Tipo</label>
+                        <select class="form-select" id="filmeTipo">
+                            <option value="filme">Filme</option>
+                            <option value="video-aula">Vídeo-Aula</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveFilme">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="anotacaoFilmeModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Anotação do Filme/Vídeo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="anotacaoFilmeForm"><input type="hidden" id="anotacaoFilmeId"><div class="mb-3"><label for="filmeTempoAtual" class="form-label">Minuto Atual</label><div class="input-group"><input type="number" class="form-control" id="filmeTempoAtual" min="0" placeholder="Minuto onde parou"><span class="input-group-text">min</span></div></div><div class="mb-3"><label for="filmeAnotacao" class="form-label">Anotações</label><textarea class="form-control" id="filmeAnotacao" rows="4" placeholder="Anotações sobre o conteúdo..."></textarea></div><div class="mb-3 form-check"><input type="checkbox" class="form-check-input" id="filmeAssistido"><label class="form-check-label" for="filmeAssistido">Marcar como assistido</label></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveAnotacaoFilme">Salvar Anotação</button></div></div></div></div>
 
-<div class="modal fade" id="videoPlayerModal" tabindex="-1"><div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Visualizador de Vídeo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="video-player-container"><iframe id="videoPlayer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe><div class="video-controls d-flex justify-content-between align-items-center"><div class="d-flex align-items-center"><button class="btn btn-sm btn-outline-light me-2" id="videoPauseBtn"><i class="fas fa-pause"></i></button><div class="video-time-display" id="videoTimeDisplay">00:00 / 00:00</div></div><button class="btn btn-sm btn-success" id="saveVideoProgressBtn"><i class="fas fa-save"></i> Salvar Progresso</button></div></div></div></div></div></div>
+<!-- Modal player de vídeo modificado -->
+<div class="modal fade" id="videoPlayerModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Visualizador de Vídeo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="video-player-container">
+                    <div id="videoPlayerContainer"></div>
+                    <div class="video-controls d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <button class="btn btn-sm btn-outline-light me-2" id="videoPauseBtn"><i class="fas fa-pause"></i></button>
+                            <div class="video-time-display" id="videoTimeDisplay">00:00 / 00:00</div>
+                        </div>
+                        <button class="btn btn-sm btn-success" id="saveVideoProgressBtn"><i class="fas fa-save"></i> Salvar Progresso</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="bibliotecaModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Livro</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="bibliotecaForm"><input type="hidden" id="bibliotecaId"><div class="mb-3"><label for="bibliotecaTitulo" class="form-label">Título</label><input type="text" class="form-control" id="bibliotecaTitulo" required></div><div class="mb-3"><label for="bibliotecaAutor" class="form-label">Autor</label><input type="text" class="form-control" id="bibliotecaAutor" required></div><div class="mb-3"><label for="bibliotecaAssunto" class="form-label">Assunto</label><input type="text" class="form-control" id="bibliotecaAssunto" required></div><div class="mb-3"><label for="bibliotecaEditora" class="form-label">Editora</label><input type="text" class="form-control" id="bibliotecaEditora"></div><div class="mb-3"><label for="bibliotecaAno" class="form-label">Ano</label><input type="number" class="form-control" id="bibliotecaAno" min="1900" max="2030"></div><div class="mb-3"><label for="bibliotecaObservacoes" class="form-label">Observações</label><textarea class="form-control" id="bibliotecaObservacoes" rows="2"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveLivro">Salvar</button></div></div></div></div>
 
@@ -1947,6 +2059,25 @@
 
 <!-- Modal para visualizar PDF -->
 <div class="modal fade" id="viewPdfModal" tabindex="-1"><div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-lg-down"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Visualizar PDF</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" style="height: 80vh;"><iframe id="pdfViewer" style="width:100%; height:100%; border:none;"></iframe></div></div></div></div>
+
+<!-- Modal para visualizar documentos gerais -->
+<div class="modal fade" id="viewDocumentModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewDocumentTitle">Visualizar Documento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="height: 80vh;">
+                <iframe id="documentViewer" style="width:100%; height:100%; border:none;"></iframe>
+            </div>
+            <div class="modal-footer">
+                <a id="downloadDocumentLink" class="btn btn-primary" download>Download</a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade handwriting-fullscreen-modal" id="handwritingFullscreenModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title text-white"><i class="fas fa-pen-fancy me-2"></i> Escrita Manual - Tela Cheia</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="handwriting-controls h-100"><div class="handwriting-area h-100 d-flex flex-column"><div class="canvas-tools"><button class="handwriting-tool-btn" id="fullscreenStartRecognitionBtn"><i class="fas fa-play"></i> Reconhecer</button><button class="handwriting-tool-btn" id="fullscreenClearHandwritingBtn"><i class="fas fa-trash"></i> Limpar</button><button class="handwriting-tool-btn" id="fullscreenSmoothHandwritingBtn"><i class="fas fa-magic"></i> Suavizar</button></div><canvas id="fullscreenHandwritingCanvas" width="1200" height="600" style="width: 100%; height: 60vh; background: white; border-radius: 12px;"></canvas><div class="recognized-text-display mt-3"><h6 class="mb-3"><i class="fas fa-font text-primary me-2"></i>Texto Reconhecido:</h6><div id="fullscreenRecognizedText" class="recognized-text-content">Aguardando reconhecimento...</div></div><div class="save-options mt-3"><button class="save-option-btn salvar-texto" id="fullscreenSaveAsTextBtn"><i class="fas fa-file-alt"></i> Salvar como Texto</button><button class="save-option-btn salvar-imagem" id="fullscreenSaveAsImageBtn"><i class="fas fa-image"></i> Salvar como Imagem</button></div></div></div></div></div></div></div>
 
@@ -1968,13 +2099,14 @@ document.addEventListener('DOMContentLoaded', function() {
     let recognizedText = '', fullscreenRecognizedText = '';
     let currentFinanceMonth = new Date().getMonth(), currentFinanceYear = new Date().getFullYear();
     let importedImageData = null;
+    let importedDocumentData = null;
     let scheduleStartHour = 7, scheduleEndHour = 22;
     
-    // Filtros financeiros
-    let financeFilterType = 'all'; // 'all', 'receita', 'despesa'
-    let financeFilterStatus = 'all'; // 'all', 'pendente', 'pago'
+    let financeFilterType = 'all';
+    let financeFilterStatus = 'all';
 
-    // Carregar preferências de filtro do localStorage
+    let objectUrls = new Map();
+
     function loadScheduleFilter() {
         const savedStart = localStorage.getItem('scheduleStartHour');
         const savedEnd = localStorage.getItem('scheduleEndHour');
@@ -2295,17 +2427,570 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('notas-tab').click(); await renderNotas(); await renderGaleria(); alert('Escrita salva como imagem!');
     }
 
-    // ---------- Initialization ----------
+    // ---------- Funções para documentos ----------
+    function setupDocumentImport() {
+        const area = document.getElementById('documentUploadArea');
+        const fileInput = document.getElementById('documentFileInput');
+        const previewContainer = document.getElementById('documentPreviewContainer');
+        const fileNameSpan = document.getElementById('documentFileName');
+        const removeBtn = document.getElementById('removeDocumentBtn');
+        const tituloInput = document.getElementById('importDocumentTitulo');
+        const descInput = document.getElementById('importDocumentDescricao');
+        const saveBtn = document.getElementById('saveImportedDocumentBtn');
+
+        area.addEventListener('click', () => fileInput.click());
+        area.addEventListener('dragover', e => { e.preventDefault(); area.style.backgroundColor = '#e9ecef'; area.style.borderColor = 'var(--primary)'; });
+        area.addEventListener('dragleave', () => { area.style.backgroundColor = '#f8f9fa'; area.style.borderColor = 'var(--accent)'; });
+        area.addEventListener('drop', e => {
+            e.preventDefault();
+            area.style.backgroundColor = '#f8f9fa';
+            area.style.borderColor = 'var(--accent)';
+            if (e.dataTransfer.files[0]) handleDocumentFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', function() {
+            if (this.files[0]) handleDocumentFile(this.files[0]);
+        });
+
+        function handleDocumentFile(file) {
+            const allowed = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'];
+            if (!allowed.includes(file.type) && !file.name.match(/\.(pdf|docx|pptx)$/i)) {
+                alert('Formato não suportado. Envie PDF, Word (.docx) ou PowerPoint (.pptx).');
+                return;
+            }
+            importedDocumentData = {
+                file: file,
+                name: file.name,
+                type: file.type,
+                size: file.size
+            };
+            fileNameSpan.textContent = file.name;
+            previewContainer.style.display = 'block';
+            area.style.display = 'none';
+            tituloInput.value = `Documento - ${new Date().toLocaleDateString('pt-BR')}`;
+            descInput.value = '';
+        }
+
+        removeBtn.addEventListener('click', () => {
+            importedDocumentData = null;
+            previewContainer.style.display = 'none';
+            area.style.display = 'block';
+            fileInput.value = '';
+            tituloInput.value = '';
+            descInput.value = '';
+        });
+
+        saveBtn.addEventListener('click', async () => {
+            if (!importedDocumentData) { alert('Nenhum documento selecionado.'); return; }
+            if (!tituloInput.value.trim()) { alert('Título obrigatório.'); return; }
+            const pid = await getCurrentProfileId();
+            const file = importedDocumentData.file;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const arrayBuffer = e.target.result;
+                const blob = new Blob([arrayBuffer], { type: file.type });
+                const base64 = await blobToBase64(blob);
+                const nota = {
+                    id: await getNewId('notas'),
+                    profileId: pid,
+                    titulo: tituloInput.value.trim(),
+                    conteudo: descInput.value.trim(),
+                    dataCriacao: new Date().toISOString().split('T')[0],
+                    tipo: 'documento',
+                    documento: {
+                        nome: file.name,
+                        tipo: file.type,
+                        tamanho: file.size,
+                        dados: base64
+                    }
+                };
+                await saveData('notas', nota);
+                importedDocumentData = null;
+                previewContainer.style.display = 'none';
+                area.style.display = 'block';
+                fileInput.value = '';
+                tituloInput.value = '';
+                descInput.value = '';
+                document.getElementById('documentos-tab').click();
+                await renderDocumentos();
+                alert('Documento salvo com sucesso!');
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    async function renderDocumentos() {
+        const data = await getProfileData();
+        const container = document.getElementById('documentos-lista');
+        container.innerHTML = '';
+        const docs = data.notas.filter(n => n.tipo === 'documento').sort((a,b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
+        if (!docs.length) {
+            container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Nenhum documento importado.</p></div></div>';
+            return;
+        }
+        docs.forEach(doc => {
+            const isPdf = doc.documento.tipo === 'application/pdf';
+            const icon = isPdf ? 'fa-file-pdf' : (doc.documento.tipo.includes('word') ? 'fa-file-word' : 'fa-file-powerpoint');
+            const cor = isPdf ? 'text-danger' : (doc.documento.tipo.includes('word') ? 'text-primary' : 'text-warning');
+            const tamanho = (doc.documento.tamanho / 1024).toFixed(1) + ' KB';
+            container.innerHTML += `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card documento-card card-dashboard" data-id="${doc.id}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <i class="fas ${icon} documento-icon ${cor}"></i>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item visualizar-documento" href="#" data-id="${doc.id}"><i class="fas fa-eye"></i> Visualizar</a></li>
+                                        <li><a class="dropdown-item download-documento" href="#" data-id="${doc.id}"><i class="fas fa-download"></i> Download</a></li>
+                                        <li><a class="dropdown-item delete-documento" href="#" data-id="${doc.id}"><i class="fas fa-trash"></i> Excluir</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <h5 class="card-title mt-2">${doc.titulo}</h5>
+                            <p class="card-text small text-muted">${doc.documento.nome}</p>
+                            <p class="documento-tamanho">${tamanho}</p>
+                            ${doc.conteudo ? `<p class="card-text small">${doc.conteudo.substring(0,60)}...</p>` : ''}
+                            <small class="text-muted">${new Date(doc.dataCriacao).toLocaleDateString('pt-BR')}</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    async function visualizarDocumento(id) {
+        const data = await getProfileData();
+        const doc = data.notas.find(n => n.id == id);
+        if (!doc) return;
+        const base64 = doc.documento.dados;
+        const blob = base64ToBlob(base64, doc.documento.tipo);
+        const url = URL.createObjectURL(blob);
+        objectUrls.set(id, url);
+
+        if (doc.documento.tipo === 'application/pdf') {
+            document.getElementById('documentViewer').src = url;
+            document.getElementById('viewDocumentTitle').textContent = doc.titulo;
+            document.getElementById('downloadDocumentLink').href = url;
+            document.getElementById('downloadDocumentLink').download = doc.documento.nome;
+            const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
+            modal.show();
+            document.getElementById('viewDocumentModal').addEventListener('hidden.bs.modal', function onClose() {
+                URL.revokeObjectURL(url);
+                objectUrls.delete(id);
+                this.removeEventListener('hidden.bs.modal', onClose);
+            });
+        } else {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = doc.documento.nome;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    }
+
+    function base64ToBlob(base64, mime) {
+        const byteCharacters = atob(base64.split(',')[1] || base64);
+        const byteArrays = [];
+        for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+            const slice = byteCharacters.slice(offset, offset + 512);
+            const byteNumbers = new Array(slice.length);
+            for (let i = 0; i < slice.length; i++) {
+                byteNumbers[i] = slice.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            byteArrays.push(byteArray);
+        }
+        return new Blob(byteArrays, { type: mime });
+    }
+
+    window.visualizarAnexo = function(base64, tipo, nome) {
+        const blob = base64ToBlob(base64, tipo);
+        const url = URL.createObjectURL(blob);
+        const id = Date.now();
+        objectUrls.set(id, url);
+
+        if (tipo === 'application/pdf') {
+            document.getElementById('pdfViewer').src = url;
+            const modal = new bootstrap.Modal(document.getElementById('viewPdfModal'));
+            modal.show();
+            document.getElementById('viewPdfModal').addEventListener('hidden.bs.modal', function onClose() {
+                URL.revokeObjectURL(url);
+                objectUrls.delete(id);
+                this.removeEventListener('hidden.bs.modal', onClose);
+            });
+        } else {
+            document.getElementById('modalImage').src = base64;
+            document.getElementById('modalImageDescription').innerText = nome;
+            new bootstrap.Modal(document.getElementById('viewImageModal')).show();
+        }
+    };
+
+    function setupAnexoPreview(inputId, previewId, hiddenId) {
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        const hidden = document.getElementById(hiddenId);
+        if (!input) return;
+        input.addEventListener('change', async function() {
+            preview.innerHTML = '';
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        preview.innerHTML = `<img src="${e.target.result}" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 5px;">`;
+                    };
+                    reader.readAsDataURL(file);
+                } else if (file.type === 'application/pdf') {
+                    preview.innerHTML = '<span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF selecionado</span>';
+                } else {
+                    preview.innerHTML = '<span class="badge bg-secondary">Arquivo selecionado</span>';
+                }
+                hidden.value = '';
+            }
+        });
+    }
+
+    function addViewExistingButton(prefix, previewId, hiddenId, item) {
+        const preview = document.getElementById(previewId);
+        const hidden = document.getElementById(hiddenId);
+        if (item.anexo) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-sm btn-info ms-2';
+            btn.innerHTML = '<i class="fas fa-eye"></i> Visualizar anexo atual';
+            btn.onclick = () => window.visualizarAnexo(item.anexo, item.anexoTipo, item.anexoNome);
+            preview.appendChild(btn);
+        }
+    }
+
+    async function handleEdit(store, prefix, id) {
+        let item = await getData(store, parseInt(id));
+        if (!item) return;
+        let modalEl = document.getElementById(prefix+'Modal');
+        modalEl.querySelector('.modal-title').textContent = 'Editar ' + modalEl.querySelector('.modal-title').textContent.replace('Novo ','').replace('Nova ','');
+        let form = document.getElementById(prefix+'Form');
+        for (let k in item) {
+            let inp = form.querySelector(`#${prefix}${k.charAt(0).toUpperCase()+k.slice(1)}`);
+            if (inp) inp.value = item[k];
+        }
+        form.querySelector(`#${prefix}Id`).value = item.id;
+        if (prefix==='financeiro' && item.tipo==='despesa') document.getElementById('financeiroStatusWrapper').style.display='block';
+        if (prefix==='horario') document.getElementById('deleteHorario').classList.remove('d-none');
+        if (prefix==='nota') document.getElementById('deleteNota').style.display='block';
+        if (prefix==='trabalho') {
+            if (item.tipo === 'grupo') {
+                document.getElementById('grupoParticipantesWrapper').style.display = 'block';
+            } else {
+                document.getElementById('grupoParticipantesWrapper').style.display = 'none';
+            }
+        }
+        if (item.anexo) {
+            const preview = document.getElementById(prefix + 'AnexoPreview');
+            const hidden = document.getElementById(prefix + 'AnexoExistente');
+            if (preview && hidden) {
+                hidden.value = item.anexo;
+                preview.innerHTML = '';
+                if (item.anexoTipo.startsWith('image/')) {
+                    preview.innerHTML = `<img src="${item.anexo}" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 5px;"><br><small class="text-muted">Anexo atual. Selecione outro para substituir.</small>`;
+                } else {
+                    preview.innerHTML = `<span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF atual. Selecione outro para substituir.</span>`;
+                }
+                addViewExistingButton(prefix, prefix + 'AnexoPreview', prefix + 'AnexoExistente', item);
+            }
+        }
+        new bootstrap.Modal(modalEl).show();
+    }
+
+    async function handleDelete(store, id, msg) {
+        if (confirm(msg)) {
+            if (store==='disciplinas') {
+                let data = await getProfileData();
+                for (let t of data.trabalhos.filter(t=>t.disciplinaId==id)) await deleteData('trabalhos', t.id);
+                for (let p of data.provas.filter(p=>p.disciplinaId==id)) await deleteData('provas', p.id);
+                for (let h of data.horarios.filter(h=>h.disciplinaId==id)) await deleteData('horarios', h.id);
+            }
+            await deleteData(store, parseInt(id));
+            await renderAll();
+        }
+    }
+
+    setTimeout(() => {
+        setupAnexoPreview('trabalhoAnexo', 'trabalhoAnexoPreview', 'trabalhoAnexoExistente');
+        setupAnexoPreview('provaAnexo', 'provaAnexoPreview', 'provaAnexoExistente');
+        setupAnexoPreview('eventAnexo', 'eventAnexoPreview', 'eventAnexoExistente');
+    }, 500);
+
+    async function editHorario(id) {
+        let a = await getData('horarios', parseInt(id));
+        if (!a) return;
+        document.getElementById('horarioModalLabel').textContent = 'Editar Aula';
+        document.getElementById('horarioId').value = a.id;
+        document.getElementById('horarioDisciplina').value = a.disciplinaId;
+        document.getElementById('horarioDiaSemana').value = a.diaSemana;
+        document.getElementById('horarioInicio').value = a.inicio;
+        document.getElementById('horarioFim').value = a.fim;
+        document.getElementById('horarioLocal').value = a.local;
+        document.getElementById('deleteHorario').classList.remove('d-none');
+        new bootstrap.Modal(document.getElementById('horarioModal')).show();
+    }
+
+    async function saveDisciplina() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('disciplinaId').value;
+        let d = { 
+            id: id?parseInt(id):await getNewId('disciplinas'), 
+            profileId: pid, 
+            nome: document.getElementById('disciplinaNome').value, 
+            professor: document.getElementById('disciplinaProfessor').value, 
+            professorEmail: document.getElementById('disciplinaEmail').value,
+            frequencia: parseInt(document.getElementById('disciplinaFrequencia').value) 
+        };
+        if (!d.nome) return alert('Nome obrigatório.');
+        await saveData('disciplinas', d); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('disciplinaModal')).hide();
+    }
+
+    async function saveTrabalho() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('trabalhoId').value;
+        let t = { 
+            id: id?parseInt(id):await getNewId('trabalhos'), 
+            profileId: pid, 
+            disciplinaId: parseInt(document.getElementById('trabalhoDisciplina').value), 
+            titulo: document.getElementById('trabalhoTitulo').value,
+            tipo: document.getElementById('trabalhoTipo').value,
+            participantes: document.getElementById('trabalhoTipo').value === 'grupo' ? document.getElementById('trabalhoParticipantes').value : '',
+            entrega: document.getElementById('trabalhoEntrega').value, 
+            status: document.getElementById('trabalhoStatus').value, 
+            prioridade: document.getElementById('trabalhoPrioridade').value, 
+            nota: document.getElementById('trabalhoNota').value===''?null:parseFloat(document.getElementById('trabalhoNota').value), 
+            observacoes: document.getElementById('trabalhoObservacoes').value
+        };
+        if (!t.disciplinaId || !t.titulo || !t.entrega) return alert('Preencha campos obrigatórios.');
+
+        const anexoInput = document.getElementById('trabalhoAnexo');
+        const anexoExistente = document.getElementById('trabalhoAnexoExistente').value;
+        if (anexoInput.files && anexoInput.files[0]) {
+            const file = anexoInput.files[0];
+            t.anexo = await readFileAsBase64(file);
+            t.anexoNome = file.name;
+            t.anexoTipo = file.type;
+        } else if (anexoExistente) {
+            t.anexo = anexoExistente;
+            if (id) {
+                const original = await getData('trabalhos', parseInt(id));
+                if (original) {
+                    t.anexoNome = original.anexoNome;
+                    t.anexoTipo = original.anexoTipo;
+                }
+            }
+        }
+
+        await saveData('trabalhos', t); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('trabalhoModal')).hide();
+    }
+
+    async function saveProva() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('provaId').value;
+        let p = { 
+            id: id?parseInt(id):await getNewId('provas'), 
+            profileId: pid, 
+            disciplinaId: parseInt(document.getElementById('provaDisciplina').value), 
+            conteudo: document.getElementById('provaConteudo').value, 
+            data: document.getElementById('provaData').value, 
+            hora: document.getElementById('provaHora').value, 
+            status: document.getElementById('provaStatus').value, 
+            nota: document.getElementById('provaNota').value===''?null:parseFloat(document.getElementById('provaNota').value)
+        };
+        if (!p.disciplinaId || !p.conteudo || !p.data) return alert('Campos obrigatórios.');
+
+        const anexoInput = document.getElementById('provaAnexo');
+        const anexoExistente = document.getElementById('provaAnexoExistente').value;
+        if (anexoInput.files && anexoInput.files[0]) {
+            const file = anexoInput.files[0];
+            p.anexo = await readFileAsBase64(file);
+            p.anexoNome = file.name;
+            p.anexoTipo = file.type;
+        } else if (anexoExistente) {
+            p.anexo = anexoExistente;
+            if (id) {
+                const original = await getData('provas', parseInt(id));
+                if (original) {
+                    p.anexoNome = original.anexoNome;
+                    p.anexoTipo = original.anexoTipo;
+                }
+            }
+        }
+
+        await saveData('provas', p); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('provaModal')).hide();
+    }
+
+    async function saveHorario() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('horarioId').value;
+        let h = { id: id?parseInt(id):await getNewId('horarios'), profileId: pid, disciplinaId: parseInt(document.getElementById('horarioDisciplina').value), diaSemana: document.getElementById('horarioDiaSemana').value, inicio: document.getElementById('horarioInicio').value, fim: document.getElementById('horarioFim').value, local: document.getElementById('horarioLocal').value };
+        if (!h.disciplinaId || !h.inicio || !h.fim) return alert('Campos obrigatórios.');
+        await saveData('horarios', h); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('horarioModal')).hide();
+    }
+
+    async function deleteHorario() {
+        let id = document.getElementById('horarioId').value;
+        if (id && confirm('Excluir esta aula?')) { await deleteData('horarios', parseInt(id)); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('horarioModal')).hide(); }
+    }
+
+    async function saveEvent() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('eventId').value;
+        let e = { 
+            id: id?parseInt(id):await getNewId('eventos'), 
+            profileId: pid, 
+            title: document.getElementById('eventTitle').value, 
+            type: document.getElementById('eventType').value, 
+            date: document.getElementById('eventDate').value, 
+            time: document.getElementById('eventTime').value, 
+            description: document.getElementById('eventDescription').value 
+        };
+        if (!e.title || !e.date) return alert('Título e data obrigatórios.');
+
+        const anexoInput = document.getElementById('eventAnexo');
+        const anexoExistente = document.getElementById('eventAnexoExistente').value;
+        if (anexoInput.files && anexoInput.files[0]) {
+            const file = anexoInput.files[0];
+            e.anexo = await readFileAsBase64(file);
+            e.anexoNome = file.name;
+            e.anexoTipo = file.type;
+        } else if (anexoExistente) {
+            e.anexo = anexoExistente;
+            if (id) {
+                const original = await getData('eventos', parseInt(id));
+                if (original) {
+                    e.anexoNome = original.anexoNome;
+                    e.anexoTipo = original.anexoTipo;
+                }
+            }
+        }
+
+        await saveData('eventos', e); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+    }
+
+    async function saveFinanceiro() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('financeiroId').value;
+        let recorrenteId = document.getElementById('financeiroRecorrenteId').value || null;
+        let data = document.getElementById('financeiroData').value;
+        if (!data) return alert('Data obrigatória.');
+        let rec = document.getElementById('financeiroRecurrence').value, end = document.getElementById('financeiroRecurrenceEndDate').value;
+        let trans = [];
+        if (recorrenteId) {
+            let todas = await getAllData('financeiro', 'recorrenteId', recorrenteId);
+            for (let t of todas) {
+                t.tipo = document.getElementById('financeiroTipo').value;
+                t.descricao = document.getElementById('financeiroDescricao').value;
+                t.valor = parseFloat(document.getElementById('financeiroValor').value);
+                t.categoria = document.getElementById('financeiroCategoria').value;
+                if (t.tipo === 'despesa') t.status = document.getElementById('financeiroStatus').value;
+                else t.status = 'pago';
+                await saveData('financeiro', t);
+            }
+        } else if (rec!=='none' && end) {
+            recorrenteId = Date.now() + Math.random();
+            let cur = new Date(data), endD = new Date(end);
+            if (cur > endD) return alert('Data final deve ser maior que inicial.');
+            cur.setHours(0,0,0,0); endD.setHours(0,0,0,0);
+            while (cur <= endD) {
+                let dStr = cur.toISOString().split('T')[0];
+                let mesAno = `${cur.getMonth()+1}-${cur.getFullYear()}`;
+                trans.push({ id: await getNewId('financeiro'), profileId: pid, tipo: document.getElementById('financeiroTipo').value, descricao: document.getElementById('financeiroDescricao').value, valor: parseFloat(document.getElementById('financeiroValor').value), categoria: document.getElementById('financeiroCategoria').value, data: dStr, status: document.getElementById('financeiroTipo').value==='despesa'?document.getElementById('financeiroStatus').value:'pago', mesAno, recorrente: true, recorrencia: rec, recorrenteId });
+                if (rec==='weekly') cur.setDate(cur.getDate()+7);
+                else if (rec==='monthly') cur.setMonth(cur.getMonth()+1);
+            }
+        } else {
+            let dt = new Date(data);
+            let mesAno = `${dt.getMonth()+1}-${dt.getFullYear()}`;
+            trans.push({ id: id?parseInt(id):await getNewId('financeiro'), profileId: pid, tipo: document.getElementById('financeiroTipo').value, descricao: document.getElementById('financeiroDescricao').value, valor: parseFloat(document.getElementById('financeiroValor').value), categoria: document.getElementById('financeiroCategoria').value, data, status: document.getElementById('financeiroTipo').value==='despesa'?document.getElementById('financeiroStatus').value:'pago', mesAno, recorrente: false });
+        }
+        for (let t of trans) await saveData('financeiro', t);
+        await renderAll(); bootstrap.Modal.getInstance(document.getElementById('financeiroModal')).hide();
+    }
+
+    async function saveNota() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('notaId').value;
+        let n = { id: id?parseInt(id):await getNewId('notas'), profileId: pid, titulo: document.getElementById('notaTitulo').value, conteudo: document.getElementById('notaConteudo').value, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto' };
+        if (!n.titulo) return alert('Título obrigatório.');
+        await saveData('notas', n); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide();
+    }
+
+    async function deleteNota() {
+        let id = document.getElementById('notaId').value;
+        if (id && confirm('Excluir nota?')) { await deleteData('notas', parseInt(id)); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide(); }
+    }
+
+    async function saveLink() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('linkId').value;
+        let l = { id: id?parseInt(id):await getNewId('links'), profileId: pid, titulo: document.getElementById('linkTitulo').value, url: document.getElementById('linkUrl').value, categoria: document.getElementById('linkCategoria').value, descricao: document.getElementById('linkDescricao').value };
+        if (!l.titulo || !l.url) return alert('Título e URL obrigatórios.');
+        await saveData('links', l); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('linkModal')).hide();
+    }
+
+    async function saveAnotacaoFilme() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('anotacaoFilmeId').value;
+        let f = await getData('filmes', parseInt(id));
+        if (f) {
+            f.anotacao = { tempoAtual: document.getElementById('filmeTempoAtual').value?parseInt(document.getElementById('filmeTempoAtual').value):null, texto: document.getElementById('filmeAnotacao').value, assistido: document.getElementById('filmeAssistido').checked };
+            await saveData('filmes', f); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('anotacaoFilmeModal')).hide();
+        }
+    }
+
+    async function saveLivro() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('bibliotecaId').value;
+        let l = { id: id?parseInt(id):await getNewId('biblioteca'), profileId: pid, titulo: document.getElementById('bibliotecaTitulo').value, autor: document.getElementById('bibliotecaAutor').value, assunto: document.getElementById('bibliotecaAssunto').value, editora: document.getElementById('bibliotecaEditora').value, ano: document.getElementById('bibliotecaAno').value||null, observacoes: document.getElementById('bibliotecaObservacoes').value };
+        if (!l.titulo || !l.autor || !l.assunto) return alert('Título, autor e assunto obrigatórios.');
+        await saveData('biblioteca', l); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('bibliotecaModal')).hide();
+    }
+
+    function getYouTubeEmbedUrl(url, start=0) {
+        let id = null;
+        let pat = [/(?:youtube\.com\/watch\?v=)([^&]+)/, /(?:youtu\.be\/)([^?]+)/, /(?:youtube\.com\/embed\/)([^?]+)/];
+        for (let p of pat) { let m = url.match(p); if (m && m[1]) { id = m[1]; break; } }
+        return id ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&start=${start}&rel=0&modestbranding=1` : null;
+    }
+
+    async function populateDisciplinaSelects() {
+        let data = await getProfileData();
+        let opts = data.disciplinas.map(d=>`<option value="${d.id}">${d.nome}</option>`).join('');
+        document.querySelectorAll('#trabalhoDisciplina, #provaDisciplina, #horarioDisciplina').forEach(s=>{ s.innerHTML = '<option value="">Selecione</option>'+opts; });
+    }
+
+    function updateMainHeaderTitle() {
+        let active = document.querySelector('.content-panel.active');
+        if (active) document.getElementById('main-header-title').textContent = active.querySelector('h2')?.textContent || 'Acadêmico Pro';
+    }
+
+    async function renderProfileManagementList() {
+        let list = document.getElementById('profile-management-list');
+        list.innerHTML = '';
+        let profiles = await getAllData('profiles');
+        let current = await getCurrentProfileId();
+        profiles.forEach(p => {
+            list.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center"><button type="button" class="btn btn-link text-start flex-grow-1 switch-profile ${p.id===current?'fw-bold':''}" data-id="${p.id}">${p.name}</button><div><button class="btn btn-sm btn-outline-primary edit-profile" data-id="${p.id}"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline-danger delete-profile" data-id="${p.id}" ${profiles.length===1?'disabled':''}><i class="fas fa-trash"></i></button></div></li>`;
+        });
+        document.querySelectorAll('.switch-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.switch-profile').dataset.id; if (id!==current) { await switchProfile(id); bootstrap.Modal.getInstance(document.getElementById('profileManagementModal')).hide(); } }));
+        document.querySelectorAll('.edit-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.edit-profile').dataset.id; let p = await getData('profiles', id); if (p) { document.getElementById('profileName').value = p.name; document.getElementById('profileId').value = p.id; document.getElementById('saveProfileBtn').innerHTML = '<i class="fas fa-save"></i> Atualizar'; } }));
+        document.querySelectorAll('.delete-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.delete-profile').dataset.id; if (profiles.length===1) return; if (confirm('Excluir perfil? Todos os dados serão perdidos.')) { await deleteData('profiles', id); let stores = ['disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links']; for (let s of stores) { let items = await getAllData(s, 'profileId', id); for (let i of items) await deleteData(s, i.id); } await renderProfileManagementList(); await renderAll(); } }));
+    }
+
     async function init() {
         await openDatabase();
-        loadScheduleFilter(); // carrega preferências de filtro
+        loadScheduleFilter();
         const pid = await getCurrentProfileId();
         const disciplinas = await getAllData('disciplinas', 'profileId', pid);
         if (!disciplinas.length) await createInitialData();
         generateQuickLinks(); await renderAll(); updateMainHeaderTitle(); setupEventListeners(); setupFooterNavigation();
-        setupDrawingCanvas(); setupHandwritingCanvas(); setupImageImport();
+        setupDrawingCanvas(); setupHandwritingCanvas(); setupImageImport(); setupDocumentImport();
         
-        // Mostrar/esconder campo de participantes conforme tipo de trabalho
         document.getElementById('trabalhoTipo').addEventListener('change', function() {
             document.getElementById('grupoParticipantesWrapper').style.display = this.value === 'grupo' ? 'block' : 'none';
         });
@@ -2328,7 +3013,7 @@ document.addEventListener('DOMContentLoaded', function() {
         await saveData('financeiro', fin[0]); id++;
         const bib = [ {id:id, profileId:pid, titulo:"Direito Civil", autor:"Carlos", assunto:"Civil", editora:"Saraiva", ano:2023, observacoes:""} ];
         await saveData('biblioteca', bib[0]); id++;
-        const film = [ {id:id, profileId:pid, titulo:"Introdução", url:"https://youtu.be/dQw4w9WgXcQ", tipo:"video-aula"} ];
+        const film = [ {id:id, profileId:pid, titulo:"Introdução", url:"https://youtu.be/dQw4w9WgXcQ", tipo:"video-aula", origem:"url"} ];
         await saveData('filmes', film[0]); id++;
         const nota = [ {id:id, profileId:pid, titulo:"Minhas anotações", conteudo:"Texto inicial", dataCriacao:new Date().toISOString().split('T')[0], tipo:"texto"} ];
         await saveData('notas', nota[0]); id++;
@@ -2340,7 +3025,7 @@ document.addEventListener('DOMContentLoaded', function() {
         await Promise.all([
             renderProximoEventoCard(), renderDashboard(), renderDisciplinas(), renderHorarios(), renderTrabalhos(),
             renderProvas(), renderAgenda(), renderBiblioteca(), renderFilmes(), renderNotas(), renderLinks(),
-            renderFinanceiro(), renderRelatorios(), renderGaleria()
+            renderFinanceiro(), renderRelatorios(), renderGaleria(), renderDocumentos()
         ]);
         populateDisciplinaSelects(); updateFixedBackButton(); updateFooterNavigation();
     }
@@ -2499,7 +3184,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } else container.innerHTML += `<div class="empty-state" style="grid-column:2/8;grid-row:2/6;">Nenhuma aula cadastrada.</div>`;
     }
 
-    // Função auxiliar para exibir anexo
     function renderAnexoIcon(item) {
         if (!item.anexo) return '-';
         const isPdf = item.anexoTipo === 'application/pdf';
@@ -2508,7 +3192,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return `<i class="fas ${icon} ${cor} attachment-icon" onclick="visualizarAnexo('${item.anexo}', '${item.anexoTipo}', '${item.anexoNome}')" title="${item.anexoNome}"></i>`;
     }
 
-    // Renderização de Trabalhos em cards (agora com professor, tipo e participantes)
     async function renderTrabalhos() {
         const data = await getProfileData();
         const container = document.getElementById('trabalhos-cards');
@@ -2519,16 +3202,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         data.trabalhos.sort((a,b)=>new Date(a.entrega)-new Date(b.entrega)).forEach(t => {
             const disc = data.disciplinas.find(d=>d.id===t.disciplinaId);
-            
-            // Badge do tipo
             let tipoBadge = '';
             if (t.tipo === 'individual') {
                 tipoBadge = `<span class="badge badge-tipo-trabalho individual"><i class="fas fa-user me-1"></i>Individual</span>`;
             } else if (t.tipo === 'grupo') {
                 tipoBadge = `<span class="badge badge-tipo-trabalho grupo"><i class="fas fa-users me-1"></i>Em grupo</span>`;
             }
-            
-            // Lista de participantes (se grupo)
             let participantesHtml = '';
             if (t.tipo === 'grupo' && t.participantes) {
                 const lista = t.participantes.split('\n').filter(p => p.trim() !== '');
@@ -2540,7 +3219,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     participantesHtml += '</ul>';
                 }
             }
-            
             const card = document.createElement('div');
             card.className = 'col-md-6 col-lg-4';
             card.innerHTML = `
@@ -2571,7 +3249,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Renderização de Provas em cards
     async function renderProvas() {
         const data = await getProfileData();
         const container = document.getElementById('provas-cards');
@@ -2665,22 +3342,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    async function renderFilmes() {
-        const data = await getProfileData();
-        const container = document.getElementById('filmes-lista');
-        container.innerHTML = '';
-        if (!data.filmes.length) { container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Adicionar Filme/Vídeo".</p></div></div>'; return; }
-        data.filmes.forEach(f => {
-            let anot = f.anotacao; let prog = anot?.tempoAtual ? Math.min(100, (anot.tempoAtual/120)*100) : 0;
-            container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card filme-card card-dashboard"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-3"><h5 class="card-title">${f.titulo}</h5><div class="dropdown"><button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button><ul class="dropdown-menu"><li><a class="dropdown-item watch-filme" href="#" data-id="${f.id}"><i class="fas fa-play-circle"></i> Assistir</a></li><li><a class="dropdown-item anotacao-filme" href="#" data-id="${f.id}"><i class="fas fa-edit"></i> Anotação</a></li><li><a class="dropdown-item edit-filme" href="#" data-id="${f.id}"><i class="fas fa-pen"></i> Editar</a></li><li><a class="dropdown-item delete-filme" href="#" data-id="${f.id}"><i class="fas fa-trash"></i> Excluir</a></li></ul></div></div><div class="d-flex justify-content-between align-items-center mb-2"><span class="badge ${f.tipo==='filme'?'bg-primary':'bg-info'}">${f.tipo==='filme'?'Filme':'Vídeo-Aula'}</span>${anot?('<div class="filme-anotacoes-badge"><i class="fas fa-bookmark"></i></div>'):''}</div>${anot?.tempoAtual?`<div class="filme-tempo-assistido"><i class="fas fa-clock"></i> Parou no minuto: ${anot.tempoAtual}</div><div class="filme-progresso"><div class="filme-progresso-bar" style="width: ${prog}%"></div></div>`:''}${anot?.assistido?`<div class="mt-2"><span class="badge bg-success"><i class="fas fa-check"></i> Assistido</span></div>`:''}<div class="mt-3"><button class="btn btn-sm btn-primary watch-filme" data-id="${f.id}"><i class="fas fa-play-circle"></i> Assistir</button></div></div></div></div>`;
-        });
-    }
-
     async function renderNotas() {
         const data = await getProfileData();
         const container = document.getElementById('notas-lista');
         container.innerHTML = '';
-        let notas = data.notas.sort((a,b)=>new Date(b.dataCriacao)-new Date(a.dataCriacao));
+        let notas = data.notas.filter(n => n.tipo !== 'documento').sort((a,b)=>new Date(b.dataCriacao)-new Date(a.dataCriacao));
         if (!notas.length) { container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Nova Nota", desenhe algo ou importe imagem.</p></div></div>'; return; }
         notas.forEach(n => {
             let dataCri = new Date(n.dataCriacao||Date.now()).toLocaleDateString('pt-BR');
@@ -2714,7 +3380,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Renderização Financeira (igual à versão anterior)
     async function renderFinanceiro() {
         const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
         document.getElementById('financeiro-mes-atual').textContent = `${meses[currentFinanceMonth]} ${currentFinanceYear}`;
@@ -3040,7 +3705,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('financeiroRecorrenteId').value = '';
                 }
                 if (m.id==='notaModal') { document.getElementById('deleteNota').style.display='none'; document.getElementById('saveNota').style.display='block'; document.getElementById('notaTitulo').readOnly=false; document.getElementById('notaConteudo').readOnly=false; }
-                if (m.id==='videoPlayerModal' && videoInterval) { clearInterval(videoInterval); videoInterval=null; currentVideoId=null; document.getElementById('videoPlayer').src=''; }
+                if (m.id==='videoPlayerModal' && videoInterval) { clearInterval(videoInterval); videoInterval=null; currentVideoId=null; document.getElementById('videoPlayerContainer').innerHTML=''; }
                 if (m.id==='handwritingFullscreenModal') clearFullscreenHandwriting();
                 if (m.id==='trabalhoModal') document.getElementById('grupoParticipantesWrapper').style.display = 'none';
                 ['trabalho', 'prova', 'event'].forEach(prefix => {
@@ -3180,7 +3845,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 let type = evItem.dataset.eventType, eid = evItem.dataset.eventId;
                 if (type && eid) handleEdit(type, {trabalhos:'trabalho', provas:'prova', financeiro:'financeiro', eventos:'event'}[type], eid);
             }
-            let target = e.target.closest('.edit-disciplina, .delete-disciplina, .edit-trabalho, .delete-trabalho, .edit-prova, .delete-prova, .schedule-class-item, .delete-horario, .edit-financeiro, .delete-financeiro, .delete-livro, .edit-livro, .delete-filme, .edit-link, .delete-link, .edit-filme, .edit-nota, .delete-nota');
+            let target = e.target.closest('.visualizar-documento, .download-documento, .delete-documento');
+            if (target) {
+                e.preventDefault();
+                const id = target.dataset.id;
+                if (target.matches('.visualizar-documento')) {
+                    await visualizarDocumento(id);
+                } else if (target.matches('.download-documento')) {
+                    const data = await getProfileData();
+                    const doc = data.notas.find(n => n.id == id);
+                    if (doc) {
+                        const blob = base64ToBlob(doc.documento.dados, doc.documento.tipo);
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = doc.documento.nome;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                    }
+                } else if (target.matches('.delete-documento')) {
+                    if (confirm('Excluir este documento?')) {
+                        await deleteData('notas', parseInt(id));
+                        await renderDocumentos();
+                    }
+                }
+                return;
+            }
+            const docCard = e.target.closest('.documento-card');
+            if (docCard && !e.target.closest('.dropdown')) {
+                const id = docCard.dataset.id;
+                await visualizarDocumento(id);
+                return;
+            }
+            target = e.target.closest('.edit-disciplina, .delete-disciplina, .edit-trabalho, .delete-trabalho, .edit-prova, .delete-prova, .schedule-class-item, .delete-horario, .edit-financeiro, .delete-financeiro, .delete-livro, .edit-livro, .delete-filme, .edit-link, .delete-link, .edit-filme, .edit-nota, .delete-nota');
             if (!target) return;
             let id = target.dataset.id;
             if (target.matches('.edit-disciplina')) handleEdit('disciplinas', 'disciplina', id);
@@ -3265,346 +3962,46 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function setupAnexoPreview(inputId, previewId, hiddenId) {
-        const input = document.getElementById(inputId);
-        const preview = document.getElementById(previewId);
-        const hidden = document.getElementById(hiddenId);
-        if (!input) return;
-        input.addEventListener('change', async function() {
-            preview.innerHTML = '';
-            if (this.files && this.files[0]) {
-                const file = this.files[0];
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = e => {
-                        preview.innerHTML = `<img src="${e.target.result}" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 5px;">`;
-                    };
-                    reader.readAsDataURL(file);
-                } else if (file.type === 'application/pdf') {
-                    preview.innerHTML = '<span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF selecionado</span>';
-                } else {
-                    preview.innerHTML = '<span class="badge bg-secondary">Arquivo selecionado</span>';
-                }
-                hidden.value = '';
-            }
-        });
-    }
-
-    setTimeout(() => {
-        setupAnexoPreview('trabalhoAnexo', 'trabalhoAnexoPreview', 'trabalhoAnexoExistente');
-        setupAnexoPreview('provaAnexo', 'provaAnexoPreview', 'provaAnexoExistente');
-        setupAnexoPreview('eventAnexo', 'eventAnexoPreview', 'eventAnexoExistente');
-    }, 500);
-
-    window.visualizarAnexo = function(base64, tipo, nome) {
-        if (tipo === 'application/pdf') {
-            document.getElementById('pdfViewer').src = base64;
-            new bootstrap.Modal(document.getElementById('viewPdfModal')).show();
-        } else {
-            document.getElementById('modalImage').src = base64;
-            document.getElementById('modalImageDescription').innerText = nome;
-            new bootstrap.Modal(document.getElementById('viewImageModal')).show();
-        }
-    };
-
-    async function handleEdit(store, prefix, id) {
-        let item = await getData(store, parseInt(id));
-        if (!item) return;
-        let modalEl = document.getElementById(prefix+'Modal');
-        modalEl.querySelector('.modal-title').textContent = 'Editar ' + modalEl.querySelector('.modal-title').textContent.replace('Novo ','').replace('Nova ','');
-        let form = document.getElementById(prefix+'Form');
-        for (let k in item) {
-            let inp = form.querySelector(`#${prefix}${k.charAt(0).toUpperCase()+k.slice(1)}`);
-            if (inp) inp.value = item[k];
-        }
-        form.querySelector(`#${prefix}Id`).value = item.id;
-        if (prefix==='financeiro' && item.tipo==='despesa') document.getElementById('financeiroStatusWrapper').style.display='block';
-        if (prefix==='horario') document.getElementById('deleteHorario').classList.remove('d-none');
-        if (prefix==='nota') document.getElementById('deleteNota').style.display='block';
-        if (prefix==='trabalho') {
-            if (item.tipo === 'grupo') {
-                document.getElementById('grupoParticipantesWrapper').style.display = 'block';
-            } else {
-                document.getElementById('grupoParticipantesWrapper').style.display = 'none';
-            }
-        }
-        if (item.anexo) {
-            const preview = document.getElementById(prefix + 'AnexoPreview');
-            const hidden = document.getElementById(prefix + 'AnexoExistente');
-            if (preview && hidden) {
-                hidden.value = item.anexo;
-                if (item.anexoTipo.startsWith('image/')) {
-                    preview.innerHTML = `<img src="${item.anexo}" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 5px;"><br><small class="text-muted">Anexo atual. Selecione outro para substituir.</small>`;
-                } else {
-                    preview.innerHTML = `<span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF atual. Selecione outro para substituir.</span>`;
-                }
-            }
-        }
-        new bootstrap.Modal(modalEl).show();
-    }
-
-    async function handleDelete(store, id, msg) {
-        if (confirm(msg)) {
-            if (store==='disciplinas') {
-                let data = await getProfileData();
-                for (let t of data.trabalhos.filter(t=>t.disciplinaId==id)) await deleteData('trabalhos', t.id);
-                for (let p of data.provas.filter(p=>p.disciplinaId==id)) await deleteData('provas', p.id);
-                for (let h of data.horarios.filter(h=>h.disciplinaId==id)) await deleteData('horarios', h.id);
-            }
-            await deleteData(store, parseInt(id));
-            await renderAll();
-        }
-    }
-
-    async function editHorario(id) {
-        let a = await getData('horarios', parseInt(id));
-        if (!a) return;
-        document.getElementById('horarioModalLabel').textContent = 'Editar Aula';
-        document.getElementById('horarioId').value = a.id;
-        document.getElementById('horarioDisciplina').value = a.disciplinaId;
-        document.getElementById('horarioDiaSemana').value = a.diaSemana;
-        document.getElementById('horarioInicio').value = a.inicio;
-        document.getElementById('horarioFim').value = a.fim;
-        document.getElementById('horarioLocal').value = a.local;
-        document.getElementById('deleteHorario').classList.remove('d-none');
-        new bootstrap.Modal(document.getElementById('horarioModal')).show();
-    }
-
-    async function saveDisciplina() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('disciplinaId').value;
-        let d = { 
-            id: id?parseInt(id):await getNewId('disciplinas'), 
-            profileId: pid, 
-            nome: document.getElementById('disciplinaNome').value, 
-            professor: document.getElementById('disciplinaProfessor').value, 
-            professorEmail: document.getElementById('disciplinaEmail').value,
-            frequencia: parseInt(document.getElementById('disciplinaFrequencia').value) 
-        };
-        if (!d.nome) return alert('Nome obrigatório.');
-        await saveData('disciplinas', d); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('disciplinaModal')).hide();
-    }
-
-    async function saveTrabalho() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('trabalhoId').value;
-        let t = { 
-            id: id?parseInt(id):await getNewId('trabalhos'), 
-            profileId: pid, 
-            disciplinaId: parseInt(document.getElementById('trabalhoDisciplina').value), 
-            titulo: document.getElementById('trabalhoTitulo').value,
-            tipo: document.getElementById('trabalhoTipo').value,
-            participantes: document.getElementById('trabalhoTipo').value === 'grupo' ? document.getElementById('trabalhoParticipantes').value : '',
-            entrega: document.getElementById('trabalhoEntrega').value, 
-            status: document.getElementById('trabalhoStatus').value, 
-            prioridade: document.getElementById('trabalhoPrioridade').value, 
-            nota: document.getElementById('trabalhoNota').value===''?null:parseFloat(document.getElementById('trabalhoNota').value), 
-            observacoes: document.getElementById('trabalhoObservacoes').value
-        };
-        if (!t.disciplinaId || !t.titulo || !t.entrega) return alert('Preencha campos obrigatórios.');
-
-        const anexoInput = document.getElementById('trabalhoAnexo');
-        const anexoExistente = document.getElementById('trabalhoAnexoExistente').value;
-        if (anexoInput.files && anexoInput.files[0]) {
-            const file = anexoInput.files[0];
-            t.anexo = await readFileAsBase64(file);
-            t.anexoNome = file.name;
-            t.anexoTipo = file.type;
-        } else if (anexoExistente) {
-            t.anexo = anexoExistente;
-            if (id) {
-                const original = await getData('trabalhos', parseInt(id));
-                if (original) {
-                    t.anexoNome = original.anexoNome;
-                    t.anexoTipo = original.anexoTipo;
-                }
-            }
-        }
-
-        await saveData('trabalhos', t); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('trabalhoModal')).hide();
-    }
-
-    async function saveProva() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('provaId').value;
-        let p = { 
-            id: id?parseInt(id):await getNewId('provas'), 
-            profileId: pid, 
-            disciplinaId: parseInt(document.getElementById('provaDisciplina').value), 
-            conteudo: document.getElementById('provaConteudo').value, 
-            data: document.getElementById('provaData').value, 
-            hora: document.getElementById('provaHora').value, 
-            status: document.getElementById('provaStatus').value, 
-            nota: document.getElementById('provaNota').value===''?null:parseFloat(document.getElementById('provaNota').value)
-        };
-        if (!p.disciplinaId || !p.conteudo || !p.data) return alert('Campos obrigatórios.');
-
-        const anexoInput = document.getElementById('provaAnexo');
-        const anexoExistente = document.getElementById('provaAnexoExistente').value;
-        if (anexoInput.files && anexoInput.files[0]) {
-            const file = anexoInput.files[0];
-            p.anexo = await readFileAsBase64(file);
-            p.anexoNome = file.name;
-            p.anexoTipo = file.type;
-        } else if (anexoExistente) {
-            p.anexo = anexoExistente;
-            if (id) {
-                const original = await getData('provas', parseInt(id));
-                if (original) {
-                    p.anexoNome = original.anexoNome;
-                    p.anexoTipo = original.anexoTipo;
-                }
-            }
-        }
-
-        await saveData('provas', p); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('provaModal')).hide();
-    }
-
-    async function saveHorario() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('horarioId').value;
-        let h = { id: id?parseInt(id):await getNewId('horarios'), profileId: pid, disciplinaId: parseInt(document.getElementById('horarioDisciplina').value), diaSemana: document.getElementById('horarioDiaSemana').value, inicio: document.getElementById('horarioInicio').value, fim: document.getElementById('horarioFim').value, local: document.getElementById('horarioLocal').value };
-        if (!h.disciplinaId || !h.inicio || !h.fim) return alert('Campos obrigatórios.');
-        await saveData('horarios', h); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('horarioModal')).hide();
-    }
-
-    async function deleteHorario() {
-        let id = document.getElementById('horarioId').value;
-        if (id && confirm('Excluir esta aula?')) { await deleteData('horarios', parseInt(id)); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('horarioModal')).hide(); }
-    }
-
-    async function saveEvent() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('eventId').value;
-        let e = { 
-            id: id?parseInt(id):await getNewId('eventos'), 
-            profileId: pid, 
-            title: document.getElementById('eventTitle').value, 
-            type: document.getElementById('eventType').value, 
-            date: document.getElementById('eventDate').value, 
-            time: document.getElementById('eventTime').value, 
-            description: document.getElementById('eventDescription').value 
-        };
-        if (!e.title || !e.date) return alert('Título e data obrigatórios.');
-
-        const anexoInput = document.getElementById('eventAnexo');
-        const anexoExistente = document.getElementById('eventAnexoExistente').value;
-        if (anexoInput.files && anexoInput.files[0]) {
-            const file = anexoInput.files[0];
-            e.anexo = await readFileAsBase64(file);
-            e.anexoNome = file.name;
-            e.anexoTipo = file.type;
-        } else if (anexoExistente) {
-            e.anexo = anexoExistente;
-            if (id) {
-                const original = await getData('eventos', parseInt(id));
-                if (original) {
-                    e.anexoNome = original.anexoNome;
-                    e.anexoTipo = original.anexoTipo;
-                }
-            }
-        }
-
-        await saveData('eventos', e); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
-    }
-
-    async function saveFinanceiro() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('financeiroId').value;
-        let recorrenteId = document.getElementById('financeiroRecorrenteId').value || null;
-        let data = document.getElementById('financeiroData').value;
-        if (!data) return alert('Data obrigatória.');
-        let rec = document.getElementById('financeiroRecurrence').value, end = document.getElementById('financeiroRecurrenceEndDate').value;
-        let trans = [];
-        if (recorrenteId) {
-            let todas = await getAllData('financeiro', 'recorrenteId', recorrenteId);
-            for (let t of todas) {
-                t.tipo = document.getElementById('financeiroTipo').value;
-                t.descricao = document.getElementById('financeiroDescricao').value;
-                t.valor = parseFloat(document.getElementById('financeiroValor').value);
-                t.categoria = document.getElementById('financeiroCategoria').value;
-                if (t.tipo === 'despesa') t.status = document.getElementById('financeiroStatus').value;
-                else t.status = 'pago';
-                await saveData('financeiro', t);
-            }
-        } else if (rec!=='none' && end) {
-            recorrenteId = Date.now() + Math.random();
-            let cur = new Date(data), endD = new Date(end);
-            if (cur > endD) return alert('Data final deve ser maior que inicial.');
-            cur.setHours(0,0,0,0); endD.setHours(0,0,0,0);
-            while (cur <= endD) {
-                let dStr = cur.toISOString().split('T')[0];
-                let mesAno = `${cur.getMonth()+1}-${cur.getFullYear()}`;
-                trans.push({ id: await getNewId('financeiro'), profileId: pid, tipo: document.getElementById('financeiroTipo').value, descricao: document.getElementById('financeiroDescricao').value, valor: parseFloat(document.getElementById('financeiroValor').value), categoria: document.getElementById('financeiroCategoria').value, data: dStr, status: document.getElementById('financeiroTipo').value==='despesa'?document.getElementById('financeiroStatus').value:'pago', mesAno, recorrente: true, recorrencia: rec, recorrenteId });
-                if (rec==='weekly') cur.setDate(cur.getDate()+7);
-                else if (rec==='monthly') cur.setMonth(cur.getMonth()+1);
-            }
-        } else {
-            let dt = new Date(data);
-            let mesAno = `${dt.getMonth()+1}-${dt.getFullYear()}`;
-            trans.push({ id: id?parseInt(id):await getNewId('financeiro'), profileId: pid, tipo: document.getElementById('financeiroTipo').value, descricao: document.getElementById('financeiroDescricao').value, valor: parseFloat(document.getElementById('financeiroValor').value), categoria: document.getElementById('financeiroCategoria').value, data, status: document.getElementById('financeiroTipo').value==='despesa'?document.getElementById('financeiroStatus').value:'pago', mesAno, recorrente: false });
-        }
-        for (let t of trans) await saveData('financeiro', t);
-        await renderAll(); bootstrap.Modal.getInstance(document.getElementById('financeiroModal')).hide();
-    }
-
-    async function saveNota() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('notaId').value;
-        let n = { id: id?parseInt(id):await getNewId('notas'), profileId: pid, titulo: document.getElementById('notaTitulo').value, conteudo: document.getElementById('notaConteudo').value, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto' };
-        if (!n.titulo) return alert('Título obrigatório.');
-        await saveData('notas', n); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide();
-    }
-
-    async function deleteNota() {
-        let id = document.getElementById('notaId').value;
-        if (id && confirm('Excluir nota?')) { await deleteData('notas', parseInt(id)); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide(); }
-    }
-
-    async function saveLink() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('linkId').value;
-        let l = { id: id?parseInt(id):await getNewId('links'), profileId: pid, titulo: document.getElementById('linkTitulo').value, url: document.getElementById('linkUrl').value, categoria: document.getElementById('linkCategoria').value, descricao: document.getElementById('linkDescricao').value };
-        if (!l.titulo || !l.url) return alert('Título e URL obrigatórios.');
-        await saveData('links', l); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('linkModal')).hide();
-    }
-
-    async function saveFilme() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('filmeId').value;
-        let f = { id: id?parseInt(id):await getNewId('filmes'), profileId: pid, titulo: document.getElementById('filmeTitulo').value, url: document.getElementById('filmeUrl').value, tipo: document.getElementById('filmeTipo').value };
-        if (!f.titulo || !f.url) return alert('Título e URL obrigatórios.');
-        await saveData('filmes', f); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('filmeModal')).hide();
-    }
-
-    async function saveAnotacaoFilme() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('anotacaoFilmeId').value;
-        let f = await getData('filmes', parseInt(id));
-        if (f) {
-            f.anotacao = { tempoAtual: document.getElementById('filmeTempoAtual').value?parseInt(document.getElementById('filmeTempoAtual').value):null, texto: document.getElementById('filmeAnotacao').value, assistido: document.getElementById('filmeAssistido').checked };
-            await saveData('filmes', f); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('anotacaoFilmeModal')).hide();
-        }
-    }
-
-    async function saveLivro() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('bibliotecaId').value;
-        let l = { id: id?parseInt(id):await getNewId('biblioteca'), profileId: pid, titulo: document.getElementById('bibliotecaTitulo').value, autor: document.getElementById('bibliotecaAutor').value, assunto: document.getElementById('bibliotecaAssunto').value, editora: document.getElementById('bibliotecaEditora').value, ano: document.getElementById('bibliotecaAno').value||null, observacoes: document.getElementById('bibliotecaObservacoes').value };
-        if (!l.titulo || !l.autor || !l.assunto) return alert('Título, autor e assunto obrigatórios.');
-        await saveData('biblioteca', l); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('bibliotecaModal')).hide();
-    }
-
-    function getYouTubeEmbedUrl(url, start=0) {
-        let id = null;
-        let pat = [/(?:youtube\.com\/watch\?v=)([^&]+)/, /(?:youtu\.be\/)([^?]+)/, /(?:youtube\.com\/embed\/)([^?]+)/];
-        for (let p of pat) { let m = url.match(p); if (m && m[1]) { id = m[1]; break; } }
-        return id ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&start=${start}&rel=0&modestbranding=1` : null;
-    }
-
     function openVideoPlayer(filme) {
-        let embed = getYouTubeEmbedUrl(filme.url, filme.anotacao?.tempoAtual||0);
-        if (!embed) { alert('URL inválida.'); return; }
+        if (filme.origem === 'url') {
+            let embed = getYouTubeEmbedUrl(filme.url, filme.anotacao?.tempoAtual || 0);
+            if (!embed) { alert('URL inválida.'); return; }
+            document.getElementById('videoPlayerContainer').innerHTML = `<iframe id="videoPlayer" width="100%" height="450" src="${embed}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+        } else if (filme.origem === 'arquivo' && filme.fileData) {
+            const blob = filme.fileData;
+            const url = URL.createObjectURL(blob);
+            document.getElementById('videoPlayerContainer').innerHTML = `
+                <video id="videoPlayer" width="100%" height="450" controls>
+                    <source src="${url}" type="${filme.fileType}">
+                    Seu navegador não suporta vídeo.
+                </video>
+            `;
+            if (filme.anotacao?.tempoAtual) {
+                const video = document.getElementById('videoPlayer');
+                video.addEventListener('loadedmetadata', () => {
+                    video.currentTime = filme.anotacao.tempoAtual;
+                });
+            }
+        } else {
+            alert('Vídeo não disponível.');
+            return;
+        }
+
         currentVideoId = filme.id;
-        currentVideoTime = filme.anotacao?.tempoAtual||0;
+        currentVideoTime = filme.anotacao?.tempoAtual || 0;
         document.getElementById('videoPlayerModalLabel').textContent = `Assistindo: ${filme.titulo}`;
-        document.getElementById('videoPlayer').src = embed;
         new bootstrap.Modal(document.getElementById('videoPlayerModal')).show();
+
         if (videoInterval) clearInterval(videoInterval);
         videoInterval = setInterval(saveVideoProgress, 30000);
     }
 
     async function saveVideoProgress() {
         if (!currentVideoId) return;
+        const video = document.getElementById('videoPlayer');
+        if (video && video.tagName === 'VIDEO') {
+            currentVideoTime = video.currentTime;
+        }
         let f = await getData('filmes', currentVideoId);
         if (f) {
             if (!f.anotacao) f.anotacao = {};
@@ -3615,28 +4012,95 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    async function populateDisciplinaSelects() {
-        let data = await getProfileData();
-        let opts = data.disciplinas.map(d=>`<option value="${d.id}">${d.nome}</option>`).join('');
-        document.querySelectorAll('#trabalhoDisciplina, #provaDisciplina, #horarioDisciplina').forEach(s=>{ s.innerHTML = '<option value="">Selecione</option>'+opts; });
+    async function saveFilme() {
+        const pid = await getCurrentProfileId();
+        const id = document.getElementById('filmeId').value;
+        const origem = document.querySelector('input[name="filmeOrigem"]:checked').value;
+        const titulo = document.getElementById('filmeTitulo').value;
+        const tipo = document.getElementById('filmeTipo').value;
+        if (!titulo) return alert('Título obrigatório.');
+
+        let filme = {
+            id: id ? parseInt(id) : await getNewId('filmes'),
+            profileId: pid,
+            titulo,
+            tipo,
+            origem
+        };
+
+        if (origem === 'url') {
+            const url = document.getElementById('filmeUrl').value;
+            if (!url) return alert('URL obrigatória.');
+            filme.url = url;
+            filme.fileData = null;
+        } else {
+            const fileInput = document.getElementById('filmeArquivo');
+            if (!fileInput.files || !fileInput.files[0]) return alert('Selecione um arquivo de vídeo.');
+            const file = fileInput.files[0];
+            filme.fileName = file.name;
+            filme.fileType = file.type;
+            filme.fileSize = file.size;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const arrayBuffer = e.target.result;
+                filme.fileData = new Blob([arrayBuffer], { type: file.type });
+                await saveData('filmes', filme);
+                bootstrap.Modal.getInstance(document.getElementById('filmeModal')).hide();
+                await renderFilmes();
+            };
+            reader.readAsArrayBuffer(file);
+            return;
+        }
+        await saveData('filmes', filme);
+        bootstrap.Modal.getInstance(document.getElementById('filmeModal')).hide();
+        await renderFilmes();
     }
 
-    function updateMainHeaderTitle() {
-        let active = document.querySelector('.content-panel.active');
-        if (active) document.getElementById('main-header-title').textContent = active.querySelector('h2')?.textContent || 'Acadêmico Pro';
-    }
-
-    async function renderProfileManagementList() {
-        let list = document.getElementById('profile-management-list');
-        list.innerHTML = '';
-        let profiles = await getAllData('profiles');
-        let current = await getCurrentProfileId();
-        profiles.forEach(p => {
-            list.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center"><button type="button" class="btn btn-link text-start flex-grow-1 switch-profile ${p.id===current?'fw-bold':''}" data-id="${p.id}">${p.name}</button><div><button class="btn btn-sm btn-outline-primary edit-profile" data-id="${p.id}"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline-danger delete-profile" data-id="${p.id}" ${profiles.length===1?'disabled':''}><i class="fas fa-trash"></i></button></div></li>`;
+    async function renderFilmes() {
+        const data = await getProfileData();
+        const container = document.getElementById('filmes-lista');
+        container.innerHTML = '';
+        if (!data.filmes.length) {
+            container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Adicionar Filme/Vídeo".</p></div></div>';
+            return;
+        }
+        data.filmes.forEach(f => {
+            let anot = f.anotacao;
+            let prog = anot?.tempoAtual ? Math.min(100, (anot.tempoAtual / 120) * 100) : 0;
+            container.innerHTML += `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card filme-card card-dashboard">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h5 class="card-title">${f.titulo}</h5>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item watch-filme" href="#" data-id="${f.id}"><i class="fas fa-play-circle"></i> Assistir</a></li>
+                                        <li><a class="dropdown-item anotacao-filme" href="#" data-id="${f.id}"><i class="fas fa-edit"></i> Anotação</a></li>
+                                        <li><a class="dropdown-item edit-filme" href="#" data-id="${f.id}"><i class="fas fa-pen"></i> Editar</a></li>
+                                        <li><a class="dropdown-item delete-filme" href="#" data-id="${f.id}"><i class="fas fa-trash"></i> Excluir</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge ${f.tipo === 'filme' ? 'bg-primary' : 'bg-info'}">${f.tipo === 'filme' ? 'Filme' : 'Vídeo-Aula'}</span>
+                                <span class="badge bg-secondary">${f.origem === 'url' ? 'Link' : 'Arquivo'}</span>
+                                ${anot ? '<div class="filme-anotacoes-badge"><i class="fas fa-bookmark"></i></div>' : ''}
+                            </div>
+                            ${anot?.tempoAtual ? `
+                                <div class="filme-tempo-assistido"><i class="fas fa-clock"></i> Parou no minuto: ${anot.tempoAtual}</div>
+                                <div class="filme-progresso"><div class="filme-progresso-bar" style="width: ${prog}%"></div></div>
+                            ` : ''}
+                            ${anot?.assistido ? `<div class="mt-2"><span class="badge bg-success"><i class="fas fa-check"></i> Assistido</span></div>` : ''}
+                            <div class="mt-3">
+                                <button class="btn btn-sm btn-primary watch-filme" data-id="${f.id}"><i class="fas fa-play-circle"></i> Assistir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
         });
-        document.querySelectorAll('.switch-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.switch-profile').dataset.id; if (id!==current) { await switchProfile(id); bootstrap.Modal.getInstance(document.getElementById('profileManagementModal')).hide(); } }));
-        document.querySelectorAll('.edit-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.edit-profile').dataset.id; let p = await getData('profiles', id); if (p) { document.getElementById('profileName').value = p.name; document.getElementById('profileId').value = p.id; document.getElementById('saveProfileBtn').innerHTML = '<i class="fas fa-save"></i> Atualizar'; } }));
-        document.querySelectorAll('.delete-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.delete-profile').dataset.id; if (profiles.length===1) return; if (confirm('Excluir perfil? Todos os dados serão perdidos.')) { await deleteData('profiles', id); let stores = ['disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links']; for (let s of stores) { let items = await getAllData(s, 'profileId', id); for (let i of items) await deleteData(s, i.id); } await renderProfileManagementList(); await renderAll(); } }));
     }
 
     if ('serviceWorker' in navigator) window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(console.error));
