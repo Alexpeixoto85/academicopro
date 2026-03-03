@@ -1552,6 +1552,27 @@
         color: var(--text-light);
     }
 
+    /* Melhorias para visualização de PDF em mobile */
+    @media (max-width: 768px) {
+        .modal-dialog.modal-xl {
+            margin: 0;
+            max-width: 100%;
+            height: 100%;
+        }
+        .modal-content {
+            border-radius: 0;
+            height: 100%;
+        }
+        .modal-body {
+            height: calc(100% - 56px) !important;
+            padding: 0;
+        }
+        #pdfViewer, #documentViewer {
+            height: 100%;
+            width: 100%;
+        }
+    }
+
     @media (max-width: 768px) {
       .main-header {
         flex-direction: column;
@@ -2057,18 +2078,40 @@
 
 <div class="modal fade" id="viewImageModal" tabindex="-1"><div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Visualizar Imagem</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><img id="modalImage" class="nota-imagem-full" src="" alt="Imagem"><p id="modalImageDescription" class="mt-3"></p></div></div></div></div>
 
-<!-- Modal para visualizar PDF -->
-<div class="modal fade" id="viewPdfModal" tabindex="-1"><div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-lg-down"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Visualizar PDF</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" style="height: 80vh;"><iframe id="pdfViewer" style="width:100%; height:100%; border:none;"></iframe></div></div></div></div>
+<!-- Modal para visualizar PDF (melhorado) -->
+<div class="modal fade" id="viewPdfModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-lg-down">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Visualizar PDF</h5>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-light me-2" id="pdfFullscreenBtn">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+            </div>
+            <div class="modal-body p-0" style="height: 85vh;">
+                <iframe id="pdfViewer" style="width:100%; height:100%; border:none;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
 
-<!-- Modal para visualizar documentos gerais -->
+<!-- Modal para visualizar documentos gerais (melhorado) -->
 <div class="modal fade" id="viewDocumentModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-lg-down">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="viewDocumentTitle">Visualizar Documento</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-light me-2" id="documentFullscreenBtn">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
             </div>
-            <div class="modal-body" style="height: 80vh;">
+            <div class="modal-body p-0" style="height: 85vh;">
                 <iframe id="documentViewer" style="width:100%; height:100%; border:none;"></iframe>
             </div>
             <div class="modal-footer">
@@ -2578,15 +2621,33 @@ document.addEventListener('DOMContentLoaded', function() {
         objectUrls.set(id, url);
 
         if (doc.documento.tipo === 'application/pdf') {
-            document.getElementById('documentViewer').src = url;
+            const modalEl = document.getElementById('viewDocumentModal');
+            const iframe = document.getElementById('documentViewer');
+            const fullscreenBtn = document.getElementById('documentFullscreenBtn');
+            const downloadLink = document.getElementById('downloadDocumentLink');
+            
+            iframe.src = url;
             document.getElementById('viewDocumentTitle').textContent = doc.titulo;
-            document.getElementById('downloadDocumentLink').href = url;
-            document.getElementById('downloadDocumentLink').download = doc.documento.nome;
-            const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
+            downloadLink.href = url;
+            downloadLink.download = doc.documento.nome;
+            
+            fullscreenBtn.onclick = function() {
+                if (iframe.requestFullscreen) {
+                    iframe.requestFullscreen();
+                } else if (iframe.webkitRequestFullscreen) {
+                    iframe.webkitRequestFullscreen();
+                } else if (iframe.msRequestFullscreen) {
+                    iframe.msRequestFullscreen();
+                }
+            };
+            
+            const modal = new bootstrap.Modal(modalEl);
             modal.show();
-            document.getElementById('viewDocumentModal').addEventListener('hidden.bs.modal', function onClose() {
+            
+            modalEl.addEventListener('hidden.bs.modal', function onClose() {
                 URL.revokeObjectURL(url);
                 objectUrls.delete(id);
+                iframe.src = '';
                 this.removeEventListener('hidden.bs.modal', onClose);
             });
         } else {
@@ -2620,12 +2681,29 @@ document.addEventListener('DOMContentLoaded', function() {
         objectUrls.set(id, url);
 
         if (tipo === 'application/pdf') {
-            document.getElementById('pdfViewer').src = url;
-            const modal = new bootstrap.Modal(document.getElementById('viewPdfModal'));
+            const modalEl = document.getElementById('viewPdfModal');
+            const iframe = document.getElementById('pdfViewer');
+            const fullscreenBtn = document.getElementById('pdfFullscreenBtn');
+            
+            iframe.src = url;
+            
+            fullscreenBtn.onclick = function() {
+                if (iframe.requestFullscreen) {
+                    iframe.requestFullscreen();
+                } else if (iframe.webkitRequestFullscreen) {
+                    iframe.webkitRequestFullscreen();
+                } else if (iframe.msRequestFullscreen) {
+                    iframe.msRequestFullscreen();
+                }
+            };
+            
+            const modal = new bootstrap.Modal(modalEl);
             modal.show();
-            document.getElementById('viewPdfModal').addEventListener('hidden.bs.modal', function onClose() {
+            
+            modalEl.addEventListener('hidden.bs.modal', function onClose() {
                 URL.revokeObjectURL(url);
                 objectUrls.delete(id);
+                iframe.src = '';
                 this.removeEventListener('hidden.bs.modal', onClose);
             });
         } else {
