@@ -291,6 +291,22 @@
       background-color: var(--success);
     }
 
+    .badge-tipo-trabalho {
+      background-color: var(--purple);
+      color: white;
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 12px;
+    }
+    
+    .badge-tipo-trabalho.individual {
+      background-color: var(--info);
+    }
+    
+    .badge-tipo-trabalho.grupo {
+      background-color: var(--purple);
+    }
+
     .avg-grade-badge {
       font-size: 1.25rem;
       font-weight: bold;
@@ -1506,6 +1522,25 @@
         transform: scale(1.2);
     }
 
+    /* Participantes do trabalho */
+    .participantes-list {
+        margin-top: 8px;
+        padding-left: 0;
+        list-style: none;
+        font-size: 0.85rem;
+    }
+    
+    .participantes-list li {
+        margin-bottom: 2px;
+        color: var(--text-light);
+    }
+    
+    .participantes-list li i {
+        margin-right: 5px;
+        color: var(--accent);
+        font-size: 0.7rem;
+    }
+
     @media (max-width: 768px) {
       .main-header {
         flex-direction: column;
@@ -1839,15 +1874,29 @@
     <button class="footer-nav-btn" id="footer-financeiro"><i class="fas fa-dollar-sign"></i><span>Financeiro</span></button>
 </div>
 
-<!-- MODAIS (mantidos os mesmos) -->
+<!-- MODAIS -->
 <div class="modal fade" id="profileManagementModal" tabindex="-1" aria-labelledby="profileManagementModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Gerenciar Perfis</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p>Selecione um perfil para ativar ou gerencie seus perfis existentes.</p><ul class="list-group" id="profile-management-list"></ul><hr><form id="profileForm"><input type="hidden" id="profileId"><div class="input-group"><input type="text" class="form-control" id="profileName" placeholder="Nome do novo perfil" required><button class="btn btn-primary" type="submit" id="saveProfileBtn"><i class="fas fa-plus"></i> Adicionar</button></div></form></div></div></div></div>
 
 <div class="modal fade" id="horarioModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Aula</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="horarioForm"><input type="hidden" id="horarioId"><div class="mb-3"><label for="horarioDisciplina" class="form-label">Disciplina</label><select class="form-select" id="horarioDisciplina" required></select></div><div class="mb-3"><label for="horarioDiaSemana" class="form-label">Dia da Semana</label><select class="form-select" id="horarioDiaSemana"><option value="1">Segunda</option><option value="2">Terça</option><option value="3">Quarta</option><option value="4">Quinta</option><option value="5">Sexta</option><option value="6">Sábado</option></select></div><div class="row"><div class="col-6 mb-3"><label for="horarioInicio" class="form-label">Início</label><input type="time" class="form-control" id="horarioInicio" step="1800" required></div><div class="col-6 mb-3"><label for="horarioFim" class="form-label">Fim</label><input type="time" class="form-control" id="horarioFim" step="1800" required></div></div><div class="mb-3"><label for="horarioLocal" class="form-label">Local</label><input type="text" class="form-control" id="horarioLocal"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto d-none" id="deleteHorario">Excluir</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveHorario">Salvar</button></div></div></div></div>
 
 <div class="modal fade" id="disciplinaModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Disciplina</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="disciplinaForm"><input type="hidden" id="disciplinaId"><div class="mb-3"><label for="disciplinaNome" class="form-label">Nome</label><input type="text" class="form-control" id="disciplinaNome" required></div><div class="mb-3"><label for="disciplinaProfessor" class="form-label">Professor</label><input type="text" class="form-control" id="disciplinaProfessor"></div><div class="mb-3"><label for="disciplinaEmail" class="form-label">E-mail do Professor</label><input type="email" class="form-control" id="disciplinaEmail"></div><div class="mb-3"><label for="disciplinaFrequencia" class="form-label">Frequência (%)</label><input type="number" class="form-control" id="disciplinaFrequencia" min="0" max="100" value="100"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveDisciplina">Salvar</button></div></div></div></div>
 
-<!-- Modal Trabalho com anexo -->
-<div class="modal fade" id="trabalhoModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Trabalho</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="trabalhoForm"><input type="hidden" id="trabalhoId"><div class="mb-3"><label for="trabalhoDisciplina" class="form-label">Disciplina</label><select class="form-select" id="trabalhoDisciplina" required></select></div><div class="mb-3"><label for="trabalhoTitulo" class="form-label">Título</label><input type="text" class="form-control" id="trabalhoTitulo" required></div><div class="mb-3"><label for="trabalhoEntrega" class="form-label">Data de Entrega</label><input type="date" class="form-control" id="trabalhoEntrega" required></div><div class="mb-3"><label for="trabalhoStatus" class="form-label">Status</label><select class="form-select" id="trabalhoStatus"><option value="Pendente">Pendente</option><option value="Entregue">Entregue</option></select></div><div class="mb-3"><label for="trabalhoPrioridade" class="form-label">Prioridade</label><select class="form-select" id="trabalhoPrioridade"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></div><div class="mb-3"><label for="trabalhoNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="trabalhoNota" min="0" max="10"></div><div class="mb-3"><label for="trabalhoObservacoes" class="form-label">Observações</label><textarea class="form-control" id="trabalhoObservacoes" rows="3"></textarea></div>
+<!-- Modal Trabalho com anexo, tipo e participantes -->
+<div class="modal fade" id="trabalhoModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Trabalho</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="trabalhoForm"><input type="hidden" id="trabalhoId"><div class="mb-3"><label for="trabalhoDisciplina" class="form-label">Disciplina</label><select class="form-select" id="trabalhoDisciplina" required></select></div><div class="mb-3"><label for="trabalhoTitulo" class="form-label">Título</label><input type="text" class="form-control" id="trabalhoTitulo" required></div>
+<!-- NOVO CAMPO TIPO -->
+<div class="mb-3">
+    <label for="trabalhoTipo" class="form-label">Tipo</label>
+    <select class="form-select" id="trabalhoTipo">
+        <option value="individual">Individual</option>
+        <option value="grupo">Em grupo</option>
+    </select>
+</div>
+<!-- CAMPO PARTICIPANTES (aparece apenas se grupo) -->
+<div class="mb-3" id="grupoParticipantesWrapper" style="display: none;">
+    <label for="trabalhoParticipantes" class="form-label">Participantes (um por linha)</label>
+    <textarea class="form-control" id="trabalhoParticipantes" rows="3" placeholder="Nome do aluno 1&#10;Nome do aluno 2&#10;Nome do aluno 3"></textarea>
+</div>
+<div class="mb-3"><label for="trabalhoEntrega" class="form-label">Data de Entrega</label><input type="date" class="form-control" id="trabalhoEntrega" required></div><div class="mb-3"><label for="trabalhoStatus" class="form-label">Status</label><select class="form-select" id="trabalhoStatus"><option value="Pendente">Pendente</option><option value="Entregue">Entregue</option></select></div><div class="mb-3"><label for="trabalhoPrioridade" class="form-label">Prioridade</label><select class="form-select" id="trabalhoPrioridade"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></div><div class="mb-3"><label for="trabalhoNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="trabalhoNota" min="0" max="10"></div><div class="mb-3"><label for="trabalhoObservacoes" class="form-label">Observações</label><textarea class="form-control" id="trabalhoObservacoes" rows="3"></textarea></div>
 <!-- Campo de anexo -->
 <div class="mb-3">
     <label for="trabalhoAnexo" class="form-label">Anexo (PDF ou imagem)</label>
@@ -2255,6 +2304,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!disciplinas.length) await createInitialData();
         generateQuickLinks(); await renderAll(); updateMainHeaderTitle(); setupEventListeners(); setupFooterNavigation();
         setupDrawingCanvas(); setupHandwritingCanvas(); setupImageImport();
+        
+        // Mostrar/esconder campo de participantes conforme tipo de trabalho
+        document.getElementById('trabalhoTipo').addEventListener('change', function() {
+            document.getElementById('grupoParticipantesWrapper').style.display = this.value === 'grupo' ? 'block' : 'none';
+        });
     }
 
     async function createInitialData() {
@@ -2264,7 +2318,7 @@ document.addEventListener('DOMContentLoaded', function() {
         await saveData('disciplinas', dis[0]); id++;
         const hor = [ {id:id, profileId:pid, disciplinaId:1, diaSemana:1, inicio:"08:00", fim:"10:00", local:"Sala 101"} ];
         await saveData('horarios', hor[0]); id++;
-        const trab = [ {id:id, profileId:pid, disciplinaId:1, titulo:"Estudo de Caso", entrega:"2025-09-25", status:"Pendente", prioridade:"high", nota:null, observacoes:""} ];
+        const trab = [ {id:id, profileId:pid, disciplinaId:1, titulo:"Estudo de Caso", tipo:"grupo", participantes:"Ana Souza\nCarlos Lima\nMariana Silva", entrega:"2025-09-25", status:"Pendente", prioridade:"high", nota:null, observacoes:""} ];
         await saveData('trabalhos', trab[0]); id++;
         const prov = [ {id:id, profileId:pid, disciplinaId:1, conteudo:"Teoria Geral", data:"2025-10-15", hora:"14:00", status:"Agendada", nota:null} ];
         await saveData('provas', prov[0]); id++;
@@ -2437,7 +2491,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 item.dataset.id = a.id;
                 item.style.gridColumn = col; item.style.gridRow = `${startRow} / ${endRow}`;
                 item.style.backgroundColor = getDisciplinaColor(a.disciplinaId);
-                // Adiciona nome do professor e email se houver
                 let professorInfo = disc.professor ? `<br><i class="fas fa-chalkboard-teacher"></i> Prof: ${disc.professor}` : '';
                 professorInfo += disc.professorEmail ? ` (${disc.professorEmail})` : '';
                 item.innerHTML = `<div class="schedule-class-title">${disc.nome}</div><div class="schedule-class-details"><i class="fas fa-map-marker-alt"></i> ${a.local||''}<br><i class="fas fa-clock"></i> ${a.inicio} - ${a.fim}${professorInfo}</div>`;
@@ -2446,7 +2499,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else container.innerHTML += `<div class="empty-state" style="grid-column:2/8;grid-row:2/6;">Nenhuma aula cadastrada.</div>`;
     }
 
-    // Função auxiliar para exibir anexo na tabela (agora usado em cards)
+    // Função auxiliar para exibir anexo
     function renderAnexoIcon(item) {
         if (!item.anexo) return '-';
         const isPdf = item.anexoTipo === 'application/pdf';
@@ -2455,7 +2508,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return `<i class="fas ${icon} ${cor} attachment-icon" onclick="visualizarAnexo('${item.anexo}', '${item.anexoTipo}', '${item.anexoNome}')" title="${item.anexoNome}"></i>`;
     }
 
-    // Renderização de Trabalhos em cards
+    // Renderização de Trabalhos em cards (agora com professor, tipo e participantes)
     async function renderTrabalhos() {
         const data = await getProfileData();
         const container = document.getElementById('trabalhos-cards');
@@ -2466,6 +2519,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         data.trabalhos.sort((a,b)=>new Date(a.entrega)-new Date(b.entrega)).forEach(t => {
             const disc = data.disciplinas.find(d=>d.id===t.disciplinaId);
+            
+            // Badge do tipo
+            let tipoBadge = '';
+            if (t.tipo === 'individual') {
+                tipoBadge = `<span class="badge badge-tipo-trabalho individual"><i class="fas fa-user me-1"></i>Individual</span>`;
+            } else if (t.tipo === 'grupo') {
+                tipoBadge = `<span class="badge badge-tipo-trabalho grupo"><i class="fas fa-users me-1"></i>Em grupo</span>`;
+            }
+            
+            // Lista de participantes (se grupo)
+            let participantesHtml = '';
+            if (t.tipo === 'grupo' && t.participantes) {
+                const lista = t.participantes.split('\n').filter(p => p.trim() !== '');
+                if (lista.length > 0) {
+                    participantesHtml = '<ul class="participantes-list">';
+                    lista.forEach(p => {
+                        participantesHtml += `<li><i class="fas fa-user"></i> ${p.trim()}</li>`;
+                    });
+                    participantesHtml += '</ul>';
+                }
+            }
+            
             const card = document.createElement('div');
             card.className = 'col-md-6 col-lg-4';
             card.innerHTML = `
@@ -2477,8 +2552,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <span class="badge ${t.prioridade==='high'?'priority-high':t.prioridade==='medium'?'priority-medium':'priority-low'}">${t.prioridade==='high'?'Alta':t.prioridade==='medium'?'Média':'Baixa'}</span>
                             </div>
                         </div>
-                        <p class="text-muted small mb-1"><i class="fas fa-book"></i> ${disc?disc.nome:'N/A'}</p>
-                        <p class="text-muted small mb-1"><i class="fas fa-calendar"></i> Entrega: ${new Date(t.entrega+'T00:00').toLocaleDateString('pt-BR')}</p>
+                        <p class="text-muted small mb-1"><i class="fas fa-book"></i> <strong>Disciplina:</strong> ${disc?disc.nome:'N/A'}</p>
+                        <p class="text-muted small mb-1"><i class="fas fa-chalkboard-teacher"></i> <strong>Professor:</strong> ${disc?disc.professor:'N/A'}</p>
+                        <div class="mb-2">${tipoBadge}</div>
+                        ${participantesHtml}
+                        <p class="text-muted small mb-1"><i class="fas fa-calendar"></i> <strong>Entrega:</strong> ${new Date(t.entrega+'T00:00').toLocaleDateString('pt-BR')}</p>
                         <p class="text-muted small mb-2"><span class="badge ${t.status==='Pendente'?'bg-warning text-dark':'bg-success'}">${t.status}</span></p>
                         <p class="card-text">${t.observacoes?t.observacoes.substring(0,80)+'...':''}</p>
                         <div class="item-actions">
@@ -2513,9 +2591,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             <h5 class="card-title mb-0">${p.conteudo}</h5>
                             <span class="badge ${p.status==='Agendada'?'bg-warning text-dark':'bg-success'}">${p.status}</span>
                         </div>
-                        <p class="text-muted small mb-1"><i class="fas fa-book"></i> ${disc?disc.nome:'N/A'}</p>
-                        <p class="text-muted small mb-1"><i class="fas fa-calendar"></i> Data: ${new Date(p.data+'T00:00').toLocaleDateString('pt-BR')} ${p.hora?p.hora:''}</p>
-                        <p class="text-muted small mb-2">Nota: ${p.nota!==null?p.nota.toFixed(1):'-'}</p>
+                        <p class="text-muted small mb-1"><i class="fas fa-book"></i> <strong>Disciplina:</strong> ${disc?disc.nome:'N/A'}</p>
+                        <p class="text-muted small mb-1"><i class="fas fa-chalkboard-teacher"></i> <strong>Professor:</strong> ${disc?disc.professor:'N/A'}</p>
+                        <p class="text-muted small mb-1"><i class="fas fa-calendar"></i> <strong>Data:</strong> ${new Date(p.data+'T00:00').toLocaleDateString('pt-BR')} ${p.hora?p.hora:''}</p>
+                        <p class="text-muted small mb-2"><strong>Nota:</strong> ${p.nota!==null?p.nota.toFixed(1):'-'}</p>
                         <div class="item-actions">
                             ${renderAnexoIcon(p)}
                             <button class="btn btn-sm btn-outline-primary edit-prova" data-id="${p.id}"><i class="fas fa-edit"></i></button>
@@ -2635,7 +2714,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // NOVA FUNÇÃO RENDERFINANCEIRO COM CARTÕES E FILTROS
+    // Renderização Financeira (igual à versão anterior)
     async function renderFinanceiro() {
         const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
         document.getElementById('financeiro-mes-atual').textContent = `${meses[currentFinanceMonth]} ${currentFinanceYear}`;
@@ -2645,7 +2724,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const mesAnoAtual = `${currentFinanceMonth+1}-${currentFinanceYear}`;
         let trans = data.financeiro.filter(t=>t.mesAno===mesAnoAtual);
 
-        // Aplicar filtros
         if (financeFilterType !== 'all') {
             trans = trans.filter(t => t.tipo === financeFilterType);
         }
@@ -2662,10 +2740,9 @@ document.addEventListener('DOMContentLoaded', function() {
         saldoEl.textContent = saldo.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
         saldoEl.className = saldo>=0 ? 'text-success' : 'text-danger';
 
-        // Agrupar por dia
         let porDia = {};
         trans.forEach(t=>{ let d = new Date(t.data).getDate(); if(!porDia[d]) porDia[d]=[]; porDia[d].push(t); });
-        let dias = Object.keys(porDia).sort((a,b)=>b-a); // dias decrescentes
+        let dias = Object.keys(porDia).sort((a,b)=>b-a);
 
         if (!dias.length) {
             container.innerHTML = '<div class="empty-state"><p>Nenhuma transação neste mês com os filtros selecionados.</p></div>';
@@ -2675,23 +2752,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 porDia[dia].forEach(t=>{ if(t.tipo==='receita') r+=t.valor; else de+=t.valor; });
                 container.innerHTML += `<div class="financeiro-dia-titulo">Dia ${dia}</div>`;
                 porDia[dia].sort((a,b)=>new Date(b.data)-new Date(a.data)).forEach(t=>{
-                    // Criar cartão
                     let card = document.createElement('div');
                     card.className = `financeiro-transacao-card ${t.tipo}`;
                     card.dataset.id = t.id;
-                    
                     let statusBadge = t.tipo==='despesa' ? `<span class="badge ${t.status==='pago'?'bg-success':'bg-warning text-dark'} ms-2">${t.status==='pago'?'Pago':'Pendente'}</span>` : '';
-                    
                     let valorClass = t.tipo==='receita' ? 'receita' : 'despesa';
                     let valorSinal = t.tipo==='receita' ? '+' : '-';
-                    
-                    // Ações
                     let actions = `
                         <button class="btn btn-sm btn-outline-primary edit-financeiro" data-id="${t.id}"><i class="fas fa-edit"></i></button>
                         ${t.tipo==='despesa' && t.status==='pendente' ? `<button class="btn btn-sm btn-outline-success baixa-financeiro" data-id="${t.id}"><i class="fas fa-check"></i></button>` : ''}
                         <button class="btn btn-sm btn-outline-danger delete-financeiro" data-id="${t.id}"><i class="fas fa-trash"></i></button>
                     `;
-                    
                     card.innerHTML = `
                         <div class="card-header-info">
                             <span class="card-descricao">${t.descricao}</span>
@@ -2905,7 +2976,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('prev-month-financeiro').addEventListener('click', ()=>{ if (--currentFinanceMonth<0) { currentFinanceMonth=11; currentFinanceYear--; } renderFinanceiro(); });
         document.getElementById('next-month-financeiro').addEventListener('click', ()=>{ if (++currentFinanceMonth>11) { currentFinanceMonth=0; currentFinanceYear++; } renderFinanceiro(); });
         
-        // Filtros financeiros
         document.querySelectorAll('[data-filter-type]').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('[data-filter-type]').forEach(b => b.classList.remove('active'));
@@ -2927,7 +2997,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let s = +document.getElementById('filterStartHour').value, e = +document.getElementById('filterEndHour').value;
             if (s>=0 && s<=23 && e>=0 && e<=23 && s<=e) { 
                 scheduleStartHour=s; scheduleEndHour=e; 
-                saveScheduleFilter(); // salva no localStorage
+                saveScheduleFilter();
                 renderHorarios(); 
             }
             else alert('Horários inválidos.');
@@ -2936,7 +3006,7 @@ document.addEventListener('DOMContentLoaded', function() {
             scheduleStartHour=7; scheduleEndHour=22; 
             document.getElementById('filterStartHour').value=7; 
             document.getElementById('filterEndHour').value=22; 
-            saveScheduleFilter(); // salva no localStorage
+            saveScheduleFilter();
             renderHorarios(); 
         });
         document.getElementById('prev-month').addEventListener('click', ()=>{ currentCalendarDate.setMonth(currentCalendarDate.getMonth()-1); renderAgenda(); });
@@ -2972,7 +3042,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (m.id==='notaModal') { document.getElementById('deleteNota').style.display='none'; document.getElementById('saveNota').style.display='block'; document.getElementById('notaTitulo').readOnly=false; document.getElementById('notaConteudo').readOnly=false; }
                 if (m.id==='videoPlayerModal' && videoInterval) { clearInterval(videoInterval); videoInterval=null; currentVideoId=null; document.getElementById('videoPlayer').src=''; }
                 if (m.id==='handwritingFullscreenModal') clearFullscreenHandwriting();
-                // Limpar preview de anexo nos modais
+                if (m.id==='trabalhoModal') document.getElementById('grupoParticipantesWrapper').style.display = 'none';
                 ['trabalho', 'prova', 'event'].forEach(prefix => {
                     const preview = document.getElementById(prefix + 'AnexoPreview');
                     if (preview) preview.innerHTML = '';
@@ -3022,7 +3092,6 @@ document.addEventListener('DOMContentLoaded', function() {
             r.readAsText(file);
         });
 
-        // Delegation
         document.body.addEventListener('click', async e=>{
             let cardLink = e.target.closest('.card-link');
             if (cardLink) {
@@ -3127,7 +3196,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!t) return;
                 if (t.recorrente && t.recorrenteId) {
                     if (confirm('Editar todas ocorrências? OK para todas, Cancelar para apenas esta.')) {
-                        // Editar todas: preencher com dados da primeira e bloquear recorrência
                         let todas = await getAllData('financeiro', 'recorrenteId', t.recorrenteId);
                         document.getElementById('financeiroRecorrenteId').value = t.recorrenteId;
                         document.getElementById('financeiroModalLabel').textContent = 'Editar Transação (todas)';
@@ -3188,7 +3256,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Função para ler arquivo como base64
     function readFileAsBase64(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -3198,7 +3265,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Função para exibir preview do anexo
     function setupAnexoPreview(inputId, previewId, hiddenId) {
         const input = document.getElementById(inputId);
         const preview = document.getElementById(previewId);
@@ -3219,20 +3285,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     preview.innerHTML = '<span class="badge bg-secondary">Arquivo selecionado</span>';
                 }
-                // Se houver um anexo existente, ele será substituído, então limpamos o hidden
                 hidden.value = '';
             }
         });
     }
 
-    // Chamar setup dos previews após carregar a página
     setTimeout(() => {
         setupAnexoPreview('trabalhoAnexo', 'trabalhoAnexoPreview', 'trabalhoAnexoExistente');
         setupAnexoPreview('provaAnexo', 'provaAnexoPreview', 'provaAnexoExistente');
         setupAnexoPreview('eventAnexo', 'eventAnexoPreview', 'eventAnexoExistente');
     }, 500);
 
-    // Função global para visualizar anexo
     window.visualizarAnexo = function(base64, tipo, nome) {
         if (tipo === 'application/pdf') {
             document.getElementById('pdfViewer').src = base64;
@@ -3258,12 +3321,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (prefix==='financeiro' && item.tipo==='despesa') document.getElementById('financeiroStatusWrapper').style.display='block';
         if (prefix==='horario') document.getElementById('deleteHorario').classList.remove('d-none');
         if (prefix==='nota') document.getElementById('deleteNota').style.display='block';
-        // Carregar anexo existente se houver
+        if (prefix==='trabalho') {
+            if (item.tipo === 'grupo') {
+                document.getElementById('grupoParticipantesWrapper').style.display = 'block';
+            } else {
+                document.getElementById('grupoParticipantesWrapper').style.display = 'none';
+            }
+        }
         if (item.anexo) {
             const preview = document.getElementById(prefix + 'AnexoPreview');
             const hidden = document.getElementById(prefix + 'AnexoExistente');
             if (preview && hidden) {
-                hidden.value = item.anexo; // guarda o anexo atual
+                hidden.value = item.anexo;
                 if (item.anexoTipo.startsWith('image/')) {
                     preview.innerHTML = `<img src="${item.anexo}" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 5px;"><br><small class="text-muted">Anexo atual. Selecione outro para substituir.</small>`;
                 } else {
@@ -3321,7 +3390,9 @@ document.addEventListener('DOMContentLoaded', function() {
             id: id?parseInt(id):await getNewId('trabalhos'), 
             profileId: pid, 
             disciplinaId: parseInt(document.getElementById('trabalhoDisciplina').value), 
-            titulo: document.getElementById('trabalhoTitulo').value, 
+            titulo: document.getElementById('trabalhoTitulo').value,
+            tipo: document.getElementById('trabalhoTipo').value,
+            participantes: document.getElementById('trabalhoTipo').value === 'grupo' ? document.getElementById('trabalhoParticipantes').value : '',
             entrega: document.getElementById('trabalhoEntrega').value, 
             status: document.getElementById('trabalhoStatus').value, 
             prioridade: document.getElementById('trabalhoPrioridade').value, 
@@ -3330,7 +3401,6 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         if (!t.disciplinaId || !t.titulo || !t.entrega) return alert('Preencha campos obrigatórios.');
 
-        // Processar anexo
         const anexoInput = document.getElementById('trabalhoAnexo');
         const anexoExistente = document.getElementById('trabalhoAnexoExistente').value;
         if (anexoInput.files && anexoInput.files[0]) {
@@ -3340,7 +3410,6 @@ document.addEventListener('DOMContentLoaded', function() {
             t.anexoTipo = file.type;
         } else if (anexoExistente) {
             t.anexo = anexoExistente;
-            // manter nome e tipo (precisamos recuperar do objeto original se for edição)
             if (id) {
                 const original = await getData('trabalhos', parseInt(id));
                 if (original) {
@@ -3442,7 +3511,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let rec = document.getElementById('financeiroRecurrence').value, end = document.getElementById('financeiroRecurrenceEndDate').value;
         let trans = [];
         if (recorrenteId) {
-            // Editando todas as ocorrências: vamos atualizar todas com os mesmos dados (exceto data)
             let todas = await getAllData('financeiro', 'recorrenteId', recorrenteId);
             for (let t of todas) {
                 t.tipo = document.getElementById('financeiroTipo').value;
