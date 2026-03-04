@@ -36,14 +36,25 @@
       color: var(--text-dark);
       line-height: 1.6;
       padding-bottom: 80px;
-      transition: background-color 0.3s;
+      transition: background-color 0.3s, background-image 0.3s;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+
+    body.bg-custom {
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
     }
 
     /* tema personalizado via classe */
-    body.bg-light { --bg-color: #ecf0f1; }
-    body.bg-dark { --bg-color: #2c3e50; color: #ecf0f1; }
-    body.bg-blue { --bg-color: #d4e6f1; }
-    body.bg-green { --bg-color: #d4efdf; }
+    body.bg-light { --bg-color: #ecf0f1; background-image: none !important; }
+    body.bg-dark { --bg-color: #2c3e50; color: #ecf0f1; background-image: none !important; }
+    body.bg-blue { --bg-color: #d4e6f1; background-image: none !important; }
+    body.bg-green { --bg-color: #d4efdf; background-image: none !important; }
 
     h1, h2, h3, h4, h5, h6 {
       font-family: 'Playfair Display', serif;
@@ -1607,6 +1618,24 @@
         display: flex;
     }
 
+    /* Botão de sair da tela cheia dentro do modal de nota */
+    .fullscreen-exit-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1061;
+        background-color: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 10px 20px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+    }
+
     @media (max-width: 768px) {
       .main-header {
         flex-direction: column;
@@ -1968,12 +1997,20 @@
       <div class="card card-dashboard mb-4">
           <div class="card-body">
               <h4 class="card-title">Personalizar Plano de Fundo</h4>
-              <p class="text-muted">Escolha uma cor de fundo para o sistema.</p>
+              <p class="text-muted">Escolha uma cor ou importe uma imagem para o fundo.</p>
               <div class="d-flex gap-2 flex-wrap mb-3">
                   <button class="btn btn-outline-secondary theme-option" data-theme="light">Claro (Padrão)</button>
                   <button class="btn btn-outline-secondary theme-option" data-theme="dark">Escuro</button>
                   <button class="btn btn-outline-secondary theme-option" data-theme="blue">Azul Suave</button>
                   <button class="btn btn-outline-secondary theme-option" data-theme="green">Verde Suave</button>
+              </div>
+              <div class="mb-3">
+                  <label for="customBackgroundImage" class="form-label">Imagem personalizada</label>
+                  <input type="file" class="form-control" id="customBackgroundImage" accept="image/*">
+                  <div class="mt-2">
+                      <button class="btn btn-sm btn-primary" id="applyCustomBackground">Aplicar imagem</button>
+                      <button class="btn btn-sm btn-outline-secondary" id="removeCustomBackground">Remover imagem</button>
+                  </div>
               </div>
               <button class="btn btn-sm btn-outline-primary" id="resetTheme">Resetar</button>
           </div>
@@ -2161,6 +2198,9 @@
             <div class="modal-body p-0" style="height: 85vh;">
                 <iframe id="pdfViewer" style="width:100%; height:100%; border:none;"></iframe>
             </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="downloadPdfBtn">Baixar</button>
+            </div>
         </div>
     </div>
 </div>
@@ -2182,7 +2222,7 @@
                 <iframe id="documentViewer" style="width:100%; height:100%; border:none;"></iframe>
             </div>
             <div class="modal-footer">
-                <a id="downloadDocumentLink" class="btn btn-primary" download>Download</a>
+                <a id="downloadDocumentLink" class="btn btn-primary" download>Baixar</a>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
             </div>
         </div>
@@ -2193,8 +2233,12 @@
 
 <div class="modal fade" id="fullscreenNoteModal" tabindex="-1"><div class="modal-dialog modal-fullscreen"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nota em Tela Cheia</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="fullscreenNoteContent"></div><div class="modal-footer"><button type="button" class="btn btn-primary" id="printNoteBtn"><i class="fas fa-print"></i> Baixar PDF</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button></div></div></div></div>
 
+<!-- Botão de sair da tela cheia dentro do modal de nota -->
+<button class="fullscreen-exit-btn" id="fullscreenNoteExitBtn" style="display: none;"><i class="fas fa-compress"></i> Sair da tela cheia</button>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+// Todo o script original com as modificações
 document.addEventListener('DOMContentLoaded', function() {
     const DB_NAME = 'academicoProDB', DB_VERSION = 2;
     let db;
@@ -2220,12 +2264,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Tema
     function loadTheme() {
         const savedTheme = localStorage.getItem('academicoTheme') || 'light';
-        applyTheme(savedTheme);
+        const customBg = localStorage.getItem('academicoCustomBg');
+        if (customBg) {
+            document.body.style.backgroundImage = `url('${customBg}')`;
+            document.body.classList.add('bg-custom');
+        } else {
+            applyTheme(savedTheme);
+        }
     }
     function applyTheme(theme) {
         document.body.className = ''; // remove classes
         document.body.classList.add(`bg-${theme}`);
         localStorage.setItem('academicoTheme', theme);
+        localStorage.removeItem('academicoCustomBg');
+        document.body.style.backgroundImage = '';
     }
     document.querySelectorAll('.theme-option').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -2235,9 +2287,33 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     document.getElementById('resetTheme')?.addEventListener('click', () => {
         localStorage.removeItem('academicoTheme');
+        localStorage.removeItem('academicoCustomBg');
+        document.body.style.backgroundImage = '';
         applyTheme('light');
     });
-    loadTheme();
+
+    // Imagem personalizada de fundo
+    document.getElementById('applyCustomBackground').addEventListener('click', function() {
+        const fileInput = document.getElementById('customBackgroundImage');
+        if (!fileInput.files || !fileInput.files[0]) {
+            alert('Selecione uma imagem.');
+            return;
+        }
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const bgData = e.target.result;
+            document.body.style.backgroundImage = `url('${bgData}')`;
+            document.body.classList.add('bg-custom');
+            localStorage.setItem('academicoCustomBg', bgData);
+            localStorage.removeItem('academicoTheme'); // remove tema anterior
+        };
+        reader.readAsDataURL(file);
+    });
+    document.getElementById('removeCustomBackground').addEventListener('click', function() {
+        localStorage.removeItem('academicoCustomBg');
+        applyTheme('light');
+    });
 
     // Botão sair da tela cheia
     const exitFSBtn = document.getElementById('exitFullscreenBtn');
@@ -2257,6 +2333,20 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             exitFSBtn.classList.remove('show');
         }
+    });
+
+    // Botão de sair da tela cheia no modal de nota
+    const fullscreenNoteExitBtn = document.getElementById('fullscreenNoteExitBtn');
+    fullscreenNoteExitBtn.addEventListener('click', () => {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('fullscreenNoteModal'));
+        if (modal) modal.hide();
+    });
+    // Mostrar botão quando o modal de nota em tela cheia for aberto
+    document.getElementById('fullscreenNoteModal').addEventListener('shown.bs.modal', function() {
+        fullscreenNoteExitBtn.style.display = 'flex';
+    });
+    document.getElementById('fullscreenNoteModal').addEventListener('hidden.bs.modal', function() {
+        fullscreenNoteExitBtn.style.display = 'none';
     });
 
     function loadScheduleFilter() {
@@ -2723,6 +2813,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Função melhorada para visualizar documentos
     async function visualizarDocumento(id) {
         const data = await getProfileData();
         const doc = data.notas.find(n => n.id == id);
@@ -2736,6 +2827,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const modalEl = document.getElementById('viewPdfModal');
             const iframe = document.getElementById('pdfViewer');
             const fullscreenBtn = document.getElementById('pdfFullscreenBtn');
+            const downloadBtn = document.getElementById('downloadPdfBtn');
             
             iframe.src = url;
             
@@ -2748,6 +2840,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     iframe.msRequestFullscreen();
                 }
             };
+
+            downloadBtn.onclick = function() {
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = doc.documento.nome;
+                a.click();
+            };
             
             const modal = new bootstrap.Modal(modalEl);
             modal.show();
@@ -2759,12 +2858,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.removeEventListener('hidden.bs.modal', onClose);
             });
         } else {
-            // Word, PowerPoint: tentar visualizar no iframe (alguns navegadores podem exibir, outros não)
+            // Word, PowerPoint: oferecer opções de abrir e baixar
             const modalEl = document.getElementById('viewDocumentModal');
             const iframe = document.getElementById('documentViewer');
             const fullscreenBtn = document.getElementById('documentFullscreenBtn');
             const downloadLink = document.getElementById('downloadDocumentLink');
             
+            // Tentar abrir no iframe (alguns navegadores podem exibir)
             iframe.src = url;
             document.getElementById('viewDocumentTitle').textContent = doc.titulo;
             downloadLink.href = url;
@@ -2789,6 +2889,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 iframe.src = '';
                 this.removeEventListener('hidden.bs.modal', onClose);
             });
+
+            // Em dispositivos móveis, o iframe pode não funcionar. Adicionar mensagem.
+            if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                const msg = document.createElement('div');
+                msg.className = 'alert alert-info mt-2';
+                msg.innerHTML = 'Se o documento não abrir, use o botão "Baixar" e abra com um aplicativo compatível.';
+                iframe.parentNode.insertBefore(msg, iframe.nextSibling);
+            }
         }
     }
 
@@ -2817,6 +2925,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const modalEl = document.getElementById('viewPdfModal');
             const iframe = document.getElementById('pdfViewer');
             const fullscreenBtn = document.getElementById('pdfFullscreenBtn');
+            const downloadBtn = document.getElementById('downloadPdfBtn');
             
             iframe.src = url;
             
@@ -2828,6 +2937,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (iframe.msRequestFullscreen) {
                     iframe.msRequestFullscreen();
                 }
+            };
+
+            downloadBtn.onclick = function() {
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = nome;
+                a.click();
             };
             
             const modal = new bootstrap.Modal(modalEl);
@@ -2844,7 +2960,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('modalImageDescription').innerText = nome;
             new bootstrap.Modal(document.getElementById('viewImageModal')).show();
         } else {
-            // Word, PowerPoint: abrir no modal de documento
+            // Word, PowerPoint
             const modalEl = document.getElementById('viewDocumentModal');
             const iframe = document.getElementById('documentViewer');
             const fullscreenBtn = document.getElementById('documentFullscreenBtn');
@@ -2874,6 +2990,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 iframe.src = '';
                 this.removeEventListener('hidden.bs.modal', onClose);
             });
+
+            if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                const msg = document.createElement('div');
+                msg.className = 'alert alert-info mt-2';
+                msg.innerHTML = 'Se o documento não abrir, use o botão "Baixar" e abra com um aplicativo compatível.';
+                iframe.parentNode.insertBefore(msg, iframe.nextSibling);
+            }
         }
     };
 
@@ -2896,6 +3019,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     preview.innerHTML = '<span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF selecionado</span>';
                 } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name.endsWith('.docx')) {
                     preview.innerHTML = '<span class="badge bg-primary"><i class="fas fa-file-word"></i> Word selecionado</span>';
+                } else if (file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' || file.name.endsWith('.pptx')) {
+                    preview.innerHTML = '<span class="badge bg-warning text-dark"><i class="fas fa-file-powerpoint"></i> PowerPoint selecionado</span>';
                 } else {
                     preview.innerHTML = '<span class="badge bg-secondary">Arquivo selecionado</span>';
                 }
@@ -3376,9 +3501,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!item.anexo) return '-';
         const isPdf = item.anexoTipo === 'application/pdf';
         const isWord = item.anexoTipo === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || (item.anexoNome && item.anexoNome.endsWith('.docx'));
+        const isPpt = item.anexoTipo === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' || (item.anexoNome && item.anexoNome.endsWith('.pptx'));
         let icon, cor;
         if (isPdf) { icon = 'fa-file-pdf'; cor = 'text-danger'; }
         else if (isWord) { icon = 'fa-file-word'; cor = 'text-primary'; }
+        else if (isPpt) { icon = 'fa-file-powerpoint'; cor = 'text-warning'; }
         else if (item.anexoTipo.startsWith('image/')) { icon = 'fa-image'; cor = 'text-success'; }
         else { icon = 'fa-file'; cor = 'text-secondary'; }
         return `<i class="fas ${icon} ${cor} attachment-icon" onclick="visualizarAnexo('${item.anexo}', '${item.anexoTipo}', '${item.anexoNome}')" title="${item.anexoNome}"></i>`;
@@ -4343,6 +4470,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('trabalhoTipo').addEventListener('change', function() {
             document.getElementById('grupoParticipantesWrapper').style.display = this.value === 'grupo' ? 'block' : 'none';
         });
+
+        // Carregar tema personalizado
+        loadTheme();
     }
 
     async function createInitialData() {
