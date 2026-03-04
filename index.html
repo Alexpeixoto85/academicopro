@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* (estilos originais – mantidos intactos) */
     :root {
       --primary: #2c3e50;
       --secondary: #34495e;
@@ -3018,75 +3019,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function addViewExistingButton(prefix, previewId, hiddenId, item) {
         const preview = document.getElementById(previewId);
-        const hidden = document.getElementById(hiddenId);
-        if (item.anexo) {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'btn btn-sm btn-info ms-2';
-            btn.innerHTML = '<i class="fas fa-eye"></i> Visualizar anexo atual';
-            btn.onclick = () => window.visualizarAnexo(item.anexo, item.anexoTipo, item.anexoNome);
-            preview.appendChild(btn);
-        }
-    }
-
-    async function handleEdit(store, prefix, id) {
-        let item = await getData(store, parseInt(id));
-        if (!item) return;
-        let modalEl = document.getElementById(prefix+'Modal');
-        modalEl.querySelector('.modal-title').textContent = 'Editar ' + modalEl.querySelector('.modal-title').textContent.replace('Novo ','').replace('Nova ','');
-        let form = document.getElementById(prefix+'Form');
-        for (let k in item) {
-            let inp = form.querySelector(`#${prefix}${k.charAt(0).toUpperCase()+k.slice(1)}`);
-            if (inp) inp.value = item[k];
-        }
-        form.querySelector(`#${prefix}Id`).value = item.id;
-
-        // Special handling for trabalho tipo to trigger change event
-        if (prefix === 'trabalho') {
-            const tipoSelect = document.getElementById('trabalhoTipo');
-            if (tipoSelect) {
-                tipoSelect.value = item.tipo;
-                // Dispatch change event to show/hide participantes wrapper
-                const event = new Event('change', { bubbles: true });
-                tipoSelect.dispatchEvent(event);
-            }
-        }
-
-        if (prefix==='financeiro' && item.tipo==='despesa') document.getElementById('financeiroStatusWrapper').style.display='block';
-        if (prefix==='horario') document.getElementById('deleteHorario').classList.remove('d-none');
-        if (prefix==='nota') document.getElementById('deleteNota').style.display='block';
-        if (item.anexo) {
-            const preview = document.getElementById(prefix + 'AnexoPreview');
-            const hidden = document.getElementById(prefix + 'AnexoExistente');
-            if (preview && hidden) {
-                hidden.value = item.anexo;
-                preview.innerHTML = '';
-                if (item.anexoTipo.startsWith('image/')) {
-                    preview.innerHTML = `<img src="${item.anexo}" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 5px;"><br><small class="text-muted">Anexo atual. Selecione outro para substituir.</small>`;
-                } else if (item.anexoTipo === 'application/pdf') {
-                    preview.innerHTML = `<span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF atual. Selecione outro para substituir.</span>`;
-                } else if (item.anexoTipo === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-                    preview.innerHTML = `<span class="badge bg-primary"><i class="fas fa-file-word"></i> Word atual. Selecione outro para substituir.</span>`;
-                } else {
-                    preview.innerHTML = `<span class="badge bg-secondary">Anexo atual. Selecione outro para substituir.</span>`;
-                }
-                addViewExistingButton(prefix, prefix + 'AnexoPreview', prefix + 'AnexoExistente', item);
-            }
-        }
-        new bootstrap.Modal(modalEl).show();
-    }
-
-    async function handleDelete(store, id, msg) {
-        if (confirm(msg)) {
-            if (store==='disciplinas') {
-                let data = await getProfileData();
-                for (let t of data.trabalhos.filter(t=>t.disciplinaId==id)) await deleteData('trabalhos', t.id);
-                for (let p of data.provas.filter(p=>p.disciplinaId==id)) await deleteData('provas', p.id);
-                for (let h of data.horarios.filter(h=>h.disciplinaId==id)) await deleteData('horarios', h.id);
-            }
-            await deleteData(store, parseInt(id));
-            await renderAll();
-        }
+        if (!preview) return;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-info ms-2 mt-2';
+        btn.innerHTML = '<i class="fas fa-eye"></i> Visualizar anexo atual';
+        btn.onclick = () => window.visualizarAnexo(item.anexo, item.anexoTipo || 'application/octet-stream', item.anexoNome || 'anexo');
+        preview.appendChild(btn);
     }
 
     setTimeout(() => {
@@ -3945,6 +3884,142 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
+    async function handleEdit(store, prefix, id) {
+        let item = await getData(store, parseInt(id));
+        if (!item) return;
+        let modalEl = document.getElementById(prefix + 'Modal');
+        modalEl.querySelector('.modal-title').textContent = 'Editar ' + modalEl.querySelector('.modal-title').textContent.replace('Novo ','').replace('Nova ','');
+        let form = document.getElementById(prefix + 'Form');
+
+        // Mapeamento de campos do formulário para propriedades do item
+        const fieldMappings = {
+            trabalho: {
+                disciplinaId: 'trabalhoDisciplina',
+                titulo: 'trabalhoTitulo',
+                tipo: 'trabalhoTipo',
+                participantes: 'trabalhoParticipantes',
+                entrega: 'trabalhoEntrega',
+                status: 'trabalhoStatus',
+                prioridade: 'trabalhoPrioridade',
+                nota: 'trabalhoNota',
+                observacoes: 'trabalhoObservacoes'
+            },
+            prova: {
+                disciplinaId: 'provaDisciplina',
+                conteudo: 'provaConteudo',
+                data: 'provaData',
+                hora: 'provaHora',
+                status: 'provaStatus',
+                nota: 'provaNota'
+            },
+            evento: {
+                title: 'eventTitle',
+                type: 'eventType',
+                date: 'eventDate',
+                time: 'eventTime',
+                description: 'eventDescription'
+            },
+            financeiro: {
+                tipo: 'financeiroTipo',
+                descricao: 'financeiroDescricao',
+                valor: 'financeiroValor',
+                categoria: 'financeiroCategoria',
+                data: 'financeiroData',
+                status: 'financeiroStatus'
+            },
+            disciplina: {
+                nome: 'disciplinaNome',
+                professor: 'disciplinaProfessor',
+                professorEmail: 'disciplinaEmail',
+                frequencia: 'disciplinaFrequencia'
+            },
+            horario: {
+                disciplinaId: 'horarioDisciplina',
+                diaSemana: 'horarioDiaSemana',
+                inicio: 'horarioInicio',
+                fim: 'horarioFim',
+                local: 'horarioLocal'
+            },
+            biblioteca: {
+                titulo: 'bibliotecaTitulo',
+                autor: 'bibliotecaAutor',
+                assunto: 'bibliotecaAssunto',
+                editora: 'bibliotecaEditora',
+                ano: 'bibliotecaAno',
+                observacoes: 'bibliotecaObservacoes'
+            },
+            link: {
+                titulo: 'linkTitulo',
+                url: 'linkUrl',
+                categoria: 'linkCategoria',
+                descricao: 'linkDescricao'
+            }
+        };
+
+        const mapping = fieldMappings[prefix];
+        if (mapping) {
+            for (let key in mapping) {
+                let inputId = mapping[key];
+                let input = document.getElementById(inputId);
+                if (input) {
+                    input.value = item[key] !== undefined ? item[key] : '';
+                }
+            }
+        } else {
+            // Fallback para stores sem mapeamento (ex: nota)
+            for (let k in item) {
+                let inp = form.querySelector(`#${prefix}${k.charAt(0).toUpperCase() + k.slice(1)}`);
+                if (inp) inp.value = item[k];
+            }
+        }
+
+        form.querySelector(`#${prefix}Id`).value = item.id;
+
+        // Tratamentos especiais
+        if (prefix === 'trabalho') {
+            const tipoSelect = document.getElementById('trabalhoTipo');
+            if (tipoSelect) {
+                const event = new Event('change', { bubbles: true });
+                tipoSelect.dispatchEvent(event);
+            }
+        }
+
+        if (prefix === 'financeiro' && item.tipo === 'despesa') {
+            document.getElementById('financeiroStatusWrapper').style.display = 'block';
+        }
+        if (prefix === 'horario') {
+            document.getElementById('deleteHorario').classList.remove('d-none');
+        }
+        if (prefix === 'nota') {
+            document.getElementById('deleteNota').style.display = 'block';
+        }
+
+        // Anexo existente
+        if (item.anexo) {
+            const preview = document.getElementById(prefix + 'AnexoPreview');
+            const hidden = document.getElementById(prefix + 'AnexoExistente');
+            if (preview && hidden) {
+                hidden.value = item.anexo;
+                preview.innerHTML = '';
+                const tipo = item.anexoTipo || '';
+                if (tipo.startsWith('image/')) {
+                    preview.innerHTML = `<img src="${item.anexo}" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 5px;"><br><small class="text-muted">Anexo atual. Selecione outro para substituir.</small>`;
+                } else if (tipo === 'application/pdf') {
+                    preview.innerHTML = `<span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF atual. Selecione outro para substituir.</span>`;
+                } else if (tipo === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                    preview.innerHTML = `<span class="badge bg-primary"><i class="fas fa-file-word"></i> Word atual. Selecione outro para substituir.</span>`;
+                } else if (tipo === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
+                    preview.innerHTML = `<span class="badge bg-warning text-dark"><i class="fas fa-file-powerpoint"></i> PowerPoint atual. Selecione outro para substituir.</span>`;
+                } else {
+                    preview.innerHTML = `<span class="badge bg-secondary">Anexo atual. Selecione outro para substituir.</span>`;
+                }
+                addViewExistingButton(prefix, prefix + 'AnexoPreview', prefix + 'AnexoExistente', item);
+            }
+        }
+
+        new bootstrap.Modal(modalEl).show();
+    }
+
     function setupEventListeners() {
         document.getElementById('fixed-back-home').addEventListener('click', goToHome);
         document.getElementById('prev-month-financeiro').addEventListener('click', ()=>{ if (--currentFinanceMonth<0) { currentFinanceMonth=11; currentFinanceYear--; } renderFinanceiro(); });
@@ -4018,7 +4093,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (m.id==='handwritingFullscreenModal') clearFullscreenHandwriting();
                 if (m.id==='trabalhoModal') {
                     document.getElementById('grupoParticipantesWrapper').style.display = 'none';
-                    // Reset tipo select to default if needed
                     document.getElementById('trabalhoTipo').value = 'individual';
                 }
                 ['trabalho', 'prova', 'event'].forEach(prefix => {
@@ -4450,6 +4524,19 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.switch-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.switch-profile').dataset.id; if (id!==current) { await switchProfile(id); bootstrap.Modal.getInstance(document.getElementById('profileManagementModal')).hide(); } }));
         document.querySelectorAll('.edit-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.edit-profile').dataset.id; let p = await getData('profiles', id); if (p) { document.getElementById('profileName').value = p.name; document.getElementById('profileId').value = p.id; document.getElementById('saveProfileBtn').innerHTML = '<i class="fas fa-save"></i> Atualizar'; } }));
         document.querySelectorAll('.delete-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.delete-profile').dataset.id; if (profiles.length===1) return; if (confirm('Excluir perfil? Todos os dados serão perdidos.')) { await deleteData('profiles', id); let stores = ['disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links']; for (let s of stores) { let items = await getAllData(s, 'profileId', id); for (let i of items) await deleteData(s, i.id); } await renderProfileManagementList(); await renderAll(); } }));
+    }
+
+    async function handleDelete(store, id, msg) {
+        if (confirm(msg)) {
+            if (store==='disciplinas') {
+                let data = await getProfileData();
+                for (let t of data.trabalhos.filter(t=>t.disciplinaId==id)) await deleteData('trabalhos', t.id);
+                for (let p of data.provas.filter(p=>p.disciplinaId==id)) await deleteData('provas', p.id);
+                for (let h of data.horarios.filter(h=>h.disciplinaId==id)) await deleteData('horarios', h.id);
+            }
+            await deleteData(store, parseInt(id));
+            await renderAll();
+        }
     }
 
     async function init() {
