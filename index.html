@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>Acadêmico Pro - Controle Universitário</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -27,15 +27,23 @@
       --text-light: #7f8c8d;
       --shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
       --transition: all 0.3s ease-in-out;
+      --bg-color: #ecf0f1; /* default background */
     }
 
     body {
-      background-color: var(--light);
+      background-color: var(--bg-color);
       font-family: 'Poppins', sans-serif;
       color: var(--text-dark);
       line-height: 1.6;
       padding-bottom: 80px;
+      transition: background-color 0.3s;
     }
+
+    /* tema personalizado via classe */
+    body.bg-light { --bg-color: #ecf0f1; }
+    body.bg-dark { --bg-color: #2c3e50; color: #ecf0f1; }
+    body.bg-blue { --bg-color: #d4e6f1; }
+    body.bg-green { --bg-color: #d4efdf; }
 
     h1, h2, h3, h4, h5, h6 {
       font-family: 'Playfair Display', serif;
@@ -1552,7 +1560,7 @@
         color: var(--text-light);
     }
 
-    /* Melhorias para visualização de PDF em mobile */
+    /* Melhorias para visualização de PDF e documentos em mobile */
     @media (max-width: 768px) {
         .modal-dialog.modal-xl {
             margin: 0;
@@ -1571,6 +1579,32 @@
             height: 100%;
             width: 100%;
         }
+        .modal-header .btn-close {
+            background-color: rgba(0,0,0,0.2);
+        }
+        .btn-fullscreen-exit {
+            display: block;
+        }
+    }
+
+    /* Botão para sair da tela cheia */
+    .btn-exit-fullscreen {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1060;
+        background-color: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 10px 20px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        display: none;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-exit-fullscreen.show {
+        display: flex;
     }
 
     @media (max-width: 768px) {
@@ -1873,6 +1907,7 @@
     <div class="row g-4" id="links-lista"></div>
   </div>
 
+  <!-- Painel Financeiro -->
   <div class="content-panel" id="financeiro">
       <div class="content-header"><h2>Controle Financeiro</h2><div class="btn-group"><button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#financeiroModal" data-type="receita"><i class="fas fa-plus"></i> Nova Receita</button><button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#financeiroModal" data-type="despesa"><i class="fas fa-minus"></i> Nova Despesa</button></div></div>
       <div class="financeiro-mes-selector">
@@ -1930,9 +1965,39 @@
 
   <div class="content-panel" id="configuracoes">
       <div class="content-header"><h2>Configurações</h2></div>
-      <div class="card card-dashboard"><div class="card-body"><h4 class="card-title">Perfis e Backup</h4><p class="text-muted">Gerencie seus perfis acadêmicos e faça backup dos dados.</p><div class="mt-4"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#profileManagementModal"><i class="fas fa-users"></i> Gerenciar Perfis</button><button class="btn btn-outline-primary ms-2" id="backup-btn"><i class="fas fa-download"></i> Criar Backup</button><label for="restore-input" class="btn btn-outline-secondary ms-2"><i class="fas fa-upload"></i> Restaurar Backup</label><input type="file" id="restore-input" class="d-none" accept=".json"></div><div class="alert alert-warning mt-4"><strong>Atenção:</strong> Restaurar um backup substituirá TODOS os perfis e dados atuais. Esta ação não pode ser desfeita.</div></div></div>
+      <div class="card card-dashboard mb-4">
+          <div class="card-body">
+              <h4 class="card-title">Personalizar Plano de Fundo</h4>
+              <p class="text-muted">Escolha uma cor de fundo para o sistema.</p>
+              <div class="d-flex gap-2 flex-wrap mb-3">
+                  <button class="btn btn-outline-secondary theme-option" data-theme="light">Claro (Padrão)</button>
+                  <button class="btn btn-outline-secondary theme-option" data-theme="dark">Escuro</button>
+                  <button class="btn btn-outline-secondary theme-option" data-theme="blue">Azul Suave</button>
+                  <button class="btn btn-outline-secondary theme-option" data-theme="green">Verde Suave</button>
+              </div>
+              <button class="btn btn-sm btn-outline-primary" id="resetTheme">Resetar</button>
+          </div>
+      </div>
+      <div class="card card-dashboard">
+          <div class="card-body">
+              <h4 class="card-title">Perfis e Backup</h4>
+              <p class="text-muted">Gerencie seus perfis acadêmicos e faça backup dos dados.</p>
+              <div class="mt-4">
+                  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#profileManagementModal"><i class="fas fa-users"></i> Gerenciar Perfis</button>
+                  <button class="btn btn-outline-primary ms-2" id="backup-btn"><i class="fas fa-download"></i> Criar Backup</button>
+                  <label for="restore-input" class="btn btn-outline-secondary ms-2"><i class="fas fa-upload"></i> Restaurar Backup</label>
+                  <input type="file" id="restore-input" class="d-none" accept=".json">
+              </div>
+              <div class="alert alert-warning mt-4"><strong>Atenção:</strong> Restaurar um backup substituirá TODOS os perfis e dados atuais. Esta ação não pode ser desfeita.</div>
+          </div>
+      </div>
   </div>
 </div>
+
+<!-- Botão para sair da tela cheia em visualizador de documentos -->
+<button class="btn-exit-fullscreen" id="exitFullscreenBtn">
+    <i class="fas fa-compress"></i> Sair da Tela Cheia
+</button>
 
 <div class="footer-nav">
     <button class="footer-nav-btn" id="footer-perfis"><i class="fas fa-users"></i><span>Perfis</span></button>
@@ -1962,8 +2027,8 @@
 </div>
 <div class="mb-3"><label for="trabalhoEntrega" class="form-label">Data de Entrega</label><input type="date" class="form-control" id="trabalhoEntrega" required></div><div class="mb-3"><label for="trabalhoStatus" class="form-label">Status</label><select class="form-select" id="trabalhoStatus"><option value="Pendente">Pendente</option><option value="Entregue">Entregue</option></select></div><div class="mb-3"><label for="trabalhoPrioridade" class="form-label">Prioridade</label><select class="form-select" id="trabalhoPrioridade"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></div><div class="mb-3"><label for="trabalhoNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="trabalhoNota" min="0" max="10"></div><div class="mb-3"><label for="trabalhoObservacoes" class="form-label">Observações</label><textarea class="form-control" id="trabalhoObservacoes" rows="3"></textarea></div>
 <div class="mb-3">
-    <label for="trabalhoAnexo" class="form-label">Anexo (PDF ou imagem)</label>
-    <input type="file" class="form-control" id="trabalhoAnexo" accept=".pdf,image/*">
+    <label for="trabalhoAnexo" class="form-label">Anexo (PDF, imagem, Word)</label>
+    <input type="file" class="form-control" id="trabalhoAnexo" accept=".pdf,.docx,image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
     <div id="trabalhoAnexoPreview" class="mt-2"></div>
     <input type="hidden" id="trabalhoAnexoExistente" value="">
 </div>
@@ -1972,8 +2037,8 @@
 <!-- Modal Prova com anexo -->
 <div class="modal fade" id="provaModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Prova</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="provaForm"><input type="hidden" id="provaId"><div class="mb-3"><label for="provaDisciplina" class="form-label">Disciplina</label><select class="form-select" id="provaDisciplina" required></select></div><div class="mb-3"><label for="provaConteudo" class="form-label">Conteúdo</label><input type="text" class="form-control" id="provaConteudo" required></div><div class="mb-3"><label for="provaData" class="form-label">Data</label><input type="date" class="form-control" id="provaData" required></div><div class="mb-3"><label for="provaHora" class="form-label">Hora</label><input type="time" class="form-control" id="provaHora"></div><div class="mb-3"><label for="provaStatus" class="form-label">Status</label><select class="form-select" id="provaStatus"><option value="Agendada">Agendada</option><option value="Realizada">Realizada</option></select></div><div class="mb-3"><label for="provaNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="provaNota" min="0" max="10"></div>
 <div class="mb-3">
-    <label for="provaAnexo" class="form-label">Anexo (PDF ou imagem)</label>
-    <input type="file" class="form-control" id="provaAnexo" accept=".pdf,image/*">
+    <label for="provaAnexo" class="form-label">Anexo (PDF, imagem, Word)</label>
+    <input type="file" class="form-control" id="provaAnexo" accept=".pdf,.docx,image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
     <div id="provaAnexoPreview" class="mt-2"></div>
     <input type="hidden" id="provaAnexoExistente" value="">
 </div>
@@ -1982,8 +2047,8 @@
 <!-- Modal Evento com anexo -->
 <div class="modal fade" id="eventModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Evento</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="eventForm"><input type="hidden" id="eventId"><div class="mb-3"><label for="eventTitle" class="form-label">Título</label><input type="text" class="form-control" id="eventTitle" required></div><div class="mb-3"><label for="eventType" class="form-label">Tipo</label><select class="form-select" id="eventType"><option value="other">Outro</option><option value="assignment">Trabalho</option><option value="exam">Prova</option><option value="class">Aula</option><option value="financeiro">Financeiro</option></select></div><div class="mb-3"><label for="eventDate" class="form-label">Data</label><input type="date" class="form-control" id="eventDate" required></div><div class="mb-3"><label for="eventTime" class="form-label">Hora</label><input type="time" class="form-control" id="eventTime"></div><div class="mb-3"><label for="eventDescription" class="form-label">Descrição</label><textarea class="form-control" id="eventDescription" rows="2"></textarea></div>
 <div class="mb-3">
-    <label for="eventAnexo" class="form-label">Anexo (PDF ou imagem)</label>
-    <input type="file" class="form-control" id="eventAnexo" accept=".pdf,image/*">
+    <label for="eventAnexo" class="form-label">Anexo (PDF, imagem, Word)</label>
+    <input type="file" class="form-control" id="eventAnexo" accept=".pdf,.docx,image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
     <div id="eventAnexoPreview" class="mt-2"></div>
     <input type="hidden" id="eventAnexoExistente" value="">
 </div>
@@ -1996,7 +2061,7 @@
 
 <div class="modal fade" id="linkModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Link</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="linkForm"><input type="hidden" id="linkId"><div class="mb-3"><label for="linkTitulo" class="form-label">Título</label><input type="text" class="form-control" id="linkTitulo" required></div><div class="mb-3"><label for="linkUrl" class="form-label">URL</label><input type="url" class="form-control" id="linkUrl" placeholder="https://..." required></div><div class="mb-3"><label for="linkCategoria" class="form-label">Categoria</label><input type="text" class="form-control" id="linkCategoria"></div><div class="mb-3"><label for="linkDescricao" class="form-label">Descrição</label><textarea class="form-control" id="linkDescricao" rows="2"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveLink">Salvar</button></div></div></div></div>
 
-<!-- Modal Filme modificado -->
+<!-- Modal Filme -->
 <div class="modal fade" id="filmeModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -2048,9 +2113,10 @@
     </div>
 </div>
 
+<!-- Modal Anotação Filme -->
 <div class="modal fade" id="anotacaoFilmeModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Anotação do Filme/Vídeo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="anotacaoFilmeForm"><input type="hidden" id="anotacaoFilmeId"><div class="mb-3"><label for="filmeTempoAtual" class="form-label">Minuto Atual</label><div class="input-group"><input type="number" class="form-control" id="filmeTempoAtual" min="0" placeholder="Minuto onde parou"><span class="input-group-text">min</span></div></div><div class="mb-3"><label for="filmeAnotacao" class="form-label">Anotações</label><textarea class="form-control" id="filmeAnotacao" rows="4" placeholder="Anotações sobre o conteúdo..."></textarea></div><div class="mb-3 form-check"><input type="checkbox" class="form-check-input" id="filmeAssistido"><label class="form-check-label" for="filmeAssistido">Marcar como assistido</label></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveAnotacaoFilme">Salvar Anotação</button></div></div></div></div>
 
-<!-- Modal player de vídeo modificado -->
+<!-- Modal player de vídeo -->
 <div class="modal fade" id="videoPlayerModal" tabindex="-1">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -2076,6 +2142,7 @@
 
 <div class="modal fade" id="bibliotecaModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Livro</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="bibliotecaForm"><input type="hidden" id="bibliotecaId"><div class="mb-3"><label for="bibliotecaTitulo" class="form-label">Título</label><input type="text" class="form-control" id="bibliotecaTitulo" required></div><div class="mb-3"><label for="bibliotecaAutor" class="form-label">Autor</label><input type="text" class="form-control" id="bibliotecaAutor" required></div><div class="mb-3"><label for="bibliotecaAssunto" class="form-label">Assunto</label><input type="text" class="form-control" id="bibliotecaAssunto" required></div><div class="mb-3"><label for="bibliotecaEditora" class="form-label">Editora</label><input type="text" class="form-control" id="bibliotecaEditora"></div><div class="mb-3"><label for="bibliotecaAno" class="form-label">Ano</label><input type="number" class="form-control" id="bibliotecaAno" min="1900" max="2030"></div><div class="mb-3"><label for="bibliotecaObservacoes" class="form-label">Observações</label><textarea class="form-control" id="bibliotecaObservacoes" rows="2"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveLivro">Salvar</button></div></div></div></div>
 
+<!-- Modal para visualizar Imagem -->
 <div class="modal fade" id="viewImageModal" tabindex="-1"><div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Visualizar Imagem</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><img id="modalImage" class="nota-imagem-full" src="" alt="Imagem"><p id="modalImageDescription" class="mt-3"></p></div></div></div></div>
 
 <!-- Modal para visualizar PDF (melhorado) -->
@@ -2086,7 +2153,7 @@
                 <h5 class="modal-title">Visualizar PDF</h5>
                 <div>
                     <button type="button" class="btn btn-sm btn-outline-light me-2" id="pdfFullscreenBtn">
-                        <i class="fas fa-expand"></i>
+                        <i class="fas fa-expand"></i> Tela Cheia
                     </button>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -2098,7 +2165,7 @@
     </div>
 </div>
 
-<!-- Modal para visualizar documentos gerais (melhorado) -->
+<!-- Modal para visualizar documentos gerais (Word, PowerPoint) - usa iframe com blob URL, o navegador pode ou não exibir -->
 <div class="modal fade" id="viewDocumentModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-lg-down">
         <div class="modal-content">
@@ -2106,7 +2173,7 @@
                 <h5 class="modal-title" id="viewDocumentTitle">Visualizar Documento</h5>
                 <div>
                     <button type="button" class="btn btn-sm btn-outline-light me-2" id="documentFullscreenBtn">
-                        <i class="fas fa-expand"></i>
+                        <i class="fas fa-expand"></i> Tela Cheia
                     </button>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -2129,7 +2196,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const DB_NAME = 'academicoProDB', DB_VERSION = 1;
+    const DB_NAME = 'academicoProDB', DB_VERSION = 2;
     let db;
     let currentCalendarDate = new Date();
     let nextEventInterval, proximoEventoGlobal;
@@ -2149,6 +2216,48 @@ document.addEventListener('DOMContentLoaded', function() {
     let financeFilterStatus = 'all';
 
     let objectUrls = new Map();
+
+    // Tema
+    function loadTheme() {
+        const savedTheme = localStorage.getItem('academicoTheme') || 'light';
+        applyTheme(savedTheme);
+    }
+    function applyTheme(theme) {
+        document.body.className = ''; // remove classes
+        document.body.classList.add(`bg-${theme}`);
+        localStorage.setItem('academicoTheme', theme);
+    }
+    document.querySelectorAll('.theme-option').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const theme = this.dataset.theme;
+            applyTheme(theme);
+        });
+    });
+    document.getElementById('resetTheme')?.addEventListener('click', () => {
+        localStorage.removeItem('academicoTheme');
+        applyTheme('light');
+    });
+    loadTheme();
+
+    // Botão sair da tela cheia
+    const exitFSBtn = document.getElementById('exitFullscreenBtn');
+    exitFSBtn.addEventListener('click', () => {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+        exitFSBtn.classList.remove('show');
+    });
+    document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement) {
+            exitFSBtn.classList.add('show');
+        } else {
+            exitFSBtn.classList.remove('show');
+        }
+    });
 
     function loadScheduleFilter() {
         const savedStart = localStorage.getItem('scheduleStartHour');
@@ -2470,7 +2579,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('notas-tab').click(); await renderNotas(); await renderGaleria(); alert('Escrita salva como imagem!');
     }
 
-    // ---------- Funções para documentos ----------
+    // ---------- Funções para documentos (incluindo Word, PPT) ----------
     function setupDocumentImport() {
         const area = document.getElementById('documentUploadArea');
         const fileInput = document.getElementById('documentFileInput');
@@ -2581,8 +2690,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         docs.forEach(doc => {
             const isPdf = doc.documento.tipo === 'application/pdf';
-            const icon = isPdf ? 'fa-file-pdf' : (doc.documento.tipo.includes('word') ? 'fa-file-word' : 'fa-file-powerpoint');
-            const cor = isPdf ? 'text-danger' : (doc.documento.tipo.includes('word') ? 'text-primary' : 'text-warning');
+            const isWord = doc.documento.tipo === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || doc.documento.nome.endsWith('.docx');
+            let icon, cor;
+            if (isPdf) { icon = 'fa-file-pdf'; cor = 'text-danger'; }
+            else if (isWord) { icon = 'fa-file-word'; cor = 'text-primary'; }
+            else { icon = 'fa-file-powerpoint'; cor = 'text-warning'; }
             const tamanho = (doc.documento.tamanho / 1024).toFixed(1) + ' KB';
             container.innerHTML += `
                 <div class="col-md-6 col-lg-4">
@@ -2621,6 +2733,33 @@ document.addEventListener('DOMContentLoaded', function() {
         objectUrls.set(id, url);
 
         if (doc.documento.tipo === 'application/pdf') {
+            const modalEl = document.getElementById('viewPdfModal');
+            const iframe = document.getElementById('pdfViewer');
+            const fullscreenBtn = document.getElementById('pdfFullscreenBtn');
+            
+            iframe.src = url;
+            
+            fullscreenBtn.onclick = function() {
+                if (iframe.requestFullscreen) {
+                    iframe.requestFullscreen();
+                } else if (iframe.webkitRequestFullscreen) {
+                    iframe.webkitRequestFullscreen();
+                } else if (iframe.msRequestFullscreen) {
+                    iframe.msRequestFullscreen();
+                }
+            };
+            
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+            
+            modalEl.addEventListener('hidden.bs.modal', function onClose() {
+                URL.revokeObjectURL(url);
+                objectUrls.delete(id);
+                iframe.src = '';
+                this.removeEventListener('hidden.bs.modal', onClose);
+            });
+        } else {
+            // Word, PowerPoint: tentar visualizar no iframe (alguns navegadores podem exibir, outros não)
             const modalEl = document.getElementById('viewDocumentModal');
             const iframe = document.getElementById('documentViewer');
             const fullscreenBtn = document.getElementById('documentFullscreenBtn');
@@ -2650,12 +2789,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 iframe.src = '';
                 this.removeEventListener('hidden.bs.modal', onClose);
             });
-        } else {
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = doc.documento.nome;
-            a.click();
-            URL.revokeObjectURL(url);
         }
     }
 
@@ -2706,10 +2839,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 iframe.src = '';
                 this.removeEventListener('hidden.bs.modal', onClose);
             });
-        } else {
+        } else if (tipo.startsWith('image/')) {
             document.getElementById('modalImage').src = base64;
             document.getElementById('modalImageDescription').innerText = nome;
             new bootstrap.Modal(document.getElementById('viewImageModal')).show();
+        } else {
+            // Word, PowerPoint: abrir no modal de documento
+            const modalEl = document.getElementById('viewDocumentModal');
+            const iframe = document.getElementById('documentViewer');
+            const fullscreenBtn = document.getElementById('documentFullscreenBtn');
+            const downloadLink = document.getElementById('downloadDocumentLink');
+            
+            iframe.src = url;
+            document.getElementById('viewDocumentTitle').textContent = nome;
+            downloadLink.href = url;
+            downloadLink.download = nome;
+            
+            fullscreenBtn.onclick = function() {
+                if (iframe.requestFullscreen) {
+                    iframe.requestFullscreen();
+                } else if (iframe.webkitRequestFullscreen) {
+                    iframe.webkitRequestFullscreen();
+                } else if (iframe.msRequestFullscreen) {
+                    iframe.msRequestFullscreen();
+                }
+            };
+            
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+            
+            modalEl.addEventListener('hidden.bs.modal', function onClose() {
+                URL.revokeObjectURL(url);
+                objectUrls.delete(id);
+                iframe.src = '';
+                this.removeEventListener('hidden.bs.modal', onClose);
+            });
         }
     };
 
@@ -2730,6 +2894,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     reader.readAsDataURL(file);
                 } else if (file.type === 'application/pdf') {
                     preview.innerHTML = '<span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF selecionado</span>';
+                } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name.endsWith('.docx')) {
+                    preview.innerHTML = '<span class="badge bg-primary"><i class="fas fa-file-word"></i> Word selecionado</span>';
                 } else {
                     preview.innerHTML = '<span class="badge bg-secondary">Arquivo selecionado</span>';
                 }
@@ -2780,8 +2946,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 preview.innerHTML = '';
                 if (item.anexoTipo.startsWith('image/')) {
                     preview.innerHTML = `<img src="${item.anexo}" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 5px;"><br><small class="text-muted">Anexo atual. Selecione outro para substituir.</small>`;
-                } else {
+                } else if (item.anexoTipo === 'application/pdf') {
                     preview.innerHTML = `<span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF atual. Selecione outro para substituir.</span>`;
+                } else if (item.anexoTipo === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                    preview.innerHTML = `<span class="badge bg-primary"><i class="fas fa-file-word"></i> Word atual. Selecione outro para substituir.</span>`;
+                } else {
+                    preview.innerHTML = `<span class="badge bg-secondary">Anexo atual. Selecione outro para substituir.</span>`;
                 }
                 addViewExistingButton(prefix, prefix + 'AnexoPreview', prefix + 'AnexoExistente', item);
             }
@@ -3029,75 +3199,7 @@ document.addEventListener('DOMContentLoaded', function() {
         await saveData('biblioteca', l); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('bibliotecaModal')).hide();
     }
 
-    function getYouTubeEmbedUrl(url, start=0) {
-        let id = null;
-        let pat = [/(?:youtube\.com\/watch\?v=)([^&]+)/, /(?:youtu\.be\/)([^?]+)/, /(?:youtube\.com\/embed\/)([^?]+)/];
-        for (let p of pat) { let m = url.match(p); if (m && m[1]) { id = m[1]; break; } }
-        return id ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&start=${start}&rel=0&modestbranding=1` : null;
-    }
-
-    async function populateDisciplinaSelects() {
-        let data = await getProfileData();
-        let opts = data.disciplinas.map(d=>`<option value="${d.id}">${d.nome}</option>`).join('');
-        document.querySelectorAll('#trabalhoDisciplina, #provaDisciplina, #horarioDisciplina').forEach(s=>{ s.innerHTML = '<option value="">Selecione</option>'+opts; });
-    }
-
-    function updateMainHeaderTitle() {
-        let active = document.querySelector('.content-panel.active');
-        if (active) document.getElementById('main-header-title').textContent = active.querySelector('h2')?.textContent || 'Acadêmico Pro';
-    }
-
-    async function renderProfileManagementList() {
-        let list = document.getElementById('profile-management-list');
-        list.innerHTML = '';
-        let profiles = await getAllData('profiles');
-        let current = await getCurrentProfileId();
-        profiles.forEach(p => {
-            list.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center"><button type="button" class="btn btn-link text-start flex-grow-1 switch-profile ${p.id===current?'fw-bold':''}" data-id="${p.id}">${p.name}</button><div><button class="btn btn-sm btn-outline-primary edit-profile" data-id="${p.id}"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline-danger delete-profile" data-id="${p.id}" ${profiles.length===1?'disabled':''}><i class="fas fa-trash"></i></button></div></li>`;
-        });
-        document.querySelectorAll('.switch-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.switch-profile').dataset.id; if (id!==current) { await switchProfile(id); bootstrap.Modal.getInstance(document.getElementById('profileManagementModal')).hide(); } }));
-        document.querySelectorAll('.edit-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.edit-profile').dataset.id; let p = await getData('profiles', id); if (p) { document.getElementById('profileName').value = p.name; document.getElementById('profileId').value = p.id; document.getElementById('saveProfileBtn').innerHTML = '<i class="fas fa-save"></i> Atualizar'; } }));
-        document.querySelectorAll('.delete-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.delete-profile').dataset.id; if (profiles.length===1) return; if (confirm('Excluir perfil? Todos os dados serão perdidos.')) { await deleteData('profiles', id); let stores = ['disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links']; for (let s of stores) { let items = await getAllData(s, 'profileId', id); for (let i of items) await deleteData(s, i.id); } await renderProfileManagementList(); await renderAll(); } }));
-    }
-
-    async function init() {
-        await openDatabase();
-        loadScheduleFilter();
-        const pid = await getCurrentProfileId();
-        const disciplinas = await getAllData('disciplinas', 'profileId', pid);
-        if (!disciplinas.length) await createInitialData();
-        generateQuickLinks(); await renderAll(); updateMainHeaderTitle(); setupEventListeners(); setupFooterNavigation();
-        setupDrawingCanvas(); setupHandwritingCanvas(); setupImageImport(); setupDocumentImport();
-        
-        document.getElementById('trabalhoTipo').addEventListener('change', function() {
-            document.getElementById('grupoParticipantesWrapper').style.display = this.value === 'grupo' ? 'block' : 'none';
-        });
-    }
-
-    async function createInitialData() {
-        const pid = await getCurrentProfileId();
-        let id = 1;
-        const dis = [ {id:id, profileId:pid, nome:"Direito Civil", professor:"Prof. Dr. Carlos Albuquerque", professorEmail:"carlos.albuquerque@universidade.edu", frequencia:85} ];
-        await saveData('disciplinas', dis[0]); id++;
-        const hor = [ {id:id, profileId:pid, disciplinaId:1, diaSemana:1, inicio:"08:00", fim:"10:00", local:"Sala 101"} ];
-        await saveData('horarios', hor[0]); id++;
-        const trab = [ {id:id, profileId:pid, disciplinaId:1, titulo:"Estudo de Caso", tipo:"grupo", participantes:"Ana Souza\nCarlos Lima\nMariana Silva", entrega:"2025-09-25", status:"Pendente", prioridade:"high", nota:null, observacoes:""} ];
-        await saveData('trabalhos', trab[0]); id++;
-        const prov = [ {id:id, profileId:pid, disciplinaId:1, conteudo:"Teoria Geral", data:"2025-10-15", hora:"14:00", status:"Agendada", nota:null} ];
-        await saveData('provas', prov[0]); id++;
-        const ev = [ {id:id, profileId:pid, title:"Seminário", type:"other", date:"2025-09-30", time:"09:00", description:""} ];
-        await saveData('eventos', ev[0]); id++;
-        const fin = [ {id:id, profileId:pid, tipo:"despesa", descricao:"Livro", valor:89.90, categoria:"Educação", data:new Date().toISOString().split('T')[0], status:"pendente", mesAno:`${new Date().getMonth()+1}-${new Date().getFullYear()}`} ];
-        await saveData('financeiro', fin[0]); id++;
-        const bib = [ {id:id, profileId:pid, titulo:"Direito Civil", autor:"Carlos", assunto:"Civil", editora:"Saraiva", ano:2023, observacoes:""} ];
-        await saveData('biblioteca', bib[0]); id++;
-        const film = [ {id:id, profileId:pid, titulo:"Introdução", url:"https://youtu.be/dQw4w9WgXcQ", tipo:"video-aula", origem:"url"} ];
-        await saveData('filmes', film[0]); id++;
-        const nota = [ {id:id, profileId:pid, titulo:"Minhas anotações", conteudo:"Texto inicial", dataCriacao:new Date().toISOString().split('T')[0], tipo:"texto"} ];
-        await saveData('notas', nota[0]); id++;
-        const link = [ {id:id, profileId:pid, titulo:"Biblioteca", url:"https://example.com", categoria:"Recursos", descricao:""} ];
-        await saveData('links', link[0]);
-    }
+    // --- Funções removidas do Plano ---
 
     async function renderAll() {
         await Promise.all([
@@ -3112,17 +3214,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('quick-links-container');
         container.innerHTML = '';
         const panels = [
-            { id:'dashboard', title:'Dashboard', icon:'fas fa-chart-line' }, { id:'disciplinas', title:'Disciplinas', icon:'fas fa-book' },
-            { id:'horarios', title:'Horários', icon:'fas fa-table-cells' }, { id:'trabalhos', title:'Trabalhos', icon:'fas fa-tasks' },
-            { id:'provas', title:'Provas', icon:'fas fa-file-alt' }, { id:'agenda', title:'Agenda', icon:'fas fa-calendar-alt' },
-            { id:'biblioteca', title:'Biblioteca', icon:'fas fa-book-open' }, { id:'filmes', title:'Filmes e Vídeo-Aulas', icon:'fas fa-film' },
-            { id:'caderno', title:'Caderno e Notas', icon:'fas fa-sticky-note' }, { id:'links', title:'Links Importantes', icon:'fas fa-link' },
-            { id:'financeiro', title:'Financeiro', icon:'fas fa-dollar-sign' }, { id:'relatorios', title:'Relatórios', icon:'fas fa-chart-pie' },
+            { id:'dashboard', title:'Dashboard', icon:'fas fa-chart-line' },
+            { id:'disciplinas', title:'Disciplinas', icon:'fas fa-book' },
+            { id:'horarios', title:'Horários', icon:'fas fa-table-cells' },
+            { id:'trabalhos', title:'Trabalhos', icon:'fas fa-tasks' },
+            { id:'provas', title:'Provas', icon:'fas fa-file-alt' },
+            { id:'agenda', title:'Agenda', icon:'fas fa-calendar-alt' },
+            { id:'biblioteca', title:'Biblioteca', icon:'fas fa-book-open' },
+            { id:'filmes', title:'Filmes e Vídeo-Aulas', icon:'fas fa-film' },
+            { id:'caderno', title:'Caderno e Notas', icon:'fas fa-sticky-note' },
+            { id:'links', title:'Links Importantes', icon:'fas fa-link' },
+            { id:'financeiro', title:'Financeiro', icon:'fas fa-dollar-sign' },
+            { id:'relatorios', title:'Relatórios', icon:'fas fa-chart-pie' },
             { id:'configuracoes', title:'Configurações', icon:'fas fa-cog' }
         ];
-        const colors = { dashboard:'var(--info)', disciplinas:'var(--primary)', horarios:'var(--purple)', trabalhos:'var(--accent)',
+        const colors = {
+            dashboard:'var(--info)', disciplinas:'var(--primary)', horarios:'var(--purple)', trabalhos:'var(--accent)',
             provas:'var(--warning)', agenda:'var(--orange)', biblioteca:'var(--danger)', filmes:'#607D8B', caderno:'#8E44AD',
-            links:'#16A085', financeiro:'var(--success)', relatorios:'var(--secondary)', configuracoes:'#2c3e50' };
+            links:'#16A085', financeiro:'var(--success)', relatorios:'var(--secondary)', configuracoes:'#2c3e50'
+        };
         panels.forEach(p => {
             container.innerHTML += `<div class="col-6 col-md-4 col-lg-3 mb-4"><div class="card card-link" data-target="${p.id}" style="background-color: ${colors[p.id]};"><div class="card-body"><div class="icon-wrapper"><i class="${p.icon}"></i></div><h5>${p.title}</h5></div></div></div>`;
         });
@@ -3265,8 +3375,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderAnexoIcon(item) {
         if (!item.anexo) return '-';
         const isPdf = item.anexoTipo === 'application/pdf';
-        const icon = isPdf ? 'fa-file-pdf' : 'fa-image';
-        const cor = isPdf ? 'text-danger' : 'text-success';
+        const isWord = item.anexoTipo === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || (item.anexoNome && item.anexoNome.endsWith('.docx'));
+        let icon, cor;
+        if (isPdf) { icon = 'fa-file-pdf'; cor = 'text-danger'; }
+        else if (isWord) { icon = 'fa-file-word'; cor = 'text-primary'; }
+        else if (item.anexoTipo.startsWith('image/')) { icon = 'fa-image'; cor = 'text-success'; }
+        else { icon = 'fa-file'; cor = 'text-secondary'; }
         return `<i class="fas ${icon} ${cor} attachment-icon" onclick="visualizarAnexo('${item.anexo}', '${item.anexoTipo}', '${item.anexoNome}')" title="${item.anexoNome}"></i>`;
     }
 
@@ -3809,7 +3923,12 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('saveLivro').addEventListener('click', saveLivro);
         document.getElementById('deleteHorario').addEventListener('click', deleteHorario);
         document.getElementById('backup-btn').addEventListener('click', async ()=>{
-            let backup = { profiles: await getAllData('profiles'), disciplinas: await getAllData('disciplinas'), horarios: await getAllData('horarios'), trabalhos: await getAllData('trabalhos'), provas: await getAllData('provas'), eventos: await getAllData('eventos'), financeiro: await getAllData('financeiro'), biblioteca: await getAllData('biblioteca'), filmes: await getAllData('filmes'), notas: await getAllData('notas'), links: await getAllData('links') };
+            let backup = { 
+                profiles: await getAllData('profiles'), disciplinas: await getAllData('disciplinas'), horarios: await getAllData('horarios'), 
+                trabalhos: await getAllData('trabalhos'), provas: await getAllData('provas'), eventos: await getAllData('eventos'), 
+                financeiro: await getAllData('financeiro'), biblioteca: await getAllData('biblioteca'), filmes: await getAllData('filmes'), 
+                notas: await getAllData('notas'), links: await getAllData('links')
+            };
             let data = JSON.stringify(backup,null,2);
             let link = document.createElement('a');
             link.href = URL.createObjectURL(new Blob([data],{type:'application/json'}));
@@ -4179,6 +4298,76 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
         });
+    }
+
+    function getYouTubeEmbedUrl(url, start=0) {
+        let id = null;
+        let pat = [/(?:youtube\.com\/watch\?v=)([^&]+)/, /(?:youtu\.be\/)([^?]+)/, /(?:youtube\.com\/embed\/)([^?]+)/];
+        for (let p of pat) { let m = url.match(p); if (m && m[1]) { id = m[1]; break; } }
+        return id ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&start=${start}&rel=0&modestbranding=1` : null;
+    }
+
+    async function populateDisciplinaSelects() {
+        let data = await getProfileData();
+        let opts = data.disciplinas.map(d=>`<option value="${d.id}">${d.nome} - ${d.professor || 'Sem professor'}</option>`).join('');
+        document.querySelectorAll('#trabalhoDisciplina, #provaDisciplina, #horarioDisciplina').forEach(s=>{ s.innerHTML = '<option value="">Selecione</option>'+opts; });
+    }
+
+    function updateMainHeaderTitle() {
+        let active = document.querySelector('.content-panel.active');
+        if (active) document.getElementById('main-header-title').textContent = active.querySelector('h2')?.textContent || 'Acadêmico Pro';
+    }
+
+    async function renderProfileManagementList() {
+        let list = document.getElementById('profile-management-list');
+        list.innerHTML = '';
+        let profiles = await getAllData('profiles');
+        let current = await getCurrentProfileId();
+        profiles.forEach(p => {
+            list.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center"><button type="button" class="btn btn-link text-start flex-grow-1 switch-profile ${p.id===current?'fw-bold':''}" data-id="${p.id}">${p.name}</button><div><button class="btn btn-sm btn-outline-primary edit-profile" data-id="${p.id}"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline-danger delete-profile" data-id="${p.id}" ${profiles.length===1?'disabled':''}><i class="fas fa-trash"></i></button></div></li>`;
+        });
+        document.querySelectorAll('.switch-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.switch-profile').dataset.id; if (id!==current) { await switchProfile(id); bootstrap.Modal.getInstance(document.getElementById('profileManagementModal')).hide(); } }));
+        document.querySelectorAll('.edit-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.edit-profile').dataset.id; let p = await getData('profiles', id); if (p) { document.getElementById('profileName').value = p.name; document.getElementById('profileId').value = p.id; document.getElementById('saveProfileBtn').innerHTML = '<i class="fas fa-save"></i> Atualizar'; } }));
+        document.querySelectorAll('.delete-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.delete-profile').dataset.id; if (profiles.length===1) return; if (confirm('Excluir perfil? Todos os dados serão perdidos.')) { await deleteData('profiles', id); let stores = ['disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links']; for (let s of stores) { let items = await getAllData(s, 'profileId', id); for (let i of items) await deleteData(s, i.id); } await renderProfileManagementList(); await renderAll(); } }));
+    }
+
+    async function init() {
+        await openDatabase();
+        loadScheduleFilter();
+        const pid = await getCurrentProfileId();
+        const disciplinas = await getAllData('disciplinas', 'profileId', pid);
+        if (!disciplinas.length) await createInitialData();
+        generateQuickLinks(); await renderAll(); updateMainHeaderTitle(); setupEventListeners(); setupFooterNavigation();
+        setupDrawingCanvas(); setupHandwritingCanvas(); setupImageImport(); setupDocumentImport();
+        
+        document.getElementById('trabalhoTipo').addEventListener('change', function() {
+            document.getElementById('grupoParticipantesWrapper').style.display = this.value === 'grupo' ? 'block' : 'none';
+        });
+    }
+
+    async function createInitialData() {
+        const pid = await getCurrentProfileId();
+        let id = 1;
+        const dis = [ {id:id, profileId:pid, nome:"Direito Civil", professor:"Prof. Dr. Carlos Albuquerque", professorEmail:"carlos.albuquerque@universidade.edu", frequencia:85} ];
+        await saveData('disciplinas', dis[0]); id++;
+        const hor = [ {id:id, profileId:pid, disciplinaId:1, diaSemana:1, inicio:"08:00", fim:"10:00", local:"Sala 101"} ];
+        await saveData('horarios', hor[0]); id++;
+        const trab = [ {id:id, profileId:pid, disciplinaId:1, titulo:"Estudo de Caso", tipo:"grupo", participantes:"Ana Souza\nCarlos Lima\nMariana Silva", entrega:"2025-09-25", status:"Pendente", prioridade:"high", nota:null, observacoes:""} ];
+        await saveData('trabalhos', trab[0]); id++;
+        const prov = [ {id:id, profileId:pid, disciplinaId:1, conteudo:"Teoria Geral", data:"2025-10-15", hora:"14:00", status:"Agendada", nota:null} ];
+        await saveData('provas', prov[0]); id++;
+        const ev = [ {id:id, profileId:pid, title:"Seminário", type:"other", date:"2025-09-30", time:"09:00", description:""} ];
+        await saveData('eventos', ev[0]); id++;
+        const fin = [ {id:id, profileId:pid, tipo:"despesa", descricao:"Livro", valor:89.90, categoria:"Educação", data:new Date().toISOString().split('T')[0], status:"pendente", mesAno:`${new Date().getMonth()+1}-${new Date().getFullYear()}`} ];
+        await saveData('financeiro', fin[0]); id++;
+        const bib = [ {id:id, profileId:pid, titulo:"Direito Civil", autor:"Carlos", assunto:"Civil", editora:"Saraiva", ano:2023, observacoes:""} ];
+        await saveData('biblioteca', bib[0]); id++;
+        const film = [ {id:id, profileId:pid, titulo:"Introdução", url:"https://youtu.be/dQw4w9WgXcQ", tipo:"video-aula", origem:"url"} ];
+        await saveData('filmes', film[0]); id++;
+        const nota = [ {id:id, profileId:pid, titulo:"Minhas anotações", conteudo:"Texto inicial", dataCriacao:new Date().toISOString().split('T')[0], tipo:"texto"} ];
+        await saveData('notas', nota[0]); id++;
+        const link = [ {id:id, profileId:pid, titulo:"Biblioteca", url:"https://example.com", categoria:"Recursos", descricao:""} ];
+        await saveData('links', link[0]);
     }
 
     if ('serviceWorker' in navigator) window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(console.error));
