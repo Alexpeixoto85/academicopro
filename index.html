@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* estilos originais – mantidos intactos (omitidos por brevidade, mas presentes no arquivo original) */
+    /* ===== ESTILOS ORIGINAIS (mantidos intactos) ===== */
     :root {
       --primary: #2c3e50;
       --secondary: #34495e;
@@ -155,7 +155,7 @@
     .card-link[style*="background-color"]:hover .icon-wrapper {
         box-shadow: none;
     }
-
+    
     .card-link[style*="background-color"] h5 {
         color: white;
     }
@@ -1530,6 +1530,7 @@
         font-size: 1.2rem;
         cursor: pointer;
         transition: transform 0.2s;
+        margin-right: 5px;
     }
     .attachment-icon:hover {
         transform: scale(1.2);
@@ -2068,7 +2069,7 @@
     <button class="footer-nav-btn" id="footer-financeiro"><i class="fas fa-dollar-sign"></i><span>Financeiro</span></button>
 </div>
 
-<!-- MODAIS (mantidos intactos) -->
+<!-- MODAIS -->
 <div class="modal fade" id="profileManagementModal" tabindex="-1" aria-labelledby="profileManagementModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Gerenciar Perfis</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p>Selecione um perfil para ativar ou gerencie seus perfis existentes.</p><ul class="list-group" id="profile-management-list"></ul><hr><form id="profileForm"><input type="hidden" id="profileId"><div class="input-group"><input type="text" class="form-control" id="profileName" placeholder="Nome do novo perfil" required><button class="btn btn-primary" type="submit" id="saveProfileBtn"><i class="fas fa-plus"></i> Adicionar</button></div></form></div></div></div></div>
 
 <div class="modal fade" id="horarioModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Aula</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="horarioForm"><input type="hidden" id="horarioId"><div class="mb-3"><label for="horarioDisciplina" class="form-label">Disciplina</label><select class="form-select" id="horarioDisciplina" required></select></div><div class="mb-3"><label for="horarioDiaSemana" class="form-label">Dia da Semana</label><select class="form-select" id="horarioDiaSemana"><option value="1">Segunda</option><option value="2">Terça</option><option value="3">Quarta</option><option value="4">Quinta</option><option value="5">Sexta</option><option value="6">Sábado</option></select></div><div class="row"><div class="col-6 mb-3"><label for="horarioInicio" class="form-label">Início</label><input type="time" class="form-control" id="horarioInicio" step="1800" required></div><div class="col-6 mb-3"><label for="horarioFim" class="form-label">Fim</label><input type="time" class="form-control" id="horarioFim" step="1800" required></div></div><div class="mb-3"><label for="horarioLocal" class="form-label">Local</label><input type="text" class="form-control" id="horarioLocal"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto d-none" id="deleteHorario">Excluir</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveHorario">Salvar</button></div></div></div></div>
@@ -2099,7 +2100,7 @@
 <input type="hidden" id="trabalhoAnexosRemovidos" value="">
 </form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveTrabalho">Salvar</button></div></div></div></div>
 
-<!-- Modal Prova com anexo único (mantido original) -->
+<!-- Modal Prova com anexo único -->
 <div class="modal fade" id="provaModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Prova</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="provaForm"><input type="hidden" id="provaId"><div class="mb-3"><label for="provaDisciplina" class="form-label">Disciplina</label><select class="form-select" id="provaDisciplina" required></select></div><div class="mb-3"><label for="provaConteudo" class="form-label">Conteúdo</label><input type="text" class="form-control" id="provaConteudo" required></div><div class="mb-3"><label for="provaData" class="form-label">Data</label><input type="date" class="form-control" id="provaData" required></div><div class="mb-3"><label for="provaHora" class="form-label">Hora</label><input type="time" class="form-control" id="provaHora"></div><div class="mb-3"><label for="provaStatus" class="form-label">Status</label><select class="form-select" id="provaStatus"><option value="Agendada">Agendada</option><option value="Realizada">Realizada</option></select></div><div class="mb-3"><label for="provaNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="provaNota" min="0" max="10"></div>
 <div class="mb-3">
     <label for="provaAnexo" class="form-label">Anexo (PDF, imagem, Word)</label>
@@ -2210,7 +2211,7 @@
 <!-- Modal para visualizar Imagem -->
 <div class="modal fade" id="viewImageModal" tabindex="-1"><div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Visualizar Imagem</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><img id="modalImage" class="nota-imagem-full" src="" alt="Imagem"><p id="modalImageDescription" class="mt-3"></p></div></div></div></div>
 
-<!-- Modal para visualizar PDF (melhorado) -->
+<!-- Modal para visualizar PDF -->
 <div class="modal fade" id="viewPdfModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-lg-down">
         <div class="modal-content">
@@ -2233,7 +2234,7 @@
     </div>
 </div>
 
-<!-- Modal para visualizar documentos gerais (Word, PowerPoint) - usa iframe com blob URL -->
+<!-- Modal para visualizar documentos gerais (Word, PowerPoint) -->
 <div class="modal fade" id="viewDocumentModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-lg-down">
         <div class="modal-content">
@@ -3236,29 +3237,41 @@ document.addEventListener('DOMContentLoaded', function() {
         bootstrap.Modal.getInstance(document.getElementById('trabalhoModal')).hide();
     }
 
+    // ========== FUNÇÃO EDITAR TRABALHO CORRIGIDA ==========
     async function editTrabalho(id) {
-        let item = await getData('trabalhos', parseInt(id));
-        if (!item) return;
-        document.getElementById('trabalhoModalLabel').textContent = 'Editar Trabalho';
-        document.getElementById('trabalhoId').value = item.id;
-        document.getElementById('trabalhoDisciplina').value = item.disciplinaId;
-        document.getElementById('trabalhoTitulo').value = item.titulo;
-        document.getElementById('trabalhoTipo').value = item.tipo || 'individual';
-        document.getElementById('trabalhoParticipantes').value = item.participantes || '';
-        document.getElementById('trabalhoEntrega').value = item.entrega;
-        document.getElementById('trabalhoStatus').value = item.status;
-        document.getElementById('trabalhoPrioridade').value = item.prioridade;
-        document.getElementById('trabalhoNota').value = item.nota !== null ? item.nota : '';
-        document.getElementById('trabalhoObservacoes').value = item.observacoes || '';
+        try {
+            let item = await getData('trabalhos', parseInt(id));
+            if (!item) {
+                alert('Trabalho não encontrado.');
+                return;
+            }
+            document.getElementById('trabalhoModalLabel').textContent = 'Editar Trabalho';
+            document.getElementById('trabalhoId').value = item.id;
+            document.getElementById('trabalhoDisciplina').value = item.disciplinaId;
+            document.getElementById('trabalhoTitulo').value = item.titulo;
+            document.getElementById('trabalhoTipo').value = item.tipo || 'individual';
+            document.getElementById('trabalhoParticipantes').value = item.participantes || '';
+            document.getElementById('trabalhoEntrega').value = item.entrega;
+            document.getElementById('trabalhoStatus').value = item.status;
+            document.getElementById('trabalhoPrioridade').value = item.prioridade;
+            document.getElementById('trabalhoNota').value = item.nota !== null ? item.nota : '';
+            document.getElementById('trabalhoObservacoes').value = item.observacoes || '';
 
-        // Mostrar/ocultar participantes conforme tipo
-        document.getElementById('grupoParticipantesWrapper').style.display = item.tipo === 'grupo' ? 'block' : 'none';
+            // Mostrar/ocultar participantes conforme tipo
+            const wrapper = document.getElementById('grupoParticipantesWrapper');
+            if (wrapper) wrapper.style.display = item.tipo === 'grupo' ? 'block' : 'none';
 
-        // Carregar anexos existentes
-        renderAnexosList(item.anexos || [], 'trabalhoAnexosPreview', 'trabalho');
-        document.getElementById('trabalhoAnexosRemovidos').value = '';
+            // Carregar anexos existentes
+            renderAnexosList(item.anexos || [], 'trabalhoAnexosPreview', 'trabalho');
+            document.getElementById('trabalhoAnexosRemovidos').value = '';
 
-        new bootstrap.Modal(document.getElementById('trabalhoModal')).show();
+            const modalEl = document.getElementById('trabalhoModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        } catch (error) {
+            console.error('Erro ao editar trabalho:', error);
+            alert('Erro ao abrir edição. Verifique o console.');
+        }
     }
 
     async function saveProva() {
@@ -3614,7 +3627,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Nova função para renderizar ícones de anexo usando data attributes (mais seguro)
     function renderAnexoIcon(item) {
-        if (!item.anexos || item.anexos.length === 0) return '-';
+        if (!item.anexos || item.anexos.length === 0) return '';
         if (Array.isArray(item.anexos)) {
             return item.anexos.map(a => {
                 const tipo = a.tipo || '';
@@ -3676,6 +3689,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     participantesHtml += '</ul>';
                 }
             }
+            const attachmentHtml = renderAnexoIcon(t);
             const card = document.createElement('div');
             card.className = 'col-md-6 col-lg-4';
             card.innerHTML = `
@@ -3694,8 +3708,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p class="text-muted small mb-1"><i class="fas fa-calendar"></i> <strong>Entrega:</strong> ${new Date(t.entrega+'T00:00').toLocaleDateString('pt-BR')}</p>
                         <p class="text-muted small mb-2"><span class="badge ${t.status==='Pendente'?'bg-warning text-dark':'bg-success'}">${t.status}</span></p>
                         <p class="card-text">${t.observacoes?t.observacoes.substring(0,80)+'...':''}</p>
+                        ${attachmentHtml ? `<div class="attachment-area mb-2">${attachmentHtml}</div>` : ''}
                         <div class="item-actions">
-                            ${renderAnexoIcon(t)}
                             <button class="btn btn-sm btn-outline-primary edit-trabalho" data-id="${t.id}"><i class="fas fa-edit"></i></button>
                             <button class="btn btn-sm btn-outline-danger delete-trabalho" data-id="${t.id}"><i class="fas fa-trash"></i></button>
                         </div>
@@ -3715,6 +3729,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         data.provas.sort((a,b)=>new Date(a.data)-new Date(b.data)).forEach(p => {
             const disc = data.disciplinas.find(d=>d.id===p.disciplinaId);
+            const attachmentHtml = p.anexo ? renderAnexoIcon(p) : '';
             const card = document.createElement('div');
             card.className = 'col-md-6 col-lg-4';
             card.innerHTML = `
@@ -3728,8 +3743,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p class="text-muted small mb-1"><i class="fas fa-chalkboard-teacher"></i> <strong>Professor:</strong> ${disc?disc.professor:'N/A'}</p>
                         <p class="text-muted small mb-1"><i class="fas fa-calendar"></i> <strong>Data:</strong> ${new Date(p.data+'T00:00').toLocaleDateString('pt-BR')} ${p.hora?p.hora:''}</p>
                         <p class="text-muted small mb-2"><strong>Nota:</strong> ${p.nota!==null?p.nota.toFixed(1):'-'}</p>
+                        ${attachmentHtml ? `<div class="attachment-area mb-2">${attachmentHtml}</div>` : ''}
                         <div class="item-actions">
-                            ${renderAnexoIcon(p)}
                             <button class="btn btn-sm btn-outline-primary edit-prova" data-id="${p.id}"><i class="fas fa-edit"></i></button>
                             <button class="btn btn-sm btn-outline-danger delete-prova" data-id="${p.id}"><i class="fas fa-trash"></i></button>
                         </div>
