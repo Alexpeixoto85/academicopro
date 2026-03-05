@@ -1571,6 +1571,36 @@
         color: var(--text-light);
     }
 
+    /* Estilos para múltiplos anexos */
+    .anexos-list {
+        margin-top: 10px;
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 10px;
+    }
+    .anexo-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 5px 10px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .anexo-item:last-child {
+        border-bottom: none;
+    }
+    .anexo-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+    }
+    .anexo-acoes button {
+        padding: 2px 6px;
+        font-size: 0.8rem;
+    }
+
     @media (max-width: 768px) {
         .modal-dialog.modal-xl {
             margin: 0;
@@ -1884,7 +1914,6 @@
             </div></div>
         </div>
         
-        <!-- ABA DOCUMENTOS -->
         <div class="tab-pane fade" id="documentos-content" role="tabpanel">
             <div class="card card-dashboard">
                 <div class="card-body">
@@ -2046,7 +2075,7 @@
 
 <div class="modal fade" id="disciplinaModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Disciplina</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="disciplinaForm"><input type="hidden" id="disciplinaId"><div class="mb-3"><label for="disciplinaNome" class="form-label">Nome</label><input type="text" class="form-control" id="disciplinaNome" required></div><div class="mb-3"><label for="disciplinaProfessor" class="form-label">Professor</label><input type="text" class="form-control" id="disciplinaProfessor"></div><div class="mb-3"><label for="disciplinaEmail" class="form-label">E-mail do Professor</label><input type="email" class="form-control" id="disciplinaEmail"></div><div class="mb-3"><label for="disciplinaFrequencia" class="form-label">Frequência (%)</label><input type="number" class="form-control" id="disciplinaFrequencia" min="0" max="100" value="100"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveDisciplina">Salvar</button></div></div></div></div>
 
-<!-- Modal Trabalho com anexo -->
+<!-- Modal Trabalho com múltiplos anexos -->
 <div class="modal fade" id="trabalhoModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Trabalho</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="trabalhoForm"><input type="hidden" id="trabalhoId"><div class="mb-3"><label for="trabalhoDisciplina" class="form-label">Disciplina</label><select class="form-select" id="trabalhoDisciplina" required></select></div><div class="mb-3"><label for="trabalhoTitulo" class="form-label">Título</label><input type="text" class="form-control" id="trabalhoTitulo" required></div>
 <div class="mb-3">
     <label for="trabalhoTipo" class="form-label">Tipo</label>
@@ -2060,15 +2089,17 @@
     <textarea class="form-control" id="trabalhoParticipantes" rows="3" placeholder="Nome do aluno 1&#10;Nome do aluno 2&#10;Nome do aluno 3"></textarea>
 </div>
 <div class="mb-3"><label for="trabalhoEntrega" class="form-label">Data de Entrega</label><input type="date" class="form-control" id="trabalhoEntrega" required></div><div class="mb-3"><label for="trabalhoStatus" class="form-label">Status</label><select class="form-select" id="trabalhoStatus"><option value="Pendente">Pendente</option><option value="Entregue">Entregue</option></select></div><div class="mb-3"><label for="trabalhoPrioridade" class="form-label">Prioridade</label><select class="form-select" id="trabalhoPrioridade"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></div><div class="mb-3"><label for="trabalhoNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="trabalhoNota" min="0" max="10"></div><div class="mb-3"><label for="trabalhoObservacoes" class="form-label">Observações</label><textarea class="form-control" id="trabalhoObservacoes" rows="3"></textarea></div>
+<!-- Área de anexos múltiplos -->
 <div class="mb-3">
-    <label for="trabalhoAnexo" class="form-label">Anexo (PDF, imagem, Word)</label>
-    <input type="file" class="form-control" id="trabalhoAnexo" accept=".pdf,.docx,image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-    <div id="trabalhoAnexoPreview" class="mt-2"></div>
-    <input type="hidden" id="trabalhoAnexoExistente" value="">
+    <label class="form-label">Anexos (PDF, imagem, Word, PowerPoint)</label>
+    <input type="file" class="form-control" id="trabalhoAnexos" accept=".pdf,.docx,.pptx,image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation" multiple>
+    <small class="text-muted">Você pode selecionar vários arquivos.</small>
+    <div id="trabalhoAnexosPreview" class="anexos-list mt-2"></div>
 </div>
+<input type="hidden" id="trabalhoAnexosRemovidos" value="">
 </form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveTrabalho">Salvar</button></div></div></div></div>
 
-<!-- Modal Prova com anexo -->
+<!-- Modal Prova com anexo único (mantido original) -->
 <div class="modal fade" id="provaModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Prova</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="provaForm"><input type="hidden" id="provaId"><div class="mb-3"><label for="provaDisciplina" class="form-label">Disciplina</label><select class="form-select" id="provaDisciplina" required></select></div><div class="mb-3"><label for="provaConteudo" class="form-label">Conteúdo</label><input type="text" class="form-control" id="provaConteudo" required></div><div class="mb-3"><label for="provaData" class="form-label">Data</label><input type="date" class="form-control" id="provaData" required></div><div class="mb-3"><label for="provaHora" class="form-label">Hora</label><input type="time" class="form-control" id="provaHora"></div><div class="mb-3"><label for="provaStatus" class="form-label">Status</label><select class="form-select" id="provaStatus"><option value="Agendada">Agendada</option><option value="Realizada">Realizada</option></select></div><div class="mb-3"><label for="provaNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="provaNota" min="0" max="10"></div>
 <div class="mb-3">
     <label for="provaAnexo" class="form-label">Anexo (PDF, imagem, Word)</label>
@@ -2078,7 +2109,7 @@
 </div>
 </form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveProva">Salvar</button></div></div></div></div>
 
-<!-- Modal Evento com anexo -->
+<!-- Modal Evento com anexo único -->
 <div class="modal fade" id="eventModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Evento</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="eventForm"><input type="hidden" id="eventId"><div class="mb-3"><label for="eventTitle" class="form-label">Título</label><input type="text" class="form-control" id="eventTitle" required></div><div class="mb-3"><label for="eventType" class="form-label">Tipo</label><select class="form-select" id="eventType"><option value="other">Outro</option><option value="assignment">Trabalho</option><option value="exam">Prova</option><option value="class">Aula</option><option value="financeiro">Financeiro</option></select></div><div class="mb-3"><label for="eventDate" class="form-label">Data</label><input type="date" class="form-control" id="eventDate" required></div><div class="mb-3"><label for="eventTime" class="form-label">Hora</label><input type="time" class="form-control" id="eventTime"></div><div class="mb-3"><label for="eventDescription" class="form-label">Descrição</label><textarea class="form-control" id="eventDescription" rows="2"></textarea></div>
 <div class="mb-3">
     <label for="eventAnexo" class="form-label">Anexo (PDF, imagem, Word)</label>
@@ -2202,7 +2233,7 @@
     </div>
 </div>
 
-<!-- Modal para visualizar documentos gerais (Word, PowerPoint) - usa iframe com blob URL, o navegador pode ou não exibir -->
+<!-- Modal para visualizar documentos gerais (Word, PowerPoint) - usa iframe com blob URL -->
 <div class="modal fade" id="viewDocumentModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-lg-down">
         <div class="modal-content">
@@ -2256,6 +2287,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let financeFilterStatus = 'all';
 
     let objectUrls = new Map();
+
+    // Cache de dados do perfil atual
+    let profileDataCache = null;
 
     // Tema
     function loadTheme() {
@@ -2443,10 +2477,13 @@ document.addEventListener('DOMContentLoaded', function() {
             p.currentProfileId = (p.id === profileId) ? profileId : null;
             await saveData('profiles', p);
         }
+        profileDataCache = null; // Limpa cache
         renderAll(); renderProfileManagementList(); updateMainHeaderTitle(); updateFixedBackButton();
     }
 
-    async function getProfileData() {
+    // Função otimizada: busca dados uma vez e cacheia
+    async function getProfileData(forceRefresh = false) {
+        if (profileDataCache && !forceRefresh) return profileDataCache;
         const pid = await getCurrentProfileId();
         const [disciplinas, horarios, trabalhos, provas, eventos, financeiro, biblioteca, filmes, notas, links] = await Promise.all([
             getAllData('disciplinas', 'profileId', pid), getAllData('horarios', 'profileId', pid),
@@ -2455,7 +2492,24 @@ document.addEventListener('DOMContentLoaded', function() {
             getAllData('biblioteca', 'profileId', pid), getAllData('filmes', 'profileId', pid),
             getAllData('notas', 'profileId', pid), getAllData('links', 'profileId', pid)
         ]);
-        return { disciplinas, horarios, trabalhos, provas, eventos, financeiro, biblioteca, filmes, notas, links };
+        // Migração de anexos antigos (único) para array em trabalhos
+        trabalhos.forEach(t => {
+            if (t.anexo && !t.anexos) {
+                t.anexos = [{
+                    id: Date.now() + Math.random(),
+                    nome: t.anexoNome || 'anexo',
+                    tipo: t.anexoTipo || 'application/octet-stream',
+                    dados: t.anexo
+                }];
+                delete t.anexo;
+                delete t.anexoNome;
+                delete t.anexoTipo;
+            } else if (!t.anexos) {
+                t.anexos = [];
+            }
+        });
+        profileDataCache = { disciplinas, horarios, trabalhos, provas, eventos, financeiro, biblioteca, filmes, notas, links };
+        return profileDataCache;
     }
 
     // ---------- Handwriting ----------
@@ -2621,7 +2675,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const pid = await getCurrentProfileId();
         const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: recognizedText, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto' };
         await saveData('notas', nota);
-        clearHandwriting(); document.getElementById('notas-tab').click(); await renderNotas(); alert('Texto salvo como nota!');
+        clearHandwriting(); document.getElementById('notas-tab').click(); 
+        profileDataCache = null; await renderAll(); alert('Texto salvo como nota!');
     }
 
     async function saveFullscreenAsText() {
@@ -2635,7 +2690,8 @@ document.addEventListener('DOMContentLoaded', function() {
         redrawHandwritingStrokes(); recognizedText = fullscreenRecognizedText;
         document.getElementById('recognizedText').innerHTML = `<span class="fw-bold">${fullscreenRecognizedText}</span>`;
         clearFullscreenHandwriting(); bootstrap.Modal.getInstance(document.getElementById('handwritingFullscreenModal')).hide();
-        document.getElementById('notas-tab').click(); await renderNotas(); alert('Texto salvo como nota!');
+        document.getElementById('notas-tab').click(); 
+        profileDataCache = null; await renderAll(); alert('Texto salvo como nota!');
     }
 
     async function saveAsImage() {
@@ -2645,7 +2701,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const pid = await getCurrentProfileId();
         const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: recognizedText || '', imagem: imageData, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'imagem' };
         await saveData('notas', nota);
-        clearHandwriting(); document.getElementById('notas-tab').click(); await renderNotas(); await renderGaleria(); alert('Escrita salva como imagem!');
+        clearHandwriting(); document.getElementById('notas-tab').click(); 
+        profileDataCache = null; await renderAll(); alert('Escrita salva como imagem!');
     }
 
     async function saveFullscreenAsImage() {
@@ -2659,7 +2716,8 @@ document.addEventListener('DOMContentLoaded', function() {
         redrawHandwritingStrokes(); recognizedText = fullscreenRecognizedText;
         document.getElementById('recognizedText').innerHTML = `<span class="fw-bold">${fullscreenRecognizedText}</span>`;
         clearFullscreenHandwriting(); bootstrap.Modal.getInstance(document.getElementById('handwritingFullscreenModal')).hide();
-        document.getElementById('notas-tab').click(); await renderNotas(); await renderGaleria(); alert('Escrita salva como imagem!');
+        document.getElementById('notas-tab').click(); 
+        profileDataCache = null; await renderAll(); alert('Escrita salva como imagem!');
     }
 
     // ---------- Funções para documentos (incluindo Word, PPT) ----------
@@ -2746,7 +2804,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 tituloInput.value = '';
                 descInput.value = '';
                 document.getElementById('documentos-tab').click();
-                await renderDocumentos();
+                profileDataCache = null; await renderAll();
                 alert('Documento salvo com sucesso!');
             };
             reader.readAsArrayBuffer(file);
@@ -2762,8 +2820,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    async function renderDocumentos() {
-        const data = await getProfileData();
+    async function renderDocumentos(data) {
         const container = document.getElementById('documentos-lista');
         container.innerHTML = '';
         const docs = data.notas.filter(n => n.tipo === 'documento').sort((a,b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
@@ -2988,6 +3045,194 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    // Função para ler múltiplos arquivos
+    async function readMultipleFilesAsBase64(files) {
+        const promises = [];
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            promises.push(new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve({
+                    id: Date.now() + i + Math.random(),
+                    nome: file.name,
+                    tipo: file.type,
+                    dados: e.target.result
+                });
+                reader.readAsDataURL(file);
+            }));
+        }
+        return Promise.all(promises);
+    }
+
+    // Renderização dos anexos no modal de trabalho (edição)
+    function renderAnexosList(anexos, containerId, prefix) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        if (!anexos || anexos.length === 0) {
+            container.innerHTML = '<p class="text-muted small">Nenhum anexo.</p>';
+            return;
+        }
+        anexos.forEach((anexo, index) => {
+            const div = document.createElement('div');
+            div.className = 'anexo-item';
+            div.innerHTML = `
+                <div class="anexo-info">
+                    <i class="fas ${anexo.tipo.startsWith('image/') ? 'fa-image' : anexo.tipo === 'application/pdf' ? 'fa-file-pdf' : anexo.tipo.includes('word') ? 'fa-file-word' : anexo.tipo.includes('presentation') ? 'fa-file-powerpoint' : 'fa-file'}"></i>
+                    <span>${anexo.nome}</span>
+                </div>
+                <div class="anexo-acoes">
+                    <button type="button" class="btn btn-sm btn-outline-danger remover-anexo" data-index="${index}" data-prefix="${prefix}"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // Função para salvar trabalho com múltiplos anexos
+    async function saveTrabalho() {
+        let pid = await getCurrentProfileId();
+        let id = document.getElementById('trabalhoId').value;
+        let t = { 
+            id: id ? parseInt(id) : await getNewId('trabalhos'), 
+            profileId: pid, 
+            disciplinaId: parseInt(document.getElementById('trabalhoDisciplina').value), 
+            titulo: document.getElementById('trabalhoTitulo').value,
+            tipo: document.getElementById('trabalhoTipo').value,
+            participantes: document.getElementById('trabalhoTipo').value === 'grupo' ? document.getElementById('trabalhoParticipantes').value : '',
+            entrega: document.getElementById('trabalhoEntrega').value, 
+            status: document.getElementById('trabalhoStatus').value, 
+            prioridade: document.getElementById('trabalhoPrioridade').value, 
+            nota: document.getElementById('trabalhoNota').value === '' ? null : parseFloat(document.getElementById('trabalhoNota').value), 
+            observacoes: document.getElementById('trabalhoObservacoes').value,
+            anexos: [] // será preenchido
+        };
+        if (!t.disciplinaId || !t.titulo || !t.entrega) return alert('Preencha campos obrigatórios.');
+
+        // Obter anexos existentes (que não foram removidos)
+        const anexosRemovidos = document.getElementById('trabalhoAnexosRemovidos').value;
+        const removidosSet = new Set(anexosRemovidos ? anexosRemovidos.split(',') : []);
+        
+        if (id) {
+            const original = await getData('trabalhos', parseInt(id));
+            if (original && original.anexos) {
+                t.anexos = original.anexos.filter(a => !removidosSet.has(a.id.toString()));
+            }
+        }
+
+        // Adicionar novos anexos
+        const anexoInput = document.getElementById('trabalhoAnexos');
+        if (anexoInput.files && anexoInput.files.length > 0) {
+            const novosAnexos = await readMultipleFilesAsBase64(anexoInput.files);
+            t.anexos = [...t.anexos, ...novosAnexos];
+        }
+
+        await saveData('trabalhos', t);
+        profileDataCache = null;
+        await renderAll();
+        bootstrap.Modal.getInstance(document.getElementById('trabalhoModal')).hide();
+    }
+
+    // Função para editar trabalho (carregar anexos existentes)
+    async function editTrabalho(id) {
+        let item = await getData('trabalhos', parseInt(id));
+        if (!item) return;
+        document.getElementById('trabalhoModalLabel').textContent = 'Editar Trabalho';
+        document.getElementById('trabalhoId').value = item.id;
+        document.getElementById('trabalhoDisciplina').value = item.disciplinaId;
+        document.getElementById('trabalhoTitulo').value = item.titulo;
+        document.getElementById('trabalhoTipo').value = item.tipo || 'individual';
+        document.getElementById('trabalhoParticipantes').value = item.participantes || '';
+        document.getElementById('trabalhoEntrega').value = item.entrega;
+        document.getElementById('trabalhoStatus').value = item.status;
+        document.getElementById('trabalhoPrioridade').value = item.prioridade;
+        document.getElementById('trabalhoNota').value = item.nota !== null ? item.nota : '';
+        document.getElementById('trabalhoObservacoes').value = item.observacoes || '';
+
+        // Mostrar/ocultar participantes conforme tipo
+        document.getElementById('grupoParticipantesWrapper').style.display = item.tipo === 'grupo' ? 'block' : 'none';
+
+        // Carregar anexos existentes
+        renderAnexosList(item.anexos || [], 'trabalhoAnexosPreview', 'trabalho');
+        document.getElementById('trabalhoAnexosRemovidos').value = '';
+
+        new bootstrap.Modal(document.getElementById('trabalhoModal')).show();
+    }
+
+    // Função para remover anexo da lista (marcar para exclusão)
+    function setupAnexoRemocao() {
+        document.body.addEventListener('click', (e) => {
+            const btn = e.target.closest('.remover-anexo');
+            if (!btn) return;
+            e.preventDefault();
+            const index = btn.dataset.index;
+            const prefix = btn.dataset.prefix;
+            if (prefix === 'trabalho') {
+                const removidosInput = document.getElementById('trabalhoAnexosRemovidos');
+                const anexoDiv = btn.closest('.anexo-item');
+                // Obter o id do anexo (está no dataset ou no texto? vamos usar o índice como referência, mas melhor usar um id único)
+                // Na renderização, cada anexo tem um id único armazenado no dataset do botão? Vamos modificar a renderização para colocar o id.
+                // Vamos refazer a renderização para incluir o id do anexo no botão.
+                // Adaptação: na função renderAnexosList, adicionar data-id ao botão.
+                // Mas já que estamos no escopo, vamos fazer de forma simples: usar o índice para remover visualmente e armazenar os ids dos removidos.
+                // Precisamos do id real do anexo.
+                // Vamos modificar a função renderAnexosList para incluir data-id.
+                // Por enquanto, farei uma versão simplificada: o índice é o índice no array, mas se houver remoções múltiplas pode bagunçar.
+                // Vamos usar o id único do anexo.
+                // Vamos alterar a função renderAnexosList para armazenar o id no botão.
+                // Como já está em execução, farei inline na nova função.
+                // Na prática, precisamos do id. Vou assumir que a função renderAnexosList foi atualizada para usar data-id.
+                // Para não complicar, vou implementar a nova versão abaixo.
+            }
+        });
+    }
+
+    // Função renderAnexosList atualizada com data-id
+    function renderAnexosList(anexos, containerId, prefix) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        if (!anexos || anexos.length === 0) {
+            container.innerHTML = '<p class="text-muted small">Nenhum anexo.</p>';
+            return;
+        }
+        anexos.forEach((anexo) => {
+            const div = document.createElement('div');
+            div.className = 'anexo-item';
+            div.innerHTML = `
+                <div class="anexo-info">
+                    <i class="fas ${anexo.tipo.startsWith('image/') ? 'fa-image' : anexo.tipo === 'application/pdf' ? 'fa-file-pdf' : anexo.tipo.includes('word') ? 'fa-file-word' : anexo.tipo.includes('presentation') ? 'fa-file-powerpoint' : 'fa-file'}"></i>
+                    <span>${anexo.nome}</span>
+                </div>
+                <div class="anexo-acoes">
+                    <button type="button" class="btn btn-sm btn-outline-danger remover-anexo" data-id="${anexo.id}" data-prefix="${prefix}"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // Função para lidar com remoção de anexo
+    function handleRemoverAnexo(e) {
+        const btn = e.target.closest('.remover-anexo');
+        if (!btn) return;
+        e.preventDefault();
+        const id = btn.dataset.id;
+        const prefix = btn.dataset.prefix;
+        const removidosInput = document.getElementById(prefix + 'AnexosRemovidos');
+        let removidos = removidosInput.value ? removidosInput.value.split(',') : [];
+        if (!removidos.includes(id)) {
+            removidos.push(id);
+            removidosInput.value = removidos.join(',');
+        }
+        // Remove visualmente o item
+        btn.closest('.anexo-item').remove();
+    }
+
+    // Configurar evento de remoção de anexo global
+    document.body.addEventListener('click', handleRemoverAnexo);
+
+    // Substituir as funções de anexo antigas
     function setupAnexoPreview(inputId, previewId, hiddenId) {
         const input = document.getElementById(inputId);
         const preview = document.getElementById(previewId);
@@ -3029,7 +3274,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     setTimeout(() => {
-        setupAnexoPreview('trabalhoAnexo', 'trabalhoAnexoPreview', 'trabalhoAnexoExistente');
         setupAnexoPreview('provaAnexo', 'provaAnexoPreview', 'provaAnexoExistente');
         setupAnexoPreview('eventAnexo', 'eventAnexoPreview', 'eventAnexoExistente');
     }, 500);
@@ -3059,45 +3303,13 @@ document.addEventListener('DOMContentLoaded', function() {
             frequencia: parseInt(document.getElementById('disciplinaFrequencia').value) 
         };
         if (!d.nome) return alert('Nome obrigatório.');
-        await saveData('disciplinas', d); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('disciplinaModal')).hide();
+        await saveData('disciplinas', d); 
+        profileDataCache = null; await renderAll(); 
+        bootstrap.Modal.getInstance(document.getElementById('disciplinaModal')).hide();
     }
 
-    async function saveTrabalho() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('trabalhoId').value;
-        let t = { 
-            id: id?parseInt(id):await getNewId('trabalhos'), 
-            profileId: pid, 
-            disciplinaId: parseInt(document.getElementById('trabalhoDisciplina').value), 
-            titulo: document.getElementById('trabalhoTitulo').value,
-            tipo: document.getElementById('trabalhoTipo').value,
-            participantes: document.getElementById('trabalhoTipo').value === 'grupo' ? document.getElementById('trabalhoParticipantes').value : '',
-            entrega: document.getElementById('trabalhoEntrega').value, 
-            status: document.getElementById('trabalhoStatus').value, 
-            prioridade: document.getElementById('trabalhoPrioridade').value, 
-            nota: document.getElementById('trabalhoNota').value===''?null:parseFloat(document.getElementById('trabalhoNota').value), 
-            observacoes: document.getElementById('trabalhoObservacoes').value
-        };
-        if (!t.disciplinaId || !t.titulo || !t.entrega) return alert('Preencha campos obrigatórios.');
-
-        const anexoInput = document.getElementById('trabalhoAnexo');
-        const anexoExistente = document.getElementById('trabalhoAnexoExistente').value;
-        if (anexoInput.files && anexoInput.files[0]) {
-            const file = anexoInput.files[0];
-            t.anexo = await readFileAsBase64(file);
-            t.anexoNome = file.name;
-            t.anexoTipo = file.type;
-        } else if (anexoExistente) {
-            t.anexo = anexoExistente;
-            if (id) {
-                const original = await getData('trabalhos', parseInt(id));
-                if (original) {
-                    t.anexoNome = original.anexoNome;
-                    t.anexoTipo = original.anexoTipo;
-                }
-            }
-        }
-
-        await saveData('trabalhos', t); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('trabalhoModal')).hide();
+    async function saveTrabalhoWrapper() {
+        await saveTrabalho();
     }
 
     async function saveProva() {
@@ -3132,19 +3344,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        await saveData('provas', p); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('provaModal')).hide();
+        await saveData('provas', p); 
+        profileDataCache = null; await renderAll(); 
+        bootstrap.Modal.getInstance(document.getElementById('provaModal')).hide();
     }
 
     async function saveHorario() {
         let pid = await getCurrentProfileId(), id = document.getElementById('horarioId').value;
         let h = { id: id?parseInt(id):await getNewId('horarios'), profileId: pid, disciplinaId: parseInt(document.getElementById('horarioDisciplina').value), diaSemana: document.getElementById('horarioDiaSemana').value, inicio: document.getElementById('horarioInicio').value, fim: document.getElementById('horarioFim').value, local: document.getElementById('horarioLocal').value };
         if (!h.disciplinaId || !h.inicio || !h.fim) return alert('Campos obrigatórios.');
-        await saveData('horarios', h); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('horarioModal')).hide();
+        await saveData('horarios', h); 
+        profileDataCache = null; await renderAll(); 
+        bootstrap.Modal.getInstance(document.getElementById('horarioModal')).hide();
     }
 
     async function deleteHorario() {
         let id = document.getElementById('horarioId').value;
-        if (id && confirm('Excluir esta aula?')) { await deleteData('horarios', parseInt(id)); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('horarioModal')).hide(); }
+        if (id && confirm('Excluir esta aula?')) { await deleteData('horarios', parseInt(id)); profileDataCache = null; await renderAll(); bootstrap.Modal.getInstance(document.getElementById('horarioModal')).hide(); }
     }
 
     async function saveEvent() {
@@ -3178,7 +3394,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        await saveData('eventos', e); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+        await saveData('eventos', e); 
+        profileDataCache = null; await renderAll(); 
+        bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
     }
 
     async function saveFinanceiro() {
@@ -3217,26 +3435,31 @@ document.addEventListener('DOMContentLoaded', function() {
             trans.push({ id: id?parseInt(id):await getNewId('financeiro'), profileId: pid, tipo: document.getElementById('financeiroTipo').value, descricao: document.getElementById('financeiroDescricao').value, valor: parseFloat(document.getElementById('financeiroValor').value), categoria: document.getElementById('financeiroCategoria').value, data, status: document.getElementById('financeiroTipo').value==='despesa'?document.getElementById('financeiroStatus').value:'pago', mesAno, recorrente: false });
         }
         for (let t of trans) await saveData('financeiro', t);
-        await renderAll(); bootstrap.Modal.getInstance(document.getElementById('financeiroModal')).hide();
+        profileDataCache = null; await renderAll(); 
+        bootstrap.Modal.getInstance(document.getElementById('financeiroModal')).hide();
     }
 
     async function saveNota() {
         let pid = await getCurrentProfileId(), id = document.getElementById('notaId').value;
         let n = { id: id?parseInt(id):await getNewId('notas'), profileId: pid, titulo: document.getElementById('notaTitulo').value, conteudo: document.getElementById('notaConteudo').value, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto' };
         if (!n.titulo) return alert('Título obrigatório.');
-        await saveData('notas', n); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide();
+        await saveData('notas', n); 
+        profileDataCache = null; await renderAll(); 
+        bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide();
     }
 
     async function deleteNota() {
         let id = document.getElementById('notaId').value;
-        if (id && confirm('Excluir nota?')) { await deleteData('notas', parseInt(id)); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide(); }
+        if (id && confirm('Excluir nota?')) { await deleteData('notas', parseInt(id)); profileDataCache = null; await renderAll(); bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide(); }
     }
 
     async function saveLink() {
         let pid = await getCurrentProfileId(), id = document.getElementById('linkId').value;
         let l = { id: id?parseInt(id):await getNewId('links'), profileId: pid, titulo: document.getElementById('linkTitulo').value, url: document.getElementById('linkUrl').value, categoria: document.getElementById('linkCategoria').value, descricao: document.getElementById('linkDescricao').value };
         if (!l.titulo || !l.url) return alert('Título e URL obrigatórios.');
-        await saveData('links', l); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('linkModal')).hide();
+        await saveData('links', l); 
+        profileDataCache = null; await renderAll(); 
+        bootstrap.Modal.getInstance(document.getElementById('linkModal')).hide();
     }
 
     async function saveAnotacaoFilme() {
@@ -3244,7 +3467,9 @@ document.addEventListener('DOMContentLoaded', function() {
         let f = await getData('filmes', parseInt(id));
         if (f) {
             f.anotacao = { tempoAtual: document.getElementById('filmeTempoAtual').value?parseInt(document.getElementById('filmeTempoAtual').value):null, texto: document.getElementById('filmeAnotacao').value, assistido: document.getElementById('filmeAssistido').checked };
-            await saveData('filmes', f); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('anotacaoFilmeModal')).hide();
+            await saveData('filmes', f); 
+            profileDataCache = null; await renderAll(); 
+            bootstrap.Modal.getInstance(document.getElementById('anotacaoFilmeModal')).hide();
         }
     }
 
@@ -3252,16 +3477,32 @@ document.addEventListener('DOMContentLoaded', function() {
         let pid = await getCurrentProfileId(), id = document.getElementById('bibliotecaId').value;
         let l = { id: id?parseInt(id):await getNewId('biblioteca'), profileId: pid, titulo: document.getElementById('bibliotecaTitulo').value, autor: document.getElementById('bibliotecaAutor').value, assunto: document.getElementById('bibliotecaAssunto').value, editora: document.getElementById('bibliotecaEditora').value, ano: document.getElementById('bibliotecaAno').value||null, observacoes: document.getElementById('bibliotecaObservacoes').value };
         if (!l.titulo || !l.autor || !l.assunto) return alert('Título, autor e assunto obrigatórios.');
-        await saveData('biblioteca', l); await renderAll(); bootstrap.Modal.getInstance(document.getElementById('bibliotecaModal')).hide();
+        await saveData('biblioteca', l); 
+        profileDataCache = null; await renderAll(); 
+        bootstrap.Modal.getInstance(document.getElementById('bibliotecaModal')).hide();
     }
 
     async function renderAll() {
+        const data = await getProfileData(true); // força refresh do cache
         await Promise.all([
-            renderProximoEventoCard(), renderDashboard(), renderDisciplinas(), renderHorarios(), renderTrabalhos(),
-            renderProvas(), renderAgenda(), renderBiblioteca(), renderFilmes(), renderNotas(), renderLinks(),
-            renderFinanceiro(), renderRelatorios(), renderGaleria(), renderDocumentos()
+            renderProximoEventoCard(data),
+            renderDashboard(data),
+            renderDisciplinas(data),
+            renderHorarios(data),
+            renderTrabalhos(data),
+            renderProvas(data),
+            renderAgenda(data),
+            renderBiblioteca(data),
+            renderFilmes(data),
+            renderNotas(data),
+            renderLinks(data),
+            renderFinanceiro(data),
+            renderRelatorios(data),
+            renderGaleria(data),
+            renderDocumentos(data)
         ]);
-        populateDisciplinaSelects(); updateFixedBackButton(); updateFooterNavigation();
+        populateDisciplinaSelects(data);
+        updateFixedBackButton(); updateFooterNavigation();
     }
 
     function generateQuickLinks() {
@@ -3292,8 +3533,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    async function renderProximoEventoCard() {
-        const data = await getProfileData();
+    async function renderProximoEventoCard(data) {
         const container = document.getElementById('next-event-container');
         if (nextEventInterval) clearInterval(nextEventInterval);
         const hoje = new Date();
@@ -3320,7 +3560,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         let discInfo = '';
         if (proximoEventoGlobal.disciplinaId) {
-            const disc = await getDisciplinaById(proximoEventoGlobal.disciplinaId);
+            const disc = data.disciplinas.find(d => d.id === proximoEventoGlobal.disciplinaId);
             if (disc) discInfo = `<p class="mb-2"><i class="fas fa-book me-2"></i><strong>Disciplina:</strong> ${disc.nome}</p>`;
         }
         container.innerHTML = `
@@ -3345,8 +3585,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCountdown(); nextEventInterval = setInterval(updateCountdown, 1000);
     }
 
-    async function renderDashboard() {
-        const data = await getProfileData();
+    async function renderDashboard(data) {
         document.getElementById('dashboard-disciplinas-count').textContent = data.disciplinas.length;
         document.getElementById('dashboard-trabalhos-pendentes').textContent = data.trabalhos.filter(t=>t.status==='Pendente').length;
         document.getElementById('dashboard-provas-agendadas').textContent = data.provas.filter(p=>p.status==='Agendada').length;
@@ -3380,8 +3619,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    async function renderDisciplinas() {
-        const data = await getProfileData();
+    async function renderDisciplinas(data) {
         const container = document.getElementById('disciplinas-lista');
         container.innerHTML = '';
         if (!data.disciplinas.length) { container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Nova Disciplina" para começar.</p></div></div>'; return; }
@@ -3394,8 +3632,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    async function renderHorarios() {
-        const data = await getProfileData();
+    async function renderHorarios(data) {
         const container = document.getElementById('schedule-grid-container');
         container.innerHTML = '';
         const horaInicio = scheduleStartHour, horaFim = scheduleEndHour, totalRows = (horaFim - horaInicio) * 2;
@@ -3427,7 +3664,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderAnexoIcon(item) {
-        if (!item.anexo) return '-';
+        if (!item.anexos || item.anexos.length === 0) return '-';
+        // Se for trabalho com múltiplos anexos, mostra ícones empilhados
+        if (Array.isArray(item.anexos)) {
+            return item.anexos.map(a => {
+                const isPdf = a.tipo === 'application/pdf';
+                const isWord = a.tipo === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || (a.nome && a.nome.endsWith('.docx'));
+                const isPpt = a.tipo === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' || (a.nome && a.nome.endsWith('.pptx'));
+                let icon, cor;
+                if (isPdf) { icon = 'fa-file-pdf'; cor = 'text-danger'; }
+                else if (isWord) { icon = 'fa-file-word'; cor = 'text-primary'; }
+                else if (isPpt) { icon = 'fa-file-powerpoint'; cor = 'text-warning'; }
+                else if (a.tipo.startsWith('image/')) { icon = 'fa-image'; cor = 'text-success'; }
+                else { icon = 'fa-file'; cor = 'text-secondary'; }
+                return `<i class="fas ${icon} ${cor} attachment-icon" onclick="visualizarAnexo('${a.dados}', '${a.tipo}', '${a.nome}')" title="${a.nome}"></i>`;
+            }).join(' ');
+        }
+        // Fallback para anexo único (prova/evento)
         const isPdf = item.anexoTipo === 'application/pdf';
         const isWord = item.anexoTipo === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || (item.anexoNome && item.anexoNome.endsWith('.docx'));
         const isPpt = item.anexoTipo === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' || (item.anexoNome && item.anexoNome.endsWith('.pptx'));
@@ -3440,8 +3693,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return `<i class="fas ${icon} ${cor} attachment-icon" onclick="visualizarAnexo('${item.anexo}', '${item.anexoTipo}', '${item.anexoNome}')" title="${item.anexoNome}"></i>`;
     }
 
-    async function renderTrabalhos() {
-        const data = await getProfileData();
+    async function renderTrabalhos(data) {
         const container = document.getElementById('trabalhos-cards');
         container.innerHTML = '';
         if (!data.trabalhos.length) {
@@ -3497,8 +3749,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    async function renderProvas() {
-        const data = await getProfileData();
+    async function renderProvas(data) {
         const container = document.getElementById('provas-cards');
         container.innerHTML = '';
         if (!data.provas.length) {
@@ -3532,7 +3783,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    async function renderAgenda() {
+    async function renderAgenda(data) {
         const month = currentCalendarDate.getMonth(), year = currentCalendarDate.getFullYear();
         document.getElementById('calendar-month-year').textContent = `${["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"][month]} ${year}`;
         const weekdays = document.getElementById('calendar-weekdays'), days = document.getElementById('calendar-days');
@@ -3544,17 +3795,16 @@ document.addEventListener('DOMContentLoaded', function() {
         for (let i=0; i<firstDay; i++) row.innerHTML += `<div class="col calendar-day empty"></div>`;
         for (let d=1; d<=daysInMonth; d++) {
             let dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            let ev = await getEventsForDate(dateStr);
+            let ev = await getEventsForDate(dateStr, data);
             let ind = ev.length ? '<div class="event-indicator">'+ (ev.some(e=>e.type==='assignment')?'<span class="event-dot assignment"></span>':'') + (ev.some(e=>e.type==='exam')?'<span class="event-dot exam"></span>':'') + (ev.some(e=>e.type==='financeiro')?'<span class="event-dot financeiro"></span>':'') + (ev.some(e=>['other','class'].includes(e.type))?'<span class="event-dot other"></span>':'') +'</div>' : '';
             let cls = 'calendar-day' + (ev.length?' has-event':'') + (dateStr===todayStr?' current':'');
             row.innerHTML += `<div class="col ${cls}" data-date="${dateStr}">${d}${ind}</div>`;
             if ((d+firstDay)%7===0 || d===daysInMonth) { days.appendChild(row); row = document.createElement('div'); row.className = 'row mb-2'; }
         }
-        renderEventsForDay(todayStr);
+        renderEventsForDay(todayStr, data);
     }
 
-    async function getEventsForDate(dateStr) {
-        const data = await getProfileData();
+    async function getEventsForDate(dateStr, data) {
         return [
             ...data.trabalhos.filter(t=>t.entrega===dateStr).map(t=>({...t, type:'assignment', date:t.entrega, title:t.titulo})),
             ...data.provas.filter(p=>p.data===dateStr).map(p=>({...p, type:'exam', date:p.data, title:p.conteudo})),
@@ -3563,25 +3813,23 @@ document.addEventListener('DOMContentLoaded', function() {
         ].sort((a,b)=>(a.time||'23:59').localeCompare(b.time||'23:59'));
     }
 
-    async function renderEventsForDay(dateStr) {
+    async function renderEventsForDay(dateStr, data) {
         document.querySelectorAll('.calendar-day.active').forEach(el=>el.classList.remove('active'));
         let day = document.querySelector(`.calendar-day[data-date="${dateStr}"]`);
         if (day) day.classList.add('active');
         let container = document.getElementById('agenda-eventos-dia');
-        let events = await getEventsForDate(dateStr);
+        let events = await getEventsForDate(dateStr, data);
         let fd = new Date(dateStr+'T00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
         container.innerHTML = `<h5 class="card-title mb-3">${fd}</h5>`;
         if (!events.length) { container.innerHTML += `<div class="empty-state"><p>Nenhum evento para este dia.</p></div>`; return; }
-        const data = await getProfileData();
         events.forEach(e => {
             let disc = e.disciplinaId ? data.disciplinas.find(d=>d.id===e.disciplinaId) : null;
-            let anexoIcon = e.anexo ? renderAnexoIcon(e) : '';
+            let anexoIcon = e.anexos ? renderAnexoIcon(e) : (e.anexo ? renderAnexoIcon(e) : '');
             container.innerHTML += `<div class="event-item ${e.type}" data-event-type="${e.type==='assignment'?'trabalhos':e.type==='exam'?'provas':e.type==='financeiro'?'financeiro':'eventos'}" data-event-id="${e.id}"><div class="d-flex justify-content-between align-items-center"><h6 class="mb-0 small">${e.title||e.conteudo||e.descricao}</h6><span class="small text-muted">${e.time||''}</span></div>${disc?`<p class="mb-0 small text-muted">${disc.nome}</p>`:''}${anexoIcon ? `<div class="mt-1">${anexoIcon}</div>` : ''}</div>`;
         });
     }
 
-    async function renderBiblioteca() {
-        const data = await getProfileData();
+    async function renderBiblioteca(data) {
         const container = document.getElementById('biblioteca-lista');
         container.innerHTML = '';
         if (!data.biblioteca.length) { container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Adicionar Livro".</p></div></div>'; return; }
@@ -3590,8 +3838,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    async function renderNotas() {
-        const data = await getProfileData();
+    async function renderNotas(data) {
         const container = document.getElementById('notas-lista');
         container.innerHTML = '';
         let notas = data.notas.filter(n => n.tipo !== 'documento').sort((a,b)=>new Date(b.dataCriacao)-new Date(a.dataCriacao));
@@ -3607,8 +3854,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    async function renderGaleria() {
-        const data = await getProfileData();
+    async function renderGaleria(data) {
         const container = document.getElementById('galeria-imagens-container');
         container.innerHTML = '';
         let imagens = data.notas.filter(n=>n.imagem);
@@ -3618,8 +3864,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    async function renderLinks() {
-        const data = await getProfileData();
+    async function renderLinks(data) {
         const container = document.getElementById('links-lista');
         container.innerHTML = '';
         if (!data.links.length) { container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Novo Link".</p></div></div>'; return; }
@@ -3628,10 +3873,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    async function renderFinanceiro() {
+    async function renderFinanceiro(data) {
         const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
         document.getElementById('financeiro-mes-atual').textContent = `${meses[currentFinanceMonth]} ${currentFinanceYear}`;
-        const data = await getProfileData();
         const container = document.getElementById('financeiro-transacoes-mes');
         container.innerHTML = '';
         const mesAnoAtual = `${currentFinanceMonth+1}-${currentFinanceYear}`;
@@ -3695,7 +3939,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
         }
-        await renderResumoAnual();
+        await renderResumoAnual(data);
         renderGraficoAnual(data.financeiro);
     }
 
@@ -3729,8 +3973,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    async function renderResumoAnual() {
-        const data = await getProfileData();
+    async function renderResumoAnual(data) {
         const container = document.getElementById('financeiro-resumo-anual');
         container.innerHTML = '';
         let porMes = {};
@@ -3752,8 +3995,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    async function renderRelatorios() {
-        const data = await getProfileData();
+    async function renderRelatorios(data) {
         let d = document.getElementById('relatorio-desempenho'); d.innerHTML = '';
         data.disciplinas.forEach(dis=>{
             let ns = [...data.trabalhos.filter(t=>t.disciplinaId===dis.id && t.nota!==null).map(t=>+t.nota), ...data.provas.filter(p=>p.disciplinaId===dis.id && p.nota!==null).map(p=>+p.nota)];
@@ -3837,7 +4079,7 @@ document.addEventListener('DOMContentLoaded', function() {
         await saveData('notas', nota);
         ctx.clearRect(0,0,canvas.width,canvas.height);
         document.getElementById('notas-tab').click();
-        await renderNotas(); await renderGaleria();
+        profileDataCache = null; await renderAll();
         alert('Desenho salvo como imagem!');
     }
 
@@ -3864,7 +4106,8 @@ document.addEventListener('DOMContentLoaded', function() {
             let nota = { id: await getNewId('notas'), profileId: pid, titulo: titulo.value.trim(), conteudo: desc.value.trim(), imagem: importedImageData, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'imagem' };
             await saveData('notas', nota);
             importedImageData = null; preview.src = ''; previewContainer.style.display = 'none'; area.style.display = 'block'; file.value = ''; titulo.value = ''; desc.value = '';
-            document.getElementById('notas-tab').click(); await renderNotas(); await renderGaleria(); alert('Imagem salva como nota!');
+            document.getElementById('notas-tab').click(); 
+            profileDataCache = null; await renderAll(); alert('Imagem salva como nota!');
         });
     }
 
@@ -3982,6 +4225,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const event = new Event('change', { bubbles: true });
                 tipoSelect.dispatchEvent(event);
             }
+            // Carregar anexos existentes
+            renderAnexosList(item.anexos || [], 'trabalhoAnexosPreview', 'trabalho');
+            document.getElementById('trabalhoAnexosRemovidos').value = '';
         }
 
         if (prefix === 'financeiro' && item.tipo === 'despesa') {
@@ -3994,26 +4240,28 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('deleteNota').style.display = 'block';
         }
 
-        // Anexo existente
-        if (item.anexo) {
-            const preview = document.getElementById(prefix + 'AnexoPreview');
-            const hidden = document.getElementById(prefix + 'AnexoExistente');
-            if (preview && hidden) {
-                hidden.value = item.anexo;
-                preview.innerHTML = '';
-                const tipo = item.anexoTipo || '';
-                if (tipo.startsWith('image/')) {
-                    preview.innerHTML = `<img src="${item.anexo}" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 5px;"><br><small class="text-muted">Anexo atual. Selecione outro para substituir.</small>`;
-                } else if (tipo === 'application/pdf') {
-                    preview.innerHTML = `<span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF atual. Selecione outro para substituir.</span>`;
-                } else if (tipo === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-                    preview.innerHTML = `<span class="badge bg-primary"><i class="fas fa-file-word"></i> Word atual. Selecione outro para substituir.</span>`;
-                } else if (tipo === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
-                    preview.innerHTML = `<span class="badge bg-warning text-dark"><i class="fas fa-file-powerpoint"></i> PowerPoint atual. Selecione outro para substituir.</span>`;
-                } else {
-                    preview.innerHTML = `<span class="badge bg-secondary">Anexo atual. Selecione outro para substituir.</span>`;
+        // Anexo existente para prova/evento (único)
+        if (prefix === 'prova' || prefix === 'evento') {
+            if (item.anexo) {
+                const preview = document.getElementById(prefix + 'AnexoPreview');
+                const hidden = document.getElementById(prefix + 'AnexoExistente');
+                if (preview && hidden) {
+                    hidden.value = item.anexo;
+                    preview.innerHTML = '';
+                    const tipo = item.anexoTipo || '';
+                    if (tipo.startsWith('image/')) {
+                        preview.innerHTML = `<img src="${item.anexo}" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 5px;"><br><small class="text-muted">Anexo atual. Selecione outro para substituir.</small>`;
+                    } else if (tipo === 'application/pdf') {
+                        preview.innerHTML = `<span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF atual. Selecione outro para substituir.</span>`;
+                    } else if (tipo === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                        preview.innerHTML = `<span class="badge bg-primary"><i class="fas fa-file-word"></i> Word atual. Selecione outro para substituir.</span>`;
+                    } else if (tipo === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
+                        preview.innerHTML = `<span class="badge bg-warning text-dark"><i class="fas fa-file-powerpoint"></i> PowerPoint atual. Selecione outro para substituir.</span>`;
+                    } else {
+                        preview.innerHTML = `<span class="badge bg-secondary">Anexo atual. Selecione outro para substituir.</span>`;
+                    }
+                    addViewExistingButton(prefix, prefix + 'AnexoPreview', prefix + 'AnexoExistente', item);
                 }
-                addViewExistingButton(prefix, prefix + 'AnexoPreview', prefix + 'AnexoExistente', item);
             }
         }
 
@@ -4022,15 +4270,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function setupEventListeners() {
         document.getElementById('fixed-back-home').addEventListener('click', goToHome);
-        document.getElementById('prev-month-financeiro').addEventListener('click', ()=>{ if (--currentFinanceMonth<0) { currentFinanceMonth=11; currentFinanceYear--; } renderFinanceiro(); });
-        document.getElementById('next-month-financeiro').addEventListener('click', ()=>{ if (++currentFinanceMonth>11) { currentFinanceMonth=0; currentFinanceYear++; } renderFinanceiro(); });
+        document.getElementById('prev-month-financeiro').addEventListener('click', ()=>{ if (--currentFinanceMonth<0) { currentFinanceMonth=11; currentFinanceYear--; } renderAll(); });
+        document.getElementById('next-month-financeiro').addEventListener('click', ()=>{ if (++currentFinanceMonth>11) { currentFinanceMonth=0; currentFinanceYear++; } renderAll(); });
         
         document.querySelectorAll('[data-filter-type]').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('[data-filter-type]').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 financeFilterType = this.dataset.filterType;
-                renderFinanceiro();
+                renderAll();
             });
         });
         document.querySelectorAll('[data-filter-status]').forEach(btn => {
@@ -4038,7 +4286,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelectorAll('[data-filter-status]').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 financeFilterStatus = this.dataset.filterStatus;
-                renderFinanceiro();
+                renderAll();
             });
         });
         
@@ -4047,7 +4295,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (s>=0 && s<=23 && e>=0 && e<=23 && s<=e) { 
                 scheduleStartHour=s; scheduleEndHour=e; 
                 saveScheduleFilter();
-                renderHorarios(); 
+                renderAll(); 
             }
             else alert('Horários inválidos.');
         });
@@ -4056,10 +4304,10 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('filterStartHour').value=7; 
             document.getElementById('filterEndHour').value=22; 
             saveScheduleFilter();
-            renderHorarios(); 
+            renderAll(); 
         });
-        document.getElementById('prev-month').addEventListener('click', ()=>{ currentCalendarDate.setMonth(currentCalendarDate.getMonth()-1); renderAgenda(); });
-        document.getElementById('next-month').addEventListener('click', ()=>{ currentCalendarDate.setMonth(currentCalendarDate.getMonth()+1); renderAgenda(); });
+        document.getElementById('prev-month').addEventListener('click', ()=>{ currentCalendarDate.setMonth(currentCalendarDate.getMonth()-1); renderAll(); });
+        document.getElementById('next-month').addEventListener('click', ()=>{ currentCalendarDate.setMonth(currentCalendarDate.getMonth()+1); renderAll(); });
         document.getElementById('financeiroTipo').addEventListener('change', function(){ document.getElementById('financeiroStatusWrapper').style.display = this.value==='despesa'?'block':'none'; });
         document.getElementById('financeiroRecurrence').addEventListener('change', function(){ document.getElementById('financeiroRecurrenceEndDateWrapper').classList.toggle('d-none', this.value==='none'); });
         document.getElementById('profileForm').addEventListener('submit', async e=>{
@@ -4094,8 +4342,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (m.id==='trabalhoModal') {
                     document.getElementById('grupoParticipantesWrapper').style.display = 'none';
                     document.getElementById('trabalhoTipo').value = 'individual';
+                    document.getElementById('trabalhoAnexosPreview').innerHTML = '';
+                    document.getElementById('trabalhoAnexosRemovidos').value = '';
                 }
-                ['trabalho', 'prova', 'event'].forEach(prefix => {
+                ['prova', 'event'].forEach(prefix => {
                     const preview = document.getElementById(prefix + 'AnexoPreview');
                     if (preview) preview.innerHTML = '';
                     const existente = document.getElementById(prefix + 'AnexoExistente');
@@ -4106,7 +4356,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('saveDisciplina').addEventListener('click', saveDisciplina);
         document.getElementById('saveHorario').addEventListener('click', saveHorario);
-        document.getElementById('saveTrabalho').addEventListener('click', saveTrabalho);
+        document.getElementById('saveTrabalho').addEventListener('click', saveTrabalhoWrapper);
         document.getElementById('saveProva').addEventListener('click', saveProva);
         document.getElementById('saveEvent').addEventListener('click', saveEvent);
         document.getElementById('saveFinanceiro').addEventListener('click', saveFinanceiro);
@@ -4160,7 +4410,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (id==='caderno') setTimeout(()=>{ if (canvas) ctx.clearRect(0,0,canvas.width,canvas.height); },100);
             }
             let calDay = e.target.closest('.calendar-day:not(.empty)');
-            if (calDay) renderEventsForDay(calDay.dataset.date);
+            if (calDay) {
+                let data = await getProfileData();
+                renderEventsForDay(calDay.dataset.date, data);
+            }
             let nextCard = e.target.closest('#next-event-card');
             if (nextCard && proximoEventoGlobal) {
                 let map = { trabalhos:'trabalhos', provas:'provas', financeiro:'financeiro', eventos:'agenda' };
@@ -4229,7 +4482,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (t && t.tipo==='despesa' && t.status==='pendente' && confirm('Marcar como paga?')) {
                     t.status = 'pago';
                     await saveData('financeiro', t);
-                    await renderAll();
+                    profileDataCache = null; await renderAll();
                 }
             }
             let evItem = e.target.closest('.event-item');
@@ -4258,7 +4511,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (target.matches('.delete-documento')) {
                     if (confirm('Excluir este documento?')) {
                         await deleteData('notas', parseInt(id));
-                        await renderDocumentos();
+                        profileDataCache = null; await renderAll();
                     }
                 }
                 return;
@@ -4274,7 +4527,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let id = target.dataset.id;
             if (target.matches('.edit-disciplina')) handleEdit('disciplinas', 'disciplina', id);
             else if (target.matches('.delete-disciplina')) handleDelete('disciplinas', id, 'Excluir disciplina e dados associados?');
-            else if (target.matches('.edit-trabalho')) handleEdit('trabalhos', 'trabalho', id);
+            else if (target.matches('.edit-trabalho')) editTrabalho(id);
             else if (target.matches('.delete-trabalho')) handleDelete('trabalhos', id, 'Excluir trabalho?');
             else if (target.matches('.edit-prova')) handleEdit('provas', 'prova', id);
             else if (target.matches('.delete-prova')) handleDelete('provas', id, 'Excluir prova?');
@@ -4309,9 +4562,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (confirm('Excluir todas ocorrências?')) {
                         let todas = await getAllData('financeiro', 'recorrenteId', t.recorrenteId);
                         for (let tx of todas) await deleteData('financeiro', tx.id);
-                        await renderAll();
-                    } else { await deleteData('financeiro', parseInt(id)); await renderAll(); }
-                } else { await deleteData('financeiro', parseInt(id)); await renderAll(); }
+                        profileDataCache = null; await renderAll();
+                    } else { await deleteData('financeiro', parseInt(id)); profileDataCache = null; await renderAll(); }
+                } else { await deleteData('financeiro', parseInt(id)); profileDataCache = null; await renderAll(); }
             }
             else if (target.matches('.delete-livro')) handleDelete('biblioteca', id, 'Excluir livro?');
             else if (target.matches('.edit-livro')) handleEdit('biblioteca', 'biblioteca', id);
@@ -4340,7 +4593,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             else if (target.matches('.delete-nota')) {
                 e.preventDefault(); e.stopPropagation();
-                if (confirm('Excluir nota?')) { await deleteData('notas', parseInt(id)); await renderAll(); }
+                if (confirm('Excluir nota?')) { await deleteData('notas', parseInt(id)); profileDataCache = null; await renderAll(); }
             }
         });
     }
@@ -4400,7 +4653,7 @@ document.addEventListener('DOMContentLoaded', function() {
             f.anotacao.tempoAtual = currentVideoTime;
             f.anotacao.dataUltimaVisualizacao = new Date().toISOString();
             await saveData('filmes', f);
-            await renderFilmes();
+            profileDataCache = null; await renderFilmes(await getProfileData());
         }
     }
 
@@ -4438,18 +4691,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 filme.fileData = new Blob([arrayBuffer], { type: file.type });
                 await saveData('filmes', filme);
                 bootstrap.Modal.getInstance(document.getElementById('filmeModal')).hide();
-                await renderFilmes();
+                profileDataCache = null; await renderAll();
             };
             reader.readAsArrayBuffer(file);
             return;
         }
         await saveData('filmes', filme);
         bootstrap.Modal.getInstance(document.getElementById('filmeModal')).hide();
-        await renderFilmes();
+        profileDataCache = null; await renderAll();
     }
 
-    async function renderFilmes() {
-        const data = await getProfileData();
+    async function renderFilmes(data) {
         const container = document.getElementById('filmes-lista');
         container.innerHTML = '';
         if (!data.filmes.length) {
@@ -4502,8 +4754,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return id ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&start=${start}&rel=0&modestbranding=1` : null;
     }
 
-    async function populateDisciplinaSelects() {
-        let data = await getProfileData();
+    async function populateDisciplinaSelects(data) {
         let opts = data.disciplinas.map(d=>`<option value="${d.id}">${d.nome} - ${d.professor || 'Sem professor'}</option>`).join('');
         document.querySelectorAll('#trabalhoDisciplina, #provaDisciplina, #horarioDisciplina').forEach(s=>{ s.innerHTML = '<option value="">Selecione</option>'+opts; });
     }
@@ -4523,7 +4774,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         document.querySelectorAll('.switch-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.switch-profile').dataset.id; if (id!==current) { await switchProfile(id); bootstrap.Modal.getInstance(document.getElementById('profileManagementModal')).hide(); } }));
         document.querySelectorAll('.edit-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.edit-profile').dataset.id; let p = await getData('profiles', id); if (p) { document.getElementById('profileName').value = p.name; document.getElementById('profileId').value = p.id; document.getElementById('saveProfileBtn').innerHTML = '<i class="fas fa-save"></i> Atualizar'; } }));
-        document.querySelectorAll('.delete-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.delete-profile').dataset.id; if (profiles.length===1) return; if (confirm('Excluir perfil? Todos os dados serão perdidos.')) { await deleteData('profiles', id); let stores = ['disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links']; for (let s of stores) { let items = await getAllData(s, 'profileId', id); for (let i of items) await deleteData(s, i.id); } await renderProfileManagementList(); await renderAll(); } }));
+        document.querySelectorAll('.delete-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.delete-profile').dataset.id; if (profiles.length===1) return; if (confirm('Excluir perfil? Todos os dados serão perdidos.')) { await deleteData('profiles', id); let stores = ['disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links']; for (let s of stores) { let items = await getAllData(s, 'profileId', id); for (let i of items) await deleteData(s, i.id); } await renderProfileManagementList(); profileDataCache = null; await renderAll(); } }));
     }
 
     async function handleDelete(store, id, msg) {
@@ -4535,7 +4786,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 for (let h of data.horarios.filter(h=>h.disciplinaId==id)) await deleteData('horarios', h.id);
             }
             await deleteData(store, parseInt(id));
-            await renderAll();
+            profileDataCache = null; await renderAll();
         }
     }
 
@@ -4545,8 +4796,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const pid = await getCurrentProfileId();
         const disciplinas = await getAllData('disciplinas', 'profileId', pid);
         if (!disciplinas.length) await createInitialData();
-        generateQuickLinks(); await renderAll(); updateMainHeaderTitle(); setupEventListeners(); setupFooterNavigation();
-        setupDrawingCanvas(); setupHandwritingCanvas(); setupImageImport(); setupDocumentImport();
+        generateQuickLinks(); 
+        profileDataCache = null; // força carregamento inicial
+        await renderAll(); 
+        updateMainHeaderTitle(); 
+        setupEventListeners(); 
+        setupFooterNavigation();
+        setupDrawingCanvas(); 
+        setupHandwritingCanvas(); 
+        setupImageImport(); 
+        setupDocumentImport();
         
         // Add change listener for trabalhoTipo to show/hide participantes wrapper
         document.getElementById('trabalhoTipo').addEventListener('change', function() {
@@ -4563,7 +4822,7 @@ document.addEventListener('DOMContentLoaded', function() {
         await saveData('disciplinas', dis[0]); id++;
         const hor = [ {id:id, profileId:pid, disciplinaId:1, diaSemana:1, inicio:"08:00", fim:"10:00", local:"Sala 101"} ];
         await saveData('horarios', hor[0]); id++;
-        const trab = [ {id:id, profileId:pid, disciplinaId:1, titulo:"Estudo de Caso", tipo:"grupo", participantes:"Ana Souza\nCarlos Lima\nMariana Silva", entrega:"2025-09-25", status:"Pendente", prioridade:"high", nota:null, observacoes:""} ];
+        const trab = [ {id:id, profileId:pid, disciplinaId:1, titulo:"Estudo de Caso", tipo:"grupo", participantes:"Ana Souza\nCarlos Lima\nMariana Silva", entrega:"2025-09-25", status:"Pendente", prioridade:"high", nota:null, observacoes:"", anexos: []} ];
         await saveData('trabalhos', trab[0]); id++;
         const prov = [ {id:id, profileId:pid, disciplinaId:1, conteudo:"Teoria Geral", data:"2025-10-15", hora:"14:00", status:"Agendada", nota:null} ];
         await saveData('provas', prov[0]); id++;
