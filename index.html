@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* (estilos originais – mantidos intactos) */
+    /* estilos originais – mantidos intactos (omitidos por brevidade, mas presentes no arquivo original) */
     :root {
       --primary: #2c3e50;
       --secondary: #34495e;
@@ -2068,7 +2068,7 @@
     <button class="footer-nav-btn" id="footer-financeiro"><i class="fas fa-dollar-sign"></i><span>Financeiro</span></button>
 </div>
 
-<!-- MODAIS -->
+<!-- MODAIS (mantidos intactos) -->
 <div class="modal fade" id="profileManagementModal" tabindex="-1" aria-labelledby="profileManagementModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Gerenciar Perfis</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p>Selecione um perfil para ativar ou gerencie seus perfis existentes.</p><ul class="list-group" id="profile-management-list"></ul><hr><form id="profileForm"><input type="hidden" id="profileId"><div class="input-group"><input type="text" class="form-control" id="profileName" placeholder="Nome do novo perfil" required><button class="btn btn-primary" type="submit" id="saveProfileBtn"><i class="fas fa-plus"></i> Adicionar</button></div></form></div></div></div></div>
 
 <div class="modal fade" id="horarioModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Aula</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="horarioForm"><input type="hidden" id="horarioId"><div class="mb-3"><label for="horarioDisciplina" class="form-label">Disciplina</label><select class="form-select" id="horarioDisciplina" required></select></div><div class="mb-3"><label for="horarioDiaSemana" class="form-label">Dia da Semana</label><select class="form-select" id="horarioDiaSemana"><option value="1">Segunda</option><option value="2">Terça</option><option value="3">Quarta</option><option value="4">Quinta</option><option value="5">Sexta</option><option value="6">Sábado</option></select></div><div class="row"><div class="col-6 mb-3"><label for="horarioInicio" class="form-label">Início</label><input type="time" class="form-control" id="horarioInicio" step="1800" required></div><div class="col-6 mb-3"><label for="horarioFim" class="form-label">Fim</label><input type="time" class="form-control" id="horarioFim" step="1800" required></div></div><div class="mb-3"><label for="horarioLocal" class="form-label">Local</label><input type="text" class="form-control" id="horarioLocal"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto d-none" id="deleteHorario">Excluir</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveHorario">Salvar</button></div></div></div></div>
@@ -2961,6 +2961,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return new Blob(byteArrays, { type: mime });
     }
 
+    // Função global para visualizar anexo, acessível via clique nos ícones
     window.visualizarAnexo = function(base64, tipo, nome) {
         const blob = base64ToBlob(base64, tipo);
         const url = URL.createObjectURL(blob);
@@ -3064,130 +3065,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return Promise.all(promises);
     }
 
-    // Renderização dos anexos no modal de trabalho (edição)
-    function renderAnexosList(anexos, containerId, prefix) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        container.innerHTML = '';
-        if (!anexos || anexos.length === 0) {
-            container.innerHTML = '<p class="text-muted small">Nenhum anexo.</p>';
-            return;
-        }
-        anexos.forEach((anexo, index) => {
-            const div = document.createElement('div');
-            div.className = 'anexo-item';
-            div.innerHTML = `
-                <div class="anexo-info">
-                    <i class="fas ${anexo.tipo.startsWith('image/') ? 'fa-image' : anexo.tipo === 'application/pdf' ? 'fa-file-pdf' : anexo.tipo.includes('word') ? 'fa-file-word' : anexo.tipo.includes('presentation') ? 'fa-file-powerpoint' : 'fa-file'}"></i>
-                    <span>${anexo.nome}</span>
-                </div>
-                <div class="anexo-acoes">
-                    <button type="button" class="btn btn-sm btn-outline-danger remover-anexo" data-index="${index}" data-prefix="${prefix}"><i class="fas fa-trash"></i></button>
-                </div>
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    // Função para salvar trabalho com múltiplos anexos
-    async function saveTrabalho() {
-        let pid = await getCurrentProfileId();
-        let id = document.getElementById('trabalhoId').value;
-        let t = { 
-            id: id ? parseInt(id) : await getNewId('trabalhos'), 
-            profileId: pid, 
-            disciplinaId: parseInt(document.getElementById('trabalhoDisciplina').value), 
-            titulo: document.getElementById('trabalhoTitulo').value,
-            tipo: document.getElementById('trabalhoTipo').value,
-            participantes: document.getElementById('trabalhoTipo').value === 'grupo' ? document.getElementById('trabalhoParticipantes').value : '',
-            entrega: document.getElementById('trabalhoEntrega').value, 
-            status: document.getElementById('trabalhoStatus').value, 
-            prioridade: document.getElementById('trabalhoPrioridade').value, 
-            nota: document.getElementById('trabalhoNota').value === '' ? null : parseFloat(document.getElementById('trabalhoNota').value), 
-            observacoes: document.getElementById('trabalhoObservacoes').value,
-            anexos: [] // será preenchido
-        };
-        if (!t.disciplinaId || !t.titulo || !t.entrega) return alert('Preencha campos obrigatórios.');
-
-        // Obter anexos existentes (que não foram removidos)
-        const anexosRemovidos = document.getElementById('trabalhoAnexosRemovidos').value;
-        const removidosSet = new Set(anexosRemovidos ? anexosRemovidos.split(',') : []);
-        
-        if (id) {
-            const original = await getData('trabalhos', parseInt(id));
-            if (original && original.anexos) {
-                t.anexos = original.anexos.filter(a => !removidosSet.has(a.id.toString()));
-            }
-        }
-
-        // Adicionar novos anexos
-        const anexoInput = document.getElementById('trabalhoAnexos');
-        if (anexoInput.files && anexoInput.files.length > 0) {
-            const novosAnexos = await readMultipleFilesAsBase64(anexoInput.files);
-            t.anexos = [...t.anexos, ...novosAnexos];
-        }
-
-        await saveData('trabalhos', t);
-        profileDataCache = null;
-        await renderAll();
-        bootstrap.Modal.getInstance(document.getElementById('trabalhoModal')).hide();
-    }
-
-    // Função para editar trabalho (carregar anexos existentes)
-    async function editTrabalho(id) {
-        let item = await getData('trabalhos', parseInt(id));
-        if (!item) return;
-        document.getElementById('trabalhoModalLabel').textContent = 'Editar Trabalho';
-        document.getElementById('trabalhoId').value = item.id;
-        document.getElementById('trabalhoDisciplina').value = item.disciplinaId;
-        document.getElementById('trabalhoTitulo').value = item.titulo;
-        document.getElementById('trabalhoTipo').value = item.tipo || 'individual';
-        document.getElementById('trabalhoParticipantes').value = item.participantes || '';
-        document.getElementById('trabalhoEntrega').value = item.entrega;
-        document.getElementById('trabalhoStatus').value = item.status;
-        document.getElementById('trabalhoPrioridade').value = item.prioridade;
-        document.getElementById('trabalhoNota').value = item.nota !== null ? item.nota : '';
-        document.getElementById('trabalhoObservacoes').value = item.observacoes || '';
-
-        // Mostrar/ocultar participantes conforme tipo
-        document.getElementById('grupoParticipantesWrapper').style.display = item.tipo === 'grupo' ? 'block' : 'none';
-
-        // Carregar anexos existentes
-        renderAnexosList(item.anexos || [], 'trabalhoAnexosPreview', 'trabalho');
-        document.getElementById('trabalhoAnexosRemovidos').value = '';
-
-        new bootstrap.Modal(document.getElementById('trabalhoModal')).show();
-    }
-
-    // Função para remover anexo da lista (marcar para exclusão)
-    function setupAnexoRemocao() {
-        document.body.addEventListener('click', (e) => {
-            const btn = e.target.closest('.remover-anexo');
-            if (!btn) return;
-            e.preventDefault();
-            const index = btn.dataset.index;
-            const prefix = btn.dataset.prefix;
-            if (prefix === 'trabalho') {
-                const removidosInput = document.getElementById('trabalhoAnexosRemovidos');
-                const anexoDiv = btn.closest('.anexo-item');
-                // Obter o id do anexo (está no dataset ou no texto? vamos usar o índice como referência, mas melhor usar um id único)
-                // Na renderização, cada anexo tem um id único armazenado no dataset do botão? Vamos modificar a renderização para colocar o id.
-                // Vamos refazer a renderização para incluir o id do anexo no botão.
-                // Adaptação: na função renderAnexosList, adicionar data-id ao botão.
-                // Mas já que estamos no escopo, vamos fazer de forma simples: usar o índice para remover visualmente e armazenar os ids dos removidos.
-                // Precisamos do id real do anexo.
-                // Vamos modificar a função renderAnexosList para incluir data-id.
-                // Por enquanto, farei uma versão simplificada: o índice é o índice no array, mas se houver remoções múltiplas pode bagunçar.
-                // Vamos usar o id único do anexo.
-                // Vamos alterar a função renderAnexosList para armazenar o id no botão.
-                // Como já está em execução, farei inline na nova função.
-                // Na prática, precisamos do id. Vou assumir que a função renderAnexosList foi atualizada para usar data-id.
-                // Para não complicar, vou implementar a nova versão abaixo.
-            }
-        });
-    }
-
-    // Função renderAnexosList atualizada com data-id
+    // Função renderAnexosList corrigida e robusta
     function renderAnexosList(anexos, containerId, prefix) {
         const container = document.getElementById(containerId);
         if (!container) return;
@@ -3197,15 +3075,22 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         anexos.forEach((anexo) => {
+            const tipo = anexo.tipo || '';
+            const nome = anexo.nome || 'anexo';
+            let iconClass = 'fa-file';
+            if (tipo.startsWith('image/')) iconClass = 'fa-image';
+            else if (tipo === 'application/pdf') iconClass = 'fa-file-pdf';
+            else if (tipo.includes('word') || nome.endsWith('.docx')) iconClass = 'fa-file-word';
+            else if (tipo.includes('presentation') || nome.endsWith('.pptx')) iconClass = 'fa-file-powerpoint';
             const div = document.createElement('div');
             div.className = 'anexo-item';
             div.innerHTML = `
                 <div class="anexo-info">
-                    <i class="fas ${anexo.tipo.startsWith('image/') ? 'fa-image' : anexo.tipo === 'application/pdf' ? 'fa-file-pdf' : anexo.tipo.includes('word') ? 'fa-file-word' : anexo.tipo.includes('presentation') ? 'fa-file-powerpoint' : 'fa-file'}"></i>
-                    <span>${anexo.nome}</span>
+                    <i class="fas ${iconClass}"></i>
+                    <span>${nome}</span>
                 </div>
                 <div class="anexo-acoes">
-                    <button type="button" class="btn btn-sm btn-outline-danger remover-anexo" data-id="${anexo.id}" data-prefix="${prefix}"><i class="fas fa-trash"></i></button>
+                    <button type="button" class="btn btn-sm btn-outline-danger remover-anexo" data-id="${anexo.id || ''}" data-prefix="${prefix}"><i class="fas fa-trash"></i></button>
                 </div>
             `;
             container.appendChild(div);
@@ -3220,8 +3105,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const id = btn.dataset.id;
         const prefix = btn.dataset.prefix;
         const removidosInput = document.getElementById(prefix + 'AnexosRemovidos');
+        if (!removidosInput) return;
         let removidos = removidosInput.value ? removidosInput.value.split(',') : [];
-        if (!removidos.includes(id)) {
+        if (id && !removidos.includes(id)) {
             removidos.push(id);
             removidosInput.value = removidos.join(',');
         }
@@ -3232,7 +3118,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Configurar evento de remoção de anexo global
     document.body.addEventListener('click', handleRemoverAnexo);
 
-    // Substituir as funções de anexo antigas
     function setupAnexoPreview(inputId, previewId, hiddenId) {
         const input = document.getElementById(inputId);
         const preview = document.getElementById(previewId);
@@ -3308,8 +3193,72 @@ document.addEventListener('DOMContentLoaded', function() {
         bootstrap.Modal.getInstance(document.getElementById('disciplinaModal')).hide();
     }
 
-    async function saveTrabalhoWrapper() {
-        await saveTrabalho();
+    async function saveTrabalho() {
+        let pid = await getCurrentProfileId();
+        let id = document.getElementById('trabalhoId').value;
+        let t = { 
+            id: id ? parseInt(id) : await getNewId('trabalhos'), 
+            profileId: pid, 
+            disciplinaId: parseInt(document.getElementById('trabalhoDisciplina').value), 
+            titulo: document.getElementById('trabalhoTitulo').value,
+            tipo: document.getElementById('trabalhoTipo').value,
+            participantes: document.getElementById('trabalhoTipo').value === 'grupo' ? document.getElementById('trabalhoParticipantes').value : '',
+            entrega: document.getElementById('trabalhoEntrega').value, 
+            status: document.getElementById('trabalhoStatus').value, 
+            prioridade: document.getElementById('trabalhoPrioridade').value, 
+            nota: document.getElementById('trabalhoNota').value === '' ? null : parseFloat(document.getElementById('trabalhoNota').value), 
+            observacoes: document.getElementById('trabalhoObservacoes').value,
+            anexos: [] // será preenchido
+        };
+        if (!t.disciplinaId || !t.titulo || !t.entrega) return alert('Preencha campos obrigatórios.');
+
+        // Obter anexos existentes (que não foram removidos)
+        const anexosRemovidos = document.getElementById('trabalhoAnexosRemovidos').value;
+        const removidosSet = new Set(anexosRemovidos ? anexosRemovidos.split(',') : []);
+        
+        if (id) {
+            const original = await getData('trabalhos', parseInt(id));
+            if (original && original.anexos) {
+                t.anexos = original.anexos.filter(a => !removidosSet.has(a.id.toString()));
+            }
+        }
+
+        // Adicionar novos anexos
+        const anexoInput = document.getElementById('trabalhoAnexos');
+        if (anexoInput.files && anexoInput.files.length > 0) {
+            const novosAnexos = await readMultipleFilesAsBase64(anexoInput.files);
+            t.anexos = [...t.anexos, ...novosAnexos];
+        }
+
+        await saveData('trabalhos', t);
+        profileDataCache = null;
+        await renderAll();
+        bootstrap.Modal.getInstance(document.getElementById('trabalhoModal')).hide();
+    }
+
+    async function editTrabalho(id) {
+        let item = await getData('trabalhos', parseInt(id));
+        if (!item) return;
+        document.getElementById('trabalhoModalLabel').textContent = 'Editar Trabalho';
+        document.getElementById('trabalhoId').value = item.id;
+        document.getElementById('trabalhoDisciplina').value = item.disciplinaId;
+        document.getElementById('trabalhoTitulo').value = item.titulo;
+        document.getElementById('trabalhoTipo').value = item.tipo || 'individual';
+        document.getElementById('trabalhoParticipantes').value = item.participantes || '';
+        document.getElementById('trabalhoEntrega').value = item.entrega;
+        document.getElementById('trabalhoStatus').value = item.status;
+        document.getElementById('trabalhoPrioridade').value = item.prioridade;
+        document.getElementById('trabalhoNota').value = item.nota !== null ? item.nota : '';
+        document.getElementById('trabalhoObservacoes').value = item.observacoes || '';
+
+        // Mostrar/ocultar participantes conforme tipo
+        document.getElementById('grupoParticipantesWrapper').style.display = item.tipo === 'grupo' ? 'block' : 'none';
+
+        // Carregar anexos existentes
+        renderAnexosList(item.anexos || [], 'trabalhoAnexosPreview', 'trabalho');
+        document.getElementById('trabalhoAnexosRemovidos').value = '';
+
+        new bootstrap.Modal(document.getElementById('trabalhoModal')).show();
     }
 
     async function saveProva() {
@@ -3663,34 +3612,42 @@ document.addEventListener('DOMContentLoaded', function() {
         } else container.innerHTML += `<div class="empty-state" style="grid-column:2/8;grid-row:2/6;">Nenhuma aula cadastrada.</div>`;
     }
 
+    // Nova função para renderizar ícones de anexo usando data attributes (mais seguro)
     function renderAnexoIcon(item) {
         if (!item.anexos || item.anexos.length === 0) return '-';
-        // Se for trabalho com múltiplos anexos, mostra ícones empilhados
         if (Array.isArray(item.anexos)) {
             return item.anexos.map(a => {
-                const isPdf = a.tipo === 'application/pdf';
-                const isWord = a.tipo === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || (a.nome && a.nome.endsWith('.docx'));
-                const isPpt = a.tipo === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' || (a.nome && a.nome.endsWith('.pptx'));
+                const tipo = a.tipo || '';
+                const nome = a.nome || 'anexo';
                 let icon, cor;
-                if (isPdf) { icon = 'fa-file-pdf'; cor = 'text-danger'; }
-                else if (isWord) { icon = 'fa-file-word'; cor = 'text-primary'; }
-                else if (isPpt) { icon = 'fa-file-powerpoint'; cor = 'text-warning'; }
-                else if (a.tipo.startsWith('image/')) { icon = 'fa-image'; cor = 'text-success'; }
+                if (tipo === 'application/pdf' || nome.endsWith('.pdf')) { icon = 'fa-file-pdf'; cor = 'text-danger'; }
+                else if (tipo.includes('word') || nome.endsWith('.docx')) { icon = 'fa-file-word'; cor = 'text-primary'; }
+                else if (tipo.includes('presentation') || nome.endsWith('.pptx')) { icon = 'fa-file-powerpoint'; cor = 'text-warning'; }
+                else if (tipo.startsWith('image/')) { icon = 'fa-image'; cor = 'text-success'; }
                 else { icon = 'fa-file'; cor = 'text-secondary'; }
-                return `<i class="fas ${icon} ${cor} attachment-icon" onclick="visualizarAnexo('${a.dados}', '${a.tipo}', '${a.nome}')" title="${a.nome}"></i>`;
+                // Codifica os dados para evitar problemas com caracteres especiais nos atributos data-
+                const dadosEncoded = encodeURIComponent(a.dados || '');
+                const tipoEncoded = encodeURIComponent(tipo);
+                const nomeEncoded = encodeURIComponent(nome);
+                // Escape para o título (tooltip)
+                const titleEscaped = nome.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                return `<i class="fas ${icon} ${cor} attachment-icon" data-dados="${dadosEncoded}" data-tipo="${tipoEncoded}" data-nome="${nomeEncoded}" title="${titleEscaped}"></i>`;
             }).join(' ');
         }
-        // Fallback para anexo único (prova/evento)
-        const isPdf = item.anexoTipo === 'application/pdf';
-        const isWord = item.anexoTipo === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || (item.anexoNome && item.anexoNome.endsWith('.docx'));
-        const isPpt = item.anexoTipo === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' || (item.anexoNome && item.anexoNome.endsWith('.pptx'));
+        // Fallback para anexo único (formato antigo)
+        const tipo = item.anexoTipo || '';
+        const nome = item.anexoNome || 'anexo';
         let icon, cor;
-        if (isPdf) { icon = 'fa-file-pdf'; cor = 'text-danger'; }
-        else if (isWord) { icon = 'fa-file-word'; cor = 'text-primary'; }
-        else if (isPpt) { icon = 'fa-file-powerpoint'; cor = 'text-warning'; }
-        else if (item.anexoTipo.startsWith('image/')) { icon = 'fa-image'; cor = 'text-success'; }
+        if (tipo === 'application/pdf' || nome.endsWith('.pdf')) { icon = 'fa-file-pdf'; cor = 'text-danger'; }
+        else if (tipo.includes('word') || nome.endsWith('.docx')) { icon = 'fa-file-word'; cor = 'text-primary'; }
+        else if (tipo.includes('presentation') || nome.endsWith('.pptx')) { icon = 'fa-file-powerpoint'; cor = 'text-warning'; }
+        else if (tipo.startsWith('image/')) { icon = 'fa-image'; cor = 'text-success'; }
         else { icon = 'fa-file'; cor = 'text-secondary'; }
-        return `<i class="fas ${icon} ${cor} attachment-icon" onclick="visualizarAnexo('${item.anexo}', '${item.anexoTipo}', '${item.anexoNome}')" title="${item.anexoNome}"></i>`;
+        const dadosEncoded = encodeURIComponent(item.anexo || '');
+        const tipoEncoded = encodeURIComponent(tipo);
+        const nomeEncoded = encodeURIComponent(nome);
+        const titleEscaped = nome.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        return `<i class="fas ${icon} ${cor} attachment-icon" data-dados="${dadosEncoded}" data-tipo="${tipoEncoded}" data-nome="${nomeEncoded}" title="${titleEscaped}"></i>`;
     }
 
     async function renderTrabalhos(data) {
@@ -4356,7 +4313,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('saveDisciplina').addEventListener('click', saveDisciplina);
         document.getElementById('saveHorario').addEventListener('click', saveHorario);
-        document.getElementById('saveTrabalho').addEventListener('click', saveTrabalhoWrapper);
+        document.getElementById('saveTrabalho').addEventListener('click', saveTrabalho);
         document.getElementById('saveProva').addEventListener('click', saveProva);
         document.getElementById('saveEvent').addEventListener('click', saveEvent);
         document.getElementById('saveFinanceiro').addEventListener('click', saveFinanceiro);
@@ -4400,6 +4357,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         document.body.addEventListener('click', async e=>{
+            // Primeiro trata ícones de anexo (novo método)
+            let attachmentIcon = e.target.closest('.attachment-icon');
+            if (attachmentIcon) {
+                e.preventDefault();
+                const dados = decodeURIComponent(attachmentIcon.dataset.dados);
+                const tipo = decodeURIComponent(attachmentIcon.dataset.tipo);
+                const nome = decodeURIComponent(attachmentIcon.dataset.nome);
+                window.visualizarAnexo(dados, tipo, nome);
+                return;
+            }
+
             let cardLink = e.target.closest('.card-link');
             if (cardLink) {
                 e.preventDefault();
