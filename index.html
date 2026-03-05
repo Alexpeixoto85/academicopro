@@ -2228,8 +2228,25 @@
 
 <div class="modal fade" id="bibliotecaModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Livro</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="bibliotecaForm"><input type="hidden" id="bibliotecaId"><div class="mb-3"><label for="bibliotecaTitulo" class="form-label">Título</label><input type="text" class="form-control" id="bibliotecaTitulo" required></div><div class="mb-3"><label for="bibliotecaAutor" class="form-label">Autor</label><input type="text" class="form-control" id="bibliotecaAutor" required></div><div class="mb-3"><label for="bibliotecaAssunto" class="form-label">Assunto</label><input type="text" class="form-control" id="bibliotecaAssunto" required></div><div class="mb-3"><label for="bibliotecaEditora" class="form-label">Editora</label><input type="text" class="form-control" id="bibliotecaEditora"></div><div class="mb-3"><label for="bibliotecaAno" class="form-label">Ano</label><input type="number" class="form-control" id="bibliotecaAno" min="1900" max="2030"></div><div class="mb-3"><label for="bibliotecaObservacoes" class="form-label">Observações</label><textarea class="form-control" id="bibliotecaObservacoes" rows="2"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveLivro">Salvar</button></div></div></div></div>
 
-<!-- Modal para visualizar Imagem -->
-<div class="modal fade" id="viewImageModal" tabindex="-1"><div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Visualizar Imagem</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><img id="modalImage" class="nota-imagem-full" src="" alt="Imagem"><p id="modalImageDescription" class="mt-3"></p></div></div></div></div>
+<!-- Modal para visualizar Imagem (com botão de download) -->
+<div class="modal fade" id="viewImageModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Visualizar Imagem</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" class="nota-imagem-full" src="" alt="Imagem">
+                <p id="modalImageDescription" class="mt-3"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="downloadImageBtn"><i class="fas fa-download"></i> Baixar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Modal para visualizar PDF -->
 <div class="modal fade" id="viewPdfModal" tabindex="-1">
@@ -2287,7 +2304,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// ... (todo o script permanece exatamente como no original, sem alterações)
+// ... (todo o script permanece exatamente como no original, com as melhorias para download de imagem)
 document.addEventListener('DOMContentLoaded', function() {
     const DB_NAME = 'academicoProDB', DB_VERSION = 2;
     let db;
@@ -3027,6 +3044,16 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (tipo.startsWith('image/')) {
             document.getElementById('modalImage').src = base64;
             document.getElementById('modalImageDescription').innerText = nome;
+            const downloadBtn = document.getElementById('downloadImageBtn');
+            downloadBtn.onclick = function() {
+                const blob = base64ToBlob(base64, tipo);
+                const imgUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = imgUrl;
+                a.download = nome;
+                a.click();
+                URL.revokeObjectURL(imgUrl);
+            };
             new bootstrap.Modal(document.getElementById('viewImageModal')).show();
         } else {
             const modalEl = document.getElementById('viewDocumentModal');
@@ -3881,9 +3908,26 @@ document.addEventListener('DOMContentLoaded', function() {
         let imagens = data.notas.filter(n=>n.imagem);
         if (!imagens.length) { container.innerHTML = '<div class="col-12"><p class="text-center text-muted">Nenhuma imagem na galeria.</p></div>'; return; }
         imagens.forEach(img => {
-            container.innerHTML += `<div class="col-md-4 col-lg-3 galeria-item"><div class="card"><img src="${img.imagem}" class="galeria-imagem" alt="${img.titulo}" onclick="document.getElementById('modalImage').src='${img.imagem}'; document.getElementById('modalImageDescription').innerText='${img.titulo}'; new bootstrap.Modal(document.getElementById('viewImageModal')).show();"><div class="card-body p-2"><p class="card-text small mb-0">${img.titulo}</p><small class="text-muted">${new Date(img.dataCriacao).toLocaleDateString('pt-BR')}</small></div></div></div>`;
+            container.innerHTML += `<div class="col-md-4 col-lg-3 galeria-item"><div class="card"><img src="${img.imagem}" class="galeria-imagem" alt="${img.titulo}" onclick="abrirImagemGaleria('${img.imagem}', '${img.titulo}');"><div class="card-body p-2"><p class="card-text small mb-0">${img.titulo}</p><small class="text-muted">${new Date(img.dataCriacao).toLocaleDateString('pt-BR')}</small></div></div></div>`;
         });
     }
+
+    // Função auxiliar para abrir imagem da galeria com download
+    window.abrirImagemGaleria = function(imagem, titulo) {
+        document.getElementById('modalImage').src = imagem;
+        document.getElementById('modalImageDescription').innerText = titulo;
+        const downloadBtn = document.getElementById('downloadImageBtn');
+        downloadBtn.onclick = function() {
+            const blob = base64ToBlob(imagem, 'image/png'); // assume png, mas pode ser melhor detectar
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = titulo + '.png';
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+        new bootstrap.Modal(document.getElementById('viewImageModal')).show();
+    };
 
     async function renderLinks(data) {
         const container = document.getElementById('links-lista');
@@ -4462,6 +4506,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (nota.imagem) {
                         document.getElementById('modalImage').src = nota.imagem;
                         document.getElementById('modalImageDescription').innerText = nota.titulo;
+                        const downloadBtn = document.getElementById('downloadImageBtn');
+                        downloadBtn.onclick = function() {
+                            const blob = base64ToBlob(nota.imagem, 'image/png');
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = nota.titulo + '.png';
+                            a.click();
+                            URL.revokeObjectURL(url);
+                        };
                         new bootstrap.Modal(document.getElementById('viewImageModal')).show();
                     } else {
                         document.getElementById('notaModalLabel').textContent = 'Visualizar Nota';
@@ -4481,8 +4535,20 @@ document.addEventListener('DOMContentLoaded', function() {
             let viewImg = e.target.closest('.view-image-btn');
             if (viewImg) {
                 e.preventDefault();
-                document.getElementById('modalImage').src = viewImg.dataset.imagem;
-                document.getElementById('modalImageDescription').innerText = viewImg.dataset.titulo;
+                const imagem = viewImg.dataset.imagem;
+                const titulo = viewImg.dataset.titulo;
+                document.getElementById('modalImage').src = imagem;
+                document.getElementById('modalImageDescription').innerText = titulo;
+                const downloadBtn = document.getElementById('downloadImageBtn');
+                downloadBtn.onclick = function() {
+                    const blob = base64ToBlob(imagem, 'image/png');
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = titulo + '.png';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                };
                 new bootstrap.Modal(document.getElementById('viewImageModal')).show();
             }
             let watchFilm = e.target.closest('.watch-filme');
@@ -4609,7 +4675,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 let nid = target.dataset.id;
                 let data = await getProfileData(), nota = data.notas.find(n=>n.id==nid);
                 if (nota) {
-                    if (nota.imagem) { document.getElementById('modalImage').src = nota.imagem; document.getElementById('modalImageDescription').innerText = nota.titulo; new bootstrap.Modal(document.getElementById('viewImageModal')).show(); }
+                    if (nota.imagem) { 
+                        document.getElementById('modalImage').src = nota.imagem; 
+                        document.getElementById('modalImageDescription').innerText = nota.titulo;
+                        const downloadBtn = document.getElementById('downloadImageBtn');
+                        downloadBtn.onclick = function() {
+                            const blob = base64ToBlob(nota.imagem, 'image/png');
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = nota.titulo + '.png';
+                            a.click();
+                            URL.revokeObjectURL(url);
+                        };
+                        new bootstrap.Modal(document.getElementById('viewImageModal')).show(); 
+                    }
                     else {
                         document.getElementById('notaModalLabel').textContent = 'Editar Nota';
                         document.getElementById('notaTitulo').value = nota.titulo;
