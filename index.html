@@ -2077,28 +2077,48 @@
 <div class="modal fade" id="disciplinaModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Disciplina</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="disciplinaForm"><input type="hidden" id="disciplinaId"><div class="mb-3"><label for="disciplinaNome" class="form-label">Nome</label><input type="text" class="form-control" id="disciplinaNome" required></div><div class="mb-3"><label for="disciplinaProfessor" class="form-label">Professor</label><input type="text" class="form-control" id="disciplinaProfessor"></div><div class="mb-3"><label for="disciplinaEmail" class="form-label">E-mail do Professor</label><input type="email" class="form-control" id="disciplinaEmail"></div><div class="mb-3"><label for="disciplinaFrequencia" class="form-label">Frequência (%)</label><input type="number" class="form-control" id="disciplinaFrequencia" min="0" max="100" value="100"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveDisciplina">Salvar</button></div></div></div></div>
 
 <!-- Modal Trabalho com múltiplos anexos -->
-<div class="modal fade" id="trabalhoModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Trabalho</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="trabalhoForm"><input type="hidden" id="trabalhoId"><div class="mb-3"><label for="trabalhoDisciplina" class="form-label">Disciplina</label><select class="form-select" id="trabalhoDisciplina" required></select></div><div class="mb-3"><label for="trabalhoTitulo" class="form-label">Título</label><input type="text" class="form-control" id="trabalhoTitulo" required></div>
-<div class="mb-3">
-    <label for="trabalhoTipo" class="form-label">Tipo</label>
-    <select class="form-select" id="trabalhoTipo">
-        <option value="individual">Individual</option>
-        <option value="grupo">Em grupo</option>
-    </select>
+<div class="modal fade" id="trabalhoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="trabalhoModalLabel">Novo Trabalho</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="trabalhoForm">
+                    <input type="hidden" id="trabalhoId">
+                    <div class="mb-3"><label for="trabalhoDisciplina" class="form-label">Disciplina</label><select class="form-select" id="trabalhoDisciplina" required></select></div>
+                    <div class="mb-3"><label for="trabalhoTitulo" class="form-label">Título</label><input type="text" class="form-control" id="trabalhoTitulo" required></div>
+                    <div class="mb-3">
+                        <label for="trabalhoTipo" class="form-label">Tipo</label>
+                        <select class="form-select" id="trabalhoTipo">
+                            <option value="individual">Individual</option>
+                            <option value="grupo">Em grupo</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="grupoParticipantesWrapper" style="display: none;">
+                        <label for="trabalhoParticipantes" class="form-label">Participantes (um por linha)</label>
+                        <textarea class="form-control" id="trabalhoParticipantes" rows="3" placeholder="Nome do aluno 1&#10;Nome do aluno 2&#10;Nome do aluno 3"></textarea>
+                    </div>
+                    <div class="mb-3"><label for="trabalhoEntrega" class="form-label">Data de Entrega</label><input type="date" class="form-control" id="trabalhoEntrega" required></div>
+                    <div class="mb-3"><label for="trabalhoStatus" class="form-label">Status</label><select class="form-select" id="trabalhoStatus"><option value="Pendente">Pendente</option><option value="Entregue">Entregue</option></select></div>
+                    <div class="mb-3"><label for="trabalhoPrioridade" class="form-label">Prioridade</label><select class="form-select" id="trabalhoPrioridade"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></div>
+                    <div class="mb-3"><label for="trabalhoNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="trabalhoNota" min="0" max="10"></div>
+                    <div class="mb-3"><label for="trabalhoObservacoes" class="form-label">Observações</label><textarea class="form-control" id="trabalhoObservacoes" rows="3"></textarea></div>
+                    <!-- Área de anexos múltiplos -->
+                    <div class="mb-3">
+                        <label class="form-label">Anexos (PDF, imagem, Word, PowerPoint)</label>
+                        <input type="file" class="form-control" id="trabalhoAnexos" accept=".pdf,.docx,.pptx,image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation" multiple>
+                        <small class="text-muted">Você pode selecionar vários arquivos.</small>
+                        <div id="trabalhoAnexosPreview" class="anexos-list mt-2"></div>
+                    </div>
+                    <input type="hidden" id="trabalhoAnexosRemovidos" value="">
+                </form>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveTrabalho">Salvar</button></div>
+        </div>
+    </div>
 </div>
-<div class="mb-3" id="grupoParticipantesWrapper" style="display: none;">
-    <label for="trabalhoParticipantes" class="form-label">Participantes (um por linha)</label>
-    <textarea class="form-control" id="trabalhoParticipantes" rows="3" placeholder="Nome do aluno 1&#10;Nome do aluno 2&#10;Nome do aluno 3"></textarea>
-</div>
-<div class="mb-3"><label for="trabalhoEntrega" class="form-label">Data de Entrega</label><input type="date" class="form-control" id="trabalhoEntrega" required></div><div class="mb-3"><label for="trabalhoStatus" class="form-label">Status</label><select class="form-select" id="trabalhoStatus"><option value="Pendente">Pendente</option><option value="Entregue">Entregue</option></select></div><div class="mb-3"><label for="trabalhoPrioridade" class="form-label">Prioridade</label><select class="form-select" id="trabalhoPrioridade"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></div><div class="mb-3"><label for="trabalhoNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="trabalhoNota" min="0" max="10"></div><div class="mb-3"><label for="trabalhoObservacoes" class="form-label">Observações</label><textarea class="form-control" id="trabalhoObservacoes" rows="3"></textarea></div>
-<!-- Área de anexos múltiplos -->
-<div class="mb-3">
-    <label class="form-label">Anexos (PDF, imagem, Word, PowerPoint)</label>
-    <input type="file" class="form-control" id="trabalhoAnexos" accept=".pdf,.docx,.pptx,image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation" multiple>
-    <small class="text-muted">Você pode selecionar vários arquivos.</small>
-    <div id="trabalhoAnexosPreview" class="anexos-list mt-2"></div>
-</div>
-<input type="hidden" id="trabalhoAnexosRemovidos" value="">
-</form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveTrabalho">Salvar</button></div></div></div></div>
 
 <!-- Modal Prova com anexo único -->
 <div class="modal fade" id="provaModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Prova</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="provaForm"><input type="hidden" id="provaId"><div class="mb-3"><label for="provaDisciplina" class="form-label">Disciplina</label><select class="form-select" id="provaDisciplina" required></select></div><div class="mb-3"><label for="provaConteudo" class="form-label">Conteúdo</label><input type="text" class="form-control" id="provaConteudo" required></div><div class="mb-3"><label for="provaData" class="form-label">Data</label><input type="date" class="form-control" id="provaData" required></div><div class="mb-3"><label for="provaHora" class="form-label">Hora</label><input type="time" class="form-control" id="provaHora"></div><div class="mb-3"><label for="provaStatus" class="form-label">Status</label><select class="form-select" id="provaStatus"><option value="Agendada">Agendada</option><option value="Realizada">Realizada</option></select></div><div class="mb-3"><label for="provaNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="provaNota" min="0" max="10"></div>
@@ -2267,6 +2287,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+// ... (todo o script permanece exatamente como no original, sem alterações)
 document.addEventListener('DOMContentLoaded', function() {
     const DB_NAME = 'academicoProDB', DB_VERSION = 2;
     let db;
@@ -3245,25 +3266,53 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Trabalho não encontrado.');
                 return;
             }
-            document.getElementById('trabalhoModalLabel').textContent = 'Editar Trabalho';
-            document.getElementById('trabalhoId').value = item.id;
-            document.getElementById('trabalhoDisciplina').value = item.disciplinaId;
-            document.getElementById('trabalhoTitulo').value = item.titulo;
-            document.getElementById('trabalhoTipo').value = item.tipo || 'individual';
-            document.getElementById('trabalhoParticipantes').value = item.participantes || '';
-            document.getElementById('trabalhoEntrega').value = item.entrega;
-            document.getElementById('trabalhoStatus').value = item.status;
-            document.getElementById('trabalhoPrioridade').value = item.prioridade;
-            document.getElementById('trabalhoNota').value = item.nota !== null ? item.nota : '';
-            document.getElementById('trabalhoObservacoes').value = item.observacoes || '';
+
+            // Mapear elementos do formulário para verificar existência
+            const elements = {
+                label: document.getElementById('trabalhoModalLabel'),
+                id: document.getElementById('trabalhoId'),
+                disciplina: document.getElementById('trabalhoDisciplina'),
+                titulo: document.getElementById('trabalhoTitulo'),
+                tipo: document.getElementById('trabalhoTipo'),
+                participantes: document.getElementById('trabalhoParticipantes'),
+                entrega: document.getElementById('trabalhoEntrega'),
+                status: document.getElementById('trabalhoStatus'),
+                prioridade: document.getElementById('trabalhoPrioridade'),
+                nota: document.getElementById('trabalhoNota'),
+                observacoes: document.getElementById('trabalhoObservacoes'),
+                wrapper: document.getElementById('grupoParticipantesWrapper'),
+                anexosPreview: document.getElementById('trabalhoAnexosPreview'),
+                removidos: document.getElementById('trabalhoAnexosRemovidos')
+            };
+
+            // Verificar se todos os elementos existem
+            for (let [key, el] of Object.entries(elements)) {
+                if (!el) {
+                    console.error(`Elemento ${key} não encontrado no DOM`);
+                    alert(`Erro: elemento ${key} não encontrado.`);
+                    return;
+                }
+            }
+
+            // Preencher campos
+            elements.label.textContent = 'Editar Trabalho';
+            elements.id.value = item.id;
+            elements.disciplina.value = item.disciplinaId;
+            elements.titulo.value = item.titulo;
+            elements.tipo.value = item.tipo || 'individual';
+            elements.participantes.value = item.participantes || '';
+            elements.entrega.value = item.entrega;
+            elements.status.value = item.status;
+            elements.prioridade.value = item.prioridade;
+            elements.nota.value = item.nota !== null ? item.nota : '';
+            elements.observacoes.value = item.observacoes || '';
 
             // Mostrar/ocultar participantes conforme tipo
-            const wrapper = document.getElementById('grupoParticipantesWrapper');
-            if (wrapper) wrapper.style.display = item.tipo === 'grupo' ? 'block' : 'none';
+            elements.wrapper.style.display = item.tipo === 'grupo' ? 'block' : 'none';
 
             // Carregar anexos existentes
             renderAnexosList(item.anexos || [], 'trabalhoAnexosPreview', 'trabalho');
-            document.getElementById('trabalhoAnexosRemovidos').value = '';
+            elements.removidos.value = '';
 
             const modalEl = document.getElementById('trabalhoModal');
             const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
