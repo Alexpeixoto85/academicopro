@@ -2069,7 +2069,7 @@
     <button class="footer-nav-btn" id="footer-financeiro"><i class="fas fa-dollar-sign"></i><span>Financeiro</span></button>
 </div>
 
-<!-- MODAIS -->
+<!-- MODAIS (mantidos intactos) -->
 <div class="modal fade" id="profileManagementModal" tabindex="-1" aria-labelledby="profileManagementModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Gerenciar Perfis</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p>Selecione um perfil para ativar ou gerencie seus perfis existentes.</p><ul class="list-group" id="profile-management-list"></ul><hr><form id="profileForm"><input type="hidden" id="profileId"><div class="input-group"><input type="text" class="form-control" id="profileName" placeholder="Nome do novo perfil" required><button class="btn btn-primary" type="submit" id="saveProfileBtn"><i class="fas fa-plus"></i> Adicionar</button></div></form></div></div></div></div>
 
 <div class="modal fade" id="horarioModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Aula</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="horarioForm"><input type="hidden" id="horarioId"><div class="mb-3"><label for="horarioDisciplina" class="form-label">Disciplina</label><select class="form-select" id="horarioDisciplina" required></select></div><div class="mb-3"><label for="horarioDiaSemana" class="form-label">Dia da Semana</label><select class="form-select" id="horarioDiaSemana"><option value="1">Segunda</option><option value="2">Terça</option><option value="3">Quarta</option><option value="4">Quinta</option><option value="5">Sexta</option><option value="6">Sábado</option></select></div><div class="row"><div class="col-6 mb-3"><label for="horarioInicio" class="form-label">Início</label><input type="time" class="form-control" id="horarioInicio" step="1800" required></div><div class="col-6 mb-3"><label for="horarioFim" class="form-label">Fim</label><input type="time" class="form-control" id="horarioFim" step="1800" required></div></div><div class="mb-3"><label for="horarioLocal" class="form-label">Local</label><input type="text" class="form-control" id="horarioLocal"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto d-none" id="deleteHorario">Excluir</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveHorario">Salvar</button></div></div></div></div>
@@ -2302,9 +2302,9 @@
 <!-- Botão de sair da tela cheia dentro do modal de nota -->
 <button class="fullscreen-exit-btn" id="fullscreenNoteExitBtn" style="display: none;"><i class="fas fa-compress"></i> Sair da tela cheia</button>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
 <script>
-// ... (todo o script permanece exatamente como no original, com as melhorias para download de imagem)
+// ========== CÓDIGO OTIMIZADO PARA CARREGAMENTO RÁPIDO ==========
 document.addEventListener('DOMContentLoaded', function() {
     const DB_NAME = 'academicoProDB', DB_VERSION = 2;
     let db;
@@ -2321,6 +2321,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let importedImageData = null;
     let importedDocumentData = null;
     let scheduleStartHour = 7, scheduleEndHour = 22;
+    let drawingCanvasInitialized = false;
+    let handwritingCanvasInitialized = false;
     
     let financeFilterType = 'all';
     let financeFilterStatus = 'all';
@@ -2329,6 +2331,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Cache de dados do perfil atual
     let profileDataCache = null;
+    let activePanel = 'home-links'; // painel atualmente ativo
 
     // Tema
     function loadTheme() {
@@ -2517,12 +2520,18 @@ document.addEventListener('DOMContentLoaded', function() {
             await saveData('profiles', p);
         }
         profileDataCache = null; // Limpa cache
-        renderAll(); renderProfileManagementList(); updateMainHeaderTitle(); updateFixedBackButton();
+        // Recarrega dados e renderiza painel ativo
+        await loadProfileData();
+        renderCurrentPanel();
     }
 
     // Função otimizada: busca dados uma vez e cacheia
     async function getProfileData(forceRefresh = false) {
         if (profileDataCache && !forceRefresh) return profileDataCache;
+        return loadProfileData(forceRefresh);
+    }
+
+    async function loadProfileData(forceRefresh = false) {
         const pid = await getCurrentProfileId();
         const [disciplinas, horarios, trabalhos, provas, eventos, financeiro, biblioteca, filmes, notas, links] = await Promise.all([
             getAllData('disciplinas', 'profileId', pid), getAllData('horarios', 'profileId', pid),
@@ -2551,996 +2560,31 @@ document.addEventListener('DOMContentLoaded', function() {
         return profileDataCache;
     }
 
-    // ---------- Handwriting ----------
-    function setupHandwritingCanvas() {
-        handwritingCanvas = document.getElementById('handwritingCanvas');
-        if (!handwritingCanvas) return;
-        handwritingCtx = handwritingCanvas.getContext('2d');
-        function resize() {
-            const w = handwritingCanvas.parentElement.clientWidth - 30;
-            handwritingCanvas.width = w;
-            handwritingCanvas.height = Math.min(300, w * 0.4);
-            redrawHandwritingStrokes();
-        }
-        window.addEventListener('resize', resize); resize();
-        handwritingCtx.lineWidth = 2; handwritingCtx.lineCap = 'round'; handwritingCtx.lineJoin = 'round'; handwritingCtx.strokeStyle = '#000';
-
-        function getCoords(e) {
-            const rect = handwritingCanvas.getBoundingClientRect();
-            const scaleX = handwritingCanvas.width / rect.width, scaleY = handwritingCanvas.height / rect.height;
-            let clientX, clientY;
-            if (e.type.includes('touch')) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
-            else { clientX = e.clientX; clientY = e.clientY; }
-            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
-        }
-
-        function start(e) { e.preventDefault(); isHandwriting = true; const c = getCoords(e); currentStroke = [c]; handwritingCtx.beginPath(); handwritingCtx.moveTo(c.x, c.y); }
-        function draw(e) { e.preventDefault(); if (!isHandwriting) return; const c = getCoords(e); currentStroke.push(c); handwritingCtx.lineTo(c.x, c.y); handwritingCtx.stroke(); handwritingCtx.beginPath(); handwritingCtx.moveTo(c.x, c.y); }
-        function stop(e) { e.preventDefault(); if (isHandwriting) { if (currentStroke.length > 10) handwritingStrokes.push([...currentStroke]); isHandwriting = false; handwritingCtx.closePath(); } }
-
-        handwritingCanvas.addEventListener('mousedown', start); handwritingCanvas.addEventListener('mousemove', draw); handwritingCanvas.addEventListener('mouseup', stop); handwritingCanvas.addEventListener('mouseout', stop);
-        handwritingCanvas.addEventListener('touchstart', e => { e.preventDefault(); start(e); });
-        handwritingCanvas.addEventListener('touchmove', e => { e.preventDefault(); draw(e); });
-        handwritingCanvas.addEventListener('touchend', e => { e.preventDefault(); stop(e); });
-
-        document.getElementById('startRecognitionBtn').addEventListener('click', recognizeHandwriting);
-        document.getElementById('clearHandwritingBtn').addEventListener('click', clearHandwriting);
-        document.getElementById('smoothHandwritingBtn').addEventListener('click', smoothHandwriting);
-        document.getElementById('saveAsTextBtn').addEventListener('click', saveAsText);
-        document.getElementById('saveAsImageBtn').addEventListener('click', saveAsImage);
-        setupFullscreenHandwritingCanvas();
-    }
-
-    function setupFullscreenHandwritingCanvas() {
-        fullscreenHandwritingCanvas = document.getElementById('fullscreenHandwritingCanvas');
-        if (!fullscreenHandwritingCanvas) return;
-        fullscreenHandwritingCtx = fullscreenHandwritingCanvas.getContext('2d');
-        function resize() {
-            const w = fullscreenHandwritingCanvas.parentElement.clientWidth - 40;
-            const h = fullscreenHandwritingCanvas.parentElement.clientHeight - 200;
-            fullscreenHandwritingCanvas.width = w;
-            fullscreenHandwritingCanvas.height = Math.min(600, h);
-            fullscreenHandwritingCtx.lineWidth = 2; fullscreenHandwritingCtx.lineCap = 'round'; fullscreenHandwritingCtx.lineJoin = 'round'; fullscreenHandwritingCtx.strokeStyle = '#000';
-            redrawFullscreenHandwritingStrokes();
-        }
-        window.addEventListener('resize', resize);
-
-        function getCoords(e) {
-            const rect = fullscreenHandwritingCanvas.getBoundingClientRect();
-            const scaleX = fullscreenHandwritingCanvas.width / rect.width, scaleY = fullscreenHandwritingCanvas.height / rect.height;
-            let clientX, clientY;
-            if (e.type.includes('touch')) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
-            else { clientX = e.clientX; clientY = e.clientY; }
-            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
-        }
-
-        function start(e) { e.preventDefault(); isFullscreenHandwriting = true; const c = getCoords(e); currentFullscreenStroke = [c]; fullscreenHandwritingCtx.beginPath(); fullscreenHandwritingCtx.moveTo(c.x, c.y); }
-        function draw(e) { e.preventDefault(); if (!isFullscreenHandwriting) return; const c = getCoords(e); currentFullscreenStroke.push(c); fullscreenHandwritingCtx.lineTo(c.x, c.y); fullscreenHandwritingCtx.stroke(); fullscreenHandwritingCtx.beginPath(); fullscreenHandwritingCtx.moveTo(c.x, c.y); }
-        function stop(e) { e.preventDefault(); if (isFullscreenHandwriting) { if (currentFullscreenStroke.length > 10) fullscreenHandwritingStrokes.push([...currentFullscreenStroke]); isFullscreenHandwriting = false; fullscreenHandwritingCtx.closePath(); } }
-
-        fullscreenHandwritingCanvas.addEventListener('mousedown', start); fullscreenHandwritingCanvas.addEventListener('mousemove', draw); fullscreenHandwritingCanvas.addEventListener('mouseup', stop); fullscreenHandwritingCanvas.addEventListener('mouseout', stop);
-        fullscreenHandwritingCanvas.addEventListener('touchstart', e => { e.preventDefault(); start(e); });
-        fullscreenHandwritingCanvas.addEventListener('touchmove', e => { e.preventDefault(); draw(e); });
-        fullscreenHandwritingCanvas.addEventListener('touchend', e => { e.preventDefault(); stop(e); });
-
-        document.getElementById('fullscreenStartRecognitionBtn').addEventListener('click', recognizeFullscreenHandwriting);
-        document.getElementById('fullscreenClearHandwritingBtn').addEventListener('click', clearFullscreenHandwriting);
-        document.getElementById('fullscreenSmoothHandwritingBtn').addEventListener('click', smoothFullscreenHandwriting);
-        document.getElementById('fullscreenSaveAsTextBtn').addEventListener('click', saveFullscreenAsText);
-        document.getElementById('fullscreenSaveAsImageBtn').addEventListener('click', saveFullscreenAsImage);
-        document.getElementById('fullscreenHandwritingBtn').addEventListener('click', () => {
-            fullscreenHandwritingStrokes = handwritingStrokes.map(s => s.map(p => ({...p})));
-            redrawFullscreenHandwritingStrokes();
-            new bootstrap.Modal(document.getElementById('handwritingFullscreenModal')).show();
-            setTimeout(resize, 100);
-        });
-    }
-
-    function redrawHandwritingStrokes() {
-        handwritingCtx.clearRect(0, 0, handwritingCanvas.width, handwritingCanvas.height);
-        handwritingCtx.beginPath();
-        handwritingStrokes.forEach(s => { if (s.length < 2) return; handwritingCtx.moveTo(s[0].x, s[0].y); for (let i = 1; i < s.length; i++) handwritingCtx.lineTo(s[i].x, s[i].y); });
-        handwritingCtx.stroke();
-    }
-
-    function redrawFullscreenHandwritingStrokes() {
-        fullscreenHandwritingCtx.clearRect(0, 0, fullscreenHandwritingCanvas.width, fullscreenHandwritingCanvas.height);
-        fullscreenHandwritingCtx.beginPath();
-        fullscreenHandwritingStrokes.forEach(s => { if (s.length < 2) return; fullscreenHandwritingCtx.moveTo(s[0].x, s[0].y); for (let i = 1; i < s.length; i++) fullscreenHandwritingCtx.lineTo(s[i].x, s[i].y); });
-        fullscreenHandwritingCtx.stroke();
-    }
-
-    function clearHandwriting() { handwritingCtx.clearRect(0,0,handwritingCanvas.width,handwritingCanvas.height); handwritingStrokes=[]; currentStroke=[]; recognizedText=''; document.getElementById('recognizedText').innerHTML='Aguardando reconhecimento...'; }
-    function clearFullscreenHandwriting() { fullscreenHandwritingCtx.clearRect(0,0,fullscreenHandwritingCanvas.width,fullscreenHandwritingCanvas.height); fullscreenHandwritingStrokes=[]; currentFullscreenStroke=[]; fullscreenRecognizedText=''; document.getElementById('fullscreenRecognizedText').innerHTML='Aguardando reconhecimento...'; }
-
-    function smoothHandwriting() {
-        if (!handwritingStrokes.length) return;
-        handwritingCtx.clearRect(0,0,handwritingCanvas.width,handwritingCanvas.height);
-        handwritingStrokes = handwritingStrokes.map(s => {
-            if (s.length < 3) return s;
-            let smoothed = [];
-            for (let i=0; i<s.length; i++) {
-                if (i===0 || i===s.length-1) smoothed.push(s[i]);
-                else {
-                    let x = (s[i-1].x + s[i].x + s[i+1].x)/3;
-                    let y = (s[i-1].y + s[i].y + s[i+1].y)/3;
-                    smoothed.push({x, y});
-                }
-            }
-            return smoothed;
-        });
-        redrawHandwritingStrokes();
-    }
-
-    function smoothFullscreenHandwriting() {
-        if (!fullscreenHandwritingStrokes.length) return;
-        fullscreenHandwritingCtx.clearRect(0,0,fullscreenHandwritingCanvas.width,fullscreenHandwritingCanvas.height);
-        fullscreenHandwritingStrokes = fullscreenHandwritingStrokes.map(s => {
-            if (s.length < 3) return s;
-            let smoothed = [];
-            for (let i=0; i<s.length; i++) {
-                if (i===0 || i===s.length-1) smoothed.push(s[i]);
-                else {
-                    let x = (s[i-1].x + s[i].x + s[i+1].x)/3;
-                    let y = (s[i-1].y + s[i].y + s[i+1].y)/3;
-                    smoothed.push({x, y});
-                }
-            }
-            return smoothed;
-        });
-        redrawFullscreenHandwritingStrokes();
-    }
-
-    function recognizeHandwriting() {
-        if (!handwritingStrokes.length) { alert('Desenhe algo primeiro!'); return; }
-        const texts = ["Olá, texto reconhecido!", "Direito Constitucional - Artigo 5°", "Anotações importantes", "Resumo do capítulo 3", "Fórmulas matemáticas"];
-        recognizedText = texts[Math.floor(Math.random() * texts.length)];
-        document.getElementById('recognizedText').innerHTML = `<span class="fw-bold">${recognizedText}</span>`;
-        smoothHandwriting();
-    }
-
-    function recognizeFullscreenHandwriting() {
-        if (!fullscreenHandwritingStrokes.length) { alert('Desenhe algo primeiro!'); return; }
-        const texts = ["Olá, texto reconhecido em tela cheia!", "Direito Constitucional - Artigo 5°", "Anotações importantes", "Resumo do capítulo 3", "Fórmulas matemáticas"];
-        fullscreenRecognizedText = texts[Math.floor(Math.random() * texts.length)];
-        document.getElementById('fullscreenRecognizedText').innerHTML = `<span class="fw-bold">${fullscreenRecognizedText}</span>`;
-        smoothFullscreenHandwriting();
-    }
-
-    async function saveAsText() {
-        if (!recognizedText) { alert('Nenhum texto reconhecido!'); return; }
-        const titulo = prompt('Título da nota:', `Texto Manual - ${new Date().toLocaleDateString('pt-BR')}`);
-        if (!titulo) return;
-        const pid = await getCurrentProfileId();
-        const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: recognizedText, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto' };
-        await saveData('notas', nota);
-        clearHandwriting(); document.getElementById('notas-tab').click(); 
-        profileDataCache = null; await renderAll(); alert('Texto salvo como nota!');
-    }
-
-    async function saveFullscreenAsText() {
-        if (!fullscreenRecognizedText) { alert('Nenhum texto reconhecido!'); return; }
-        const titulo = prompt('Título da nota:', `Texto Manual - ${new Date().toLocaleDateString('pt-BR')}`);
-        if (!titulo) return;
-        const pid = await getCurrentProfileId();
-        const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: fullscreenRecognizedText, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto' };
-        await saveData('notas', nota);
-        handwritingStrokes = fullscreenHandwritingStrokes.map(s => s.map(p => ({...p})));
-        redrawHandwritingStrokes(); recognizedText = fullscreenRecognizedText;
-        document.getElementById('recognizedText').innerHTML = `<span class="fw-bold">${fullscreenRecognizedText}</span>`;
-        clearFullscreenHandwriting(); bootstrap.Modal.getInstance(document.getElementById('handwritingFullscreenModal')).hide();
-        document.getElementById('notas-tab').click(); 
-        profileDataCache = null; await renderAll(); alert('Texto salvo como nota!');
-    }
-
-    async function saveAsImage() {
-        const titulo = prompt('Título da imagem da escrita:', `Escrita Manual - ${new Date().toLocaleDateString('pt-BR')}`);
-        if (!titulo) return;
-        const imageData = handwritingCanvas.toDataURL('image/png');
-        const pid = await getCurrentProfileId();
-        const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: recognizedText || '', imagem: imageData, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'imagem' };
-        await saveData('notas', nota);
-        clearHandwriting(); document.getElementById('notas-tab').click(); 
-        profileDataCache = null; await renderAll(); alert('Escrita salva como imagem!');
-    }
-
-    async function saveFullscreenAsImage() {
-        const titulo = prompt('Título da imagem da escrita:', `Escrita Manual - ${new Date().toLocaleDateString('pt-BR')}`);
-        if (!titulo) return;
-        const imageData = fullscreenHandwritingCanvas.toDataURL('image/png');
-        const pid = await getCurrentProfileId();
-        const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: fullscreenRecognizedText || '', imagem: imageData, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'imagem' };
-        await saveData('notas', nota);
-        handwritingStrokes = fullscreenHandwritingStrokes.map(s => s.map(p => ({...p})));
-        redrawHandwritingStrokes(); recognizedText = fullscreenRecognizedText;
-        document.getElementById('recognizedText').innerHTML = `<span class="fw-bold">${fullscreenRecognizedText}</span>`;
-        clearFullscreenHandwriting(); bootstrap.Modal.getInstance(document.getElementById('handwritingFullscreenModal')).hide();
-        document.getElementById('notas-tab').click(); 
-        profileDataCache = null; await renderAll(); alert('Escrita salva como imagem!');
-    }
-
-    // ---------- Funções para documentos (incluindo Word, PPT) ----------
-    function setupDocumentImport() {
-        const area = document.getElementById('documentUploadArea');
-        const fileInput = document.getElementById('documentFileInput');
-        const previewContainer = document.getElementById('documentPreviewContainer');
-        const fileNameSpan = document.getElementById('documentFileName');
-        const removeBtn = document.getElementById('removeDocumentBtn');
-        const tituloInput = document.getElementById('importDocumentTitulo');
-        const descInput = document.getElementById('importDocumentDescricao');
-        const saveBtn = document.getElementById('saveImportedDocumentBtn');
-
-        area.addEventListener('click', () => fileInput.click());
-        area.addEventListener('dragover', e => { e.preventDefault(); area.style.backgroundColor = '#e9ecef'; area.style.borderColor = 'var(--primary)'; });
-        area.addEventListener('dragleave', () => { area.style.backgroundColor = '#f8f9fa'; area.style.borderColor = 'var(--accent)'; });
-        area.addEventListener('drop', e => {
-            e.preventDefault();
-            area.style.backgroundColor = '#f8f9fa';
-            area.style.borderColor = 'var(--accent)';
-            if (e.dataTransfer.files[0]) handleDocumentFile(e.dataTransfer.files[0]);
-        });
-        fileInput.addEventListener('change', function() {
-            if (this.files[0]) handleDocumentFile(this.files[0]);
-        });
-
-        function handleDocumentFile(file) {
-            const allowed = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'];
-            if (!allowed.includes(file.type) && !file.name.match(/\.(pdf|docx|pptx)$/i)) {
-                alert('Formato não suportado. Envie PDF, Word (.docx) ou PowerPoint (.pptx).');
-                return;
-            }
-            importedDocumentData = {
-                file: file,
-                name: file.name,
-                type: file.type,
-                size: file.size
-            };
-            fileNameSpan.textContent = file.name;
-            previewContainer.style.display = 'block';
-            area.style.display = 'none';
-            tituloInput.value = `Documento - ${new Date().toLocaleDateString('pt-BR')}`;
-            descInput.value = '';
-        }
-
-        removeBtn.addEventListener('click', () => {
-            importedDocumentData = null;
-            previewContainer.style.display = 'none';
-            area.style.display = 'block';
-            fileInput.value = '';
-            tituloInput.value = '';
-            descInput.value = '';
-        });
-
-        saveBtn.addEventListener('click', async () => {
-            if (!importedDocumentData) { alert('Nenhum documento selecionado.'); return; }
-            if (!tituloInput.value.trim()) { alert('Título obrigatório.'); return; }
-            const pid = await getCurrentProfileId();
-            const file = importedDocumentData.file;
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const arrayBuffer = e.target.result;
-                const blob = new Blob([arrayBuffer], { type: file.type });
-                const base64 = await blobToBase64(blob);
-                const nota = {
-                    id: await getNewId('notas'),
-                    profileId: pid,
-                    titulo: tituloInput.value.trim(),
-                    conteudo: descInput.value.trim(),
-                    dataCriacao: new Date().toISOString().split('T')[0],
-                    tipo: 'documento',
-                    documento: {
-                        nome: file.name,
-                        tipo: file.type,
-                        tamanho: file.size,
-                        dados: base64
-                    }
-                };
-                await saveData('notas', nota);
-                importedDocumentData = null;
-                previewContainer.style.display = 'none';
-                area.style.display = 'block';
-                fileInput.value = '';
-                tituloInput.value = '';
-                descInput.value = '';
-                document.getElementById('documentos-tab').click();
-                profileDataCache = null; await renderAll();
-                alert('Documento salvo com sucesso!');
-            };
-            reader.readAsArrayBuffer(file);
-        });
-    }
-
-    function blobToBase64(blob) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
-    }
-
-    async function renderDocumentos(data) {
-        const container = document.getElementById('documentos-lista');
-        container.innerHTML = '';
-        const docs = data.notas.filter(n => n.tipo === 'documento').sort((a,b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
-        if (!docs.length) {
-            container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Nenhum documento importado.</p></div></div>';
-            return;
-        }
-        docs.forEach(doc => {
-            const isPdf = doc.documento.tipo === 'application/pdf';
-            const isWord = doc.documento.tipo === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || doc.documento.nome.endsWith('.docx');
-            let icon, cor;
-            if (isPdf) { icon = 'fa-file-pdf'; cor = 'text-danger'; }
-            else if (isWord) { icon = 'fa-file-word'; cor = 'text-primary'; }
-            else { icon = 'fa-file-powerpoint'; cor = 'text-warning'; }
-            const tamanho = (doc.documento.tamanho / 1024).toFixed(1) + ' KB';
-            container.innerHTML += `
-                <div class="col-md-6 col-lg-4">
-                    <div class="card documento-card card-dashboard" data-id="${doc.id}">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <i class="fas ${icon} documento-icon ${cor}"></i>
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item visualizar-documento" href="#" data-id="${doc.id}"><i class="fas fa-eye"></i> Visualizar</a></li>
-                                        <li><a class="dropdown-item download-documento" href="#" data-id="${doc.id}"><i class="fas fa-download"></i> Download</a></li>
-                                        <li><a class="dropdown-item delete-documento" href="#" data-id="${doc.id}"><i class="fas fa-trash"></i> Excluir</a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <h5 class="card-title mt-2">${doc.titulo}</h5>
-                            <p class="card-text small text-muted">${doc.documento.nome}</p>
-                            <p class="documento-tamanho">${tamanho}</p>
-                            ${doc.conteudo ? `<p class="card-text small">${doc.conteudo.substring(0,60)}...</p>` : ''}
-                            <small class="text-muted">${new Date(doc.dataCriacao).toLocaleDateString('pt-BR')}</small>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-    }
-
-    async function visualizarDocumento(id) {
+    // Renderiza apenas o painel ativo
+    async function renderCurrentPanel() {
         const data = await getProfileData();
-        const doc = data.notas.find(n => n.id == id);
-        if (!doc) return;
-        const base64 = doc.documento.dados;
-        const blob = base64ToBlob(base64, doc.documento.tipo);
-        const url = URL.createObjectURL(blob);
-        objectUrls.set(id, url);
-
-        if (doc.documento.tipo === 'application/pdf') {
-            const modalEl = document.getElementById('viewPdfModal');
-            const iframe = document.getElementById('pdfViewer');
-            const fullscreenBtn = document.getElementById('pdfFullscreenBtn');
-            const downloadBtn = document.getElementById('downloadPdfBtn');
-            
-            iframe.src = url;
-            
-            fullscreenBtn.onclick = function() {
-                if (iframe.requestFullscreen) {
-                    iframe.requestFullscreen();
-                } else if (iframe.webkitRequestFullscreen) {
-                    iframe.webkitRequestFullscreen();
-                } else if (iframe.msRequestFullscreen) {
-                    iframe.msRequestFullscreen();
-                }
-            };
-
-            downloadBtn.onclick = function() {
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = doc.documento.nome;
-                a.click();
-            };
-            
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
-            
-            modalEl.addEventListener('hidden.bs.modal', function onClose() {
-                URL.revokeObjectURL(url);
-                objectUrls.delete(id);
-                iframe.src = '';
-                this.removeEventListener('hidden.bs.modal', onClose);
-            });
-        } else {
-            const modalEl = document.getElementById('viewDocumentModal');
-            const iframe = document.getElementById('documentViewer');
-            const fullscreenBtn = document.getElementById('documentFullscreenBtn');
-            const downloadLink = document.getElementById('downloadDocumentLink');
-            
-            iframe.src = url;
-            document.getElementById('viewDocumentTitle').textContent = doc.titulo;
-            downloadLink.href = url;
-            downloadLink.download = doc.documento.nome;
-            
-            fullscreenBtn.onclick = function() {
-                if (iframe.requestFullscreen) {
-                    iframe.requestFullscreen();
-                } else if (iframe.webkitRequestFullscreen) {
-                    iframe.webkitRequestFullscreen();
-                } else if (iframe.msRequestFullscreen) {
-                    iframe.msRequestFullscreen();
-                }
-            };
-            
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
-            
-            modalEl.addEventListener('hidden.bs.modal', function onClose() {
-                URL.revokeObjectURL(url);
-                objectUrls.delete(id);
-                iframe.src = '';
-                this.removeEventListener('hidden.bs.modal', onClose);
-            });
-
-            if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                const msg = document.createElement('div');
-                msg.className = 'alert alert-info mt-2';
-                msg.innerHTML = 'Se o documento não abrir, use o botão "Baixar" e abra com um aplicativo compatível.';
-                iframe.parentNode.insertBefore(msg, iframe.nextSibling);
-            }
+        switch (activePanel) {
+            case 'home-links':
+                renderProximoEventoCard(data);
+                // quick-links já está gerado no init
+                break;
+            case 'dashboard': renderDashboard(data); break;
+            case 'disciplinas': renderDisciplinas(data); break;
+            case 'horarios': renderHorarios(data); break;
+            case 'trabalhos': renderTrabalhos(data); break;
+            case 'provas': renderProvas(data); break;
+            case 'agenda': renderAgenda(data); break;
+            case 'biblioteca': renderBiblioteca(data); break;
+            case 'filmes': renderFilmes(data); break;
+            case 'caderno': renderNotas(data); renderDocumentos(data); renderGaleria(data); break;
+            case 'links': renderLinks(data); break;
+            case 'financeiro': renderFinanceiro(data); break;
+            case 'relatorios': renderRelatorios(data); break;
+            case 'configuracoes': /* estático */ break;
         }
-    }
-
-    function base64ToBlob(base64, mime) {
-        const byteCharacters = atob(base64.split(',')[1] || base64);
-        const byteArrays = [];
-        for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-            const slice = byteCharacters.slice(offset, offset + 512);
-            const byteNumbers = new Array(slice.length);
-            for (let i = 0; i < slice.length; i++) {
-                byteNumbers[i] = slice.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            byteArrays.push(byteArray);
-        }
-        return new Blob(byteArrays, { type: mime });
-    }
-
-    // Função global para visualizar anexo, acessível via clique nos ícones
-    window.visualizarAnexo = function(base64, tipo, nome) {
-        const blob = base64ToBlob(base64, tipo);
-        const url = URL.createObjectURL(blob);
-        const id = Date.now();
-        objectUrls.set(id, url);
-
-        if (tipo === 'application/pdf') {
-            const modalEl = document.getElementById('viewPdfModal');
-            const iframe = document.getElementById('pdfViewer');
-            const fullscreenBtn = document.getElementById('pdfFullscreenBtn');
-            const downloadBtn = document.getElementById('downloadPdfBtn');
-            
-            iframe.src = url;
-            
-            fullscreenBtn.onclick = function() {
-                if (iframe.requestFullscreen) {
-                    iframe.requestFullscreen();
-                } else if (iframe.webkitRequestFullscreen) {
-                    iframe.webkitRequestFullscreen();
-                } else if (iframe.msRequestFullscreen) {
-                    iframe.msRequestFullscreen();
-                }
-            };
-
-            downloadBtn.onclick = function() {
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = nome;
-                a.click();
-            };
-            
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
-            
-            modalEl.addEventListener('hidden.bs.modal', function onClose() {
-                URL.revokeObjectURL(url);
-                objectUrls.delete(id);
-                iframe.src = '';
-                this.removeEventListener('hidden.bs.modal', onClose);
-            });
-        } else if (tipo.startsWith('image/')) {
-            document.getElementById('modalImage').src = base64;
-            document.getElementById('modalImageDescription').innerText = nome;
-            const downloadBtn = document.getElementById('downloadImageBtn');
-            downloadBtn.onclick = function() {
-                const blob = base64ToBlob(base64, tipo);
-                const imgUrl = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = imgUrl;
-                a.download = nome;
-                a.click();
-                URL.revokeObjectURL(imgUrl);
-            };
-            new bootstrap.Modal(document.getElementById('viewImageModal')).show();
-        } else {
-            const modalEl = document.getElementById('viewDocumentModal');
-            const iframe = document.getElementById('documentViewer');
-            const fullscreenBtn = document.getElementById('documentFullscreenBtn');
-            const downloadLink = document.getElementById('downloadDocumentLink');
-            
-            iframe.src = url;
-            document.getElementById('viewDocumentTitle').textContent = nome;
-            downloadLink.href = url;
-            downloadLink.download = nome;
-            
-            fullscreenBtn.onclick = function() {
-                if (iframe.requestFullscreen) {
-                    iframe.requestFullscreen();
-                } else if (iframe.webkitRequestFullscreen) {
-                    iframe.webkitRequestFullscreen();
-                } else if (iframe.msRequestFullscreen) {
-                    iframe.msRequestFullscreen();
-                }
-            };
-            
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
-            
-            modalEl.addEventListener('hidden.bs.modal', function onClose() {
-                URL.revokeObjectURL(url);
-                objectUrls.delete(id);
-                iframe.src = '';
-                this.removeEventListener('hidden.bs.modal', onClose);
-            });
-
-            if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                const msg = document.createElement('div');
-                msg.className = 'alert alert-info mt-2';
-                msg.innerHTML = 'Se o documento não abrir, use o botão "Baixar" e abra com um aplicativo compatível.';
-                iframe.parentNode.insertBefore(msg, iframe.nextSibling);
-            }
-        }
-    };
-
-    // Função para ler múltiplos arquivos
-    async function readMultipleFilesAsBase64(files) {
-        const promises = [];
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            promises.push(new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve({
-                    id: Date.now() + i + Math.random(),
-                    nome: file.name,
-                    tipo: file.type,
-                    dados: e.target.result
-                });
-                reader.readAsDataURL(file);
-            }));
-        }
-        return Promise.all(promises);
-    }
-
-    // Função renderAnexosList corrigida e robusta
-    function renderAnexosList(anexos, containerId, prefix) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        container.innerHTML = '';
-        if (!anexos || anexos.length === 0) {
-            container.innerHTML = '<p class="text-muted small">Nenhum anexo.</p>';
-            return;
-        }
-        anexos.forEach((anexo) => {
-            const tipo = anexo.tipo || '';
-            const nome = anexo.nome || 'anexo';
-            let iconClass = 'fa-file';
-            if (tipo.startsWith('image/')) iconClass = 'fa-image';
-            else if (tipo === 'application/pdf') iconClass = 'fa-file-pdf';
-            else if (tipo.includes('word') || nome.endsWith('.docx')) iconClass = 'fa-file-word';
-            else if (tipo.includes('presentation') || nome.endsWith('.pptx')) iconClass = 'fa-file-powerpoint';
-            const div = document.createElement('div');
-            div.className = 'anexo-item';
-            div.innerHTML = `
-                <div class="anexo-info">
-                    <i class="fas ${iconClass}"></i>
-                    <span>${nome}</span>
-                </div>
-                <div class="anexo-acoes">
-                    <button type="button" class="btn btn-sm btn-outline-danger remover-anexo" data-id="${anexo.id || ''}" data-prefix="${prefix}"><i class="fas fa-trash"></i></button>
-                </div>
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    // Função para lidar com remoção de anexo
-    function handleRemoverAnexo(e) {
-        const btn = e.target.closest('.remover-anexo');
-        if (!btn) return;
-        e.preventDefault();
-        const id = btn.dataset.id;
-        const prefix = btn.dataset.prefix;
-        const removidosInput = document.getElementById(prefix + 'AnexosRemovidos');
-        if (!removidosInput) return;
-        let removidos = removidosInput.value ? removidosInput.value.split(',') : [];
-        if (id && !removidos.includes(id)) {
-            removidos.push(id);
-            removidosInput.value = removidos.join(',');
-        }
-        // Remove visualmente o item
-        btn.closest('.anexo-item').remove();
-    }
-
-    // Configurar evento de remoção de anexo global
-    document.body.addEventListener('click', handleRemoverAnexo);
-
-    function setupAnexoPreview(inputId, previewId, hiddenId) {
-        const input = document.getElementById(inputId);
-        const preview = document.getElementById(previewId);
-        const hidden = document.getElementById(hiddenId);
-        if (!input) return;
-        input.addEventListener('change', async function() {
-            preview.innerHTML = '';
-            if (this.files && this.files[0]) {
-                const file = this.files[0];
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = e => {
-                        preview.innerHTML = `<img src="${e.target.result}" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 5px;">`;
-                    };
-                    reader.readAsDataURL(file);
-                } else if (file.type === 'application/pdf') {
-                    preview.innerHTML = '<span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF selecionado</span>';
-                } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name.endsWith('.docx')) {
-                    preview.innerHTML = '<span class="badge bg-primary"><i class="fas fa-file-word"></i> Word selecionado</span>';
-                } else if (file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' || file.name.endsWith('.pptx')) {
-                    preview.innerHTML = '<span class="badge bg-warning text-dark"><i class="fas fa-file-powerpoint"></i> PowerPoint selecionado</span>';
-                } else {
-                    preview.innerHTML = '<span class="badge bg-secondary">Arquivo selecionado</span>';
-                }
-                hidden.value = '';
-            }
-        });
-    }
-
-    function addViewExistingButton(prefix, previewId, hiddenId, item) {
-        const preview = document.getElementById(previewId);
-        if (!preview) return;
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'btn btn-sm btn-info ms-2 mt-2';
-        btn.innerHTML = '<i class="fas fa-eye"></i> Visualizar anexo atual';
-        btn.onclick = () => window.visualizarAnexo(item.anexo, item.anexoTipo || 'application/octet-stream', item.anexoNome || 'anexo');
-        preview.appendChild(btn);
-    }
-
-    setTimeout(() => {
-        setupAnexoPreview('provaAnexo', 'provaAnexoPreview', 'provaAnexoExistente');
-        setupAnexoPreview('eventAnexo', 'eventAnexoPreview', 'eventAnexoExistente');
-    }, 500);
-
-    async function editHorario(id) {
-        let a = await getData('horarios', parseInt(id));
-        if (!a) return;
-        document.getElementById('horarioModalLabel').textContent = 'Editar Aula';
-        document.getElementById('horarioId').value = a.id;
-        document.getElementById('horarioDisciplina').value = a.disciplinaId;
-        document.getElementById('horarioDiaSemana').value = a.diaSemana;
-        document.getElementById('horarioInicio').value = a.inicio;
-        document.getElementById('horarioFim').value = a.fim;
-        document.getElementById('horarioLocal').value = a.local;
-        document.getElementById('deleteHorario').classList.remove('d-none');
-        new bootstrap.Modal(document.getElementById('horarioModal')).show();
-    }
-
-    async function saveDisciplina() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('disciplinaId').value;
-        let d = { 
-            id: id?parseInt(id):await getNewId('disciplinas'), 
-            profileId: pid, 
-            nome: document.getElementById('disciplinaNome').value, 
-            professor: document.getElementById('disciplinaProfessor').value, 
-            professorEmail: document.getElementById('disciplinaEmail').value,
-            frequencia: parseInt(document.getElementById('disciplinaFrequencia').value) 
-        };
-        if (!d.nome) return alert('Nome obrigatório.');
-        await saveData('disciplinas', d); 
-        profileDataCache = null; await renderAll(); 
-        bootstrap.Modal.getInstance(document.getElementById('disciplinaModal')).hide();
-    }
-
-    async function saveTrabalho() {
-        let pid = await getCurrentProfileId();
-        let id = document.getElementById('trabalhoId').value;
-        let t = { 
-            id: id ? parseInt(id) : await getNewId('trabalhos'), 
-            profileId: pid, 
-            disciplinaId: parseInt(document.getElementById('trabalhoDisciplina').value), 
-            titulo: document.getElementById('trabalhoTitulo').value,
-            tipo: document.getElementById('trabalhoTipo').value,
-            participantes: document.getElementById('trabalhoTipo').value === 'grupo' ? document.getElementById('trabalhoParticipantes').value : '',
-            entrega: document.getElementById('trabalhoEntrega').value, 
-            status: document.getElementById('trabalhoStatus').value, 
-            prioridade: document.getElementById('trabalhoPrioridade').value, 
-            nota: document.getElementById('trabalhoNota').value === '' ? null : parseFloat(document.getElementById('trabalhoNota').value), 
-            observacoes: document.getElementById('trabalhoObservacoes').value,
-            anexos: [] // será preenchido
-        };
-        if (!t.disciplinaId || !t.titulo || !t.entrega) return alert('Preencha campos obrigatórios.');
-
-        // Obter anexos existentes (que não foram removidos)
-        const anexosRemovidos = document.getElementById('trabalhoAnexosRemovidos').value;
-        const removidosSet = new Set(anexosRemovidos ? anexosRemovidos.split(',') : []);
-        
-        if (id) {
-            const original = await getData('trabalhos', parseInt(id));
-            if (original && original.anexos) {
-                t.anexos = original.anexos.filter(a => !removidosSet.has(a.id.toString()));
-            }
-        }
-
-        // Adicionar novos anexos
-        const anexoInput = document.getElementById('trabalhoAnexos');
-        if (anexoInput.files && anexoInput.files.length > 0) {
-            const novosAnexos = await readMultipleFilesAsBase64(anexoInput.files);
-            t.anexos = [...t.anexos, ...novosAnexos];
-        }
-
-        await saveData('trabalhos', t);
-        profileDataCache = null;
-        await renderAll();
-        bootstrap.Modal.getInstance(document.getElementById('trabalhoModal')).hide();
-    }
-
-    // ========== FUNÇÃO EDITAR TRABALHO CORRIGIDA ==========
-    async function editTrabalho(id) {
-        try {
-            let item = await getData('trabalhos', parseInt(id));
-            if (!item) {
-                alert('Trabalho não encontrado.');
-                return;
-            }
-
-            // Mapear elementos do formulário para verificar existência
-            const elements = {
-                label: document.getElementById('trabalhoModalLabel'),
-                id: document.getElementById('trabalhoId'),
-                disciplina: document.getElementById('trabalhoDisciplina'),
-                titulo: document.getElementById('trabalhoTitulo'),
-                tipo: document.getElementById('trabalhoTipo'),
-                participantes: document.getElementById('trabalhoParticipantes'),
-                entrega: document.getElementById('trabalhoEntrega'),
-                status: document.getElementById('trabalhoStatus'),
-                prioridade: document.getElementById('trabalhoPrioridade'),
-                nota: document.getElementById('trabalhoNota'),
-                observacoes: document.getElementById('trabalhoObservacoes'),
-                wrapper: document.getElementById('grupoParticipantesWrapper'),
-                anexosPreview: document.getElementById('trabalhoAnexosPreview'),
-                removidos: document.getElementById('trabalhoAnexosRemovidos')
-            };
-
-            // Verificar se todos os elementos existem
-            for (let [key, el] of Object.entries(elements)) {
-                if (!el) {
-                    console.error(`Elemento ${key} não encontrado no DOM`);
-                    alert(`Erro: elemento ${key} não encontrado.`);
-                    return;
-                }
-            }
-
-            // Preencher campos
-            elements.label.textContent = 'Editar Trabalho';
-            elements.id.value = item.id;
-            elements.disciplina.value = item.disciplinaId;
-            elements.titulo.value = item.titulo;
-            elements.tipo.value = item.tipo || 'individual';
-            elements.participantes.value = item.participantes || '';
-            elements.entrega.value = item.entrega;
-            elements.status.value = item.status;
-            elements.prioridade.value = item.prioridade;
-            elements.nota.value = item.nota !== null ? item.nota : '';
-            elements.observacoes.value = item.observacoes || '';
-
-            // Mostrar/ocultar participantes conforme tipo
-            elements.wrapper.style.display = item.tipo === 'grupo' ? 'block' : 'none';
-
-            // Carregar anexos existentes
-            renderAnexosList(item.anexos || [], 'trabalhoAnexosPreview', 'trabalho');
-            elements.removidos.value = '';
-
-            const modalEl = document.getElementById('trabalhoModal');
-            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.show();
-        } catch (error) {
-            console.error('Erro ao editar trabalho:', error);
-            alert('Erro ao abrir edição. Verifique o console.');
-        }
-    }
-
-    async function saveProva() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('provaId').value;
-        let p = { 
-            id: id?parseInt(id):await getNewId('provas'), 
-            profileId: pid, 
-            disciplinaId: parseInt(document.getElementById('provaDisciplina').value), 
-            conteudo: document.getElementById('provaConteudo').value, 
-            data: document.getElementById('provaData').value, 
-            hora: document.getElementById('provaHora').value, 
-            status: document.getElementById('provaStatus').value, 
-            nota: document.getElementById('provaNota').value===''?null:parseFloat(document.getElementById('provaNota').value)
-        };
-        if (!p.disciplinaId || !p.conteudo || !p.data) return alert('Campos obrigatórios.');
-
-        const anexoInput = document.getElementById('provaAnexo');
-        const anexoExistente = document.getElementById('provaAnexoExistente').value;
-        if (anexoInput.files && anexoInput.files[0]) {
-            const file = anexoInput.files[0];
-            p.anexo = await readFileAsBase64(file);
-            p.anexoNome = file.name;
-            p.anexoTipo = file.type;
-        } else if (anexoExistente) {
-            p.anexo = anexoExistente;
-            if (id) {
-                const original = await getData('provas', parseInt(id));
-                if (original) {
-                    p.anexoNome = original.anexoNome;
-                    p.anexoTipo = original.anexoTipo;
-                }
-            }
-        }
-
-        await saveData('provas', p); 
-        profileDataCache = null; await renderAll(); 
-        bootstrap.Modal.getInstance(document.getElementById('provaModal')).hide();
-    }
-
-    async function saveHorario() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('horarioId').value;
-        let h = { id: id?parseInt(id):await getNewId('horarios'), profileId: pid, disciplinaId: parseInt(document.getElementById('horarioDisciplina').value), diaSemana: document.getElementById('horarioDiaSemana').value, inicio: document.getElementById('horarioInicio').value, fim: document.getElementById('horarioFim').value, local: document.getElementById('horarioLocal').value };
-        if (!h.disciplinaId || !h.inicio || !h.fim) return alert('Campos obrigatórios.');
-        await saveData('horarios', h); 
-        profileDataCache = null; await renderAll(); 
-        bootstrap.Modal.getInstance(document.getElementById('horarioModal')).hide();
-    }
-
-    async function deleteHorario() {
-        let id = document.getElementById('horarioId').value;
-        if (id && confirm('Excluir esta aula?')) { await deleteData('horarios', parseInt(id)); profileDataCache = null; await renderAll(); bootstrap.Modal.getInstance(document.getElementById('horarioModal')).hide(); }
-    }
-
-    async function saveEvent() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('eventId').value;
-        let e = { 
-            id: id?parseInt(id):await getNewId('eventos'), 
-            profileId: pid, 
-            title: document.getElementById('eventTitle').value, 
-            type: document.getElementById('eventType').value, 
-            date: document.getElementById('eventDate').value, 
-            time: document.getElementById('eventTime').value, 
-            description: document.getElementById('eventDescription').value 
-        };
-        if (!e.title || !e.date) return alert('Título e data obrigatórios.');
-
-        const anexoInput = document.getElementById('eventAnexo');
-        const anexoExistente = document.getElementById('eventAnexoExistente').value;
-        if (anexoInput.files && anexoInput.files[0]) {
-            const file = anexoInput.files[0];
-            e.anexo = await readFileAsBase64(file);
-            e.anexoNome = file.name;
-            e.anexoTipo = file.type;
-        } else if (anexoExistente) {
-            e.anexo = anexoExistente;
-            if (id) {
-                const original = await getData('eventos', parseInt(id));
-                if (original) {
-                    e.anexoNome = original.anexoNome;
-                    e.anexoTipo = original.anexoTipo;
-                }
-            }
-        }
-
-        await saveData('eventos', e); 
-        profileDataCache = null; await renderAll(); 
-        bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
-    }
-
-    async function saveFinanceiro() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('financeiroId').value;
-        let recorrenteId = document.getElementById('financeiroRecorrenteId').value || null;
-        let data = document.getElementById('financeiroData').value;
-        if (!data) return alert('Data obrigatória.');
-        let rec = document.getElementById('financeiroRecurrence').value, end = document.getElementById('financeiroRecurrenceEndDate').value;
-        let trans = [];
-        if (recorrenteId) {
-            let todas = await getAllData('financeiro', 'recorrenteId', recorrenteId);
-            for (let t of todas) {
-                t.tipo = document.getElementById('financeiroTipo').value;
-                t.descricao = document.getElementById('financeiroDescricao').value;
-                t.valor = parseFloat(document.getElementById('financeiroValor').value);
-                t.categoria = document.getElementById('financeiroCategoria').value;
-                if (t.tipo === 'despesa') t.status = document.getElementById('financeiroStatus').value;
-                else t.status = 'pago';
-                await saveData('financeiro', t);
-            }
-        } else if (rec!=='none' && end) {
-            recorrenteId = Date.now() + Math.random();
-            let cur = new Date(data), endD = new Date(end);
-            if (cur > endD) return alert('Data final deve ser maior que inicial.');
-            cur.setHours(0,0,0,0); endD.setHours(0,0,0,0);
-            while (cur <= endD) {
-                let dStr = cur.toISOString().split('T')[0];
-                let mesAno = `${cur.getMonth()+1}-${cur.getFullYear()}`;
-                trans.push({ id: await getNewId('financeiro'), profileId: pid, tipo: document.getElementById('financeiroTipo').value, descricao: document.getElementById('financeiroDescricao').value, valor: parseFloat(document.getElementById('financeiroValor').value), categoria: document.getElementById('financeiroCategoria').value, data: dStr, status: document.getElementById('financeiroTipo').value==='despesa'?document.getElementById('financeiroStatus').value:'pago', mesAno, recorrente: true, recorrencia: rec, recorrenteId });
-                if (rec==='weekly') cur.setDate(cur.getDate()+7);
-                else if (rec==='monthly') cur.setMonth(cur.getMonth()+1);
-            }
-        } else {
-            let dt = new Date(data);
-            let mesAno = `${dt.getMonth()+1}-${dt.getFullYear()}`;
-            trans.push({ id: id?parseInt(id):await getNewId('financeiro'), profileId: pid, tipo: document.getElementById('financeiroTipo').value, descricao: document.getElementById('financeiroDescricao').value, valor: parseFloat(document.getElementById('financeiroValor').value), categoria: document.getElementById('financeiroCategoria').value, data, status: document.getElementById('financeiroTipo').value==='despesa'?document.getElementById('financeiroStatus').value:'pago', mesAno, recorrente: false });
-        }
-        for (let t of trans) await saveData('financeiro', t);
-        profileDataCache = null; await renderAll(); 
-        bootstrap.Modal.getInstance(document.getElementById('financeiroModal')).hide();
-    }
-
-    async function saveNota() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('notaId').value;
-        let n = { id: id?parseInt(id):await getNewId('notas'), profileId: pid, titulo: document.getElementById('notaTitulo').value, conteudo: document.getElementById('notaConteudo').value, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto' };
-        if (!n.titulo) return alert('Título obrigatório.');
-        await saveData('notas', n); 
-        profileDataCache = null; await renderAll(); 
-        bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide();
-    }
-
-    async function deleteNota() {
-        let id = document.getElementById('notaId').value;
-        if (id && confirm('Excluir nota?')) { await deleteData('notas', parseInt(id)); profileDataCache = null; await renderAll(); bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide(); }
-    }
-
-    async function saveLink() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('linkId').value;
-        let l = { id: id?parseInt(id):await getNewId('links'), profileId: pid, titulo: document.getElementById('linkTitulo').value, url: document.getElementById('linkUrl').value, categoria: document.getElementById('linkCategoria').value, descricao: document.getElementById('linkDescricao').value };
-        if (!l.titulo || !l.url) return alert('Título e URL obrigatórios.');
-        await saveData('links', l); 
-        profileDataCache = null; await renderAll(); 
-        bootstrap.Modal.getInstance(document.getElementById('linkModal')).hide();
-    }
-
-    async function saveAnotacaoFilme() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('anotacaoFilmeId').value;
-        let f = await getData('filmes', parseInt(id));
-        if (f) {
-            f.anotacao = { tempoAtual: document.getElementById('filmeTempoAtual').value?parseInt(document.getElementById('filmeTempoAtual').value):null, texto: document.getElementById('filmeAnotacao').value, assistido: document.getElementById('filmeAssistido').checked };
-            await saveData('filmes', f); 
-            profileDataCache = null; await renderAll(); 
-            bootstrap.Modal.getInstance(document.getElementById('anotacaoFilmeModal')).hide();
-        }
-    }
-
-    async function saveLivro() {
-        let pid = await getCurrentProfileId(), id = document.getElementById('bibliotecaId').value;
-        let l = { id: id?parseInt(id):await getNewId('biblioteca'), profileId: pid, titulo: document.getElementById('bibliotecaTitulo').value, autor: document.getElementById('bibliotecaAutor').value, assunto: document.getElementById('bibliotecaAssunto').value, editora: document.getElementById('bibliotecaEditora').value, ano: document.getElementById('bibliotecaAno').value||null, observacoes: document.getElementById('bibliotecaObservacoes').value };
-        if (!l.titulo || !l.autor || !l.assunto) return alert('Título, autor e assunto obrigatórios.');
-        await saveData('biblioteca', l); 
-        profileDataCache = null; await renderAll(); 
-        bootstrap.Modal.getInstance(document.getElementById('bibliotecaModal')).hide();
-    }
-
-    async function renderAll() {
-        const data = await getProfileData(true); // força refresh do cache
-        await Promise.all([
-            renderProximoEventoCard(data),
-            renderDashboard(data),
-            renderDisciplinas(data),
-            renderHorarios(data),
-            renderTrabalhos(data),
-            renderProvas(data),
-            renderAgenda(data),
-            renderBiblioteca(data),
-            renderFilmes(data),
-            renderNotas(data),
-            renderLinks(data),
-            renderFinanceiro(data),
-            renderRelatorios(data),
-            renderGaleria(data),
-            renderDocumentos(data)
-        ]);
         populateDisciplinaSelects(data);
-        updateFixedBackButton(); updateFooterNavigation();
+        updateFixedBackButton(); 
+        updateFooterNavigation();
     }
 
     function generateQuickLinks() {
@@ -4088,21 +3132,35 @@ document.addEventListener('DOMContentLoaded', function() {
     const colorPalette = ["#1abc9c","#3498db","#9b59b6","#f1c40f","#e67e22","#e74c3c","#34495e","#7f8c8d"];
     function getDisciplinaColor(id) { if (!disciplinaColors[id]) disciplinaColors[id] = colorPalette[Object.keys(disciplinaColors).length % colorPalette.length]; return disciplinaColors[id]; }
 
-    function goToHome() { document.querySelectorAll('.content-panel').forEach(p=>p.classList.remove('active')); document.getElementById('home-links').classList.add('active'); updateMainHeaderTitle(); updateFixedBackButton(); updateFooterNavigation(); }
-    function updateFixedBackButton() { document.getElementById('fixed-back-home').style.display = document.getElementById('home-links').classList.contains('active') ? 'none' : 'block'; }
+    function goToHome() { 
+        activePanel = 'home-links';
+        document.querySelectorAll('.content-panel').forEach(p=>p.classList.remove('active')); 
+        document.getElementById('home-links').classList.add('active'); 
+        updateMainHeaderTitle(); 
+        renderCurrentPanel(); 
+        updateFooterNavigation(); 
+    }
+    function updateFixedBackButton() { document.getElementById('fixed-back-home').style.display = activePanel === 'home-links' ? 'none' : 'block'; }
     function setupFooterNavigation() {
         document.getElementById('footer-perfis').addEventListener('click', ()=>{ renderProfileManagementList(); new bootstrap.Modal(document.getElementById('profileManagementModal')).show(); });
         document.getElementById('footer-inicio').addEventListener('click', goToHome);
-        document.getElementById('footer-financeiro').addEventListener('click', ()=>{ document.querySelectorAll('.content-panel').forEach(p=>p.classList.remove('active')); document.getElementById('financeiro').classList.add('active'); updateMainHeaderTitle(); updateFixedBackButton(); updateFooterNavigation(); });
+        document.getElementById('footer-financeiro').addEventListener('click', ()=>{ 
+            activePanel = 'financeiro';
+            document.querySelectorAll('.content-panel').forEach(p=>p.classList.remove('active')); 
+            document.getElementById('financeiro').classList.add('active'); 
+            updateMainHeaderTitle(); 
+            renderCurrentPanel(); 
+            updateFooterNavigation(); 
+        });
     }
     function updateFooterNavigation() {
-        let active = document.querySelector('.content-panel.active')?.id;
         document.querySelectorAll('.footer-nav-btn').forEach(b=>b.classList.remove('active'));
-        if (active==='home-links') document.getElementById('footer-inicio').classList.add('active');
-        else if (active==='financeiro') document.getElementById('footer-financeiro').classList.add('active');
+        if (activePanel === 'home-links') document.getElementById('footer-inicio').classList.add('active');
+        else if (activePanel === 'financeiro') document.getElementById('footer-financeiro').classList.add('active');
     }
 
     function setupDrawingCanvas() {
+        if (drawingCanvasInitialized) return;
         canvas = document.getElementById('desenhoCanvas');
         if (!canvas) return;
         ctx = canvas.getContext('2d');
@@ -4130,6 +3188,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.color-option').forEach(opt=>{ opt.addEventListener('click', function(){ document.querySelectorAll('.color-option').forEach(o=>o.classList.remove('active')); this.classList.add('active'); currentColor = this.dataset.color; if (currentTool==='pencil') ctx.strokeStyle = currentColor; }); });
         let sz = document.getElementById('brushSize'), szv = document.getElementById('brushSizeValue');
         sz.addEventListener('input', ()=>{ currentBrushSize = +sz.value; szv.textContent = currentBrushSize+'px'; ctx.lineWidth = currentBrushSize; });
+        drawingCanvasInitialized = true;
     }
 
     function setActiveTool(tool) { document.querySelectorAll('.canvas-tool-btn').forEach(b=>b.classList.remove('active')); document.getElementById(tool+'Tool').classList.add('active'); }
@@ -4143,8 +3202,10 @@ document.addEventListener('DOMContentLoaded', function() {
         let nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: '', imagem: imgData, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'desenho' };
         await saveData('notas', nota);
         ctx.clearRect(0,0,canvas.width,canvas.height);
-        document.getElementById('notas-tab').click();
-        profileDataCache = null; await renderAll();
+        // Recarrega dados e renderiza painel atual
+        profileDataCache = null;
+        await loadProfileData();
+        if (activePanel === 'caderno') renderNotas(profileDataCache);
         alert('Desenho salvo como imagem!');
     }
 
@@ -4171,179 +3232,1025 @@ document.addEventListener('DOMContentLoaded', function() {
             let nota = { id: await getNewId('notas'), profileId: pid, titulo: titulo.value.trim(), conteudo: desc.value.trim(), imagem: importedImageData, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'imagem' };
             await saveData('notas', nota);
             importedImageData = null; preview.src = ''; previewContainer.style.display = 'none'; area.style.display = 'block'; file.value = ''; titulo.value = ''; desc.value = '';
-            document.getElementById('notas-tab').click(); 
-            profileDataCache = null; await renderAll(); alert('Imagem salva como nota!');
+            profileDataCache = null;
+            await loadProfileData();
+            if (activePanel === 'caderno') renderNotas(profileDataCache);
+            alert('Imagem salva como nota!');
         });
     }
 
-    async function openFullscreenNote(id) {
-        let data = await getProfileData(), nota = data.notas.find(n=>n.id==id);
-        if (!nota) return;
-        let modalBody = document.getElementById('fullscreenNoteContent');
-        let html = '';
-        if (nota.imagem) html = `<div class="text-center"><h3>${nota.titulo}</h3><img src="${nota.imagem}" style="max-width:100%;max-height:70vh;" alt="${nota.titulo}"><p class="mt-4">${nota.conteudo||''}</p><small class="text-muted">Criado em: ${new Date(nota.dataCriacao).toLocaleDateString('pt-BR')}</small></div>`;
-        else html = `<div class="container"><h3>${nota.titulo}</h3><div style="white-space: pre-wrap;">${nota.conteudo.replace(/\n/g,'<br>')}</div><hr><small class="text-muted">Criado em: ${new Date(nota.dataCriacao).toLocaleDateString('pt-BR')}</small></div>`;
-        modalBody.innerHTML = html;
-        new bootstrap.Modal(document.getElementById('fullscreenNoteModal')).show();
-        document.getElementById('printNoteBtn').onclick = ()=>{
-            let w = window.open('','_blank');
-            w.document.write(`<html><head><title>${nota.titulo}</title><style>body{font-family:Arial;padding:20px;}</style></head><body><h1>${nota.titulo}</h1><div>${nota.conteudo.replace(/\n/g,'<br>')}</div>${nota.imagem?`<img src="${nota.imagem}" style="max-width:100%;">`:''}<hr><small>Criado em: ${new Date(nota.dataCriacao).toLocaleDateString('pt-BR')}</small></body></html>`);
-            w.document.close(); w.print();
-        };
+    // ---------- Handwriting ----------
+    function setupHandwritingCanvas() {
+        if (handwritingCanvasInitialized) return;
+        handwritingCanvas = document.getElementById('handwritingCanvas');
+        if (!handwritingCanvas) return;
+        handwritingCtx = handwritingCanvas.getContext('2d');
+        function resize() {
+            const w = handwritingCanvas.parentElement.clientWidth - 30;
+            handwritingCanvas.width = w;
+            handwritingCanvas.height = Math.min(300, w * 0.4);
+            redrawHandwritingStrokes();
+        }
+        window.addEventListener('resize', resize); resize();
+        handwritingCtx.lineWidth = 2; handwritingCtx.lineCap = 'round'; handwritingCtx.lineJoin = 'round'; handwritingCtx.strokeStyle = '#000';
+
+        function getCoords(e) {
+            const rect = handwritingCanvas.getBoundingClientRect();
+            const scaleX = handwritingCanvas.width / rect.width, scaleY = handwritingCanvas.height / rect.height;
+            let clientX, clientY;
+            if (e.type.includes('touch')) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
+            else { clientX = e.clientX; clientY = e.clientY; }
+            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+        }
+
+        function start(e) { e.preventDefault(); isHandwriting = true; const c = getCoords(e); currentStroke = [c]; handwritingCtx.beginPath(); handwritingCtx.moveTo(c.x, c.y); }
+        function draw(e) { e.preventDefault(); if (!isHandwriting) return; const c = getCoords(e); currentStroke.push(c); handwritingCtx.lineTo(c.x, c.y); handwritingCtx.stroke(); handwritingCtx.beginPath(); handwritingCtx.moveTo(c.x, c.y); }
+        function stop(e) { e.preventDefault(); if (isHandwriting) { if (currentStroke.length > 10) handwritingStrokes.push([...currentStroke]); isHandwriting = false; handwritingCtx.closePath(); } }
+
+        handwritingCanvas.addEventListener('mousedown', start); handwritingCanvas.addEventListener('mousemove', draw); handwritingCanvas.addEventListener('mouseup', stop); handwritingCanvas.addEventListener('mouseout', stop);
+        handwritingCanvas.addEventListener('touchstart', e => { e.preventDefault(); start(e); });
+        handwritingCanvas.addEventListener('touchmove', e => { e.preventDefault(); draw(e); });
+        handwritingCanvas.addEventListener('touchend', e => { e.preventDefault(); stop(e); });
+
+        document.getElementById('startRecognitionBtn').addEventListener('click', recognizeHandwriting);
+        document.getElementById('clearHandwritingBtn').addEventListener('click', clearHandwriting);
+        document.getElementById('smoothHandwritingBtn').addEventListener('click', smoothHandwriting);
+        document.getElementById('saveAsTextBtn').addEventListener('click', saveAsText);
+        document.getElementById('saveAsImageBtn').addEventListener('click', saveAsImage);
+        setupFullscreenHandwritingCanvas();
+        handwritingCanvasInitialized = true;
     }
 
-    async function handleEdit(store, prefix, id) {
-        let item = await getData(store, parseInt(id));
-        if (!item) return;
-        let modalEl = document.getElementById(prefix + 'Modal');
-        modalEl.querySelector('.modal-title').textContent = 'Editar ' + modalEl.querySelector('.modal-title').textContent.replace('Novo ','').replace('Nova ','');
-        let form = document.getElementById(prefix + 'Form');
+    function setupFullscreenHandwritingCanvas() {
+        fullscreenHandwritingCanvas = document.getElementById('fullscreenHandwritingCanvas');
+        if (!fullscreenHandwritingCanvas) return;
+        fullscreenHandwritingCtx = fullscreenHandwritingCanvas.getContext('2d');
+        function resize() {
+            const w = fullscreenHandwritingCanvas.parentElement.clientWidth - 40;
+            const h = fullscreenHandwritingCanvas.parentElement.clientHeight - 200;
+            fullscreenHandwritingCanvas.width = w;
+            fullscreenHandwritingCanvas.height = Math.min(600, h);
+            fullscreenHandwritingCtx.lineWidth = 2; fullscreenHandwritingCtx.lineCap = 'round'; fullscreenHandwritingCtx.lineJoin = 'round'; fullscreenHandwritingCtx.strokeStyle = '#000';
+            redrawFullscreenHandwritingStrokes();
+        }
+        window.addEventListener('resize', resize);
 
-        // Mapeamento de campos do formulário para propriedades do item
-        const fieldMappings = {
-            trabalho: {
-                disciplinaId: 'trabalhoDisciplina',
-                titulo: 'trabalhoTitulo',
-                tipo: 'trabalhoTipo',
-                participantes: 'trabalhoParticipantes',
-                entrega: 'trabalhoEntrega',
-                status: 'trabalhoStatus',
-                prioridade: 'trabalhoPrioridade',
-                nota: 'trabalhoNota',
-                observacoes: 'trabalhoObservacoes'
-            },
-            prova: {
-                disciplinaId: 'provaDisciplina',
-                conteudo: 'provaConteudo',
-                data: 'provaData',
-                hora: 'provaHora',
-                status: 'provaStatus',
-                nota: 'provaNota'
-            },
-            evento: {
-                title: 'eventTitle',
-                type: 'eventType',
-                date: 'eventDate',
-                time: 'eventTime',
-                description: 'eventDescription'
-            },
-            financeiro: {
-                tipo: 'financeiroTipo',
-                descricao: 'financeiroDescricao',
-                valor: 'financeiroValor',
-                categoria: 'financeiroCategoria',
-                data: 'financeiroData',
-                status: 'financeiroStatus'
-            },
-            disciplina: {
-                nome: 'disciplinaNome',
-                professor: 'disciplinaProfessor',
-                professorEmail: 'disciplinaEmail',
-                frequencia: 'disciplinaFrequencia'
-            },
-            horario: {
-                disciplinaId: 'horarioDisciplina',
-                diaSemana: 'horarioDiaSemana',
-                inicio: 'horarioInicio',
-                fim: 'horarioFim',
-                local: 'horarioLocal'
-            },
-            biblioteca: {
-                titulo: 'bibliotecaTitulo',
-                autor: 'bibliotecaAutor',
-                assunto: 'bibliotecaAssunto',
-                editora: 'bibliotecaEditora',
-                ano: 'bibliotecaAno',
-                observacoes: 'bibliotecaObservacoes'
-            },
-            link: {
-                titulo: 'linkTitulo',
-                url: 'linkUrl',
-                categoria: 'linkCategoria',
-                descricao: 'linkDescricao'
-            }
-        };
+        function getCoords(e) {
+            const rect = fullscreenHandwritingCanvas.getBoundingClientRect();
+            const scaleX = fullscreenHandwritingCanvas.width / rect.width, scaleY = fullscreenHandwritingCanvas.height / rect.height;
+            let clientX, clientY;
+            if (e.type.includes('touch')) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
+            else { clientX = e.clientX; clientY = e.clientY; }
+            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+        }
 
-        const mapping = fieldMappings[prefix];
-        if (mapping) {
-            for (let key in mapping) {
-                let inputId = mapping[key];
-                let input = document.getElementById(inputId);
-                if (input) {
-                    input.value = item[key] !== undefined ? item[key] : '';
+        function start(e) { e.preventDefault(); isFullscreenHandwriting = true; const c = getCoords(e); currentFullscreenStroke = [c]; fullscreenHandwritingCtx.beginPath(); fullscreenHandwritingCtx.moveTo(c.x, c.y); }
+        function draw(e) { e.preventDefault(); if (!isFullscreenHandwriting) return; const c = getCoords(e); currentFullscreenStroke.push(c); fullscreenHandwritingCtx.lineTo(c.x, c.y); fullscreenHandwritingCtx.stroke(); fullscreenHandwritingCtx.beginPath(); fullscreenHandwritingCtx.moveTo(c.x, c.y); }
+        function stop(e) { e.preventDefault(); if (isFullscreenHandwriting) { if (currentFullscreenStroke.length > 10) fullscreenHandwritingStrokes.push([...currentFullscreenStroke]); isFullscreenHandwriting = false; fullscreenHandwritingCtx.closePath(); } }
+
+        fullscreenHandwritingCanvas.addEventListener('mousedown', start); fullscreenHandwritingCanvas.addEventListener('mousemove', draw); fullscreenHandwritingCanvas.addEventListener('mouseup', stop); fullscreenHandwritingCanvas.addEventListener('mouseout', stop);
+        fullscreenHandwritingCanvas.addEventListener('touchstart', e => { e.preventDefault(); start(e); });
+        fullscreenHandwritingCanvas.addEventListener('touchmove', e => { e.preventDefault(); draw(e); });
+        fullscreenHandwritingCanvas.addEventListener('touchend', e => { e.preventDefault(); stop(e); });
+
+        document.getElementById('fullscreenStartRecognitionBtn').addEventListener('click', recognizeFullscreenHandwriting);
+        document.getElementById('fullscreenClearHandwritingBtn').addEventListener('click', clearFullscreenHandwriting);
+        document.getElementById('fullscreenSmoothHandwritingBtn').addEventListener('click', smoothFullscreenHandwriting);
+        document.getElementById('fullscreenSaveAsTextBtn').addEventListener('click', saveFullscreenAsText);
+        document.getElementById('fullscreenSaveAsImageBtn').addEventListener('click', saveFullscreenAsImage);
+        document.getElementById('fullscreenHandwritingBtn').addEventListener('click', () => {
+            fullscreenHandwritingStrokes = handwritingStrokes.map(s => s.map(p => ({...p})));
+            redrawFullscreenHandwritingStrokes();
+            new bootstrap.Modal(document.getElementById('handwritingFullscreenModal')).show();
+            setTimeout(resize, 100);
+        });
+    }
+
+    function redrawHandwritingStrokes() {
+        handwritingCtx.clearRect(0, 0, handwritingCanvas.width, handwritingCanvas.height);
+        handwritingCtx.beginPath();
+        handwritingStrokes.forEach(s => { if (s.length < 2) return; handwritingCtx.moveTo(s[0].x, s[0].y); for (let i = 1; i < s.length; i++) handwritingCtx.lineTo(s[i].x, s[i].y); });
+        handwritingCtx.stroke();
+    }
+
+    function redrawFullscreenHandwritingStrokes() {
+        fullscreenHandwritingCtx.clearRect(0, 0, fullscreenHandwritingCanvas.width, fullscreenHandwritingCanvas.height);
+        fullscreenHandwritingCtx.beginPath();
+        fullscreenHandwritingStrokes.forEach(s => { if (s.length < 2) return; fullscreenHandwritingCtx.moveTo(s[0].x, s[0].y); for (let i = 1; i < s.length; i++) fullscreenHandwritingCtx.lineTo(s[i].x, s[i].y); });
+        fullscreenHandwritingCtx.stroke();
+    }
+
+    function clearHandwriting() { handwritingCtx.clearRect(0,0,handwritingCanvas.width,handwritingCanvas.height); handwritingStrokes=[]; currentStroke=[]; recognizedText=''; document.getElementById('recognizedText').innerHTML='Aguardando reconhecimento...'; }
+    function clearFullscreenHandwriting() { fullscreenHandwritingCtx.clearRect(0,0,fullscreenHandwritingCanvas.width,fullscreenHandwritingCanvas.height); fullscreenHandwritingStrokes=[]; currentFullscreenStroke=[]; fullscreenRecognizedText=''; document.getElementById('fullscreenRecognizedText').innerHTML='Aguardando reconhecimento...'; }
+
+    function smoothHandwriting() {
+        if (!handwritingStrokes.length) return;
+        handwritingCtx.clearRect(0,0,handwritingCanvas.width,handwritingCanvas.height);
+        handwritingStrokes = handwritingStrokes.map(s => {
+            if (s.length < 3) return s;
+            let smoothed = [];
+            for (let i=0; i<s.length; i++) {
+                if (i===0 || i===s.length-1) smoothed.push(s[i]);
+                else {
+                    let x = (s[i-1].x + s[i].x + s[i+1].x)/3;
+                    let y = (s[i-1].y + s[i].y + s[i+1].y)/3;
+                    smoothed.push({x, y});
                 }
             }
+            return smoothed;
+        });
+        redrawHandwritingStrokes();
+    }
+
+    function smoothFullscreenHandwriting() {
+        if (!fullscreenHandwritingStrokes.length) return;
+        fullscreenHandwritingCtx.clearRect(0,0,fullscreenHandwritingCanvas.width,fullscreenHandwritingCanvas.height);
+        fullscreenHandwritingStrokes = fullscreenHandwritingStrokes.map(s => {
+            if (s.length < 3) return s;
+            let smoothed = [];
+            for (let i=0; i<s.length; i++) {
+                if (i===0 || i===s.length-1) smoothed.push(s[i]);
+                else {
+                    let x = (s[i-1].x + s[i].x + s[i+1].x)/3;
+                    let y = (s[i-1].y + s[i].y + s[i+1].y)/3;
+                    smoothed.push({x, y});
+                }
+            }
+            return smoothed;
+        });
+        redrawFullscreenHandwritingStrokes();
+    }
+
+    function recognizeHandwriting() {
+        if (!handwritingStrokes.length) { alert('Desenhe algo primeiro!'); return; }
+        const texts = ["Olá, texto reconhecido!", "Direito Constitucional - Artigo 5°", "Anotações importantes", "Resumo do capítulo 3", "Fórmulas matemáticas"];
+        recognizedText = texts[Math.floor(Math.random() * texts.length)];
+        document.getElementById('recognizedText').innerHTML = `<span class="fw-bold">${recognizedText}</span>`;
+        smoothHandwriting();
+    }
+
+    function recognizeFullscreenHandwriting() {
+        if (!fullscreenHandwritingStrokes.length) { alert('Desenhe algo primeiro!'); return; }
+        const texts = ["Olá, texto reconhecido em tela cheia!", "Direito Constitucional - Artigo 5°", "Anotações importantes", "Resumo do capítulo 3", "Fórmulas matemáticas"];
+        fullscreenRecognizedText = texts[Math.floor(Math.random() * texts.length)];
+        document.getElementById('fullscreenRecognizedText').innerHTML = `<span class="fw-bold">${fullscreenRecognizedText}</span>`;
+        smoothFullscreenHandwriting();
+    }
+
+    async function saveAsText() {
+        if (!recognizedText) { alert('Nenhum texto reconhecido!'); return; }
+        const titulo = prompt('Título da nota:', `Texto Manual - ${new Date().toLocaleDateString('pt-BR')}`);
+        if (!titulo) return;
+        const pid = await getCurrentProfileId();
+        const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: recognizedText, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto' };
+        await saveData('notas', nota);
+        clearHandwriting(); 
+        profileDataCache = null;
+        await loadProfileData();
+        if (activePanel === 'caderno') renderNotas(profileDataCache);
+        alert('Texto salvo como nota!');
+    }
+
+    async function saveFullscreenAsText() {
+        if (!fullscreenRecognizedText) { alert('Nenhum texto reconhecido!'); return; }
+        const titulo = prompt('Título da nota:', `Texto Manual - ${new Date().toLocaleDateString('pt-BR')}`);
+        if (!titulo) return;
+        const pid = await getCurrentProfileId();
+        const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: fullscreenRecognizedText, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto' };
+        await saveData('notas', nota);
+        handwritingStrokes = fullscreenHandwritingStrokes.map(s => s.map(p => ({...p})));
+        redrawHandwritingStrokes(); recognizedText = fullscreenRecognizedText;
+        document.getElementById('recognizedText').innerHTML = `<span class="fw-bold">${fullscreenRecognizedText}</span>`;
+        clearFullscreenHandwriting(); bootstrap.Modal.getInstance(document.getElementById('handwritingFullscreenModal')).hide();
+        profileDataCache = null;
+        await loadProfileData();
+        if (activePanel === 'caderno') renderNotas(profileDataCache);
+        alert('Texto salvo como nota!');
+    }
+
+    async function saveAsImage() {
+        const titulo = prompt('Título da imagem da escrita:', `Escrita Manual - ${new Date().toLocaleDateString('pt-BR')}`);
+        if (!titulo) return;
+        const imageData = handwritingCanvas.toDataURL('image/png');
+        const pid = await getCurrentProfileId();
+        const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: recognizedText || '', imagem: imageData, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'imagem' };
+        await saveData('notas', nota);
+        clearHandwriting(); 
+        profileDataCache = null;
+        await loadProfileData();
+        if (activePanel === 'caderno') renderNotas(profileDataCache);
+        alert('Escrita salva como imagem!');
+    }
+
+    async function saveFullscreenAsImage() {
+        const titulo = prompt('Título da imagem da escrita:', `Escrita Manual - ${new Date().toLocaleDateString('pt-BR')}`);
+        if (!titulo) return;
+        const imageData = fullscreenHandwritingCanvas.toDataURL('image/png');
+        const pid = await getCurrentProfileId();
+        const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: fullscreenRecognizedText || '', imagem: imageData, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'imagem' };
+        await saveData('notas', nota);
+        handwritingStrokes = fullscreenHandwritingStrokes.map(s => s.map(p => ({...p})));
+        redrawHandwritingStrokes(); recognizedText = fullscreenRecognizedText;
+        document.getElementById('recognizedText').innerHTML = `<span class="fw-bold">${fullscreenRecognizedText}</span>`;
+        clearFullscreenHandwriting(); bootstrap.Modal.getInstance(document.getElementById('handwritingFullscreenModal')).hide();
+        profileDataCache = null;
+        await loadProfileData();
+        if (activePanel === 'caderno') renderNotas(profileDataCache);
+        alert('Escrita salva como imagem!');
+    }
+
+    // ---------- Funções para documentos (incluindo Word, PPT) ----------
+    function setupDocumentImport() {
+        const area = document.getElementById('documentUploadArea');
+        const fileInput = document.getElementById('documentFileInput');
+        const previewContainer = document.getElementById('documentPreviewContainer');
+        const fileNameSpan = document.getElementById('documentFileName');
+        const removeBtn = document.getElementById('removeDocumentBtn');
+        const tituloInput = document.getElementById('importDocumentTitulo');
+        const descInput = document.getElementById('importDocumentDescricao');
+        const saveBtn = document.getElementById('saveImportedDocumentBtn');
+
+        area.addEventListener('click', () => fileInput.click());
+        area.addEventListener('dragover', e => { e.preventDefault(); area.style.backgroundColor = '#e9ecef'; area.style.borderColor = 'var(--primary)'; });
+        area.addEventListener('dragleave', () => { area.style.backgroundColor = '#f8f9fa'; area.style.borderColor = 'var(--accent)'; });
+        area.addEventListener('drop', e => {
+            e.preventDefault();
+            area.style.backgroundColor = '#f8f9fa';
+            area.style.borderColor = 'var(--accent)';
+            if (e.dataTransfer.files[0]) handleDocumentFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', function() {
+            if (this.files[0]) handleDocumentFile(this.files[0]);
+        });
+
+        function handleDocumentFile(file) {
+            const allowed = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'];
+            if (!allowed.includes(file.type) && !file.name.match(/\.(pdf|docx|pptx)$/i)) {
+                alert('Formato não suportado. Envie PDF, Word (.docx) ou PowerPoint (.pptx).');
+                return;
+            }
+            importedDocumentData = {
+                file: file,
+                name: file.name,
+                type: file.type,
+                size: file.size
+            };
+            fileNameSpan.textContent = file.name;
+            previewContainer.style.display = 'block';
+            area.style.display = 'none';
+            tituloInput.value = `Documento - ${new Date().toLocaleDateString('pt-BR')}`;
+            descInput.value = '';
+        }
+
+        removeBtn.addEventListener('click', () => {
+            importedDocumentData = null;
+            previewContainer.style.display = 'none';
+            area.style.display = 'block';
+            fileInput.value = '';
+            tituloInput.value = '';
+            descInput.value = '';
+        });
+
+        saveBtn.addEventListener('click', async () => {
+            if (!importedDocumentData) { alert('Nenhum documento selecionado.'); return; }
+            if (!tituloInput.value.trim()) { alert('Título obrigatório.'); return; }
+            const pid = await getCurrentProfileId();
+            const file = importedDocumentData.file;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const arrayBuffer = e.target.result;
+                const blob = new Blob([arrayBuffer], { type: file.type });
+                const base64 = await blobToBase64(blob);
+                const nota = {
+                    id: await getNewId('notas'),
+                    profileId: pid,
+                    titulo: tituloInput.value.trim(),
+                    conteudo: descInput.value.trim(),
+                    dataCriacao: new Date().toISOString().split('T')[0],
+                    tipo: 'documento',
+                    documento: {
+                        nome: file.name,
+                        tipo: file.type,
+                        tamanho: file.size,
+                        dados: base64
+                    }
+                };
+                await saveData('notas', nota);
+                importedDocumentData = null;
+                previewContainer.style.display = 'none';
+                area.style.display = 'block';
+                fileInput.value = '';
+                tituloInput.value = '';
+                descInput.value = '';
+                profileDataCache = null;
+                await loadProfileData();
+                if (activePanel === 'caderno') renderDocumentos(profileDataCache);
+                alert('Documento salvo com sucesso!');
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    async function renderDocumentos(data) {
+        const container = document.getElementById('documentos-lista');
+        container.innerHTML = '';
+        const docs = data.notas.filter(n => n.tipo === 'documento').sort((a,b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
+        if (!docs.length) {
+            container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Nenhum documento importado.</p></div></div>';
+            return;
+        }
+        docs.forEach(doc => {
+            const isPdf = doc.documento.tipo === 'application/pdf';
+            const isWord = doc.documento.tipo === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || doc.documento.nome.endsWith('.docx');
+            let icon, cor;
+            if (isPdf) { icon = 'fa-file-pdf'; cor = 'text-danger'; }
+            else if (isWord) { icon = 'fa-file-word'; cor = 'text-primary'; }
+            else { icon = 'fa-file-powerpoint'; cor = 'text-warning'; }
+            const tamanho = (doc.documento.tamanho / 1024).toFixed(1) + ' KB';
+            container.innerHTML += `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card documento-card card-dashboard" data-id="${doc.id}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <i class="fas ${icon} documento-icon ${cor}"></i>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item visualizar-documento" href="#" data-id="${doc.id}"><i class="fas fa-eye"></i> Visualizar</a></li>
+                                        <li><a class="dropdown-item download-documento" href="#" data-id="${doc.id}"><i class="fas fa-download"></i> Download</a></li>
+                                        <li><a class="dropdown-item delete-documento" href="#" data-id="${doc.id}"><i class="fas fa-trash"></i> Excluir</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <h5 class="card-title mt-2">${doc.titulo}</h5>
+                            <p class="card-text small text-muted">${doc.documento.nome}</p>
+                            <p class="documento-tamanho">${tamanho}</p>
+                            ${doc.conteudo ? `<p class="card-text small">${doc.conteudo.substring(0,60)}...</p>` : ''}
+                            <small class="text-muted">${new Date(doc.dataCriacao).toLocaleDateString('pt-BR')}</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    async function visualizarDocumento(id) {
+        const data = await getProfileData();
+        const doc = data.notas.find(n => n.id == id);
+        if (!doc) return;
+        const base64 = doc.documento.dados;
+        const blob = base64ToBlob(base64, doc.documento.tipo);
+        const url = URL.createObjectURL(blob);
+        objectUrls.set(id, url);
+
+        if (doc.documento.tipo === 'application/pdf') {
+            const modalEl = document.getElementById('viewPdfModal');
+            const iframe = document.getElementById('pdfViewer');
+            const fullscreenBtn = document.getElementById('pdfFullscreenBtn');
+            const downloadBtn = document.getElementById('downloadPdfBtn');
+            
+            iframe.src = url;
+            
+            fullscreenBtn.onclick = function() {
+                if (iframe.requestFullscreen) {
+                    iframe.requestFullscreen();
+                } else if (iframe.webkitRequestFullscreen) {
+                    iframe.webkitRequestFullscreen();
+                } else if (iframe.msRequestFullscreen) {
+                    iframe.msRequestFullscreen();
+                }
+            };
+
+            downloadBtn.onclick = function() {
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = doc.documento.nome;
+                a.click();
+            };
+            
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+            
+            modalEl.addEventListener('hidden.bs.modal', function onClose() {
+                URL.revokeObjectURL(url);
+                objectUrls.delete(id);
+                iframe.src = '';
+                this.removeEventListener('hidden.bs.modal', onClose);
+            });
         } else {
-            // Fallback para stores sem mapeamento (ex: nota)
-            for (let k in item) {
-                let inp = form.querySelector(`#${prefix}${k.charAt(0).toUpperCase() + k.slice(1)}`);
-                if (inp) inp.value = item[k];
+            const modalEl = document.getElementById('viewDocumentModal');
+            const iframe = document.getElementById('documentViewer');
+            const fullscreenBtn = document.getElementById('documentFullscreenBtn');
+            const downloadLink = document.getElementById('downloadDocumentLink');
+            
+            iframe.src = url;
+            document.getElementById('viewDocumentTitle').textContent = doc.titulo;
+            downloadLink.href = url;
+            downloadLink.download = doc.documento.nome;
+            
+            fullscreenBtn.onclick = function() {
+                if (iframe.requestFullscreen) {
+                    iframe.requestFullscreen();
+                } else if (iframe.webkitRequestFullscreen) {
+                    iframe.webkitRequestFullscreen();
+                } else if (iframe.msRequestFullscreen) {
+                    iframe.msRequestFullscreen();
+                }
+            };
+            
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+            
+            modalEl.addEventListener('hidden.bs.modal', function onClose() {
+                URL.revokeObjectURL(url);
+                objectUrls.delete(id);
+                iframe.src = '';
+                this.removeEventListener('hidden.bs.modal', onClose);
+            });
+
+            if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                const msg = document.createElement('div');
+                msg.className = 'alert alert-info mt-2';
+                msg.innerHTML = 'Se o documento não abrir, use o botão "Baixar" e abra com um aplicativo compatível.';
+                iframe.parentNode.insertBefore(msg, iframe.nextSibling);
+            }
+        }
+    }
+
+    function base64ToBlob(base64, mime) {
+        const byteCharacters = atob(base64.split(',')[1] || base64);
+        const byteArrays = [];
+        for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+            const slice = byteCharacters.slice(offset, offset + 512);
+            const byteNumbers = new Array(slice.length);
+            for (let i = 0; i < slice.length; i++) {
+                byteNumbers[i] = slice.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            byteArrays.push(byteArray);
+        }
+        return new Blob(byteArrays, { type: mime });
+    }
+
+    // Função global para visualizar anexo, acessível via clique nos ícones
+    window.visualizarAnexo = function(base64, tipo, nome) {
+        const blob = base64ToBlob(base64, tipo);
+        const url = URL.createObjectURL(blob);
+        const id = Date.now();
+        objectUrls.set(id, url);
+
+        if (tipo === 'application/pdf') {
+            const modalEl = document.getElementById('viewPdfModal');
+            const iframe = document.getElementById('pdfViewer');
+            const fullscreenBtn = document.getElementById('pdfFullscreenBtn');
+            const downloadBtn = document.getElementById('downloadPdfBtn');
+            
+            iframe.src = url;
+            
+            fullscreenBtn.onclick = function() {
+                if (iframe.requestFullscreen) {
+                    iframe.requestFullscreen();
+                } else if (iframe.webkitRequestFullscreen) {
+                    iframe.webkitRequestFullscreen();
+                } else if (iframe.msRequestFullscreen) {
+                    iframe.msRequestFullscreen();
+                }
+            };
+
+            downloadBtn.onclick = function() {
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = nome;
+                a.click();
+            };
+            
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+            
+            modalEl.addEventListener('hidden.bs.modal', function onClose() {
+                URL.revokeObjectURL(url);
+                objectUrls.delete(id);
+                iframe.src = '';
+                this.removeEventListener('hidden.bs.modal', onClose);
+            });
+        } else if (tipo.startsWith('image/')) {
+            document.getElementById('modalImage').src = base64;
+            document.getElementById('modalImageDescription').innerText = nome;
+            const downloadBtn = document.getElementById('downloadImageBtn');
+            downloadBtn.onclick = function() {
+                const blob = base64ToBlob(base64, tipo);
+                const imgUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = imgUrl;
+                a.download = nome;
+                a.click();
+                URL.revokeObjectURL(imgUrl);
+            };
+            new bootstrap.Modal(document.getElementById('viewImageModal')).show();
+        } else {
+            const modalEl = document.getElementById('viewDocumentModal');
+            const iframe = document.getElementById('documentViewer');
+            const fullscreenBtn = document.getElementById('documentFullscreenBtn');
+            const downloadLink = document.getElementById('downloadDocumentLink');
+            
+            iframe.src = url;
+            document.getElementById('viewDocumentTitle').textContent = nome;
+            downloadLink.href = url;
+            downloadLink.download = nome;
+            
+            fullscreenBtn.onclick = function() {
+                if (iframe.requestFullscreen) {
+                    iframe.requestFullscreen();
+                } else if (iframe.webkitRequestFullscreen) {
+                    iframe.webkitRequestFullscreen();
+                } else if (iframe.msRequestFullscreen) {
+                    iframe.msRequestFullscreen();
+                }
+            };
+            
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+            
+            modalEl.addEventListener('hidden.bs.modal', function onClose() {
+                URL.revokeObjectURL(url);
+                objectUrls.delete(id);
+                iframe.src = '';
+                this.removeEventListener('hidden.bs.modal', onClose);
+            });
+
+            if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                const msg = document.createElement('div');
+                msg.className = 'alert alert-info mt-2';
+                msg.innerHTML = 'Se o documento não abrir, use o botão "Baixar" e abra com um aplicativo compatível.';
+                iframe.parentNode.insertBefore(msg, iframe.nextSibling);
+            }
+        }
+    };
+
+    // Função para ler múltiplos arquivos
+    async function readMultipleFilesAsBase64(files) {
+        const promises = [];
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            promises.push(new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve({
+                    id: Date.now() + i + Math.random(),
+                    nome: file.name,
+                    tipo: file.type,
+                    dados: e.target.result
+                });
+                reader.readAsDataURL(file);
+            }));
+        }
+        return Promise.all(promises);
+    }
+
+    // Função renderAnexosList corrigida e robusta
+    function renderAnexosList(anexos, containerId, prefix) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        if (!anexos || anexos.length === 0) {
+            container.innerHTML = '<p class="text-muted small">Nenhum anexo.</p>';
+            return;
+        }
+        anexos.forEach((anexo) => {
+            const tipo = anexo.tipo || '';
+            const nome = anexo.nome || 'anexo';
+            let iconClass = 'fa-file';
+            if (tipo.startsWith('image/')) iconClass = 'fa-image';
+            else if (tipo === 'application/pdf') iconClass = 'fa-file-pdf';
+            else if (tipo.includes('word') || nome.endsWith('.docx')) iconClass = 'fa-file-word';
+            else if (tipo.includes('presentation') || nome.endsWith('.pptx')) iconClass = 'fa-file-powerpoint';
+            const div = document.createElement('div');
+            div.className = 'anexo-item';
+            div.innerHTML = `
+                <div class="anexo-info">
+                    <i class="fas ${iconClass}"></i>
+                    <span>${nome}</span>
+                </div>
+                <div class="anexo-acoes">
+                    <button type="button" class="btn btn-sm btn-outline-danger remover-anexo" data-id="${anexo.id || ''}" data-prefix="${prefix}"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // Função para lidar com remoção de anexo
+    function handleRemoverAnexo(e) {
+        const btn = e.target.closest('.remover-anexo');
+        if (!btn) return;
+        e.preventDefault();
+        const id = btn.dataset.id;
+        const prefix = btn.dataset.prefix;
+        const removidosInput = document.getElementById(prefix + 'AnexosRemovidos');
+        if (!removidosInput) return;
+        let removidos = removidosInput.value ? removidosInput.value.split(',') : [];
+        if (id && !removidos.includes(id)) {
+            removidos.push(id);
+            removidosInput.value = removidos.join(',');
+        }
+        // Remove visualmente o item
+        btn.closest('.anexo-item').remove();
+    }
+
+    // Configurar evento de remoção de anexo global
+    document.body.addEventListener('click', handleRemoverAnexo);
+
+    function setupAnexoPreview(inputId, previewId, hiddenId) {
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        const hidden = document.getElementById(hiddenId);
+        if (!input) return;
+        input.addEventListener('change', async function() {
+            preview.innerHTML = '';
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        preview.innerHTML = `<img src="${e.target.result}" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 5px;">`;
+                    };
+                    reader.readAsDataURL(file);
+                } else if (file.type === 'application/pdf') {
+                    preview.innerHTML = '<span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF selecionado</span>';
+                } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name.endsWith('.docx')) {
+                    preview.innerHTML = '<span class="badge bg-primary"><i class="fas fa-file-word"></i> Word selecionado</span>';
+                } else if (file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' || file.name.endsWith('.pptx')) {
+                    preview.innerHTML = '<span class="badge bg-warning text-dark"><i class="fas fa-file-powerpoint"></i> PowerPoint selecionado</span>';
+                } else {
+                    preview.innerHTML = '<span class="badge bg-secondary">Arquivo selecionado</span>';
+                }
+                hidden.value = '';
+            }
+        });
+    }
+
+    function addViewExistingButton(prefix, previewId, hiddenId, item) {
+        const preview = document.getElementById(previewId);
+        if (!preview) return;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-info ms-2 mt-2';
+        btn.innerHTML = '<i class="fas fa-eye"></i> Visualizar anexo atual';
+        btn.onclick = () => window.visualizarAnexo(item.anexo, item.anexoTipo || 'application/octet-stream', item.anexoNome || 'anexo');
+        preview.appendChild(btn);
+    }
+
+    setTimeout(() => {
+        setupAnexoPreview('provaAnexo', 'provaAnexoPreview', 'provaAnexoExistente');
+        setupAnexoPreview('eventAnexo', 'eventAnexoPreview', 'eventAnexoExistente');
+    }, 500);
+
+    async function editHorario(id) {
+        let a = await getData('horarios', parseInt(id));
+        if (!a) return;
+        document.getElementById('horarioModalLabel').textContent = 'Editar Aula';
+        document.getElementById('horarioId').value = a.id;
+        document.getElementById('horarioDisciplina').value = a.disciplinaId;
+        document.getElementById('horarioDiaSemana').value = a.diaSemana;
+        document.getElementById('horarioInicio').value = a.inicio;
+        document.getElementById('horarioFim').value = a.fim;
+        document.getElementById('horarioLocal').value = a.local;
+        document.getElementById('deleteHorario').classList.remove('d-none');
+        new bootstrap.Modal(document.getElementById('horarioModal')).show();
+    }
+
+    async function saveDisciplina() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('disciplinaId').value;
+        let d = { 
+            id: id?parseInt(id):await getNewId('disciplinas'), 
+            profileId: pid, 
+            nome: document.getElementById('disciplinaNome').value, 
+            professor: document.getElementById('disciplinaProfessor').value, 
+            professorEmail: document.getElementById('disciplinaEmail').value,
+            frequencia: parseInt(document.getElementById('disciplinaFrequencia').value) 
+        };
+        if (!d.nome) return alert('Nome obrigatório.');
+        await saveData('disciplinas', d); 
+        profileDataCache = null;
+        await loadProfileData();
+        renderCurrentPanel();
+        bootstrap.Modal.getInstance(document.getElementById('disciplinaModal')).hide();
+    }
+
+    async function saveTrabalho() {
+        let pid = await getCurrentProfileId();
+        let id = document.getElementById('trabalhoId').value;
+        let t = { 
+            id: id ? parseInt(id) : await getNewId('trabalhos'), 
+            profileId: pid, 
+            disciplinaId: parseInt(document.getElementById('trabalhoDisciplina').value), 
+            titulo: document.getElementById('trabalhoTitulo').value,
+            tipo: document.getElementById('trabalhoTipo').value,
+            participantes: document.getElementById('trabalhoTipo').value === 'grupo' ? document.getElementById('trabalhoParticipantes').value : '',
+            entrega: document.getElementById('trabalhoEntrega').value, 
+            status: document.getElementById('trabalhoStatus').value, 
+            prioridade: document.getElementById('trabalhoPrioridade').value, 
+            nota: document.getElementById('trabalhoNota').value === '' ? null : parseFloat(document.getElementById('trabalhoNota').value), 
+            observacoes: document.getElementById('trabalhoObservacoes').value,
+            anexos: [] // será preenchido
+        };
+        if (!t.disciplinaId || !t.titulo || !t.entrega) return alert('Preencha campos obrigatórios.');
+
+        // Obter anexos existentes (que não foram removidos)
+        const anexosRemovidos = document.getElementById('trabalhoAnexosRemovidos').value;
+        const removidosSet = new Set(anexosRemovidos ? anexosRemovidos.split(',') : []);
+        
+        if (id) {
+            const original = await getData('trabalhos', parseInt(id));
+            if (original && original.anexos) {
+                t.anexos = original.anexos.filter(a => !removidosSet.has(a.id.toString()));
             }
         }
 
-        form.querySelector(`#${prefix}Id`).value = item.id;
+        // Adicionar novos anexos
+        const anexoInput = document.getElementById('trabalhoAnexos');
+        if (anexoInput.files && anexoInput.files.length > 0) {
+            const novosAnexos = await readMultipleFilesAsBase64(anexoInput.files);
+            t.anexos = [...t.anexos, ...novosAnexos];
+        }
 
-        // Tratamentos especiais
-        if (prefix === 'trabalho') {
-            const tipoSelect = document.getElementById('trabalhoTipo');
-            if (tipoSelect) {
-                const event = new Event('change', { bubbles: true });
-                tipoSelect.dispatchEvent(event);
+        await saveData('trabalhos', t);
+        profileDataCache = null;
+        await loadProfileData();
+        renderCurrentPanel();
+        bootstrap.Modal.getInstance(document.getElementById('trabalhoModal')).hide();
+    }
+
+    // ========== FUNÇÃO EDITAR TRABALHO CORRIGIDA ==========
+    async function editTrabalho(id) {
+        try {
+            let item = await getData('trabalhos', parseInt(id));
+            if (!item) {
+                alert('Trabalho não encontrado.');
+                return;
             }
+
+            // Mapear elementos do formulário para verificar existência
+            const elements = {
+                label: document.getElementById('trabalhoModalLabel'),
+                id: document.getElementById('trabalhoId'),
+                disciplina: document.getElementById('trabalhoDisciplina'),
+                titulo: document.getElementById('trabalhoTitulo'),
+                tipo: document.getElementById('trabalhoTipo'),
+                participantes: document.getElementById('trabalhoParticipantes'),
+                entrega: document.getElementById('trabalhoEntrega'),
+                status: document.getElementById('trabalhoStatus'),
+                prioridade: document.getElementById('trabalhoPrioridade'),
+                nota: document.getElementById('trabalhoNota'),
+                observacoes: document.getElementById('trabalhoObservacoes'),
+                wrapper: document.getElementById('grupoParticipantesWrapper'),
+                anexosPreview: document.getElementById('trabalhoAnexosPreview'),
+                removidos: document.getElementById('trabalhoAnexosRemovidos')
+            };
+
+            // Verificar se todos os elementos existem
+            for (let [key, el] of Object.entries(elements)) {
+                if (!el) {
+                    console.error(`Elemento ${key} não encontrado no DOM`);
+                    alert(`Erro: elemento ${key} não encontrado.`);
+                    return;
+                }
+            }
+
+            // Preencher campos
+            elements.label.textContent = 'Editar Trabalho';
+            elements.id.value = item.id;
+            elements.disciplina.value = item.disciplinaId;
+            elements.titulo.value = item.titulo;
+            elements.tipo.value = item.tipo || 'individual';
+            elements.participantes.value = item.participantes || '';
+            elements.entrega.value = item.entrega;
+            elements.status.value = item.status;
+            elements.prioridade.value = item.prioridade;
+            elements.nota.value = item.nota !== null ? item.nota : '';
+            elements.observacoes.value = item.observacoes || '';
+
+            // Mostrar/ocultar participantes conforme tipo
+            elements.wrapper.style.display = item.tipo === 'grupo' ? 'block' : 'none';
+
             // Carregar anexos existentes
             renderAnexosList(item.anexos || [], 'trabalhoAnexosPreview', 'trabalho');
-            document.getElementById('trabalhoAnexosRemovidos').value = '';
-        }
+            elements.removidos.value = '';
 
-        if (prefix === 'financeiro' && item.tipo === 'despesa') {
-            document.getElementById('financeiroStatusWrapper').style.display = 'block';
+            const modalEl = document.getElementById('trabalhoModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        } catch (error) {
+            console.error('Erro ao editar trabalho:', error);
+            alert('Erro ao abrir edição. Verifique o console.');
         }
-        if (prefix === 'horario') {
-            document.getElementById('deleteHorario').classList.remove('d-none');
-        }
-        if (prefix === 'nota') {
-            document.getElementById('deleteNota').style.display = 'block';
-        }
+    }
 
-        // Anexo existente para prova/evento (único)
-        if (prefix === 'prova' || prefix === 'evento') {
-            if (item.anexo) {
-                const preview = document.getElementById(prefix + 'AnexoPreview');
-                const hidden = document.getElementById(prefix + 'AnexoExistente');
-                if (preview && hidden) {
-                    hidden.value = item.anexo;
-                    preview.innerHTML = '';
-                    const tipo = item.anexoTipo || '';
-                    if (tipo.startsWith('image/')) {
-                        preview.innerHTML = `<img src="${item.anexo}" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 5px;"><br><small class="text-muted">Anexo atual. Selecione outro para substituir.</small>`;
-                    } else if (tipo === 'application/pdf') {
-                        preview.innerHTML = `<span class="badge bg-danger"><i class="fas fa-file-pdf"></i> PDF atual. Selecione outro para substituir.</span>`;
-                    } else if (tipo === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-                        preview.innerHTML = `<span class="badge bg-primary"><i class="fas fa-file-word"></i> Word atual. Selecione outro para substituir.</span>`;
-                    } else if (tipo === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
-                        preview.innerHTML = `<span class="badge bg-warning text-dark"><i class="fas fa-file-powerpoint"></i> PowerPoint atual. Selecione outro para substituir.</span>`;
-                    } else {
-                        preview.innerHTML = `<span class="badge bg-secondary">Anexo atual. Selecione outro para substituir.</span>`;
-                    }
-                    addViewExistingButton(prefix, prefix + 'AnexoPreview', prefix + 'AnexoExistente', item);
+    async function saveProva() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('provaId').value;
+        let p = { 
+            id: id?parseInt(id):await getNewId('provas'), 
+            profileId: pid, 
+            disciplinaId: parseInt(document.getElementById('provaDisciplina').value), 
+            conteudo: document.getElementById('provaConteudo').value, 
+            data: document.getElementById('provaData').value, 
+            hora: document.getElementById('provaHora').value, 
+            status: document.getElementById('provaStatus').value, 
+            nota: document.getElementById('provaNota').value===''?null:parseFloat(document.getElementById('provaNota').value)
+        };
+        if (!p.disciplinaId || !p.conteudo || !p.data) return alert('Campos obrigatórios.');
+
+        const anexoInput = document.getElementById('provaAnexo');
+        const anexoExistente = document.getElementById('provaAnexoExistente').value;
+        if (anexoInput.files && anexoInput.files[0]) {
+            const file = anexoInput.files[0];
+            p.anexo = await readFileAsBase64(file);
+            p.anexoNome = file.name;
+            p.anexoTipo = file.type;
+        } else if (anexoExistente) {
+            p.anexo = anexoExistente;
+            if (id) {
+                const original = await getData('provas', parseInt(id));
+                if (original) {
+                    p.anexoNome = original.anexoNome;
+                    p.anexoTipo = original.anexoTipo;
                 }
             }
         }
 
-        new bootstrap.Modal(modalEl).show();
+        await saveData('provas', p); 
+        profileDataCache = null;
+        await loadProfileData();
+        renderCurrentPanel();
+        bootstrap.Modal.getInstance(document.getElementById('provaModal')).hide();
+    }
+
+    async function saveHorario() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('horarioId').value;
+        let h = { id: id?parseInt(id):await getNewId('horarios'), profileId: pid, disciplinaId: parseInt(document.getElementById('horarioDisciplina').value), diaSemana: document.getElementById('horarioDiaSemana').value, inicio: document.getElementById('horarioInicio').value, fim: document.getElementById('horarioFim').value, local: document.getElementById('horarioLocal').value };
+        if (!h.disciplinaId || !h.inicio || !h.fim) return alert('Campos obrigatórios.');
+        await saveData('horarios', h); 
+        profileDataCache = null;
+        await loadProfileData();
+        renderCurrentPanel();
+        bootstrap.Modal.getInstance(document.getElementById('horarioModal')).hide();
+    }
+
+    async function deleteHorario() {
+        let id = document.getElementById('horarioId').value;
+        if (id && confirm('Excluir esta aula?')) { await deleteData('horarios', parseInt(id)); profileDataCache = null; await loadProfileData(); renderCurrentPanel(); bootstrap.Modal.getInstance(document.getElementById('horarioModal')).hide(); }
+    }
+
+    async function saveEvent() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('eventId').value;
+        let e = { 
+            id: id?parseInt(id):await getNewId('eventos'), 
+            profileId: pid, 
+            title: document.getElementById('eventTitle').value, 
+            type: document.getElementById('eventType').value, 
+            date: document.getElementById('eventDate').value, 
+            time: document.getElementById('eventTime').value, 
+            description: document.getElementById('eventDescription').value 
+        };
+        if (!e.title || !e.date) return alert('Título e data obrigatórios.');
+
+        const anexoInput = document.getElementById('eventAnexo');
+        const anexoExistente = document.getElementById('eventAnexoExistente').value;
+        if (anexoInput.files && anexoInput.files[0]) {
+            const file = anexoInput.files[0];
+            e.anexo = await readFileAsBase64(file);
+            e.anexoNome = file.name;
+            e.anexoTipo = file.type;
+        } else if (anexoExistente) {
+            e.anexo = anexoExistente;
+            if (id) {
+                const original = await getData('eventos', parseInt(id));
+                if (original) {
+                    e.anexoNome = original.anexoNome;
+                    e.anexoTipo = original.anexoTipo;
+                }
+            }
+        }
+
+        await saveData('eventos', e); 
+        profileDataCache = null;
+        await loadProfileData();
+        renderCurrentPanel();
+        bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+    }
+
+    async function saveFinanceiro() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('financeiroId').value;
+        let recorrenteId = document.getElementById('financeiroRecorrenteId').value || null;
+        let data = document.getElementById('financeiroData').value;
+        if (!data) return alert('Data obrigatória.');
+        let rec = document.getElementById('financeiroRecurrence').value, end = document.getElementById('financeiroRecurrenceEndDate').value;
+        let trans = [];
+        if (recorrenteId) {
+            let todas = await getAllData('financeiro', 'recorrenteId', recorrenteId);
+            for (let t of todas) {
+                t.tipo = document.getElementById('financeiroTipo').value;
+                t.descricao = document.getElementById('financeiroDescricao').value;
+                t.valor = parseFloat(document.getElementById('financeiroValor').value);
+                t.categoria = document.getElementById('financeiroCategoria').value;
+                if (t.tipo === 'despesa') t.status = document.getElementById('financeiroStatus').value;
+                else t.status = 'pago';
+                await saveData('financeiro', t);
+            }
+        } else if (rec!=='none' && end) {
+            recorrenteId = Date.now() + Math.random();
+            let cur = new Date(data), endD = new Date(end);
+            if (cur > endD) return alert('Data final deve ser maior que inicial.');
+            cur.setHours(0,0,0,0); endD.setHours(0,0,0,0);
+            while (cur <= endD) {
+                let dStr = cur.toISOString().split('T')[0];
+                let mesAno = `${cur.getMonth()+1}-${cur.getFullYear()}`;
+                trans.push({ id: await getNewId('financeiro'), profileId: pid, tipo: document.getElementById('financeiroTipo').value, descricao: document.getElementById('financeiroDescricao').value, valor: parseFloat(document.getElementById('financeiroValor').value), categoria: document.getElementById('financeiroCategoria').value, data: dStr, status: document.getElementById('financeiroTipo').value==='despesa'?document.getElementById('financeiroStatus').value:'pago', mesAno, recorrente: true, recorrencia: rec, recorrenteId });
+                if (rec==='weekly') cur.setDate(cur.getDate()+7);
+                else if (rec==='monthly') cur.setMonth(cur.getMonth()+1);
+            }
+        } else {
+            let dt = new Date(data);
+            let mesAno = `${dt.getMonth()+1}-${dt.getFullYear()}`;
+            trans.push({ id: id?parseInt(id):await getNewId('financeiro'), profileId: pid, tipo: document.getElementById('financeiroTipo').value, descricao: document.getElementById('financeiroDescricao').value, valor: parseFloat(document.getElementById('financeiroValor').value), categoria: document.getElementById('financeiroCategoria').value, data, status: document.getElementById('financeiroTipo').value==='despesa'?document.getElementById('financeiroStatus').value:'pago', mesAno, recorrente: false });
+        }
+        for (let t of trans) await saveData('financeiro', t);
+        profileDataCache = null;
+        await loadProfileData();
+        renderCurrentPanel();
+        bootstrap.Modal.getInstance(document.getElementById('financeiroModal')).hide();
+    }
+
+    async function saveNota() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('notaId').value;
+        let n = { id: id?parseInt(id):await getNewId('notas'), profileId: pid, titulo: document.getElementById('notaTitulo').value, conteudo: document.getElementById('notaConteudo').value, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto' };
+        if (!n.titulo) return alert('Título obrigatório.');
+        await saveData('notas', n); 
+        profileDataCache = null;
+        await loadProfileData();
+        renderCurrentPanel();
+        bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide();
+    }
+
+    async function deleteNota() {
+        let id = document.getElementById('notaId').value;
+        if (id && confirm('Excluir nota?')) { await deleteData('notas', parseInt(id)); profileDataCache = null; await loadProfileData(); renderCurrentPanel(); bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide(); }
+    }
+
+    async function saveLink() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('linkId').value;
+        let l = { id: id?parseInt(id):await getNewId('links'), profileId: pid, titulo: document.getElementById('linkTitulo').value, url: document.getElementById('linkUrl').value, categoria: document.getElementById('linkCategoria').value, descricao: document.getElementById('linkDescricao').value };
+        if (!l.titulo || !l.url) return alert('Título e URL obrigatórios.');
+        await saveData('links', l); 
+        profileDataCache = null;
+        await loadProfileData();
+        renderCurrentPanel();
+        bootstrap.Modal.getInstance(document.getElementById('linkModal')).hide();
+    }
+
+    async function saveAnotacaoFilme() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('anotacaoFilmeId').value;
+        let f = await getData('filmes', parseInt(id));
+        if (f) {
+            f.anotacao = { tempoAtual: document.getElementById('filmeTempoAtual').value?parseInt(document.getElementById('filmeTempoAtual').value):null, texto: document.getElementById('filmeAnotacao').value, assistido: document.getElementById('filmeAssistido').checked };
+            await saveData('filmes', f); 
+            profileDataCache = null;
+            await loadProfileData();
+            renderCurrentPanel();
+            bootstrap.Modal.getInstance(document.getElementById('anotacaoFilmeModal')).hide();
+        }
+    }
+
+    async function saveLivro() {
+        let pid = await getCurrentProfileId(), id = document.getElementById('bibliotecaId').value;
+        let l = { id: id?parseInt(id):await getNewId('biblioteca'), profileId: pid, titulo: document.getElementById('bibliotecaTitulo').value, autor: document.getElementById('bibliotecaAutor').value, assunto: document.getElementById('bibliotecaAssunto').value, editora: document.getElementById('bibliotecaEditora').value, ano: document.getElementById('bibliotecaAno').value||null, observacoes: document.getElementById('bibliotecaObservacoes').value };
+        if (!l.titulo || !l.autor || !l.assunto) return alert('Título, autor e assunto obrigatórios.');
+        await saveData('biblioteca', l); 
+        profileDataCache = null;
+        await loadProfileData();
+        renderCurrentPanel();
+        bootstrap.Modal.getInstance(document.getElementById('bibliotecaModal')).hide();
     }
 
     function setupEventListeners() {
         document.getElementById('fixed-back-home').addEventListener('click', goToHome);
-        document.getElementById('prev-month-financeiro').addEventListener('click', ()=>{ if (--currentFinanceMonth<0) { currentFinanceMonth=11; currentFinanceYear--; } renderAll(); });
-        document.getElementById('next-month-financeiro').addEventListener('click', ()=>{ if (++currentFinanceMonth>11) { currentFinanceMonth=0; currentFinanceYear++; } renderAll(); });
+        document.getElementById('prev-month-financeiro').addEventListener('click', ()=>{ if (--currentFinanceMonth<0) { currentFinanceMonth=11; currentFinanceYear--; } renderCurrentPanel(); });
+        document.getElementById('next-month-financeiro').addEventListener('click', ()=>{ if (++currentFinanceMonth>11) { currentFinanceMonth=0; currentFinanceYear++; } renderCurrentPanel(); });
         
         document.querySelectorAll('[data-filter-type]').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('[data-filter-type]').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 financeFilterType = this.dataset.filterType;
-                renderAll();
+                if (activePanel === 'financeiro') renderCurrentPanel();
             });
         });
         document.querySelectorAll('[data-filter-status]').forEach(btn => {
@@ -4351,7 +4258,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelectorAll('[data-filter-status]').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 financeFilterStatus = this.dataset.filterStatus;
-                renderAll();
+                if (activePanel === 'financeiro') renderCurrentPanel();
             });
         });
         
@@ -4360,7 +4267,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (s>=0 && s<=23 && e>=0 && e<=23 && s<=e) { 
                 scheduleStartHour=s; scheduleEndHour=e; 
                 saveScheduleFilter();
-                renderAll(); 
+                if (activePanel === 'horarios') renderCurrentPanel();
             }
             else alert('Horários inválidos.');
         });
@@ -4369,10 +4276,10 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('filterStartHour').value=7; 
             document.getElementById('filterEndHour').value=22; 
             saveScheduleFilter();
-            renderAll(); 
+            if (activePanel === 'horarios') renderCurrentPanel();
         });
-        document.getElementById('prev-month').addEventListener('click', ()=>{ currentCalendarDate.setMonth(currentCalendarDate.getMonth()-1); renderAll(); });
-        document.getElementById('next-month').addEventListener('click', ()=>{ currentCalendarDate.setMonth(currentCalendarDate.getMonth()+1); renderAll(); });
+        document.getElementById('prev-month').addEventListener('click', ()=>{ currentCalendarDate.setMonth(currentCalendarDate.getMonth()-1); if (activePanel === 'agenda') renderCurrentPanel(); });
+        document.getElementById('next-month').addEventListener('click', ()=>{ currentCalendarDate.setMonth(currentCalendarDate.getMonth()+1); if (activePanel === 'agenda') renderCurrentPanel(); });
         document.getElementById('financeiroTipo').addEventListener('change', function(){ document.getElementById('financeiroStatusWrapper').style.display = this.value==='despesa'?'block':'none'; });
         document.getElementById('financeiroRecurrence').addEventListener('change', function(){ document.getElementById('financeiroRecurrenceEndDateWrapper').classList.toggle('d-none', this.value==='none'); });
         document.getElementById('profileForm').addEventListener('submit', async e=>{
@@ -4480,10 +4387,19 @@ document.addEventListener('DOMContentLoaded', function() {
             if (cardLink) {
                 e.preventDefault();
                 let id = cardLink.dataset.target;
+                activePanel = id;
                 document.querySelectorAll('.content-panel').forEach(p=>p.classList.remove('active'));
                 document.getElementById(id).classList.add('active');
-                updateMainHeaderTitle(); updateFixedBackButton(); updateFooterNavigation();
-                if (id==='caderno') setTimeout(()=>{ if (canvas) ctx.clearRect(0,0,canvas.width,canvas.height); },100);
+                updateMainHeaderTitle(); 
+                renderCurrentPanel();
+                updateFooterNavigation();
+                // Inicializa canvases se necessário
+                if (id === 'caderno') {
+                    setTimeout(() => { 
+                        if (!drawingCanvasInitialized) setupDrawingCanvas(); 
+                        if (!handwritingCanvasInitialized) setupHandwritingCanvas(); 
+                    }, 100);
+                }
             }
             let calDay = e.target.closest('.calendar-day:not(.empty)');
             if (calDay) {
@@ -4494,9 +4410,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (nextCard && proximoEventoGlobal) {
                 let map = { trabalhos:'trabalhos', provas:'provas', financeiro:'financeiro', eventos:'agenda' };
                 let target = map[proximoEventoGlobal.eventType] || 'agenda';
+                activePanel = target;
                 document.querySelectorAll('.content-panel').forEach(p=>p.classList.remove('active'));
                 document.getElementById(target).classList.add('active');
-                updateMainHeaderTitle(); updateFixedBackButton(); updateFooterNavigation();
+                updateMainHeaderTitle(); 
+                renderCurrentPanel();
+                updateFooterNavigation();
             }
             let notaCard = e.target.closest('.nota-card');
             if (notaCard && !e.target.closest('.nota-acoes') && !e.target.closest('.view-image-btn') && !e.target.closest('.fullscreen-nota')) {
@@ -4580,7 +4499,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (t && t.tipo==='despesa' && t.status==='pendente' && confirm('Marcar como paga?')) {
                     t.status = 'pago';
                     await saveData('financeiro', t);
-                    profileDataCache = null; await renderAll();
+                    profileDataCache = null;
+                    await loadProfileData();
+                    if (activePanel === 'financeiro') renderCurrentPanel();
                 }
             }
             let evItem = e.target.closest('.event-item');
@@ -4609,7 +4530,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (target.matches('.delete-documento')) {
                     if (confirm('Excluir este documento?')) {
                         await deleteData('notas', parseInt(id));
-                        profileDataCache = null; await renderAll();
+                        profileDataCache = null;
+                        await loadProfileData();
+                        if (activePanel === 'caderno') renderDocumentos(profileDataCache);
                     }
                 }
                 return;
@@ -4660,9 +4583,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (confirm('Excluir todas ocorrências?')) {
                         let todas = await getAllData('financeiro', 'recorrenteId', t.recorrenteId);
                         for (let tx of todas) await deleteData('financeiro', tx.id);
-                        profileDataCache = null; await renderAll();
-                    } else { await deleteData('financeiro', parseInt(id)); profileDataCache = null; await renderAll(); }
-                } else { await deleteData('financeiro', parseInt(id)); profileDataCache = null; await renderAll(); }
+                        profileDataCache = null;
+                        await loadProfileData();
+                        if (activePanel === 'financeiro') renderCurrentPanel();
+                    } else { await deleteData('financeiro', parseInt(id)); profileDataCache = null; await loadProfileData(); if (activePanel === 'financeiro') renderCurrentPanel(); }
+                } else { await deleteData('financeiro', parseInt(id)); profileDataCache = null; await loadProfileData(); if (activePanel === 'financeiro') renderCurrentPanel(); }
             }
             else if (target.matches('.delete-livro')) handleDelete('biblioteca', id, 'Excluir livro?');
             else if (target.matches('.edit-livro')) handleEdit('biblioteca', 'biblioteca', id);
@@ -4705,7 +4630,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             else if (target.matches('.delete-nota')) {
                 e.preventDefault(); e.stopPropagation();
-                if (confirm('Excluir nota?')) { await deleteData('notas', parseInt(id)); profileDataCache = null; await renderAll(); }
+                if (confirm('Excluir nota?')) { await deleteData('notas', parseInt(id)); profileDataCache = null; await loadProfileData(); if (activePanel === 'caderno') renderNotas(profileDataCache); }
             }
         });
     }
@@ -4765,7 +4690,8 @@ document.addEventListener('DOMContentLoaded', function() {
             f.anotacao.tempoAtual = currentVideoTime;
             f.anotacao.dataUltimaVisualizacao = new Date().toISOString();
             await saveData('filmes', f);
-            profileDataCache = null; await renderFilmes(await getProfileData());
+            profileDataCache = null;
+            if (activePanel === 'filmes') renderFilmes(await getProfileData());
         }
     }
 
@@ -4803,14 +4729,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 filme.fileData = new Blob([arrayBuffer], { type: file.type });
                 await saveData('filmes', filme);
                 bootstrap.Modal.getInstance(document.getElementById('filmeModal')).hide();
-                profileDataCache = null; await renderAll();
+                profileDataCache = null;
+                await loadProfileData();
+                if (activePanel === 'filmes') renderFilmes(profileDataCache);
             };
             reader.readAsArrayBuffer(file);
             return;
         }
         await saveData('filmes', filme);
         bootstrap.Modal.getInstance(document.getElementById('filmeModal')).hide();
-        profileDataCache = null; await renderAll();
+        profileDataCache = null;
+        await loadProfileData();
+        if (activePanel === 'filmes') renderFilmes(profileDataCache);
     }
 
     async function renderFilmes(data) {
@@ -4886,7 +4816,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         document.querySelectorAll('.switch-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.switch-profile').dataset.id; if (id!==current) { await switchProfile(id); bootstrap.Modal.getInstance(document.getElementById('profileManagementModal')).hide(); } }));
         document.querySelectorAll('.edit-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.edit-profile').dataset.id; let p = await getData('profiles', id); if (p) { document.getElementById('profileName').value = p.name; document.getElementById('profileId').value = p.id; document.getElementById('saveProfileBtn').innerHTML = '<i class="fas fa-save"></i> Atualizar'; } }));
-        document.querySelectorAll('.delete-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.delete-profile').dataset.id; if (profiles.length===1) return; if (confirm('Excluir perfil? Todos os dados serão perdidos.')) { await deleteData('profiles', id); let stores = ['disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links']; for (let s of stores) { let items = await getAllData(s, 'profileId', id); for (let i of items) await deleteData(s, i.id); } await renderProfileManagementList(); profileDataCache = null; await renderAll(); } }));
+        document.querySelectorAll('.delete-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.delete-profile').dataset.id; if (profiles.length===1) return; if (confirm('Excluir perfil? Todos os dados serão perdidos.')) { await deleteData('profiles', id); let stores = ['disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links']; for (let s of stores) { let items = await getAllData(s, 'profileId', id); for (let i of items) await deleteData(s, i.id); } await renderProfileManagementList(); profileDataCache = null; await loadProfileData(); renderCurrentPanel(); } }));
     }
 
     async function handleDelete(store, id, msg) {
@@ -4898,7 +4828,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 for (let h of data.horarios.filter(h=>h.disciplinaId==id)) await deleteData('horarios', h.id);
             }
             await deleteData(store, parseInt(id));
-            profileDataCache = null; await renderAll();
+            profileDataCache = null;
+            await loadProfileData();
+            renderCurrentPanel();
         }
     }
 
@@ -4910,12 +4842,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!disciplinas.length) await createInitialData();
         generateQuickLinks(); 
         profileDataCache = null; // força carregamento inicial
-        await renderAll(); 
+        await loadProfileData();
+        // Renderiza apenas o painel ativo (home)
+        renderCurrentPanel();
         updateMainHeaderTitle(); 
         setupEventListeners(); 
         setupFooterNavigation();
-        setupDrawingCanvas(); 
-        setupHandwritingCanvas(); 
+        // Inicialização preguiçosa dos canvases (só quando a aba for aberta)
         setupImageImport(); 
         setupDocumentImport();
         
