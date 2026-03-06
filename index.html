@@ -100,7 +100,12 @@
       color: var(--dark);
       border: none;
       height: 100%;
-      background: white;
+      background-color: var(--card-color); /* fallback para navegadores sem color-mix */
+    }
+    @supports (background-color: color-mix(in srgb, red, transparent)) {
+      .card-link {
+        background-color: color-mix(in srgb, var(--card-color) 80%, transparent);
+      }
     }
 
     .card-link:hover {
@@ -2611,7 +2616,7 @@ document.addEventListener('DOMContentLoaded', function() {
             links:'#16A085', financeiro:'var(--success)', relatorios:'var(--secondary)', configuracoes:'#2c3e50'
         };
         panels.forEach(p => {
-            container.innerHTML += `<div class="col-6 col-md-4 col-lg-3 mb-4"><div class="card card-link" data-target="${p.id}" style="background-color: ${colors[p.id]};"><div class="card-body"><div class="icon-wrapper"><i class="${p.icon}"></i></div><h5>${p.title}</h5></div></div></div>`;
+            container.innerHTML += `<div class="col-6 col-md-4 col-lg-3 mb-4"><div class="card card-link" data-target="${p.id}" style="--card-color: ${colors[p.id]};"><div class="card-body"><div class="icon-wrapper"><i class="${p.icon}"></i></div><h5>${p.title}</h5></div></div></div>`;
         });
     }
 
