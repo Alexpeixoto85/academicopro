@@ -2945,10 +2945,10 @@ document.addEventListener('DOMContentLoaded', function() {
     async function renderNotas(data) {
         const container = document.getElementById('notas-lista');
         container.innerHTML = '';
-        let notas = data.notas.filter(n => n.tipo !== 'documento').sort((a,b)=>new Date(b.dataCriacao)-new Date(a.dataCriacao));
+        let notas = data.notas.filter(n => n.tipo !== 'documento').sort((a,b)=>new Date(b.dataCriacao+'T12:00:00') - new Date(a.dataCriacao+'T12:00:00'));
         if (!notas.length) { container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Nova Nota", desenhe algo ou importe imagem.</p></div></div>'; return; }
         notas.forEach(n => {
-            let dataCri = new Date(n.dataCriacao||Date.now()).toLocaleDateString('pt-BR');
+            let dataCri = new Date(n.dataCriacao+'T12:00:00').toLocaleDateString('pt-BR');
             if (n.imagem) {
                 container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-card card-dashboard" data-id="${n.id}"><div class="card-body"><div class="image-note-badge"><i class="fas fa-image"></i></div><div class="d-flex justify-content-between align-items-start mb-3"><h5 class="card-title">${n.titulo}</h5><div class="nota-acoes"><button class="btn btn-sm btn-outline-primary fullscreen-nota" data-id="${n.id}"><i class="fas fa-expand"></i></button><button class="btn btn-sm btn-outline-danger delete-nota" data-id="${n.id}"><i class="fas fa-trash"></i></button></div></div><div class="text-center"><img src="${n.imagem}" class="nota-imagem-preview" alt="${n.titulo}"></div>${n.conteudo?`<p class="card-text mt-2 small">${n.conteudo}</p>`:''}<div class="mt-3"><small class="nota-data">Criado em: ${dataCri}</small></div><button class="btn btn-sm btn-primary mt-2 view-image-btn" data-imagem="${n.imagem}" data-titulo="${n.titulo}"><i class="fas fa-eye"></i> Visualizar</button></div></div></div>`;
             } else {
@@ -2964,7 +2964,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let imagens = data.notas.filter(n=>n.imagem);
         if (!imagens.length) { container.innerHTML = '<div class="col-12"><p class="text-center text-muted">Nenhuma imagem na galeria.</p></div>'; return; }
         imagens.forEach(img => {
-            container.innerHTML += `<div class="col-md-4 col-lg-3 galeria-item"><div class="card"><img src="${img.imagem}" class="galeria-imagem" alt="${img.titulo}" onclick="abrirImagemGaleria('${img.imagem}', '${img.titulo}');"><div class="card-body p-2"><p class="card-text small mb-0">${img.titulo}</p><small class="text-muted">${new Date(img.dataCriacao).toLocaleDateString('pt-BR')}</small></div></div></div>`;
+            container.innerHTML += `<div class="col-md-4 col-lg-3 galeria-item"><div class="card"><img src="${img.imagem}" class="galeria-imagem" alt="${img.titulo}" onclick="abrirImagemGaleria('${img.imagem}', '${img.titulo}');"><div class="card-body p-2"><p class="card-text small mb-0">${img.titulo}</p><small class="text-muted">${new Date(img.dataCriacao+'T12:00:00').toLocaleDateString('pt-BR')}</small></div></div></div>`;
         });
     }
 
@@ -3019,7 +3019,11 @@ document.addEventListener('DOMContentLoaded', function() {
         saldoEl.className = saldo>=0 ? 'text-success' : 'text-danger';
 
         let porDia = {};
-        trans.forEach(t=>{ let d = new Date(t.data).getDate(); if(!porDia[d]) porDia[d]=[]; porDia[d].push(t); });
+        trans.forEach(t=>{ 
+            let day = parseInt(t.data.split('-')[2]); // extrai dia da string YYYY-MM-DD
+            if(!porDia[day]) porDia[day]=[]; 
+            porDia[day].push(t); 
+        });
         let dias = Object.keys(porDia).sort((a,b)=>b-a);
 
         if (!dias.length) {
@@ -3029,7 +3033,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 let r=0, de=0; 
                 porDia[dia].forEach(t=>{ if(t.tipo==='receita') r+=t.valor; else de+=t.valor; });
                 container.innerHTML += `<div class="financeiro-dia-titulo">Dia ${dia}</div>`;
-                porDia[dia].sort((a,b)=>new Date(b.data)-new Date(a.data)).forEach(t=>{
+                porDia[dia].sort((a,b)=>new Date(b.data+'T00:00')-new Date(a.data+'T00:00')).forEach(t=>{
                     let card = document.createElement('div');
                     card.className = `financeiro-transacao-card ${t.tipo}`;
                     card.dataset.id = t.id;
@@ -3575,7 +3579,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function renderDocumentos(data) {
         const container = document.getElementById('documentos-lista');
         container.innerHTML = '';
-        const docs = data.notas.filter(n => n.tipo === 'documento').sort((a,b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
+        const docs = data.notas.filter(n => n.tipo === 'documento').sort((a,b) => new Date(b.dataCriacao+'T12:00:00') - new Date(a.dataCriacao+'T12:00:00'));
         if (!docs.length) {
             container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Nenhum documento importado.</p></div></div>';
             return;
@@ -3607,7 +3611,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <p class="card-text small text-muted">${doc.documento.nome}</p>
                             <p class="documento-tamanho">${tamanho}</p>
                             ${doc.conteudo ? `<p class="card-text small">${doc.conteudo.substring(0,60)}...</p>` : ''}
-                            <small class="text-muted">${new Date(doc.dataCriacao).toLocaleDateString('pt-BR')}</small>
+                            <small class="text-muted">${new Date(doc.dataCriacao+'T12:00:00').toLocaleDateString('pt-BR')}</small>
                         </div>
                     </div>
                 </div>
@@ -3985,6 +3989,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (original && original.anexos) {
                 t.anexos = original.anexos.filter(a => !removidosSet.has(a.id.toString()));
             }
+        } else {
+            t.anexos = [];
         }
 
         // Adicionar novos anexos
@@ -4159,14 +4165,28 @@ document.addEventListener('DOMContentLoaded', function() {
         bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
     }
 
+    // Função auxiliar para criar data local a partir de string YYYY-MM-DD (meio-dia para evitar deslocamento)
+    function localDateFromString(dateStr) {
+        if (!dateStr) return null;
+        let [year, month, day] = dateStr.split('-').map(Number);
+        return new Date(year, month-1, day, 12, 0, 0); // meio-dia local
+    }
+
     async function saveFinanceiro() {
         let pid = await getCurrentProfileId(), id = document.getElementById('financeiroId').value;
         let recorrenteId = document.getElementById('financeiroRecorrenteId').value || null;
         let data = document.getElementById('financeiroData').value;
         if (!data) return alert('Data obrigatória.');
         let rec = document.getElementById('financeiroRecurrence').value, end = document.getElementById('financeiroRecurrenceEndDate').value;
+        
+        // Extrair ano e mês da data string (YYYY-MM-DD)
+        let [yearStr, monthStr, dayStr] = data.split('-');
+        let year = parseInt(yearStr), month = parseInt(monthStr), day = parseInt(dayStr);
+        let mesAnoBase = `${month}-${year}`;
+
         let trans = [];
         if (recorrenteId) {
+            // Edição de todas as ocorrências de uma recorrência
             let todas = await getAllData('financeiro', 'recorrenteId', recorrenteId);
             for (let t of todas) {
                 t.tipo = document.getElementById('financeiroTipo').value;
@@ -4178,21 +4198,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 await saveData('financeiro', t);
             }
         } else if (rec!=='none' && end) {
+            // Criar recorrência
             recorrenteId = Date.now() + Math.random();
-            let cur = new Date(data), endD = new Date(end);
-            if (cur > endD) return alert('Data final deve ser maior que inicial.');
-            cur.setHours(0,0,0,0); endD.setHours(0,0,0,0);
-            while (cur <= endD) {
-                let dStr = cur.toISOString().split('T')[0];
-                let mesAno = `${cur.getMonth()+1}-${cur.getFullYear()}`;
-                trans.push({ id: await getNewId('financeiro'), profileId: pid, tipo: document.getElementById('financeiroTipo').value, descricao: document.getElementById('financeiroDescricao').value, valor: parseFloat(document.getElementById('financeiroValor').value), categoria: document.getElementById('financeiroCategoria').value, data: dStr, status: document.getElementById('financeiroTipo').value==='despesa'?document.getElementById('financeiroStatus').value:'pago', mesAno, recorrente: true, recorrencia: rec, recorrenteId });
-                if (rec==='weekly') cur.setDate(cur.getDate()+7);
-                else if (rec==='monthly') cur.setMonth(cur.getMonth()+1);
+            let curDate = localDateFromString(data);
+            let endDate = localDateFromString(end);
+            if (curDate > endDate) return alert('Data final deve ser maior que inicial.');
+            while (curDate <= endDate) {
+                let dStr = curDate.toISOString().split('T')[0];
+                let mesAno = `${curDate.getMonth()+1}-${curDate.getFullYear()}`;
+                trans.push({
+                    id: await getNewId('financeiro'),
+                    profileId: pid,
+                    tipo: document.getElementById('financeiroTipo').value,
+                    descricao: document.getElementById('financeiroDescricao').value,
+                    valor: parseFloat(document.getElementById('financeiroValor').value),
+                    categoria: document.getElementById('financeiroCategoria').value,
+                    data: dStr,
+                    status: document.getElementById('financeiroTipo').value==='despesa' ? document.getElementById('financeiroStatus').value : 'pago',
+                    mesAno,
+                    recorrente: true,
+                    recorrencia: rec,
+                    recorrenteId
+                });
+                if (rec==='weekly') curDate.setDate(curDate.getDate()+7);
+                else if (rec==='monthly') curDate.setMonth(curDate.getMonth()+1);
             }
         } else {
-            let dt = new Date(data);
-            let mesAno = `${dt.getMonth()+1}-${dt.getFullYear()}`;
-            trans.push({ id: id?parseInt(id):await getNewId('financeiro'), profileId: pid, tipo: document.getElementById('financeiroTipo').value, descricao: document.getElementById('financeiroDescricao').value, valor: parseFloat(document.getElementById('financeiroValor').value), categoria: document.getElementById('financeiroCategoria').value, data, status: document.getElementById('financeiroTipo').value==='despesa'?document.getElementById('financeiroStatus').value:'pago', mesAno, recorrente: false });
+            // Transação única
+            trans.push({
+                id: id ? parseInt(id) : await getNewId('financeiro'),
+                profileId: pid,
+                tipo: document.getElementById('financeiroTipo').value,
+                descricao: document.getElementById('financeiroDescricao').value,
+                valor: parseFloat(document.getElementById('financeiroValor').value),
+                categoria: document.getElementById('financeiroCategoria').value,
+                data,
+                status: document.getElementById('financeiroTipo').value==='despesa' ? document.getElementById('financeiroStatus').value : 'pago',
+                mesAno: mesAnoBase,
+                recorrente: false
+            });
         }
         for (let t of trans) await saveData('financeiro', t);
         profileDataCache = null;
