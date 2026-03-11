@@ -2334,6 +2334,9 @@
 <div class="app-container">
   <header class="main-header">
       <h2 id="main-header-title">Acadêmico Pro</h2>
+      <button class="btn btn-outline-secondary btn-sm backup-header-btn" id="openBackupBtn" title="Backup & Restauração">
+          <i class="fas fa-database me-1"></i> <span class="d-none d-sm-inline">Backup</span>
+      </button>
   </header>
 
   <button class="back-to-home-btn" id="fixed-back-home" style="display: none;">
@@ -7401,6 +7404,581 @@ document.addEventListener('DOMContentLoaded', function() {
     init();
     
 });
+</script>
+
+<!-- ===== MODAL BACKUP ===== -->
+<div class="modal fade" id="backupModal" tabindex="-1" aria-labelledby="backupModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #2c3e50, #34495e);">
+        <h5 class="modal-title text-white" id="backupModalLabel"><i class="fas fa-database me-2"></i>Backup & Restauração</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+
+        <!-- Info Banner -->
+        <div class="alert alert-info d-flex align-items-start gap-2 mb-4" style="border-radius:12px;">
+          <i class="fas fa-info-circle mt-1"></i>
+          <div>
+            <strong>Como funciona:</strong> O backup exporta <em>todos os seus dados</em> (disciplinas, provas, trabalhos, notas, financeiro, certificados, Jurista e mais) num único arquivo <code>.json</code>. Para restaurar, importe esse arquivo aqui.
+          </div>
+        </div>
+
+        <!-- EXPORTAR -->
+        <div class="backup-section mb-4">
+          <div class="backup-section-header">
+            <div class="backup-section-icon" style="background:linear-gradient(135deg,#1abc9c,#16a085);">
+              <i class="fas fa-file-export"></i>
+            </div>
+            <div>
+              <h5 class="mb-0">Exportar Backup</h5>
+              <p class="text-muted small mb-0">Baixe um arquivo com todos os seus dados</p>
+            </div>
+          </div>
+
+          <div class="row g-3 mt-2">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Perfil a exportar</label>
+              <select class="form-select form-select-sm" id="backupProfileSelect">
+                <option value="all">Todos os perfis</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Nome do arquivo</label>
+              <div class="input-group input-group-sm">
+                <input type="text" class="form-control" id="backupFileName" placeholder="academico_pro_backup">
+                <span class="input-group-text">.json</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="backup-stats-row mt-3" id="backupStatsRow">
+            <!-- preenchido dinamicamente -->
+          </div>
+
+          <button class="btn btn-success mt-3 w-100" id="exportBackupBtn">
+            <i class="fas fa-download me-2"></i>Exportar Backup Agora
+          </button>
+        </div>
+
+        <hr>
+
+        <!-- IMPORTAR -->
+        <div class="backup-section">
+          <div class="backup-section-header">
+            <div class="backup-section-icon" style="background:linear-gradient(135deg,#3498db,#2980b9);">
+              <i class="fas fa-file-import"></i>
+            </div>
+            <div>
+              <h5 class="mb-0">Importar Backup</h5>
+              <p class="text-muted small mb-0">Restaure seus dados a partir de um arquivo de backup</p>
+            </div>
+          </div>
+
+          <div class="backup-dropzone mt-3" id="backupDropzone">
+            <i class="fas fa-cloud-upload-alt fa-2x mb-2" style="color:var(--info);"></i>
+            <p class="mb-1 fw-semibold">Clique para selecionar ou arraste o arquivo</p>
+            <p class="text-muted small mb-0">Somente arquivos <code>.json</code> gerados por este app</p>
+            <input type="file" id="backupFileInput" class="d-none" accept=".json,application/json">
+          </div>
+
+          <div id="backupImportPreview" class="d-none mt-3">
+            <div class="backup-import-info" id="backupImportInfo"></div>
+            <div class="alert alert-warning d-flex align-items-start gap-2 mt-3" style="border-radius:12px;">
+              <i class="fas fa-exclamation-triangle mt-1"></i>
+              <div>
+                <strong>Atenção:</strong> A importação <strong>substituirá</strong> os dados existentes do(s) perfil(s) importado(s). Esta ação não pode ser desfeita.
+              </div>
+            </div>
+            <div class="row g-2 mt-1">
+              <div class="col-6">
+                <button class="btn btn-outline-secondary w-100 btn-sm" id="backupImportCancel">
+                  <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+              </div>
+              <div class="col-6">
+                <button class="btn btn-primary w-100 btn-sm" id="backupImportConfirm">
+                  <i class="fas fa-check me-1"></i>Confirmar Importação
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="backupImportProgress" class="d-none mt-3">
+            <div class="progress" style="height:8px;border-radius:8px;">
+              <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" id="backupProgressBar" style="width:0%"></div>
+            </div>
+            <p class="text-center text-muted small mt-2" id="backupProgressText">Processando...</p>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <small class="text-muted me-auto"><i class="fas fa-lock me-1"></i>Seus dados ficam apenas no seu dispositivo</small>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ===== BACKUP STYLES ===== */
+.backup-header-btn {
+  border-radius: 20px;
+  font-size: 0.82rem;
+  padding: 6px 14px;
+  border-color: rgba(44,62,80,0.3);
+  color: var(--primary);
+  transition: var(--transition);
+}
+.backup-header-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.backup-section-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.backup-section-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+.backup-stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.backup-stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f0f4f8;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.78rem;
+  color: var(--text-dark);
+  font-weight: 500;
+}
+.backup-stat-chip i { color: var(--accent); }
+.backup-dropzone {
+  border: 2px dashed var(--accent);
+  border-radius: 12px;
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: rgba(26,188,156,0.03);
+}
+.backup-dropzone:hover, .backup-dropzone.dragover {
+  background: rgba(26,188,156,0.08);
+  border-color: var(--primary);
+}
+.backup-import-info {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #dee2e6;
+}
+.backup-import-info .bi-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 0.85rem;
+}
+.backup-import-info .bi-row:last-child { border-bottom: none; }
+.backup-import-info .bi-key { color: var(--text-light); }
+.backup-import-info .bi-val { font-weight: 600; color: var(--primary); }
+</style>
+
+<!-- ===== BACKUP JAVASCRIPT ===== -->
+<script>
+(function() {
+  'use strict';
+
+  // ── Nomes dos stores IndexedDB que serão exportados/importados ──
+  const ALL_STORES = ['profiles', 'disciplinas', 'horarios', 'trabalhos', 'provas', 'eventos', 'financeiro', 'biblioteca', 'filmes', 'notas', 'links', 'certificados'];
+  const STORE_LABELS = {
+    profiles: 'Perfis', disciplinas: 'Disciplinas', horarios: 'Horários',
+    trabalhos: 'Trabalhos', provas: 'Provas', eventos: 'Eventos',
+    financeiro: 'Financeiro', biblioteca: 'Biblioteca', filmes: 'Filmes',
+    notas: 'Notas', links: 'Links', certificados: 'Certificados'
+  };
+
+  // ── Helper: obter instância do IndexedDB ──
+  function getDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('AcademicoProDB');
+      req.onsuccess = e => resolve(e.target.result);
+      req.onerror = e => reject(e.target.error);
+    });
+  }
+
+  // ── Helper: ler todos os registros de um store ──
+  function readAllFromStore(db, storeName) {
+    return new Promise((resolve, reject) => {
+      try {
+        const tx = db.transaction([storeName], 'readonly');
+        const req = tx.objectStore(storeName).getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = e => reject(e.target.error);
+      } catch(e) { resolve([]); }
+    });
+  }
+
+  // ── Helper: salvar um registro num store (put) ──
+  function putRecord(db, storeName, record) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction([storeName], 'readwrite');
+      const req = tx.objectStore(storeName).put(record);
+      req.onsuccess = () => resolve();
+      req.onerror = e => reject(e.target.error);
+    });
+  }
+
+  // ── Helper: limpar todos os registros de um store ──
+  function clearStore(db, storeName) {
+    return new Promise((resolve, reject) => {
+      try {
+        const tx = db.transaction([storeName], 'readwrite');
+        const req = tx.objectStore(storeName).clear();
+        req.onsuccess = () => resolve();
+        req.onerror = e => reject(e.target.error);
+      } catch(e) { resolve(); }
+    });
+  }
+
+  // ── Toast flutuante ──
+  function showToast(msg, type = 'success') {
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;min-width:280px;';
+    const icon = type === 'success' ? 'fa-check-circle' : type === 'danger' ? 'fa-times-circle' : 'fa-info-circle';
+    el.innerHTML = `<div class="alert alert-${type} alert-dismissible shadow d-flex align-items-center gap-2" role="alert" style="border-radius:12px;">
+      <i class="fas ${icon}"></i><span>${msg}</span>
+      <button type="button" class="btn-close" onclick="this.closest('.alert').parentElement.remove()"></button>
+    </div>`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 5000);
+  }
+
+  // ── EXPORTAR ──
+  async function exportBackup() {
+    const btn = document.getElementById('exportBackupBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exportando...';
+
+    try {
+      const db = await getDB();
+      const selectedProfile = document.getElementById('backupProfileSelect').value;
+      const exportData = {
+        _meta: {
+          app: 'AcademicoProDB',
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          profileFilter: selectedProfile
+        },
+        stores: {},
+        localStorage: {}
+      };
+
+      // Exportar localStorage (Jurista + schedule settings)
+      const lsKeys = ['juristaData_v3', 'scheduleStartHour', 'scheduleEndHour'];
+      lsKeys.forEach(k => {
+        const v = localStorage.getItem(k);
+        if (v !== null) exportData.localStorage[k] = v;
+      });
+
+      // Exportar todos os stores
+      for (const storeName of ALL_STORES) {
+        let records = await readAllFromStore(db, storeName);
+
+        // Filtrar por perfil se necessário
+        if (selectedProfile !== 'all' && storeName !== 'profiles') {
+          const pid = parseInt(selectedProfile);
+          records = records.filter(r => r.profileId === pid || r.profileId === undefined);
+        }
+        if (selectedProfile !== 'all' && storeName === 'profiles') {
+          records = records.filter(r => r.id === parseInt(selectedProfile));
+        }
+
+        exportData.stores[storeName] = records;
+      }
+
+      // Serializar e baixar
+      const json = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const nameInput = document.getElementById('backupFileName').value.trim() || 'academico_pro_backup';
+      const date = new Date().toISOString().split('T')[0];
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${nameInput}_${date}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      db.close();
+      showToast('✅ Backup exportado com sucesso!', 'success');
+    } catch(err) {
+      console.error('Erro ao exportar backup:', err);
+      showToast('❌ Erro ao exportar: ' + err.message, 'danger');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-download me-2"></i>Exportar Backup Agora';
+    }
+  }
+
+  // ── IMPORTAR ──
+  let pendingImportData = null;
+
+  function handleImportFile(file) {
+    if (!file || !file.name.endsWith('.json')) {
+      showToast('⚠️ Selecione um arquivo .json válido', 'warning');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!data._meta || data._meta.app !== 'AcademicoProDB' || !data.stores) {
+          showToast('❌ Arquivo inválido. Use um backup gerado por este app.', 'danger');
+          return;
+        }
+        pendingImportData = data;
+        renderImportPreview(data);
+        document.getElementById('backupImportPreview').classList.remove('d-none');
+      } catch(err) {
+        showToast('❌ Erro ao ler o arquivo: ' + err.message, 'danger');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function renderImportPreview(data) {
+    const meta = data._meta;
+    const exportDate = new Date(meta.exportedAt).toLocaleString('pt-BR');
+    const stores = data.stores || {};
+    const lsCount = Object.keys(data.localStorage || {}).length;
+
+    let statsHtml = '';
+    for (const [store, records] of Object.entries(stores)) {
+      if (records.length > 0) {
+        statsHtml += `<div class="bi-row">
+          <span class="bi-key"><i class="fas fa-table me-1" style="color:var(--accent);font-size:0.7rem;"></i>${STORE_LABELS[store] || store}</span>
+          <span class="bi-val">${records.length} registro(s)</span>
+        </div>`;
+      }
+    }
+    if (lsCount > 0) {
+      statsHtml += `<div class="bi-row">
+        <span class="bi-key"><i class="fas fa-balance-scale me-1" style="color:#c9a84c;font-size:0.7rem;"></i>Jurista & Config</span>
+        <span class="bi-val">${lsCount} item(s)</span>
+      </div>`;
+    }
+
+    document.getElementById('backupImportInfo').innerHTML = `
+      <div class="bi-row"><span class="bi-key"><i class="fas fa-calendar me-1"></i>Data do backup</span><span class="bi-val">${exportDate}</span></div>
+      <div class="bi-row"><span class="bi-key"><i class="fas fa-filter me-1"></i>Perfil exportado</span><span class="bi-val">${meta.profileFilter === 'all' ? 'Todos' : 'Perfil ' + meta.profileFilter}</span></div>
+      ${statsHtml}
+    `;
+  }
+
+  async function confirmImport() {
+    if (!pendingImportData) return;
+    const data = pendingImportData;
+    const confirmBtn = document.getElementById('backupImportConfirm');
+    const cancelBtn = document.getElementById('backupImportCancel');
+    confirmBtn.disabled = true;
+    cancelBtn.disabled = true;
+
+    const progress = document.getElementById('backupImportProgress');
+    const progressBar = document.getElementById('backupProgressBar');
+    const progressText = document.getElementById('backupProgressText');
+    document.getElementById('backupImportPreview').classList.add('d-none');
+    progress.classList.remove('d-none');
+
+    try {
+      const db = await getDB();
+      const storeNames = Object.keys(data.stores || {});
+      const total = storeNames.length;
+      let done = 0;
+
+      for (const storeName of storeNames) {
+        if (!ALL_STORES.includes(storeName)) { done++; continue; }
+        progressText.textContent = `Importando ${STORE_LABELS[storeName] || storeName}...`;
+        progressBar.style.width = Math.round((done / total) * 90) + '%';
+
+        const records = data.stores[storeName];
+        if (!Array.isArray(records) || records.length === 0) { done++; continue; }
+
+        // Para cada store: remover registros com mesmo profileId e reinserir
+        // (evita limpar dados de outros perfis que não estão no backup)
+        const profileIds = [...new Set(records.map(r => r.profileId).filter(Boolean))];
+
+        if (profileIds.length > 0) {
+          // Buscar registros existentes daqueles perfis e deletá-los
+          const existingAll = await readAllFromStore(db, storeName);
+          const toDelete = existingAll.filter(r => profileIds.includes(r.profileId));
+          for (const rec of toDelete) {
+            try {
+              await new Promise((res, rej) => {
+                const tx = db.transaction([storeName], 'readwrite');
+                const req = tx.objectStore(storeName).delete(rec.id);
+                req.onsuccess = res;
+                req.onerror = rej;
+              });
+            } catch(e) { /* ignora */ }
+          }
+        } else {
+          // Se não há profileId (ex: profiles), limpar e reimportar
+          await clearStore(db, storeName);
+        }
+
+        // Inserir registros do backup
+        for (const record of records) {
+          await putRecord(db, storeName, record);
+        }
+
+        done++;
+      }
+
+      // Restaurar localStorage
+      if (data.localStorage) {
+        for (const [k, v] of Object.entries(data.localStorage)) {
+          localStorage.setItem(k, v);
+        }
+      }
+
+      progressBar.style.width = '100%';
+      progressText.textContent = 'Importação concluída!';
+      db.close();
+
+      setTimeout(() => {
+        progress.classList.add('d-none');
+        pendingImportData = null;
+        document.getElementById('backupFileInput').value = '';
+        bootstrap.Modal.getInstance(document.getElementById('backupModal')).hide();
+        showToast('✅ Backup restaurado com sucesso! Recarregando...', 'success');
+        setTimeout(() => window.location.reload(), 1800);
+      }, 800);
+
+    } catch(err) {
+      console.error('Erro ao importar backup:', err);
+      progress.classList.add('d-none');
+      document.getElementById('backupImportPreview').classList.remove('d-none');
+      showToast('❌ Erro ao importar: ' + err.message, 'danger');
+      confirmBtn.disabled = false;
+      cancelBtn.disabled = false;
+    }
+  }
+
+  // ── Preencher stats do export e select de perfis ──
+  async function populateBackupModal() {
+    try {
+      const db = await getDB();
+
+      // Preencher select de perfis
+      const profiles = await readAllFromStore(db, 'profiles');
+      const sel = document.getElementById('backupProfileSelect');
+      sel.innerHTML = '<option value="all">Todos os perfis</option>';
+      profiles.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name || ('Perfil ' + p.id);
+        sel.appendChild(opt);
+      });
+
+      // Preencher stats de contagem
+      const statsRow = document.getElementById('backupStatsRow');
+      statsRow.innerHTML = '<span class="text-muted small">Calculando...</span>';
+      let chips = '';
+      for (const storeName of ALL_STORES) {
+        const records = await readAllFromStore(db, storeName);
+        if (records.length > 0) {
+          chips += `<span class="backup-stat-chip"><i class="fas fa-layer-group"></i>${STORE_LABELS[storeName]}: <strong>${records.length}</strong></span>`;
+        }
+      }
+      // Jurista localStorage
+      const juristaRaw = localStorage.getItem('juristaData_v3');
+      if (juristaRaw) {
+        try {
+          const jd = JSON.parse(juristaRaw);
+          const sessoes = (jd.sessions || []).length;
+          if (sessoes > 0) chips += `<span class="backup-stat-chip"><i class="fas fa-balance-scale"></i>Sessões Jurista: <strong>${sessoes}</strong></span>`;
+        } catch(e) {}
+      }
+      statsRow.innerHTML = chips || '<span class="text-muted small">Nenhum dado encontrado.</span>';
+
+      // Nome de arquivo padrão
+      const date = new Date().toISOString().split('T')[0];
+      document.getElementById('backupFileName').value = `academico_pro_backup_${date}`;
+
+      db.close();
+    } catch(err) {
+      console.error('Erro ao popular modal de backup:', err);
+    }
+  }
+
+  // ── Setup de eventos ──
+  document.addEventListener('DOMContentLoaded', () => {
+    // Botão abrir modal
+    document.getElementById('openBackupBtn').addEventListener('click', () => {
+      populateBackupModal();
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('backupModal')).show();
+    });
+
+    // Exportar
+    document.getElementById('exportBackupBtn').addEventListener('click', exportBackup);
+
+    // Dropzone clique
+    const dropzone = document.getElementById('backupDropzone');
+    dropzone.addEventListener('click', () => document.getElementById('backupFileInput').click());
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) handleImportFile(e.dataTransfer.files[0]);
+    });
+
+    // Input file
+    document.getElementById('backupFileInput').addEventListener('change', function() {
+      if (this.files[0]) handleImportFile(this.files[0]);
+    });
+
+    // Confirmar importação
+    document.getElementById('backupImportConfirm').addEventListener('click', confirmImport);
+
+    // Cancelar importação
+    document.getElementById('backupImportCancel').addEventListener('click', () => {
+      pendingImportData = null;
+      document.getElementById('backupImportPreview').classList.add('d-none');
+      document.getElementById('backupFileInput').value = '';
+    });
+
+    // Resetar modal ao fechar
+    document.getElementById('backupModal').addEventListener('hidden.bs.modal', () => {
+      pendingImportData = null;
+      document.getElementById('backupImportPreview').classList.add('d-none');
+      document.getElementById('backupImportProgress').classList.add('d-none');
+      document.getElementById('backupFileInput').value = '';
+      const confirmBtn = document.getElementById('backupImportConfirm');
+      const cancelBtn = document.getElementById('backupImportCancel');
+      if (confirmBtn) confirmBtn.disabled = false;
+      if (cancelBtn) cancelBtn.disabled = false;
+    });
+  });
+
+})();
 </script>
 
 <!-- Modal Certificado -->
