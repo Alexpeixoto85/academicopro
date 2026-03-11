@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1548,6 +1549,91 @@
         transform: scale(1.2);
     }
 
+    /* === EVENT DETAIL CARD STYLES === */
+    .event-detail-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 0.95rem;
+    }
+    .event-detail-info:last-child { border-bottom: none; }
+    .event-detail-info i { color: var(--accent); width: 20px; text-align: center; }
+
+    .event-attachment-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+        transition: background 0.2s;
+    }
+    .event-attachment-card:hover { background: #e9ecef; }
+    .event-attachment-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        overflow: hidden;
+    }
+    .event-attachment-info span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 250px;
+    }
+    .event-attachment-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+    /* Event type badge colors in detail modal */
+    .event-type-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        color: white;
+        font-weight: 600;
+    }
+    .event-type-badge.assignment { background: var(--info); }
+    .event-type-badge.exam { background: var(--danger); }
+    .event-type-badge.financeiro { background: var(--purple); }
+    .event-type-badge.other, .event-type-badge.class { background: var(--warning); color: #333; }
+
+    /* Enhanced event item in day view */
+    .event-item-actions {
+        display: flex;
+        gap: 5px;
+        margin-top: 6px;
+        padding-top: 6px;
+        border-top: 1px solid rgba(0,0,0,0.07);
+    }
+    .event-item-actions .btn { font-size: 0.75rem; padding: 2px 8px; }
+
+    /* Double-click hint on calendar days */
+    .calendar-day:not(.empty):not(.current):after {
+        content: '';
+    }
+    .calendar-day-hint {
+        font-size: 0.6rem;
+        color: var(--text-light);
+        opacity: 0;
+        transition: opacity 0.2s;
+        display: block;
+        text-align: center;
+    }
+    #agenda-eventos-dia .section-title {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: var(--text-light);
+        letter-spacing: 0.05em;
+        margin: 12px 0 6px;
+        font-weight: 600;
+    }
+
     .participantes-list {
         margin-top: 8px;
         padding-left: 0;
@@ -2142,15 +2228,38 @@
 </div>
 </form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveProva">Salvar</button></div></div></div></div>
 
-<!-- Modal Evento com anexo único -->
-<div class="modal fade" id="eventModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Evento</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="eventForm"><input type="hidden" id="eventId"><div class="mb-3"><label for="eventTitle" class="form-label">Título</label><input type="text" class="form-control" id="eventTitle" required></div><div class="mb-3"><label for="eventType" class="form-label">Tipo</label><select class="form-select" id="eventType"><option value="other">Outro</option><option value="assignment">Trabalho</option><option value="exam">Prova</option><option value="class">Aula</option><option value="financeiro">Financeiro</option></select></div><div class="mb-3"><label for="eventDate" class="form-label">Data</label><input type="date" class="form-control" id="eventDate" required></div><div class="mb-3"><label for="eventTime" class="form-label">Hora</label><input type="time" class="form-control" id="eventTime"></div><div class="mb-3"><label for="eventDescription" class="form-label">Descrição</label><textarea class="form-control" id="eventDescription" rows="2"></textarea></div>
+<!-- Modal Evento com múltiplos anexos -->
+<div class="modal fade" id="eventModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="eventModalLabel">Novo Evento</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="eventForm"><input type="hidden" id="eventId"><div class="mb-3"><label for="eventTitle" class="form-label">Título</label><input type="text" class="form-control" id="eventTitle" required></div><div class="mb-3"><label for="eventType" class="form-label">Tipo</label><select class="form-select" id="eventType"><option value="other">Outro</option><option value="assignment">Trabalho</option><option value="exam">Prova</option><option value="class">Aula</option><option value="financeiro">Financeiro</option></select></div><div class="mb-3"><label for="eventDate" class="form-label">Data</label><input type="date" class="form-control" id="eventDate" required></div><div class="mb-3"><label for="eventTime" class="form-label">Hora</label><input type="time" class="form-control" id="eventTime"></div><div class="mb-3"><label for="eventDescription" class="form-label">Descrição</label><textarea class="form-control" id="eventDescription" rows="2"></textarea></div>
 <div class="mb-3">
-    <label for="eventAnexo" class="form-label">Anexo (PDF, imagem, Word)</label>
-    <input type="file" class="form-control" id="eventAnexo" accept=".pdf,.docx,image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-    <div id="eventAnexoPreview" class="mt-2"></div>
-    <input type="hidden" id="eventAnexoExistente" value="">
+    <label class="form-label">Anexos (PDF, imagem, Word, PowerPoint)</label>
+    <input type="file" class="form-control" id="eventAnexos" accept=".pdf,.docx,.pptx,image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation" multiple>
+    <small class="text-muted">Você pode selecionar vários arquivos.</small>
+    <div id="eventAnexosPreview" class="anexos-list mt-2"></div>
+    <input type="hidden" id="eventAnexosRemovidos" value="">
 </div>
 </form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto d-none" id="deleteEvent">Excluir</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveEvent">Salvar</button></div></div></div></div>
+
+<!-- Modal de detalhes do evento (card ao clicar) -->
+<div class="modal fade" id="eventDetailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header" id="eventDetailModalHeader">
+        <div>
+          <h5 class="modal-title" id="eventDetailTitle"></h5>
+          <small class="text-white-50" id="eventDetailSubtitle"></small>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="eventDetailBody">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+        <button type="button" class="btn btn-warning" id="eventDetailEditBtn"><i class="fas fa-edit"></i> Editar</button>
+        <button type="button" class="btn btn-danger" id="eventDetailDeleteBtn"><i class="fas fa-trash"></i> Excluir</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Modal Financeiro -->
 <div class="modal fade" id="financeiroModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Transação</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="financeiroForm"><input type="hidden" id="financeiroId"><input type="hidden" id="financeiroRecorrenteId" value=""><div class="mb-3"><label for="financeiroTipo" class="form-label">Tipo</label><select class="form-select" id="financeiroTipo"><option value="receita">Receita</option><option value="despesa">Despesa</option></select></div><div class="mb-3"><label for="financeiroDescricao" class="form-label">Descrição</label><input type="text" class="form-control" id="financeiroDescricao" required></div><div class="mb-3"><label for="financeiroValor" class="form-label">Valor</label><input type="number" step="0.01" class="form-control" id="financeiroValor" required></div><div class="mb-3"><label for="financeiroCategoria" class="form-label">Categoria</label><select class="form-select" id="financeiroCategoria"><option value="">Selecione</option><option value="Alimentação">Alimentação</option><option value="Transporte">Transporte</option><option value="Moradia">Moradia</option><option value="Educação">Educação</option><option value="Lazer">Lazer</option><option value="Saúde">Saúde</option><option value="Vestuário">Vestuário</option><option value="Outros">Outros</option></select></div><div class="mb-3"><label for="financeiroData" class="form-label">Data</label><input type="date" class="form-control" id="financeiroData" required></div><div class="mb-3" id="financeiroStatusWrapper" style="display: none;"><label for="financeiroStatus" class="form-label">Status</label><select class="form-select" id="financeiroStatus"><option value="pendente">Pendente</option><option value="pago">Pago</option></select></div><hr><div class="mb-3"><label for="financeiroRecurrence" class="form-label">Recorrência</label><select class="form-select" id="financeiroRecurrence"><option value="none" selected>Não repetir</option><option value="weekly">Semanalmente</option><option value="monthly">Mensalmente</option></select></div><div class="mb-3 d-none" id="financeiroRecurrenceEndDateWrapper"><label for="financeiroRecurrenceEndDate" class="form-label">Repetir até</label><input type="date" class="form-control" id="financeiroRecurrenceEndDate"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto d-none" id="deleteFinanceiro">Excluir</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveFinanceiro">Salvar</button></div></div></div></div>
@@ -2924,12 +3033,33 @@ document.addEventListener('DOMContentLoaded', function() {
         let container = document.getElementById('agenda-eventos-dia');
         let events = await getEventsForDate(dateStr, data);
         let fd = new Date(dateStr+'T00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
-        container.innerHTML = `<h5 class="card-title mb-3">${fd}</h5>`;
-        if (!events.length) { container.innerHTML += `<div class="empty-state"><p>Nenhum evento para este dia.</p></div>`; return; }
+        container.innerHTML = `<h5 class="card-title mb-3">${fd}</h5><p class="text-muted small mb-3"><i class="fas fa-hand-point-up me-1"></i>Duplo clique na data para novo evento</p>`;
+        if (!events.length) { container.innerHTML += `<div class="empty-state"><p>Nenhum evento para este dia.</p><button class="btn btn-sm btn-outline-primary mt-2 btn-novo-evento-dia" data-date="${dateStr}"><i class="fas fa-plus"></i> Adicionar evento</button></div>`; return; }
         events.forEach(e => {
             let disc = e.disciplinaId ? data.disciplinas.find(d=>d.id===e.disciplinaId) : null;
-            let anexoIcon = e.anexos ? renderAnexoIcon(e) : (e.anexo ? renderAnexoIcon(e) : '');
-            container.innerHTML += `<div class="event-item ${e.type}" data-event-type="${e.type==='assignment'?'trabalhos':e.type==='exam'?'provas':e.type==='financeiro'?'financeiro':'eventos'}" data-event-id="${e.id}"><div class="d-flex justify-content-between align-items-center"><h6 class="mb-0 small">${e.title||e.conteudo||e.descricao}</h6><span class="small text-muted">${e.time||''}</span></div>${disc?`<p class="mb-0 small text-muted">${disc.nome}</p>`:''}${anexoIcon ? `<div class="mt-1">${anexoIcon}</div>` : ''}</div>`;
+            let hasAnexos = (e.anexos && e.anexos.length > 0) || e.anexo;
+            let anexoBadge = hasAnexos ? `<span class="badge bg-info ms-1" title="Tem anexos"><i class="fas fa-paperclip"></i></span>` : '';
+            let eventType = e.type === 'assignment' ? 'trabalhos' : e.type === 'exam' ? 'provas' : e.type === 'financeiro' ? 'financeiro' : 'eventos';
+            let isEventoPuro = e.type !== 'assignment' && e.type !== 'exam' && e.type !== 'financeiro';
+            let editBtn = isEventoPuro ? `<button class="btn btn-sm btn-outline-primary btn-event-edit" data-id="${e.id}" data-type="${eventType}" title="Editar"><i class="fas fa-edit"></i></button>` : '';
+            let deleteBtn = isEventoPuro ? `<button class="btn btn-sm btn-outline-danger btn-event-delete" data-id="${e.id}" data-type="${eventType}" title="Excluir"><i class="fas fa-trash"></i></button>` : '';
+            let viewBtn = `<button class="btn btn-sm btn-outline-secondary btn-event-detail" data-id="${e.id}" data-type="${eventType}" title="Ver detalhes"><i class="fas fa-eye"></i> Ver</button>`;
+            let div = document.createElement('div');
+            div.className = `event-item ${e.type}`;
+            div.dataset.eventType = eventType;
+            div.dataset.eventId = e.id;
+            div.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 small fw-semibold">${e.title||e.conteudo||e.descricao}</h6>
+                    <span class="small text-muted">${e.time||''}</span>
+                </div>
+                ${disc?`<p class="mb-0 small text-muted mt-1"><i class="fas fa-book me-1"></i>${disc.nome}</p>`:''}
+                <div class="event-item-actions">
+                    ${viewBtn}${editBtn}${deleteBtn}
+                    ${anexoBadge ? `<span class="badge bg-info"><i class="fas fa-paperclip"></i> Anexos</span>` : ''}
+                </div>
+            `;
+            container.appendChild(div);
         });
     }
 
@@ -3926,7 +4056,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     setTimeout(() => {
         setupAnexoPreview('provaAnexo', 'provaAnexoPreview', 'provaAnexoExistente');
-        setupAnexoPreview('eventAnexo', 'eventAnexoPreview', 'eventAnexoExistente');
+        // Setup event multiple file preview
+        const eventAnexosInput = document.getElementById('eventAnexos');
+        if (eventAnexosInput) {
+            eventAnexosInput.addEventListener('change', function() {
+                const preview = document.getElementById('eventAnexosPreview');
+                if (!preview) return;
+                // Não apaga a lista, apenas mostra os novos
+                if (this.files && this.files.length > 0) {
+                    let html = '<p class="text-muted small mb-1">Novos arquivos selecionados:</p>';
+                    Array.from(this.files).forEach(f => {
+                        let icon = 'fa-file', color = 'text-secondary';
+                        if (f.type === 'application/pdf') { icon = 'fa-file-pdf'; color = 'text-danger'; }
+                        else if (f.type.includes('word') || f.name.endsWith('.docx')) { icon = 'fa-file-word'; color = 'text-primary'; }
+                        else if (f.type.includes('presentation') || f.name.endsWith('.pptx')) { icon = 'fa-file-powerpoint'; color = 'text-warning'; }
+                        else if (f.type.startsWith('image/')) { icon = 'fa-image'; color = 'text-success'; }
+                        html += `<div class="anexo-item"><div class="anexo-info"><i class="fas ${icon} ${color}"></i><span>${f.name}</span></div></div>`;
+                    });
+                    preview.innerHTML = html;
+                }
+            });
+        }
     }, 500);
 
     async function editHorario(id) {
@@ -4136,26 +4286,30 @@ document.addEventListener('DOMContentLoaded', function() {
             type: document.getElementById('eventType').value, 
             date: document.getElementById('eventDate').value, 
             time: document.getElementById('eventTime').value, 
-            description: document.getElementById('eventDescription').value 
+            description: document.getElementById('eventDescription').value,
+            anexos: []
         };
         if (!e.title || !e.date) return alert('Título e data obrigatórios.');
 
-        const anexoInput = document.getElementById('eventAnexo');
-        const anexoExistente = document.getElementById('eventAnexoExistente').value;
-        if (anexoInput.files && anexoInput.files[0]) {
-            const file = anexoInput.files[0];
-            e.anexo = await readFileAsBase64(file);
-            e.anexoNome = file.name;
-            e.anexoTipo = file.type;
-        } else if (anexoExistente) {
-            e.anexo = anexoExistente;
-            if (id) {
-                const original = await getData('eventos', parseInt(id));
-                if (original) {
-                    e.anexoNome = original.anexoNome;
-                    e.anexoTipo = original.anexoTipo;
+        // Obter anexos existentes que não foram removidos
+        const anexosRemovidosVal = document.getElementById('eventAnexosRemovidos').value;
+        const removidosSet = new Set(anexosRemovidosVal ? anexosRemovidosVal.split(',') : []);
+        if (id) {
+            const original = await getData('eventos', parseInt(id));
+            if (original) {
+                // Migrar formato antigo
+                if (original.anexo && !original.anexos) {
+                    original.anexos = [{ id: Date.now()+'', nome: original.anexoNome||'anexo', tipo: original.anexoTipo||'application/octet-stream', dados: original.anexo }];
                 }
+                e.anexos = (original.anexos||[]).filter(a => !removidosSet.has(String(a.id)));
             }
+        }
+
+        // Adicionar novos anexos
+        const anexoInput = document.getElementById('eventAnexos');
+        if (anexoInput && anexoInput.files && anexoInput.files.length > 0) {
+            const novosAnexos = await readMultipleFilesAsBase64(anexoInput.files);
+            e.anexos = [...e.anexos, ...novosAnexos];
         }
 
         await saveData('eventos', e); 
@@ -4165,7 +4319,129 @@ document.addEventListener('DOMContentLoaded', function() {
         bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
     }
 
-    // Função auxiliar para criar data local a partir de string YYYY-MM-DD (meio-dia para evitar deslocamento)
+    async function editEvent(id) {
+        let item = await getData('eventos', parseInt(id));
+        if (!item) return;
+        // Migrar formato antigo
+        if (item.anexo && !item.anexos) {
+            item.anexos = [{ id: Date.now()+'', nome: item.anexoNome||'anexo', tipo: item.anexoTipo||'application/octet-stream', dados: item.anexo }];
+        }
+        document.getElementById('eventModalLabel').textContent = 'Editar Evento';
+        document.getElementById('eventId').value = item.id;
+        document.getElementById('eventTitle').value = item.title||'';
+        document.getElementById('eventType').value = item.type||'other';
+        document.getElementById('eventDate').value = item.date||'';
+        document.getElementById('eventTime').value = item.time||'';
+        document.getElementById('eventDescription').value = item.description||'';
+        document.getElementById('eventAnexosRemovidos').value = '';
+        document.getElementById('deleteEvent').classList.remove('d-none');
+        renderAnexosList(item.anexos||[], 'eventAnexosPreview', 'event');
+        new bootstrap.Modal(document.getElementById('eventModal')).show();
+    }
+
+    async function openEventDetail(id, type) {
+        const data = await getProfileData();
+        let event = null;
+        let eventObj = null;
+        if (type === 'eventos') {
+            eventObj = data.eventos.find(e => e.id == id);
+            if (!eventObj) return;
+            // Migrar formato antigo de anexo
+            if (eventObj.anexo && !eventObj.anexos) {
+                eventObj.anexos = [{ id: Date.now()+'_m', nome: eventObj.anexoNome||'anexo', tipo: eventObj.anexoTipo||'application/octet-stream', dados: eventObj.anexo }];
+            }
+            event = { ...eventObj, isEvento: true };
+        } else if (type === 'trabalhos') {
+            let t = data.trabalhos.find(t => t.id == id);
+            if (!t) return;
+            let disc = data.disciplinas.find(d => d.id === t.disciplinaId);
+            event = { title: t.titulo, type: 'assignment', date: t.entrega, description: t.observacoes, 
+                disciplina: disc ? disc.nome : null, status: t.status, prioridade: t.prioridade, nota: t.nota,
+                anexos: t.anexos || [], isEvento: false };
+        } else if (type === 'provas') {
+            let p = data.provas.find(p => p.id == id);
+            if (!p) return;
+            let disc = data.disciplinas.find(d => d.id === p.disciplinaId);
+            // Migrar formato antigo
+            let anexos = p.anexos || [];
+            if (p.anexo && !p.anexos) anexos = [{ id: 'pv_'+id, nome: p.anexoNome||'anexo', tipo: p.anexoTipo||'application/octet-stream', dados: p.anexo }];
+            event = { title: p.conteudo, type: 'exam', date: p.data, time: p.hora, description: '',
+                disciplina: disc ? disc.nome : null, status: p.status, nota: p.nota,
+                anexos, isEvento: false };
+        } else if (type === 'financeiro') {
+            let f = data.financeiro.find(f => f.id == id);
+            if (!f) return;
+            event = { title: f.descricao, type: 'financeiro', date: f.data, description: f.categoria,
+                valor: f.valor, status: f.status, anexos: [], isEvento: false };
+        }
+        if (!event) return;
+
+        const typeNames = { assignment: 'Trabalho', exam: 'Prova', financeiro: 'Financeiro', other: 'Outro', class: 'Aula' };
+        const typeColors = { assignment: '#3498db', exam: '#e74c3c', financeiro: '#9b59b6', other: '#f1c40f', class: '#f1c40f' };
+        const header = document.getElementById('eventDetailModalHeader');
+        header.style.backgroundColor = typeColors[event.type] || 'var(--primary)';
+
+        document.getElementById('eventDetailTitle').textContent = event.title || '';
+        document.getElementById('eventDetailSubtitle').textContent = typeNames[event.type] || event.type;
+
+        let bodyHtml = `<div class="mb-3">`;
+        if (event.date) bodyHtml += `<div class="event-detail-info"><i class="fas fa-calendar"></i> <strong>Data:</strong> ${new Date(event.date+'T00:00').toLocaleDateString('pt-BR', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}${event.time ? ' às '+event.time : ''}</div>`;
+        if (event.disciplina) bodyHtml += `<div class="event-detail-info"><i class="fas fa-book"></i> <strong>Disciplina:</strong> ${event.disciplina}</div>`;
+        if (event.status) bodyHtml += `<div class="event-detail-info"><i class="fas fa-info-circle"></i> <strong>Status:</strong> ${event.status}</div>`;
+        if (event.nota !== undefined && event.nota !== null) bodyHtml += `<div class="event-detail-info"><i class="fas fa-star"></i> <strong>Nota:</strong> ${event.nota}</div>`;
+        if (event.valor !== undefined) bodyHtml += `<div class="event-detail-info"><i class="fas fa-dollar-sign"></i> <strong>Valor:</strong> R$ ${event.valor.toFixed(2)}</div>`;
+        if (event.prioridade) bodyHtml += `<div class="event-detail-info"><i class="fas fa-flag"></i> <strong>Prioridade:</strong> ${event.prioridade === 'high' ? 'Alta' : event.prioridade === 'medium' ? 'Média' : 'Baixa'}</div>`;
+        if (event.description) bodyHtml += `<div class="event-detail-info"><i class="fas fa-align-left"></i> <strong>Descrição:</strong> ${event.description}</div>`;
+        bodyHtml += `</div>`;
+
+        // Seção de anexos
+        const anexos = event.anexos || [];
+        if (anexos.length > 0) {
+            bodyHtml += `<h6 class="mb-2"><i class="fas fa-paperclip me-2 text-info"></i>Arquivos Anexados (${anexos.length})</h6>`;
+            anexos.forEach(a => {
+                const tipo = a.tipo || '';
+                const nome = a.nome || 'arquivo';
+                let iconClass = 'fa-file', iconColor = 'text-secondary';
+                if (tipo === 'application/pdf' || nome.endsWith('.pdf')) { iconClass = 'fa-file-pdf'; iconColor = 'text-danger'; }
+                else if (tipo.includes('word') || nome.endsWith('.docx')) { iconClass = 'fa-file-word'; iconColor = 'text-primary'; }
+                else if (tipo.includes('presentation') || nome.endsWith('.pptx')) { iconClass = 'fa-file-powerpoint'; iconColor = 'text-warning'; }
+                else if (tipo.startsWith('image/')) { iconClass = 'fa-image'; iconColor = 'text-success'; }
+                const dadosEncoded = encodeURIComponent(a.dados || '');
+                const tipoEncoded = encodeURIComponent(tipo);
+                const nomeEncoded = encodeURIComponent(nome);
+                bodyHtml += `
+                    <div class="event-attachment-card">
+                        <div class="event-attachment-info">
+                            <i class="fas ${iconClass} ${iconColor} fa-lg"></i>
+                            <span title="${nome}">${nome}</span>
+                        </div>
+                        <div class="event-attachment-actions">
+                            <button class="btn btn-sm btn-outline-info detail-view-anexo" data-dados="${dadosEncoded}" data-tipo="${tipoEncoded}" data-nome="${nomeEncoded}"><i class="fas fa-eye"></i> Ver</button>
+                            <button class="btn btn-sm btn-outline-success detail-download-anexo" data-dados="${dadosEncoded}" data-tipo="${tipoEncoded}" data-nome="${nomeEncoded}"><i class="fas fa-download"></i> Baixar</button>
+                        </div>
+                    </div>`;
+            });
+        } else {
+            bodyHtml += `<p class="text-muted small"><i class="fas fa-paperclip me-1"></i>Nenhum arquivo anexado.</p>`;
+        }
+
+        document.getElementById('eventDetailBody').innerHTML = bodyHtml;
+
+        // Botões editar/excluir
+        const editBtn = document.getElementById('eventDetailEditBtn');
+        const deleteBtn = document.getElementById('eventDetailDeleteBtn');
+        if (event.isEvento) {
+            editBtn.style.display = '';
+            deleteBtn.style.display = '';
+            editBtn.onclick = () => { bootstrap.Modal.getInstance(document.getElementById('eventDetailModal')).hide(); setTimeout(() => editEvent(id), 400); };
+            deleteBtn.onclick = async () => { if (confirm('Excluir este evento?')) { await deleteData('eventos', parseInt(id)); profileDataCache = null; await loadProfileData(); renderCurrentPanel(); bootstrap.Modal.getInstance(document.getElementById('eventDetailModal')).hide(); } };
+        } else {
+            editBtn.style.display = 'none';
+            deleteBtn.style.display = 'none';
+        }
+
+        new bootstrap.Modal(document.getElementById('eventDetailModal')).show();
+    }
     function localDateFromString(dateStr) {
         if (!dateStr) return null;
         let [year, month, day] = dateStr.split('-').map(Number);
@@ -4336,6 +4612,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         document.getElementById('prev-month').addEventListener('click', ()=>{ currentCalendarDate.setMonth(currentCalendarDate.getMonth()-1); if (activePanel === 'agenda') renderCurrentPanel(); });
         document.getElementById('next-month').addEventListener('click', ()=>{ currentCalendarDate.setMonth(currentCalendarDate.getMonth()+1); if (activePanel === 'agenda') renderCurrentPanel(); });
+
+        // Duplo clique na data do calendário: abre modal de novo evento
+        document.getElementById('calendar-days').addEventListener('dblclick', (e) => {
+            let calDay = e.target.closest('.calendar-day:not(.empty)');
+            if (calDay && calDay.dataset.date) {
+                document.getElementById('eventModalLabel').textContent = 'Novo Evento';
+                document.getElementById('eventId').value = '';
+                document.getElementById('eventDate').value = calDay.dataset.date;
+                document.getElementById('deleteEvent').classList.add('d-none');
+                document.getElementById('eventAnexosRemovidos').value = '';
+                document.getElementById('eventAnexosPreview').innerHTML = '';
+                new bootstrap.Modal(document.getElementById('eventModal')).show();
+            }
+        });
         document.getElementById('financeiroTipo').addEventListener('change', function(){ document.getElementById('financeiroStatusWrapper').style.display = this.value==='despesa'?'block':'none'; });
         document.getElementById('financeiroRecurrence').addEventListener('change', function(){ document.getElementById('financeiroRecurrenceEndDateWrapper').classList.toggle('d-none', this.value==='none'); });
         document.getElementById('profileForm').addEventListener('submit', async e=>{
@@ -4373,7 +4663,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('trabalhoAnexosPreview').innerHTML = '';
                     document.getElementById('trabalhoAnexosRemovidos').value = '';
                 }
-                ['prova', 'event'].forEach(prefix => {
+                if (m.id==='eventModal') {
+                    document.getElementById('eventModalLabel').textContent = 'Novo Evento';
+                    document.getElementById('deleteEvent').classList.add('d-none');
+                    document.getElementById('eventAnexosPreview').innerHTML = '';
+                    document.getElementById('eventAnexosRemovidos').value = '';
+                }
+                ['prova'].forEach(prefix => {
                     const preview = document.getElementById(prefix + 'AnexoPreview');
                     if (preview) preview.innerHTML = '';
                     const existente = document.getElementById(prefix + 'AnexoExistente');
@@ -4387,6 +4683,16 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('saveTrabalho').addEventListener('click', saveTrabalho);
         document.getElementById('saveProva').addEventListener('click', saveProva);
         document.getElementById('saveEvent').addEventListener('click', saveEvent);
+        document.getElementById('deleteEvent').addEventListener('click', async () => {
+            let id = document.getElementById('eventId').value;
+            if (id && confirm('Excluir este evento?')) {
+                await deleteData('eventos', parseInt(id));
+                profileDataCache = null;
+                await loadProfileData();
+                renderCurrentPanel();
+                bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+            }
+        });
         document.getElementById('saveFinanceiro').addEventListener('click', saveFinanceiro);
         document.getElementById('saveNota').addEventListener('click', saveNota);
         document.getElementById('deleteNota').addEventListener('click', deleteNota);
@@ -4461,6 +4767,66 @@ document.addEventListener('DOMContentLoaded', function() {
             if (calDay) {
                 let data = await getProfileData();
                 renderEventsForDay(calDay.dataset.date, data);
+            }
+            // Botão "adicionar evento" no dia vazio
+            let btnNovoEventoDia = e.target.closest('.btn-novo-evento-dia');
+            if (btnNovoEventoDia) {
+                e.preventDefault();
+                let dateStr = btnNovoEventoDia.dataset.date;
+                document.getElementById('eventModalLabel').textContent = 'Novo Evento';
+                document.getElementById('eventId').value = '';
+                document.getElementById('eventDate').value = dateStr;
+                document.getElementById('deleteEvent').classList.add('d-none');
+                document.getElementById('eventAnexosRemovidos').value = '';
+                document.getElementById('eventAnexosPreview').innerHTML = '';
+                new bootstrap.Modal(document.getElementById('eventModal')).show();
+            }
+            // Botão ver detalhes do evento
+            let btnDetail = e.target.closest('.btn-event-detail');
+            if (btnDetail) {
+                e.preventDefault();
+                e.stopPropagation();
+                await openEventDetail(btnDetail.dataset.id, btnDetail.dataset.type);
+            }
+            // Botão editar evento direto
+            let btnEventEdit = e.target.closest('.btn-event-edit');
+            if (btnEventEdit) {
+                e.preventDefault();
+                e.stopPropagation();
+                await editEvent(btnEventEdit.dataset.id);
+            }
+            // Botão excluir evento direto
+            let btnEventDelete = e.target.closest('.btn-event-delete');
+            if (btnEventDelete) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (confirm('Excluir este evento?')) {
+                    await deleteData('eventos', parseInt(btnEventDelete.dataset.id));
+                    profileDataCache = null;
+                    await loadProfileData();
+                    renderCurrentPanel();
+                }
+            }
+            // Visualizar/baixar anexo no modal de detalhe
+            let btnDetailView = e.target.closest('.detail-view-anexo');
+            if (btnDetailView) {
+                e.preventDefault();
+                const dados = decodeURIComponent(btnDetailView.dataset.dados);
+                const tipo = decodeURIComponent(btnDetailView.dataset.tipo);
+                const nome = decodeURIComponent(btnDetailView.dataset.nome);
+                window.visualizarAnexo(dados, tipo, nome);
+            }
+            let btnDetailDownload = e.target.closest('.detail-download-anexo');
+            if (btnDetailDownload) {
+                e.preventDefault();
+                const dados = decodeURIComponent(btnDetailDownload.dataset.dados);
+                const tipo = decodeURIComponent(btnDetailDownload.dataset.tipo);
+                const nome = decodeURIComponent(btnDetailDownload.dataset.nome);
+                const blob = base64ToBlob(dados, tipo);
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = nome; a.click();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
             }
             let nextCard = e.target.closest('#next-event-card');
             if (nextCard && proximoEventoGlobal) {
@@ -4561,9 +4927,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             let evItem = e.target.closest('.event-item');
-            if (evItem) {
+            if (evItem && !e.target.closest('.btn-event-detail') && !e.target.closest('.btn-event-edit') && !e.target.closest('.btn-event-delete')) {
                 let type = evItem.dataset.eventType, eid = evItem.dataset.eventId;
-                if (type && eid) handleEdit(type, {trabalhos:'trabalho', provas:'prova', financeiro:'financeiro', eventos:'event'}[type], eid);
+                if (type && eid) await openEventDetail(eid, type);
             }
             let target = e.target.closest('.visualizar-documento, .download-documento, .delete-documento');
             if (target) {
@@ -4873,6 +5239,72 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.switch-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.switch-profile').dataset.id; if (id!==current) { await switchProfile(id); bootstrap.Modal.getInstance(document.getElementById('profileManagementModal')).hide(); } }));
         document.querySelectorAll('.edit-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.edit-profile').dataset.id; let p = await getData('profiles', id); if (p) { document.getElementById('profileName').value = p.name; document.getElementById('profileId').value = p.id; document.getElementById('saveProfileBtn').innerHTML = '<i class="fas fa-save"></i> Atualizar'; } }));
         document.querySelectorAll('.delete-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.delete-profile').dataset.id; if (profiles.length===1) return; if (confirm('Excluir perfil? Todos os dados serão perdidos.')) { await deleteData('profiles', id); let stores = ['disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links']; for (let s of stores) { let items = await getAllData(s, 'profileId', id); for (let i of items) await deleteData(s, i.id); } await renderProfileManagementList(); profileDataCache = null; await loadProfileData(); renderCurrentPanel(); } }));
+    }
+
+    async function handleEdit(store, prefix, id) {
+        let item = await getData(store, parseInt(id));
+        if (!item) return;
+        const modalMap = { disciplina: 'disciplinaModal', prova: 'provaModal', financeiro: 'financeiroModal', biblioteca: 'bibliotecaModal', link: 'linkModal', filme: 'filmeModal', event: 'eventModal' };
+        const labelMap = { disciplina: 'disciplinaModalLabel', prova: 'provaModalLabel', financeiro: 'financeiroModalLabel', biblioteca: 'bibliotecaModalLabel', link: 'linkModalLabel', filme: 'filmeModalLabel', event: 'eventModalLabel' };
+        const titleMap = { disciplina: 'Editar Disciplina', prova: 'Editar Prova', financeiro: 'Editar Transação', biblioteca: 'Editar Livro', link: 'Editar Link', filme: 'Editar Filme', event: 'Editar Evento' };
+        const modalId = modalMap[prefix]; if (!modalId) return;
+        const labelEl = document.getElementById(labelMap[prefix]);
+        if (labelEl) labelEl.textContent = titleMap[prefix] || 'Editar';
+        if (prefix === 'disciplina') {
+            document.getElementById('disciplinaId').value = item.id;
+            document.getElementById('disciplinaNome').value = item.nome||'';
+            document.getElementById('disciplinaProfessor').value = item.professor||'';
+            document.getElementById('disciplinaEmail').value = item.professorEmail||'';
+            document.getElementById('disciplinaFrequencia').value = item.frequencia||85;
+        } else if (prefix === 'prova') {
+            document.getElementById('provaId').value = item.id;
+            document.getElementById('provaDisciplina').value = item.disciplinaId;
+            document.getElementById('provaConteudo').value = item.conteudo||'';
+            document.getElementById('provaData').value = item.data||'';
+            document.getElementById('provaHora').value = item.hora||'';
+            document.getElementById('provaStatus').value = item.status||'Agendada';
+            document.getElementById('provaNota').value = item.nota!==null ? item.nota : '';
+            if (item.anexo) { document.getElementById('provaAnexoExistente').value = item.anexo; addViewExistingButton('prova', 'provaAnexoPreview', 'provaAnexoExistente', item); }
+        } else if (prefix === 'financeiro') {
+            document.getElementById('financeiroId').value = item.id;
+            document.getElementById('financeiroTipo').value = item.tipo;
+            document.getElementById('financeiroDescricao').value = item.descricao||'';
+            document.getElementById('financeiroValor').value = item.valor;
+            document.getElementById('financeiroCategoria').value = item.categoria||'';
+            document.getElementById('financeiroData').value = item.data;
+            if (item.tipo==='despesa') { document.getElementById('financeiroStatusWrapper').style.display='block'; document.getElementById('financeiroStatus').value = item.status; }
+        } else if (prefix === 'biblioteca') {
+            document.getElementById('bibliotecaId').value = item.id;
+            document.getElementById('bibliotecaTitulo').value = item.titulo||'';
+            document.getElementById('bibliotecaAutor').value = item.autor||'';
+            document.getElementById('bibliotecaAssunto').value = item.assunto||'';
+            document.getElementById('bibliotecaEditora').value = item.editora||'';
+            document.getElementById('bibliotecaAno').value = item.ano||'';
+            document.getElementById('bibliotecaObservacoes').value = item.observacoes||'';
+        } else if (prefix === 'link') {
+            document.getElementById('linkId').value = item.id;
+            document.getElementById('linkTitulo').value = item.titulo||'';
+            document.getElementById('linkUrl').value = item.url||'';
+            document.getElementById('linkCategoria').value = item.categoria||'';
+            document.getElementById('linkDescricao').value = item.descricao||'';
+        } else if (prefix === 'filme') {
+            document.getElementById('filmeId').value = item.id;
+            document.getElementById('filmeTitulo').value = item.titulo||'';
+            document.getElementById('filmeTipo').value = item.tipo||'video-aula';
+            if (item.origem==='url') {
+                document.querySelector('input[name="filmeOrigem"][value="url"]').checked = true;
+                document.getElementById('filmeUrl').value = item.url||'';
+                document.getElementById('filmeUrlWrapper').style.display = 'block';
+                document.getElementById('filmeArquivoWrapper').style.display = 'none';
+            } else {
+                document.querySelector('input[name="filmeOrigem"][value="arquivo"]').checked = true;
+                document.getElementById('filmeUrlWrapper').style.display = 'none';
+                document.getElementById('filmeArquivoWrapper').style.display = 'block';
+            }
+        } else if (prefix === 'event') {
+            return await editEvent(id);
+        }
+        new bootstrap.Modal(document.getElementById(modalId)).show();
     }
 
     async function handleDelete(store, id, msg) {
