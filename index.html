@@ -1670,6 +1670,200 @@
         color: var(--text-light);
     }
 
+    /* === BIBLIOTECA: Estilos de anexos e links === */
+    .livro-anexo-area {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid #f0f0f0;
+    }
+    .livro-anexo-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 8px;
+        border-radius: 8px;
+        background: #f8f9fa;
+        margin-bottom: 5px;
+        font-size: 0.82rem;
+        border: 1px solid #e9ecef;
+        transition: background 0.15s;
+        cursor: pointer;
+    }
+    .livro-anexo-item:hover { background: #e3f2fd; border-color: var(--info); }
+    .livro-anexo-item .livro-anexo-nome {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .livro-anexo-item .livro-anexo-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .livro-link-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(135deg, #e8f4fd, #d0e9fc);
+        border: 1px solid #aed6f1;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 0.82rem;
+        color: #1a5276;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-decoration: none;
+        transition: all 0.18s;
+        margin-top: 8px;
+    }
+    .livro-link-chip:hover {
+        background: linear-gradient(135deg, #d0e9fc, #aed6f1);
+        color: #1a5276;
+        box-shadow: 0 2px 8px rgba(52,152,219,0.2);
+    }
+    .livro-link-chip i { color: var(--info); flex-shrink: 0; }
+    /* Upload area no modal biblioteca */
+    .biblioteca-upload-area {
+        border: 2px dashed var(--accent);
+        border-radius: 10px;
+        padding: 18px 12px;
+        text-align: center;
+        background: #f8fffe;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 10px;
+    }
+    .biblioteca-upload-area:hover, .biblioteca-upload-area.dragover {
+        background: #e8faf6;
+        border-color: #16a085;
+    }
+    .biblioteca-anexos-preview {
+        max-height: 160px;
+        overflow-y: auto;
+    }
+    .biblioteca-label-section {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-light);
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* Livro card melhorado */
+    .livro-card .livro-card-footer {
+        border-top: 1px solid #f0f0f0;
+        padding-top: 10px;
+        margin-top: 10px;
+    }
+
+    .modal-header-biblioteca {
+        background: linear-gradient(135deg, var(--danger), #922b21) !important;
+    }
+
+    .modal-title-biblioteca { color: white; }
+
+    /* Biblioteca label ID badge */
+    #bibliotecaModalLabel { color: white; }
+
+    
+    .card-action-bar {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 10px 0 2px 0;
+        border-top: 1px solid #f0f0f0;
+        margin-top: 12px;
+    }
+    .card-action-bar .btn {
+        font-size: 0.78rem;
+        padding: 4px 10px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.18s;
+    }
+    .btn-attach-file {
+        background: linear-gradient(135deg, var(--info), #2980b9);
+        color: white !important;
+        border: none;
+    }
+    .btn-attach-file:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(52,152,219,0.35);
+        background: linear-gradient(135deg, #2980b9, var(--info));
+        color: white !important;
+    }
+    .btn-edit-card {
+        background: linear-gradient(135deg, var(--accent), #16a085);
+        color: white !important;
+        border: none;
+    }
+    .btn-edit-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(26,188,156,0.35);
+        color: white !important;
+    }
+    .btn-delete-card {
+        background: linear-gradient(135deg, var(--danger), #c0392b);
+        color: white !important;
+        border: none;
+    }
+    .btn-delete-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(231,76,60,0.35);
+        color: white !important;
+    }
+    /* Modal de anexar arquivo rápido */
+    #quickAttachModal .modal-header {
+        background: linear-gradient(135deg, var(--info), #2980b9);
+    }
+    .quick-attach-dropzone {
+        border: 2.5px dashed var(--info);
+        border-radius: 12px;
+        padding: 30px 20px;
+        text-align: center;
+        background: #f0f8ff;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 16px;
+    }
+    .quick-attach-dropzone:hover, .quick-attach-dropzone.dragover {
+        background: #dbeeff;
+        border-color: #2980b9;
+        transform: scale(1.01);
+    }
+    .quick-attach-files-list {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 8px;
+    }
+    .quick-attach-file-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 10px;
+        border-radius: 6px;
+        background: #f8f9fa;
+        margin-bottom: 5px;
+        font-size: 0.88rem;
+    }
+    .quick-attach-file-item:last-child { margin-bottom: 0; }
+    .quick-attach-file-item .file-icon { margin-right: 8px; }
+    .quick-attach-file-item .remove-file-btn { 
+        background: none; border: none; color: var(--danger); 
+        cursor: pointer; padding: 0; font-size: 0.85rem; 
+    }
+    /* Estilos para detalhes com ações de editar/excluir para todos os tipos */
+    #eventDetailEditBtn.btn-warning { background: var(--warning); border-color: var(--warning); color: #333; }
+    #eventDetailDeleteBtn.btn-danger { background: var(--danger); border-color: var(--danger); }
+
     /* Estilos para múltiplos anexos */
     .anexos-list {
         margin-top: 10px;
@@ -2347,7 +2541,44 @@
     </div>
 </div>
 
-<div class="modal fade" id="bibliotecaModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Livro</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="bibliotecaForm"><input type="hidden" id="bibliotecaId"><div class="mb-3"><label for="bibliotecaTitulo" class="form-label">Título</label><input type="text" class="form-control" id="bibliotecaTitulo" required></div><div class="mb-3"><label for="bibliotecaAutor" class="form-label">Autor</label><input type="text" class="form-control" id="bibliotecaAutor" required></div><div class="mb-3"><label for="bibliotecaAssunto" class="form-label">Assunto</label><input type="text" class="form-control" id="bibliotecaAssunto" required></div><div class="mb-3"><label for="bibliotecaEditora" class="form-label">Editora</label><input type="text" class="form-control" id="bibliotecaEditora"></div><div class="mb-3"><label for="bibliotecaAno" class="form-label">Ano</label><input type="number" class="form-control" id="bibliotecaAno" min="1900" max="2030"></div><div class="mb-3"><label for="bibliotecaObservacoes" class="form-label">Observações</label><textarea class="form-control" id="bibliotecaObservacoes" rows="2"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveLivro">Salvar</button></div></div></div></div>
+<div class="modal fade" id="bibliotecaModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header modal-header-biblioteca"><h5 class="modal-title" id="bibliotecaModalLabel"><i class="fas fa-book-open me-2"></i>Novo Livro</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="bibliotecaForm"><input type="hidden" id="bibliotecaId"><input type="hidden" id="bibliotecaAnexosRemovidos">
+<div class="row">
+  <div class="col-md-6">
+    <div class="mb-3"><label for="bibliotecaTitulo" class="form-label fw-semibold"><i class="fas fa-book me-1 text-danger"></i>Título <span class="text-danger">*</span></label><input type="text" class="form-control" id="bibliotecaTitulo" placeholder="Ex: Direito Constitucional" required></div>
+    <div class="mb-3"><label for="bibliotecaAutor" class="form-label fw-semibold"><i class="fas fa-user-edit me-1 text-danger"></i>Autor <span class="text-danger">*</span></label><input type="text" class="form-control" id="bibliotecaAutor" placeholder="Ex: Alexandre de Moraes" required></div>
+    <div class="mb-3"><label for="bibliotecaAssunto" class="form-label fw-semibold"><i class="fas fa-tag me-1 text-danger"></i>Assunto <span class="text-danger">*</span></label><input type="text" class="form-control" id="bibliotecaAssunto" placeholder="Ex: Direito, Cálculo, História..."></div>
+    <div class="mb-3"><label for="bibliotecaEditora" class="form-label fw-semibold"><i class="fas fa-building me-1"></i>Editora</label><input type="text" class="form-control" id="bibliotecaEditora" placeholder="Ex: Saraiva, Atlas..."></div>
+    <div class="mb-3"><label for="bibliotecaAno" class="form-label fw-semibold"><i class="fas fa-calendar me-1"></i>Ano de Publicação</label><input type="number" class="form-control" id="bibliotecaAno" min="1900" max="2030" placeholder="Ex: 2023"></div>
+    <div class="mb-3"><label for="bibliotecaObservacoes" class="form-label fw-semibold"><i class="fas fa-sticky-note me-1"></i>Observações</label><textarea class="form-control" id="bibliotecaObservacoes" rows="2" placeholder="Anotações, capítulos relevantes..."></textarea></div>
+  </div>
+  <div class="col-md-6">
+    <!-- Campo Link -->
+    <div class="mb-3">
+      <label for="bibliotecaLink" class="form-label fw-semibold"><i class="fas fa-link me-1 text-info"></i>Link (URL)</label>
+      <div class="input-group">
+        <span class="input-group-text bg-info text-white"><i class="fas fa-globe"></i></span>
+        <input type="url" class="form-control" id="bibliotecaLink" placeholder="https://... (PDF online, catálogo, etc.)">
+        <button type="button" class="btn btn-outline-info" id="bibliotecaLinkTestBtn" title="Abrir link"><i class="fas fa-external-link-alt"></i></button>
+      </div>
+      <small class="text-muted">Link para PDF online, catálogo da biblioteca, e-book, etc.</small>
+    </div>
+    <!-- Upload de Arquivos -->
+    <div class="mb-2">
+      <label class="form-label fw-semibold"><i class="fas fa-paperclip me-1 text-success"></i>Anexar Arquivos</label>
+      <small class="d-block text-muted mb-2">PDF, imagens (JPG, PNG) e Word (.docx)</small>
+      <div id="bibliotecaUploadArea" class="biblioteca-upload-area">
+        <i class="fas fa-cloud-upload-alt fa-2x mb-2" style="color:var(--accent);"></i>
+        <p class="mb-0 small">Clique ou arraste arquivos aqui</p>
+        <p class="mb-0 small text-muted">PDF, JPG, PNG, DOCX</p>
+        <input type="file" id="bibliotecaAnexoInput" multiple accept=".pdf,.jpg,.jpeg,.png,.docx,image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="d-none">
+      </div>
+      <div id="bibliotecaAnexosPreview" class="biblioteca-anexos-preview">
+        <!-- Arquivos existentes e novos aparecem aqui -->
+      </div>
+    </div>
+  </div>
+</div>
+</form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-danger" id="saveLivro"><i class="fas fa-save me-1"></i>Salvar Livro</button></div></div></div></div>
 
 <!-- Modal para visualizar Imagem (com botão de download) -->
 <div class="modal fade" id="viewImageModal" tabindex="-1">
@@ -2950,9 +3181,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p class="text-muted small mb-2"><span class="badge ${t.status==='Pendente'?'bg-warning text-dark':'bg-success'}">${t.status}</span></p>
                         <p class="card-text">${t.observacoes?t.observacoes.substring(0,80)+'...':''}</p>
                         ${attachmentHtml ? `<div class="attachment-area mb-2">${attachmentHtml}</div>` : ''}
-                        <div class="item-actions">
-                            <button class="btn btn-sm btn-outline-primary edit-trabalho" data-id="${t.id}"><i class="fas fa-edit"></i></button>
-                            <button class="btn btn-sm btn-outline-danger delete-trabalho" data-id="${t.id}"><i class="fas fa-trash"></i></button>
+                        <div class="card-action-bar">
+                            <button class="btn btn-sm btn-edit-card edit-trabalho" data-id="${t.id}" title="Editar trabalho"><i class="fas fa-edit"></i> Editar</button>
+                            <button class="btn btn-sm btn-attach-file quick-attach-btn" data-id="${t.id}" data-type="trabalhos" title="Adicionar arquivo"><i class="fas fa-paperclip"></i> Anexar</button>
+                            <button class="btn btn-sm btn-delete-card delete-trabalho" data-id="${t.id}" title="Excluir trabalho"><i class="fas fa-trash"></i> Excluir</button>
                         </div>
                     </div>
                 </div>
@@ -2985,9 +3217,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p class="text-muted small mb-1"><i class="fas fa-calendar"></i> <strong>Data:</strong> ${new Date(p.data+'T00:00').toLocaleDateString('pt-BR')} ${p.hora?p.hora:''}</p>
                         <p class="text-muted small mb-2"><strong>Nota:</strong> ${p.nota!==null?p.nota.toFixed(1):'-'}</p>
                         ${attachmentHtml ? `<div class="attachment-area mb-2">${attachmentHtml}</div>` : ''}
-                        <div class="item-actions">
-                            <button class="btn btn-sm btn-outline-primary edit-prova" data-id="${p.id}"><i class="fas fa-edit"></i></button>
-                            <button class="btn btn-sm btn-outline-danger delete-prova" data-id="${p.id}"><i class="fas fa-trash"></i></button>
+                        <div class="card-action-bar">
+                            <button class="btn btn-sm btn-edit-card edit-prova" data-id="${p.id}" title="Editar prova"><i class="fas fa-edit"></i> Editar</button>
+                            <button class="btn btn-sm btn-attach-file quick-attach-btn" data-id="${p.id}" data-type="provas" title="Adicionar arquivo"><i class="fas fa-paperclip"></i> Anexar</button>
+                            <button class="btn btn-sm btn-delete-card delete-prova" data-id="${p.id}" title="Excluir prova"><i class="fas fa-trash"></i> Excluir</button>
                         </div>
                     </div>
                 </div>
@@ -3041,8 +3274,13 @@ document.addEventListener('DOMContentLoaded', function() {
             let anexoBadge = hasAnexos ? `<span class="badge bg-info ms-1" title="Tem anexos"><i class="fas fa-paperclip"></i></span>` : '';
             let eventType = e.type === 'assignment' ? 'trabalhos' : e.type === 'exam' ? 'provas' : e.type === 'financeiro' ? 'financeiro' : 'eventos';
             let isEventoPuro = e.type !== 'assignment' && e.type !== 'exam' && e.type !== 'financeiro';
-            let editBtn = isEventoPuro ? `<button class="btn btn-sm btn-outline-primary btn-event-edit" data-id="${e.id}" data-type="${eventType}" title="Editar"><i class="fas fa-edit"></i></button>` : '';
-            let deleteBtn = isEventoPuro ? `<button class="btn btn-sm btn-outline-danger btn-event-delete" data-id="${e.id}" data-type="${eventType}" title="Excluir"><i class="fas fa-trash"></i></button>` : '';
+            let editBtn = isEventoPuro ? `<button class="btn btn-sm btn-outline-primary btn-event-edit" data-id="${e.id}" data-type="${eventType}" title="Editar"><i class="fas fa-edit"></i></button>` : 
+                (e.type === 'assignment' ? `<button class="btn btn-sm btn-outline-primary btn-event-edit-trabalho" data-id="${e.id}" title="Editar Trabalho"><i class="fas fa-edit"></i></button>` :
+                (e.type === 'exam' ? `<button class="btn btn-sm btn-outline-primary btn-event-edit-prova" data-id="${e.id}" title="Editar Prova"><i class="fas fa-edit"></i></button>` : ''));
+            let deleteBtn = isEventoPuro ? `<button class="btn btn-sm btn-outline-danger btn-event-delete" data-id="${e.id}" data-type="${eventType}" title="Excluir"><i class="fas fa-trash"></i></button>` :
+                (e.type === 'assignment' ? `<button class="btn btn-sm btn-outline-danger btn-event-delete-item" data-id="${e.id}" data-store="trabalhos" title="Excluir Trabalho"><i class="fas fa-trash"></i></button>` :
+                (e.type === 'exam' ? `<button class="btn btn-sm btn-outline-danger btn-event-delete-item" data-id="${e.id}" data-store="provas" title="Excluir Prova"><i class="fas fa-trash"></i></button>` : ''));
+            let attachBtn = (e.type === 'assignment' || e.type === 'exam') ? `<button class="btn btn-sm btn-outline-info quick-attach-btn" data-id="${e.id}" data-type="${eventType}" title="Adicionar Arquivo"><i class="fas fa-paperclip"></i></button>` : '';
             let viewBtn = `<button class="btn btn-sm btn-outline-secondary btn-event-detail" data-id="${e.id}" data-type="${eventType}" title="Ver detalhes"><i class="fas fa-eye"></i> Ver</button>`;
             let div = document.createElement('div');
             div.className = `event-item ${e.type}`;
@@ -3055,7 +3293,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 ${disc?`<p class="mb-0 small text-muted mt-1"><i class="fas fa-book me-1"></i>${disc.nome}</p>`:''}
                 <div class="event-item-actions">
-                    ${viewBtn}${editBtn}${deleteBtn}
+                    ${viewBtn}${editBtn}${deleteBtn}${attachBtn}
                     ${anexoBadge ? `<span class="badge bg-info"><i class="fas fa-paperclip"></i> Anexos</span>` : ''}
                 </div>
             `;
@@ -3068,7 +3306,57 @@ document.addEventListener('DOMContentLoaded', function() {
         container.innerHTML = '';
         if (!data.biblioteca.length) { container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Adicionar Livro".</p></div></div>'; return; }
         data.biblioteca.forEach(l => {
-            container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card livro-card card-dashboard"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-3"><h5 class="card-title">${l.titulo}</h5><div class="dropdown"><button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button><ul class="dropdown-menu"><li><a class="dropdown-item edit-livro" href="#" data-id="${l.id}">Editar</a></li><li><a class="dropdown-item delete-livro" href="#" data-id="${l.id}">Excluir</a></li></ul></div></div><div class="livro-info"><div class="livro-info-item"><i class="fas fa-user"></i><span><strong>Autor:</strong> ${l.autor}</span></div><div class="livro-info-item"><i class="fas fa-tag"></i><span><strong>Assunto:</strong> ${l.assunto}</span></div>${l.editora?`<div class="livro-info-item"><i class="fas fa-building"></i><span><strong>Editora:</strong> ${l.editora}</span></div>`:''}${l.ano?`<div class="livro-info-item"><i class="fas fa-calendar"></i><span><strong>Ano:</strong> ${l.ano}</span></div>`:''}${l.observacoes?`<div class="livro-info-item"><i class="fas fa-sticky-note"></i><span><strong>Observações:</strong> ${l.observacoes}</span></div>`:''}</div></div></div></div>`;
+            // Build anexos HTML
+            let anexosHtml = '';
+            const anexos = l.anexos || [];
+            if (anexos.length > 0) {
+                anexosHtml = `<div class="livro-anexo-area"><div class="biblioteca-label-section"><i class="fas fa-paperclip"></i> Arquivos (${anexos.length})</div>`;
+                anexos.forEach(a => {
+                    const tipo = a.tipo || '';
+                    const nome = a.nome || 'arquivo';
+                    let iconClass = 'fa-file text-secondary';
+                    if (tipo === 'application/pdf' || nome.endsWith('.pdf')) iconClass = 'fa-file-pdf text-danger';
+                    else if (tipo.includes('word') || nome.endsWith('.docx')) iconClass = 'fa-file-word text-primary';
+                    else if (tipo.startsWith('image/')) iconClass = 'fa-image text-success';
+                    const dadosEncoded = encodeURIComponent(a.dados || '');
+                    const tipoEncoded = encodeURIComponent(tipo);
+                    const nomeEncoded = encodeURIComponent(nome);
+                    anexosHtml += `<div class="livro-anexo-item">
+                        <i class="fas ${iconClass}"></i>
+                        <span class="livro-anexo-nome" title="${nome}">${nome}</span>
+                        <div class="livro-anexo-actions">
+                            <button type="button" class="btn btn-xs btn-outline-info py-0 px-1 attachment-icon" style="font-size:0.75rem;" data-dados="${dadosEncoded}" data-tipo="${tipoEncoded}" data-nome="${nomeEncoded}" title="Visualizar"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </div>`;
+                });
+                anexosHtml += `</div>`;
+            }
+            // Build link HTML
+            let linkHtml = '';
+            if (l.link) {
+                const linkEscaped = l.link.replace(/"/g, '&quot;');
+                linkHtml = `<a href="${linkEscaped}" target="_blank" rel="noopener" class="livro-link-chip d-block mt-2"><i class="fas fa-external-link-alt"></i><span class="text-truncate">${l.link}</span></a>`;
+            }
+
+            container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card livro-card card-dashboard"><div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h5 class="card-title">${l.titulo}</h5>
+                    <div class="dropdown"><button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item edit-livro" href="#" data-id="${l.id}"><i class="fas fa-edit me-2 text-success"></i>Editar</a></li>
+                        <li><a class="dropdown-item delete-livro" href="#" data-id="${l.id}"><i class="fas fa-trash me-2 text-danger"></i>Excluir</a></li>
+                    </ul></div>
+                </div>
+                <div class="livro-info">
+                    <div class="livro-info-item"><i class="fas fa-user"></i><span><strong>Autor:</strong> ${l.autor}</span></div>
+                    <div class="livro-info-item"><i class="fas fa-tag"></i><span><strong>Assunto:</strong> ${l.assunto}</span></div>
+                    ${l.editora?`<div class="livro-info-item"><i class="fas fa-building"></i><span><strong>Editora:</strong> ${l.editora}</span></div>`:''}
+                    ${l.ano?`<div class="livro-info-item"><i class="fas fa-calendar"></i><span><strong>Ano:</strong> ${l.ano}</span></div>`:''}
+                    ${l.observacoes?`<div class="livro-info-item"><i class="fas fa-sticky-note"></i><span><strong>Obs:</strong> ${l.observacoes.substring(0,80)}${l.observacoes.length>80?'...':''}</span></div>`:''}
+                </div>
+                ${linkHtml}
+                ${anexosHtml}
+            </div></div></div>`;
         });
     }
 
@@ -4430,11 +4718,36 @@ document.addEventListener('DOMContentLoaded', function() {
         // Botões editar/excluir
         const editBtn = document.getElementById('eventDetailEditBtn');
         const deleteBtn = document.getElementById('eventDetailDeleteBtn');
+        
+        // Botão de anexar arquivo no detalhe (para trabalhos e provas)
+        let attachBtnContainer = document.getElementById('eventDetailAttachContainer');
+        if (!attachBtnContainer) {
+            attachBtnContainer = document.createElement('div');
+            attachBtnContainer.id = 'eventDetailAttachContainer';
+            attachBtnContainer.style.cssText = 'margin-top:8px;';
+            document.querySelector('#eventDetailModal .modal-footer').prepend(attachBtnContainer);
+        }
+        if (type === 'trabalhos' || type === 'provas') {
+            attachBtnContainer.innerHTML = `<button class="btn btn-info me-2 quick-attach-btn" data-id="${id}" data-type="${type}"><i class="fas fa-paperclip me-1"></i> Adicionar Arquivo</button>`;
+            // Add listener for quick attach btn inside detail modal
+            attachBtnContainer.querySelector('.quick-attach-btn').addEventListener('click', () => {
+                bootstrap.Modal.getInstance(document.getElementById('eventDetailModal')).hide();
+                setTimeout(() => openQuickAttach(id, type), 400);
+            });
+        } else {
+            attachBtnContainer.innerHTML = '';
+        }
+        editBtn.style.display = '';
+        deleteBtn.style.display = '';
         if (event.isEvento) {
-            editBtn.style.display = '';
-            deleteBtn.style.display = '';
             editBtn.onclick = () => { bootstrap.Modal.getInstance(document.getElementById('eventDetailModal')).hide(); setTimeout(() => editEvent(id), 400); };
             deleteBtn.onclick = async () => { if (confirm('Excluir este evento?')) { await deleteData('eventos', parseInt(id)); profileDataCache = null; await loadProfileData(); renderCurrentPanel(); bootstrap.Modal.getInstance(document.getElementById('eventDetailModal')).hide(); } };
+        } else if (type === 'trabalhos') {
+            editBtn.onclick = () => { bootstrap.Modal.getInstance(document.getElementById('eventDetailModal')).hide(); setTimeout(() => editTrabalho(id), 400); };
+            deleteBtn.onclick = async () => { if (confirm('Excluir este trabalho?')) { await deleteData('trabalhos', parseInt(id)); profileDataCache = null; await loadProfileData(); renderCurrentPanel(); bootstrap.Modal.getInstance(document.getElementById('eventDetailModal')).hide(); } };
+        } else if (type === 'provas') {
+            editBtn.onclick = () => { bootstrap.Modal.getInstance(document.getElementById('eventDetailModal')).hide(); setTimeout(() => handleEdit('provas', 'prova', id), 400); };
+            deleteBtn.onclick = async () => { if (confirm('Excluir esta prova?')) { await deleteData('provas', parseInt(id)); profileDataCache = null; await loadProfileData(); renderCurrentPanel(); bootstrap.Modal.getInstance(document.getElementById('eventDetailModal')).hide(); } };
         } else {
             editBtn.style.display = 'none';
             deleteBtn.style.display = 'none';
@@ -4442,6 +4755,194 @@ document.addEventListener('DOMContentLoaded', function() {
 
         new bootstrap.Modal(document.getElementById('eventDetailModal')).show();
     }
+    // ========== QUICK ATTACH FILE (pós-agendamento) ==========
+    let quickAttachNewFiles = []; // Files staged for upload
+
+    async function openQuickAttach(itemId, itemType) {
+        quickAttachNewFiles = [];
+        document.getElementById('quickAttachItemId').value = itemId;
+        document.getElementById('quickAttachItemType').value = itemType;
+        document.getElementById('quickAttachInput').value = '';
+        document.getElementById('quickAttachFilesItems').innerHTML = '';
+        document.getElementById('quickAttachFilesList').classList.add('d-none');
+
+        // Load existing attachments
+        const store = itemType === 'trabalhos' ? 'trabalhos' : 'provas';
+        const item = await getData(store, parseInt(itemId));
+        const existingContainer = document.getElementById('quickAttachExistingList');
+        existingContainer.innerHTML = '';
+        
+        let existingAnexos = [];
+        if (itemType === 'trabalhos') {
+            existingAnexos = item?.anexos || [];
+        } else if (itemType === 'provas') {
+            // Provas use single anexo or array
+            if (item?.anexos && Array.isArray(item.anexos)) existingAnexos = item.anexos;
+            else if (item?.anexo) existingAnexos = [{ id: 'pv_' + itemId, nome: item.anexoNome || 'anexo', tipo: item.anexoTipo || '', dados: item.anexo }];
+        }
+
+        if (existingAnexos.length > 0) {
+            let html = `<h6 class="mb-2 text-muted small fw-bold"><i class="fas fa-folder-open me-1"></i>Arquivos Existentes (${existingAnexos.length}):</h6>`;
+            existingAnexos.forEach(a => {
+                const tipo = a.tipo || '';
+                let iconClass = 'fa-file', iconColor = 'text-secondary';
+                if (tipo === 'application/pdf' || (a.nome || '').endsWith('.pdf')) { iconClass = 'fa-file-pdf'; iconColor = 'text-danger'; }
+                else if (tipo.includes('word') || (a.nome || '').endsWith('.docx')) { iconClass = 'fa-file-word'; iconColor = 'text-primary'; }
+                else if (tipo.includes('presentation') || (a.nome || '').endsWith('.pptx')) { iconClass = 'fa-file-powerpoint'; iconColor = 'text-warning'; }
+                else if (tipo.startsWith('image/')) { iconClass = 'fa-image'; iconColor = 'text-success'; }
+                html += `<div class="quick-attach-file-item">
+                    <span><i class="fas ${iconClass} ${iconColor} file-icon"></i>${a.nome || 'arquivo'}</span>
+                    <button type="button" class="remove-file-btn remove-existing-attach" data-id="${a.id}" title="Remover"><i class="fas fa-times"></i></button>
+                </div>`;
+            });
+            existingContainer.innerHTML = html;
+            // Remove existing attach handlers
+            existingContainer.querySelectorAll('.remove-existing-attach').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.closest('.quick-attach-file-item').remove();
+                    // Track removal
+                    let removedIds = document.getElementById('quickAttachRemovedIds');
+                    if (!removedIds) {
+                        removedIds = document.createElement('input');
+                        removedIds.type = 'hidden';
+                        removedIds.id = 'quickAttachRemovedIds';
+                        document.getElementById('quickAttachModal').appendChild(removedIds);
+                    }
+                    let ids = removedIds.value ? removedIds.value.split(',') : [];
+                    ids.push(this.dataset.id);
+                    removedIds.value = ids.join(',');
+                });
+            });
+        } else {
+            existingContainer.innerHTML = '<p class="text-muted small"><i class="fas fa-inbox me-1"></i>Nenhum arquivo anexado ainda.</p>';
+        }
+
+        // Reset removed ids
+        let removedIdsEl = document.getElementById('quickAttachRemovedIds');
+        if (removedIdsEl) removedIdsEl.value = '';
+
+        const modalLabel = document.getElementById('quickAttachModalLabel');
+        modalLabel.innerHTML = `<i class="fas fa-paperclip me-2"></i>${itemType === 'trabalhos' ? 'Adicionar Arquivo ao Trabalho' : 'Adicionar Arquivo à Prova'}`;
+
+        new bootstrap.Modal(document.getElementById('quickAttachModal')).show();
+    }
+
+    function renderQuickAttachStaged() {
+        const container = document.getElementById('quickAttachFilesItems');
+        container.innerHTML = '';
+        if (quickAttachNewFiles.length === 0) {
+            document.getElementById('quickAttachFilesList').classList.add('d-none');
+            return;
+        }
+        document.getElementById('quickAttachFilesList').classList.remove('d-none');
+        quickAttachNewFiles.forEach((file, idx) => {
+            const tipo = file.type || '';
+            let iconClass = 'fa-file', iconColor = 'text-secondary';
+            if (tipo === 'application/pdf' || file.name.endsWith('.pdf')) { iconClass = 'fa-file-pdf'; iconColor = 'text-danger'; }
+            else if (tipo.includes('word') || file.name.endsWith('.docx')) { iconClass = 'fa-file-word'; iconColor = 'text-primary'; }
+            else if (tipo.includes('presentation') || file.name.endsWith('.pptx')) { iconClass = 'fa-file-powerpoint'; iconColor = 'text-warning'; }
+            else if (tipo.startsWith('image/')) { iconClass = 'fa-image'; iconColor = 'text-success'; }
+            const div = document.createElement('div');
+            div.className = 'quick-attach-file-item';
+            div.innerHTML = `<span><i class="fas ${iconClass} ${iconColor} file-icon"></i>${file.name}</span>
+                <button type="button" class="remove-file-btn" data-idx="${idx}"><i class="fas fa-times"></i></button>`;
+            div.querySelector('.remove-file-btn').addEventListener('click', function() {
+                quickAttachNewFiles.splice(parseInt(this.dataset.idx), 1);
+                renderQuickAttachStaged();
+            });
+            container.appendChild(div);
+        });
+    }
+
+    // Setup quick attach modal events (runs after DOM ready)
+    setTimeout(() => {
+        const dropzone = document.getElementById('quickAttachDropzone');
+        const input = document.getElementById('quickAttachInput');
+        if (!dropzone || !input) return;
+
+        dropzone.addEventListener('click', () => input.click());
+        dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+        dropzone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                quickAttachNewFiles.push(...Array.from(e.dataTransfer.files));
+                renderQuickAttachStaged();
+            }
+        });
+        input.addEventListener('change', function() {
+            if (this.files.length) {
+                quickAttachNewFiles.push(...Array.from(this.files));
+                renderQuickAttachStaged();
+                this.value = '';
+            }
+        });
+
+        document.getElementById('quickAttachSaveBtn').addEventListener('click', async () => {
+            const itemId = parseInt(document.getElementById('quickAttachItemId').value);
+            const itemType = document.getElementById('quickAttachItemType').value;
+            const store = itemType === 'trabalhos' ? 'trabalhos' : 'provas';
+            const item = await getData(store, itemId);
+            if (!item) { alert('Item não encontrado.'); return; }
+
+            // Get removed IDs
+            const removedIdsEl = document.getElementById('quickAttachRemovedIds');
+            const removedIds = removedIdsEl && removedIdsEl.value ? removedIdsEl.value.split(',') : [];
+            const removedSet = new Set(removedIds.filter(Boolean));
+
+            if (itemType === 'trabalhos') {
+                let existingAnexos = (item.anexos || []).filter(a => !removedSet.has(String(a.id)));
+                if (quickAttachNewFiles.length > 0) {
+                    const newAnexos = await readMultipleFilesAsBase64(quickAttachNewFiles);
+                    existingAnexos = [...existingAnexos, ...newAnexos];
+                }
+                item.anexos = existingAnexos;
+            } else {
+                // provas: convert to array format
+                let existingAnexos = [];
+                if (item.anexos && Array.isArray(item.anexos)) {
+                    existingAnexos = item.anexos.filter(a => !removedSet.has(String(a.id)));
+                } else if (item.anexo && !removedSet.has('pv_' + itemId)) {
+                    existingAnexos = [{ id: 'pv_' + itemId, nome: item.anexoNome || 'anexo', tipo: item.anexoTipo || '', dados: item.anexo }];
+                }
+                if (quickAttachNewFiles.length > 0) {
+                    const newAnexos = await readMultipleFilesAsBase64(quickAttachNewFiles);
+                    existingAnexos = [...existingAnexos, ...newAnexos];
+                }
+                item.anexos = existingAnexos;
+                // Clear old single-file fields
+                delete item.anexo;
+                delete item.anexoNome;
+                delete item.anexoTipo;
+            }
+
+            await saveData(store, item);
+            profileDataCache = null;
+            await loadProfileData();
+            renderCurrentPanel();
+            quickAttachNewFiles = [];
+            bootstrap.Modal.getInstance(document.getElementById('quickAttachModal')).hide();
+            // Small success toast feedback
+            const toastEl = document.createElement('div');
+            toastEl.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;';
+            toastEl.innerHTML = `<div class="alert alert-success alert-dismissible shadow" role="alert"><i class="fas fa-check-circle me-2"></i><strong>Arquivos salvos com sucesso!</strong><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+            document.body.appendChild(toastEl);
+            setTimeout(() => toastEl.remove(), 3500);
+        });
+
+        // Handle quick attach btn clicks on cards
+        document.body.addEventListener('click', async function(e) {
+            const btn = e.target.closest('.quick-attach-btn');
+            if (btn && btn.dataset.id && btn.dataset.type) {
+                e.preventDefault();
+                e.stopPropagation();
+                await openQuickAttach(btn.dataset.id, btn.dataset.type);
+            }
+        });
+
+    }, 600);
+
     function localDateFromString(dateStr) {
         if (!dateStr) return null;
         let [year, month, day] = dateStr.split('-').map(Number);
@@ -4561,10 +5062,144 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // ===== BIBLIOTECA: Render anexos no modal =====
+    function renderBibliotecaAnexosList(anexos, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        if (!anexos || anexos.length === 0) return;
+        anexos.forEach(a => {
+            const tipo = a.tipo || '';
+            const nome = a.nome || 'arquivo';
+            let iconClass = 'fa-file text-secondary';
+            if (tipo === 'application/pdf' || nome.endsWith('.pdf')) iconClass = 'fa-file-pdf text-danger';
+            else if (tipo.includes('word') || nome.endsWith('.docx')) iconClass = 'fa-file-word text-primary';
+            else if (tipo.startsWith('image/')) iconClass = 'fa-image text-success';
+            const div = document.createElement('div');
+            div.className = 'quick-attach-file-item';
+            div.style.marginBottom = '5px';
+            div.innerHTML = `<span><i class="fas ${iconClass} me-2"></i>${nome}</span>
+                <button type="button" class="remove-file-btn remover-biblioteca-anexo" data-id="${a.id||''}" title="Remover"><i class="fas fa-times"></i></button>`;
+            div.querySelector('.remover-biblioteca-anexo').addEventListener('click', function() {
+                const idVal = this.dataset.id;
+                const removidosInput = document.getElementById('bibliotecaAnexosRemovidos');
+                if (idVal && removidosInput) {
+                    let ids = removidosInput.value ? removidosInput.value.split(',') : [];
+                    ids.push(idVal);
+                    removidosInput.value = ids.filter(Boolean).join(',');
+                }
+                div.remove();
+            });
+            container.appendChild(div);
+        });
+    }
+
+    // ===== BIBLIOTECA: Setup upload area (chamado após DOM ready) =====
+    setTimeout(() => {
+        const uploadArea = document.getElementById('bibliotecaUploadArea');
+        const fileInput = document.getElementById('bibliotecaAnexoInput');
+        const preview = document.getElementById('bibliotecaAnexosPreview');
+        const linkTestBtn = document.getElementById('bibliotecaLinkTestBtn');
+        if (!uploadArea || !fileInput) return;
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', e => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                // Simulate input change
+                showBibliotecaNewFilesPreview(e.dataTransfer.files);
+            }
+        });
+        fileInput.addEventListener('change', function() {
+            if (this.files.length) showBibliotecaNewFilesPreview(this.files);
+        });
+
+        if (linkTestBtn) {
+            linkTestBtn.addEventListener('click', () => {
+                const url = document.getElementById('bibliotecaLink').value.trim();
+                if (url) window.open(url, '_blank');
+                else alert('Digite um link primeiro.');
+            });
+        }
+
+        // Reset modal on close
+        const modal = document.getElementById('bibliotecaModal');
+        if (modal) {
+            modal.addEventListener('hidden.bs.modal', () => {
+                if (preview) preview.innerHTML = '';
+                if (fileInput) fileInput.value = '';
+                const removidosInput = document.getElementById('bibliotecaAnexosRemovidos');
+                if (removidosInput) removidosInput.value = '';
+                const label = document.getElementById('bibliotecaModalLabel');
+                if (label) label.innerHTML = '<i class="fas fa-book-open me-2"></i>Novo Livro';
+            });
+        }
+    }, 700);
+
+    function showBibliotecaNewFilesPreview(files) {
+        const preview = document.getElementById('bibliotecaAnexosPreview');
+        if (!preview) return;
+        // Remove existing "new files" section header if present to avoid duplicates
+        const existingHeader = preview.querySelector('.biblioteca-new-files-header');
+        if (existingHeader) existingHeader.remove();
+        preview.querySelectorAll('.biblioteca-new-file-item').forEach(el => el.remove());
+
+        if (files.length === 0) return;
+        const header = document.createElement('p');
+        header.className = 'biblioteca-new-files-header text-muted small mb-1 mt-2 fw-bold';
+        header.innerHTML = '<i class="fas fa-plus-circle text-success me-1"></i>Novos arquivos:';
+        preview.appendChild(header);
+
+        Array.from(files).forEach(f => {
+            const tipo = f.type || '';
+            let iconClass = 'fa-file text-secondary';
+            if (tipo === 'application/pdf' || f.name.endsWith('.pdf')) iconClass = 'fa-file-pdf text-danger';
+            else if (tipo.includes('word') || f.name.endsWith('.docx')) iconClass = 'fa-file-word text-primary';
+            else if (tipo.startsWith('image/')) iconClass = 'fa-image text-success';
+            const div = document.createElement('div');
+            div.className = 'quick-attach-file-item biblioteca-new-file-item';
+            div.style.marginBottom = '4px';
+            div.innerHTML = `<span><i class="fas ${iconClass} me-2"></i>${f.name}</span><span class="text-muted small">${(f.size/1024).toFixed(1)} KB</span>`;
+            preview.appendChild(div);
+        });
+    }
+
     async function saveLivro() {
         let pid = await getCurrentProfileId(), id = document.getElementById('bibliotecaId').value;
-        let l = { id: id?parseInt(id):await getNewId('biblioteca'), profileId: pid, titulo: document.getElementById('bibliotecaTitulo').value, autor: document.getElementById('bibliotecaAutor').value, assunto: document.getElementById('bibliotecaAssunto').value, editora: document.getElementById('bibliotecaEditora').value, ano: document.getElementById('bibliotecaAno').value||null, observacoes: document.getElementById('bibliotecaObservacoes').value };
+        let l = { 
+            id: id?parseInt(id):await getNewId('biblioteca'), 
+            profileId: pid, 
+            titulo: document.getElementById('bibliotecaTitulo').value, 
+            autor: document.getElementById('bibliotecaAutor').value, 
+            assunto: document.getElementById('bibliotecaAssunto').value, 
+            editora: document.getElementById('bibliotecaEditora').value, 
+            ano: document.getElementById('bibliotecaAno').value||null, 
+            observacoes: document.getElementById('bibliotecaObservacoes').value,
+            link: document.getElementById('bibliotecaLink').value.trim() || null,
+            anexos: []
+        };
         if (!l.titulo || !l.autor || !l.assunto) return alert('Título, autor e assunto obrigatórios.');
+
+        // Manter anexos existentes que não foram removidos
+        const removidosInput = document.getElementById('bibliotecaAnexosRemovidos');
+        const removidosSet = new Set(removidosInput && removidosInput.value ? removidosInput.value.split(',').filter(Boolean) : []);
+        if (id) {
+            const original = await getData('biblioteca', parseInt(id));
+            if (original && original.anexos) {
+                l.anexos = original.anexos.filter(a => !removidosSet.has(String(a.id)));
+            }
+        }
+
+        // Adicionar novos arquivos
+        const fileInput = document.getElementById('bibliotecaAnexoInput');
+        if (fileInput.files && fileInput.files.length > 0) {
+            const novos = await readMultipleFilesAsBase64(fileInput.files);
+            l.anexos = [...l.anexos, ...novos];
+        }
+
         await saveData('biblioteca', l); 
         profileDataCache = null;
         await loadProfileData();
@@ -4780,6 +5415,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('eventAnexosRemovidos').value = '';
                 document.getElementById('eventAnexosPreview').innerHTML = '';
                 new bootstrap.Modal(document.getElementById('eventModal')).show();
+            }
+            // Botão editar trabalho direto na agenda
+            let btnEditTrabalho = e.target.closest('.btn-event-edit-trabalho');
+            if (btnEditTrabalho) {
+                e.preventDefault(); e.stopPropagation();
+                await editTrabalho(btnEditTrabalho.dataset.id);
+            }
+            // Botão editar prova direto na agenda
+            let btnEditProva = e.target.closest('.btn-event-edit-prova');
+            if (btnEditProva) {
+                e.preventDefault(); e.stopPropagation();
+                await handleEdit('provas', 'prova', btnEditProva.dataset.id);
+            }
+            // Botão excluir trabalho/prova direto na agenda
+            let btnDeleteItem = e.target.closest('.btn-event-delete-item');
+            if (btnDeleteItem) {
+                e.preventDefault(); e.stopPropagation();
+                const store = btnDeleteItem.dataset.store;
+                const label = store === 'trabalhos' ? 'este trabalho' : 'esta prova';
+                if (confirm(`Excluir ${label}?`)) {
+                    await deleteData(store, parseInt(btnDeleteItem.dataset.id));
+                    profileDataCache = null;
+                    await loadProfileData();
+                    renderCurrentPanel();
+                }
             }
             // Botão ver detalhes do evento
             let btnDetail = e.target.closest('.btn-event-detail');
@@ -5249,7 +5909,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const titleMap = { disciplina: 'Editar Disciplina', prova: 'Editar Prova', financeiro: 'Editar Transação', biblioteca: 'Editar Livro', link: 'Editar Link', filme: 'Editar Filme', event: 'Editar Evento' };
         const modalId = modalMap[prefix]; if (!modalId) return;
         const labelEl = document.getElementById(labelMap[prefix]);
-        if (labelEl) labelEl.textContent = titleMap[prefix] || 'Editar';
+        if (labelEl) {
+            if (prefix === 'biblioteca') labelEl.innerHTML = '<i class="fas fa-book-open me-2"></i>Editar Livro';
+            else labelEl.textContent = titleMap[prefix] || 'Editar';
+        }
         if (prefix === 'disciplina') {
             document.getElementById('disciplinaId').value = item.id;
             document.getElementById('disciplinaNome').value = item.nome||'';
@@ -5281,6 +5944,10 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('bibliotecaEditora').value = item.editora||'';
             document.getElementById('bibliotecaAno').value = item.ano||'';
             document.getElementById('bibliotecaObservacoes').value = item.observacoes||'';
+            document.getElementById('bibliotecaLink').value = item.link||'';
+            document.getElementById('bibliotecaAnexosRemovidos').value = '';
+            // Render existing annexes
+            renderBibliotecaAnexosList(item.anexos || [], 'bibliotecaAnexosPreview');
         } else if (prefix === 'link') {
             document.getElementById('linkId').value = item.id;
             document.getElementById('linkTitulo').value = item.titulo||'';
@@ -5377,5 +6044,42 @@ document.addEventListener('DOMContentLoaded', function() {
     init();
 });
 </script>
+
+<!-- Modal Anexar Arquivo Rápido -->
+<div class="modal fade" id="quickAttachModal" tabindex="-1" aria-labelledby="quickAttachModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="quickAttachModalLabel"><i class="fas fa-paperclip me-2"></i>Adicionar Arquivo</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="quickAttachItemId">
+        <input type="hidden" id="quickAttachItemType">
+        <div id="quickAttachDropzone" class="quick-attach-dropzone">
+          <i class="fas fa-cloud-upload-alt fa-3x mb-3" style="color: var(--info);"></i>
+          <h6>Clique para selecionar arquivos</h6>
+          <p class="text-muted small mb-0">ou arraste e solte aqui</p>
+          <p class="text-muted small">PDF, Word, PowerPoint, imagens, etc.</p>
+          <input type="file" id="quickAttachInput" multiple class="d-none">
+        </div>
+        <div id="quickAttachFilesList" class="quick-attach-files-list d-none">
+          <p class="text-muted small mb-2 fw-bold">Arquivos selecionados:</p>
+          <div id="quickAttachFilesItems"></div>
+        </div>
+        <div id="quickAttachExistingList" class="mt-3">
+          <!-- Arquivos existentes listados aqui -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="quickAttachSaveBtn">
+          <i class="fas fa-save me-1"></i> Salvar Arquivos
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
