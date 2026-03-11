@@ -1956,6 +1956,170 @@
         cursor: pointer;
     }
 
+    /* ===== JURISTA DE ALTA PERFORMANCE ===== */
+    #jurista { --j-gold: #c9a84c; --j-dark: #1a1f2e; --j-card: #242938; --j-border: rgba(201,168,76,0.25); }
+    .jurista-hero {
+      background: linear-gradient(135deg, #1a1f2e 0%, #0f1520 60%, #1a2540 100%);
+      border-radius: 20px; padding: 32px; margin-bottom: 28px;
+      border: 1px solid rgba(201,168,76,0.3);
+      position: relative; overflow: hidden;
+    }
+    .jurista-hero::before {
+      content: '⚖️'; position: absolute; right: 30px; top: 50%; transform: translateY(-50%);
+      font-size: 6rem; opacity: 0.08; pointer-events: none;
+    }
+    .jurista-hero h2 { color: #c9a84c; font-family: 'Playfair Display', serif; font-size: 1.9rem; margin-bottom: 4px; }
+    .jurista-hero p { color: rgba(255,255,255,0.6); margin: 0; font-size: 0.9rem; }
+    .jurista-stat-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 24px; }
+    .jurista-stat {
+      background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25);
+      border-radius: 12px; padding: 14px 20px; flex: 1; min-width: 120px; text-align: center;
+    }
+    .jurista-stat .js-val { font-size: 1.6rem; font-weight: 700; color: #c9a84c; display: block; }
+    .jurista-stat .js-label { font-size: 0.75rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Timer */
+    .jurista-timer-card {
+      background: linear-gradient(135deg, #1a1f2e, #0f1520);
+      border: 1px solid rgba(201,168,76,0.3); border-radius: 20px; padding: 28px;
+      text-align: center; margin-bottom: 24px;
+    }
+    .timer-display {
+      font-family: 'Courier New', monospace; font-size: 3.8rem; font-weight: 700;
+      color: #c9a84c; letter-spacing: 4px; text-shadow: 0 0 30px rgba(201,168,76,0.4);
+      margin: 16px 0; line-height: 1;
+    }
+    .timer-display.running { animation: timerPulse 2s ease-in-out infinite; }
+    @keyframes timerPulse { 0%,100% { text-shadow: 0 0 20px rgba(201,168,76,0.4); } 50% { text-shadow: 0 0 45px rgba(201,168,76,0.8); } }
+    .timer-session-label { color: rgba(255,255,255,0.5); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+    .timer-btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+    .btn-timer-start { background: linear-gradient(135deg, #27ae60, #1e8449); color: white; border: none; border-radius: 50px; padding: 12px 32px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-timer-start:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(39,174,96,0.4); }
+    .btn-timer-pause { background: linear-gradient(135deg, #e67e22, #d35400); color: white; border: none; border-radius: 50px; padding: 12px 28px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-timer-pause:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(230,126,34,0.4); }
+    .btn-timer-stop { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: none; border-radius: 50px; padding: 12px 28px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-timer-stop:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(231,76,60,0.4); }
+    .btn-timer-reset { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 50px; padding: 12px 28px; font-size: 1rem; cursor: pointer; transition: all 0.2s; }
+    .btn-timer-reset:hover { background: rgba(255,255,255,0.2); }
+    .pomodoro-selector { display: flex; gap: 8px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap; }
+    .pomo-btn { background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.3); color: #c9a84c; border-radius: 20px; padding: 6px 16px; font-size: 0.82rem; cursor: pointer; transition: all 0.2s; }
+    .pomo-btn.active, .pomo-btn:hover { background: rgba(201,168,76,0.3); border-color: #c9a84c; }
+    .timer-subject-select { width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(201,168,76,0.25); color: white; border-radius: 10px; padding: 10px 14px; font-size: 0.9rem; margin-bottom: 16px; }
+    .timer-subject-select option { background: #1a1f2e; color: white; }
+    .timer-subject-select:focus { outline: none; border-color: #c9a84c; }
+
+    /* Cronograma Cards */
+    .j-card {
+      background: #242938; border: 1px solid rgba(201,168,76,0.18);
+      border-radius: 16px; padding: 20px; transition: all 0.25s;
+    }
+    .j-card:hover { border-color: rgba(201,168,76,0.5); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .j-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+    .j-card-title { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: #e8dcc8; font-weight: 700; }
+    .j-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .j-badge-gold { background: rgba(201,168,76,0.2); color: #c9a84c; border: 1px solid rgba(201,168,76,0.4); }
+    .j-badge-blue { background: rgba(52,152,219,0.2); color: #5dade2; border: 1px solid rgba(52,152,219,0.4); }
+    .j-badge-green { background: rgba(39,174,96,0.2); color: #58d68d; border: 1px solid rgba(39,174,96,0.4); }
+    .j-badge-red { background: rgba(231,76,60,0.2); color: #f1948a; border: 1px solid rgba(231,76,60,0.4); }
+    .j-badge-purple { background: rgba(155,89,182,0.2); color: #c39bd3; border: 1px solid rgba(155,89,182,0.4); }
+    .j-progress-bar { background: rgba(255,255,255,0.08); border-radius: 6px; height: 6px; overflow: hidden; margin: 8px 0; }
+    .j-progress-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #c9a84c, #f0d080); transition: width 0.5s ease; }
+    .j-text-muted { color: rgba(255,255,255,0.45); font-size: 0.82rem; }
+    .j-text-white { color: #e8dcc8; }
+    .j-divider { border: none; border-top: 1px solid rgba(201,168,76,0.15); margin: 16px 0; }
+
+    /* Tabs */
+    .j-tabs { display: flex; gap: 4px; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 4px; margin-bottom: 24px; flex-wrap: wrap; }
+    .j-tab { flex: 1; min-width: 100px; text-align: center; padding: 10px 14px; border-radius: 9px; cursor: pointer; font-size: 0.83rem; font-weight: 500; color: rgba(255,255,255,0.5); border: none; background: none; transition: all 0.2s; }
+    .j-tab.active { background: rgba(201,168,76,0.2); color: #c9a84c; border: 1px solid rgba(201,168,76,0.35); }
+    .j-tab:hover:not(.active) { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.06); }
+    .j-tab-content { display: none; }
+    .j-tab-content.active { display: block; }
+
+    /* Matéria Item */
+    .j-materia-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+      border-radius: 10px; margin-bottom: 8px; cursor: pointer;
+      border: 1px solid transparent; transition: all 0.2s;
+      background: rgba(255,255,255,0.04);
+    }
+    .j-materia-item:hover { background: rgba(201,168,76,0.08); border-color: rgba(201,168,76,0.2); }
+    .j-materia-item.concluida { opacity: 0.5; }
+    .j-materia-item.concluida .j-materia-nome { text-decoration: line-through; }
+    .j-materia-check { width: 22px; height: 22px; border-radius: 6px; border: 2px solid rgba(201,168,76,0.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+    .j-materia-check.checked { background: #c9a84c; border-color: #c9a84c; color: white; }
+    .j-materia-nome { font-size: 0.9rem; color: #e8dcc8; flex: 1; }
+    .j-materia-horas { font-size: 0.78rem; color: rgba(201,168,76,0.7); }
+
+    /* Cronograma Semanal */
+    .j-week-grid { display: grid; grid-template-columns: 80px repeat(6, 1fr); gap: 4px; font-size: 0.78rem; }
+    .j-week-header { background: rgba(201,168,76,0.1); color: #c9a84c; border-radius: 8px; padding: 8px 4px; text-align: center; font-weight: 600; }
+    .j-week-time { color: rgba(255,255,255,0.4); padding: 8px 4px; font-size: 0.75rem; display: flex; align-items: center; }
+    .j-week-cell { background: rgba(255,255,255,0.03); border-radius: 6px; padding: 6px 4px; min-height: 48px; border: 1px solid rgba(255,255,255,0.05); position: relative; transition: all 0.2s; }
+    .j-week-cell:hover { border-color: rgba(201,168,76,0.3); background: rgba(201,168,76,0.05); cursor: pointer; }
+    .j-week-cell.filled { background: rgba(201,168,76,0.1); border-color: rgba(201,168,76,0.35); }
+    .j-week-cell-text { font-size: 0.7rem; color: #c9a84c; line-height: 1.3; }
+
+    /* Livros */
+    .j-livro-card { display: flex; gap: 14px; padding: 14px; background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid rgba(201,168,76,0.12); margin-bottom: 10px; transition: all 0.2s; }
+    .j-livro-card:hover { border-color: rgba(201,168,76,0.35); background: rgba(201,168,76,0.05); }
+    .j-livro-cover { width: 52px; height: 68px; background: linear-gradient(135deg, #2c3e50, #34495e); border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 3px 3px 8px rgba(0,0,0,0.4); }
+    .j-livro-info { flex: 1; }
+    .j-livro-title { font-size: 0.88rem; font-weight: 700; color: #e8dcc8; margin-bottom: 2px; }
+    .j-livro-author { font-size: 0.76rem; color: rgba(255,255,255,0.45); margin-bottom: 8px; }
+    .j-livro-progress { display: flex; align-items: center; gap: 8px; }
+    .j-livro-pct { font-size: 0.75rem; color: #c9a84c; min-width: 32px; }
+    .j-livro-actions { display: flex; flex-direction: column; gap: 4px; justify-content: center; }
+    .j-btn-sm { background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.3); color: #c9a84c; border-radius: 8px; padding: 5px 10px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; }
+    .j-btn-sm:hover { background: rgba(201,168,76,0.25); }
+    .j-btn-sm.red { background: rgba(231,76,60,0.12); border-color: rgba(231,76,60,0.3); color: #f1948a; }
+    .j-btn-sm.red:hover { background: rgba(231,76,60,0.25); }
+
+    /* Sessões Log */
+    .j-session-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(255,255,255,0.04); border-radius: 10px; margin-bottom: 6px; border-left: 3px solid #c9a84c; }
+    .j-session-mat { font-size: 0.85rem; color: #e8dcc8; font-weight: 500; flex: 1; }
+    .j-session-dur { font-size: 0.82rem; color: #c9a84c; font-weight: 700; }
+    .j-session-date { font-size: 0.75rem; color: rgba(255,255,255,0.4); }
+
+    /* Meta/Objetivo */
+    .j-meta-card { background: linear-gradient(135deg, rgba(201,168,76,0.1), rgba(201,168,76,0.05)); border: 1px solid rgba(201,168,76,0.3); border-radius: 14px; padding: 20px; margin-bottom: 14px; }
+    .j-meta-title { color: #c9a84c; font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; }
+    .j-meta-desc { color: rgba(255,255,255,0.55); font-size: 0.82rem; margin-bottom: 12px; }
+    .j-input { width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(201,168,76,0.25); color: white; border-radius: 10px; padding: 10px 14px; font-size: 0.88rem; transition: border 0.2s; }
+    .j-input:focus { outline: none; border-color: #c9a84c; background: rgba(255,255,255,0.1); }
+    .j-input::placeholder { color: rgba(255,255,255,0.3); }
+    .j-input option { background: #1a1f2e; }
+    .j-btn-primary { background: linear-gradient(135deg, #c9a84c, #a8862e); color: #1a1f2e; border: none; border-radius: 10px; padding: 10px 20px; font-weight: 700; font-size: 0.88rem; cursor: pointer; transition: all 0.2s; }
+    .j-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(201,168,76,0.4); }
+
+    /* Semestres */
+    .j-semestre-block { background: rgba(255,255,255,0.03); border: 1px solid rgba(201,168,76,0.15); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+    .j-semestre-title { color: #c9a84c; font-weight: 700; font-size: 0.92rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .j-semestre-num { background: rgba(201,168,76,0.2); color: #c9a84c; border-radius: 6px; padding: 2px 8px; font-size: 0.75rem; }
+
+    /* Heatmap de estudo */
+    .j-heatmap { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 10px; }
+    .j-heatmap-cell { aspect-ratio: 1; border-radius: 3px; cursor: pointer; transition: transform 0.15s; }
+    .j-heatmap-cell:hover { transform: scale(1.3); }
+    .j-heat-0 { background: rgba(255,255,255,0.06); }
+    .j-heat-1 { background: rgba(201,168,76,0.2); }
+    .j-heat-2 { background: rgba(201,168,76,0.45); }
+    .j-heat-3 { background: rgba(201,168,76,0.7); }
+    .j-heat-4 { background: #c9a84c; }
+
+    /* Notificações/alertas jurista */
+    .j-alert { border-radius: 10px; padding: 12px 16px; margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-start; font-size: 0.85rem; }
+    .j-alert-gold { background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.3); color: #e8dcc8; }
+    .j-alert-blue { background: rgba(52,152,219,0.1); border: 1px solid rgba(52,152,219,0.3); color: #aed6f1; }
+    .j-alert i { color: #c9a84c; margin-top: 2px; flex-shrink: 0; }
+
+    /* Responsivo */
+    @media (max-width: 768px) {
+      .timer-display { font-size: 2.8rem; }
+      .j-week-grid { grid-template-columns: 50px repeat(6, 1fr); font-size: 0.65rem; }
+      .jurista-stat-row { gap: 8px; }
+    }
+
     @media (max-width: 768px) {
       .main-header {
         flex-direction: column;
@@ -2348,7 +2512,245 @@
           </div>
       </div>
   </div>
-</div>
+  <!-- ===== PAINEL JURISTA DE ALTA PERFORMANCE ===== -->
+  <div class="content-panel" id="jurista" style="background: #0f1520; min-height: 100vh; margin: -20px; padding: 28px; border-radius: 0;">
+
+    <!-- Hero -->
+    <div class="jurista-hero">
+      <h2><i class="fas fa-balance-scale me-2"></i>Jurista de Alta Performance</h2>
+      <p>Plano de formação completo · Cronograma · Cronômetro · Controle de horas</p>
+      <div class="jurista-stat-row">
+        <div class="jurista-stat"><span class="js-val" id="j-total-hoje">0h 0m</span><span class="js-label">Estudado Hoje</span></div>
+        <div class="jurista-stat"><span class="js-val" id="j-total-semana">0h</span><span class="js-label">Esta Semana</span></div>
+        <div class="jurista-stat"><span class="js-val" id="j-total-geral">0h</span><span class="js-label">Total Acumulado</span></div>
+        <div class="jurista-stat"><span class="js-val" id="j-streak">0</span><span class="js-label">Dias Seguidos</span></div>
+        <div class="jurista-stat"><span class="js-val" id="j-meta-pct">0%</span><span class="js-label">Meta Diária</span></div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="j-tabs" id="jurista-tabs">
+      <button class="j-tab active" data-jtab="cronometro"><i class="fas fa-stopwatch me-1"></i>Cronômetro</button>
+      <button class="j-tab" data-jtab="cronograma"><i class="fas fa-calendar-week me-1"></i>Cronograma Diário</button>
+      <button class="j-tab" data-jtab="materias"><i class="fas fa-book-open me-1"></i>Matérias</button>
+      <button class="j-tab" data-jtab="leituras"><i class="fas fa-book me-1"></i>Leituras Obrigatórias</button>
+      <button class="j-tab" data-jtab="historico"><i class="fas fa-history me-1"></i>Histórico</button>
+      <button class="j-tab" data-jtab="metas"><i class="fas fa-trophy me-1"></i>Metas</button>
+    </div>
+
+    <!-- TAB: CRONÔMETRO -->
+    <div class="j-tab-content active" id="jtab-cronometro">
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <div class="jurista-timer-card">
+            <div class="timer-session-label" id="j-timer-mode-label">SESSÃO DE ESTUDO</div>
+            <div class="timer-display" id="j-timer-display">00:00:00</div>
+            <div class="pomodoro-selector">
+              <button class="pomo-btn active" data-dur="25" title="Pomodoro 25 min">🍅 25min</button>
+              <button class="pomo-btn" data-dur="50" title="Sessão longa">⏱ 50min</button>
+              <button class="pomo-btn" data-dur="90" title="Deep work">🔥 90min</button>
+              <button class="pomo-btn" data-dur="0" title="Livre">∞ Livre</button>
+            </div>
+            <select class="timer-subject-select" id="j-timer-subject">
+              <option value="">— Selecione a Matéria —</option>
+              <option value="Direito Constitucional">Direito Constitucional</option>
+              <option value="Direito Civil">Direito Civil</option>
+              <option value="Direito Penal">Direito Penal</option>
+              <option value="Direito Administrativo">Direito Administrativo</option>
+              <option value="Direito Processual Civil">Direito Processual Civil</option>
+              <option value="Direito Processual Penal">Direito Processual Penal</option>
+              <option value="Direito do Trabalho">Direito do Trabalho</option>
+              <option value="Direito Tributário">Direito Tributário</option>
+              <option value="Direito Empresarial">Direito Empresarial</option>
+              <option value="Direito Internacional">Direito Internacional</option>
+              <option value="Teoria Geral do Direito">Teoria Geral do Direito</option>
+              <option value="Filosofia do Direito">Filosofia do Direito</option>
+              <option value="Ética e Estatuto da OAB">Ética e Estatuto da OAB</option>
+              <option value="Leitura de Doutrina">Leitura de Doutrina</option>
+              <option value="Resolução de Questões">Resolução de Questões</option>
+              <option value="Revisão">Revisão</option>
+            </select>
+            <div class="timer-btn-row">
+              <button class="btn-timer-start" id="j-btn-start"><i class="fas fa-play me-2"></i>Iniciar</button>
+              <button class="btn-timer-pause" id="j-btn-pause" style="display:none"><i class="fas fa-pause me-2"></i>Pausar</button>
+              <button class="btn-timer-stop" id="j-btn-stop" style="display:none"><i class="fas fa-stop me-2"></i>Salvar</button>
+              <button class="btn-timer-reset" id="j-btn-reset"><i class="fas fa-redo"></i></button>
+            </div>
+            <div class="j-progress-bar mt-3" style="height: 8px;">
+              <div class="j-progress-fill" id="j-pomo-progress" style="width:0%;"></div>
+            </div>
+            <div id="j-pomo-status" class="j-text-muted mt-2" style="font-size:0.78rem;">Selecione uma matéria e inicie o cronômetro</div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="j-card" style="height:100%;">
+            <div class="j-card-title mb-3"><i class="fas fa-chart-bar me-2" style="color:#c9a84c;"></i>Horas por Matéria (hoje)</div>
+            <div id="j-hoje-breakdown">
+              <p class="j-text-muted text-center" style="padding:40px 0;">Nenhuma sessão registrada hoje.</p>
+            </div>
+            <hr class="j-divider">
+            <div class="j-card-title mb-3"><i class="fas fa-fire me-2" style="color:#e67e22;"></i>Atividade (últimas 4 semanas)</div>
+            <div class="j-heatmap" id="j-heatmap"></div>
+            <div class="d-flex gap-2 mt-2 align-items-center">
+              <span class="j-text-muted" style="font-size:0.72rem;">menos</span>
+              <div style="width:12px;height:12px;border-radius:2px;" class="j-heat-0"></div>
+              <div style="width:12px;height:12px;border-radius:2px;" class="j-heat-1"></div>
+              <div style="width:12px;height:12px;border-radius:2px;" class="j-heat-2"></div>
+              <div style="width:12px;height:12px;border-radius:2px;" class="j-heat-3"></div>
+              <div style="width:12px;height:12px;border-radius:2px;" class="j-heat-4"></div>
+              <span class="j-text-muted" style="font-size:0.72rem;">mais</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: CRONOGRAMA DIÁRIO -->
+    <div class="j-tab-content" id="jtab-cronograma">
+      <div class="row g-4 mb-4">
+        <div class="col-12">
+          <div class="j-alert j-alert-gold"><i class="fas fa-graduation-cap"></i><div><strong>Rotina Recomendada para Jurista de Alta Performance</strong><br>Baseada em estudos de performance acadêmica e no modelo de formação dos grandes juristas brasileiros. Meta: <strong>8h/dia</strong> nos períodos intensivos.</div></div>
+        </div>
+      </div>
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <div class="j-card">
+            <div class="j-card-title mb-4"><i class="fas fa-sun me-2" style="color:#c9a84c;"></i>Cronograma Padrão Diário</div>
+            <div id="j-cronograma-list"></div>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="j-card mb-4">
+            <div class="j-card-title mb-3"><i class="fas fa-calendar-week me-2" style="color:#c9a84c;"></i>Grade Semanal</div>
+            <div style="overflow-x:auto;">
+              <div class="j-week-grid" id="j-week-grid"></div>
+            </div>
+          </div>
+          <div class="j-card">
+            <div class="j-card-title mb-3"><i class="fas fa-sliders-h me-2" style="color:#c9a84c;"></i>Personalizar Meta Diária</div>
+            <label class="j-text-muted" style="font-size:0.82rem;">Meta de horas/dia</label>
+            <input type="number" class="j-input mt-1 mb-3" id="j-meta-horas-input" value="8" min="1" max="16" step="0.5">
+            <label class="j-text-muted" style="font-size:0.82rem;">Fase atual</label>
+            <select class="j-input mt-1 mb-3" id="j-fase-select">
+              <option value="base">Formação Base (1º-2º semestre)</option>
+              <option value="intermediaria">Intermediária (3º-6º semestre)</option>
+              <option value="avancada">Avançada (7º-10º semestre)</option>
+              <option value="pos">Pós-graduação / OAB / Concursos</option>
+            </select>
+            <button class="j-btn-primary w-100" id="j-salvar-meta">Salvar Configurações</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: MATÉRIAS DO CURSO -->
+    <div class="j-tab-content" id="jtab-materias">
+      <div class="row g-4">
+        <div class="col-12">
+          <div class="j-alert j-alert-blue"><i class="fas fa-info-circle"></i><div>Marque as matérias conforme for concluindo os estudos de cada unidade. O progresso é salvo automaticamente.</div></div>
+        </div>
+      </div>
+      <div id="j-semestres-container" class="mt-2"></div>
+    </div>
+
+    <!-- TAB: LEITURAS OBRIGATÓRIAS -->
+    <div class="j-tab-content" id="jtab-leituras">
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="j-card">
+            <div class="j-card-title mb-4"><i class="fas fa-book me-2" style="color:#c9a84c;"></i>Biblioteca do Jurista — Leitura Obrigatória</div>
+            <div id="j-livros-list"></div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="j-card mb-4">
+            <div class="j-card-title mb-3"><i class="fas fa-plus me-2" style="color:#c9a84c;"></i>Adicionar Livro</div>
+            <input type="text" class="j-input mb-2" id="j-livro-titulo-input" placeholder="Título do livro">
+            <input type="text" class="j-input mb-2" id="j-livro-autor-input" placeholder="Autor">
+            <select class="j-input mb-3" id="j-livro-cat-input">
+              <option value="Constitucional">Constitucional</option>
+              <option value="Civil">Civil</option>
+              <option value="Penal">Penal</option>
+              <option value="Processual">Processual</option>
+              <option value="Administrativo">Administrativo</option>
+              <option value="Trabalho">Trabalho</option>
+              <option value="Tributário">Tributário</option>
+              <option value="Filosofia">Filosofia/TGD</option>
+              <option value="Outros">Outros</option>
+            </select>
+            <button class="j-btn-primary w-100" id="j-add-livro-btn">Adicionar à Biblioteca</button>
+          </div>
+          <div class="j-card">
+            <div class="j-card-title mb-3"><i class="fas fa-chart-pie me-2" style="color:#c9a84c;"></i>Progresso de Leitura</div>
+            <div id="j-leitura-stats"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: HISTÓRICO -->
+    <div class="j-tab-content" id="jtab-historico">
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <div class="j-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <div class="j-card-title"><i class="fas fa-list me-2" style="color:#c9a84c;"></i>Sessões de Estudo</div>
+              <button class="j-btn-sm red" id="j-clear-sessions" style="font-size:0.72rem;">🗑 Limpar tudo</button>
+            </div>
+            <div id="j-sessions-list">
+              <p class="j-text-muted text-center" style="padding: 30px 0;">Nenhuma sessão registrada ainda.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="j-card mb-4">
+            <div class="j-card-title mb-3"><i class="fas fa-chart-line me-2" style="color:#c9a84c;"></i>Resumo da Semana</div>
+            <div id="j-week-summary"></div>
+          </div>
+          <div class="j-card">
+            <div class="j-card-title mb-3"><i class="fas fa-medal me-2" style="color:#c9a84c;"></i>Conquistas</div>
+            <div id="j-conquistas"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: METAS -->
+    <div class="j-tab-content" id="jtab-metas">
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <div class="j-meta-card">
+            <div class="j-meta-title"><i class="fas fa-bullseye me-2"></i>Meta Diária</div>
+            <div class="j-meta-desc">Defina quantas horas deseja estudar por dia para alcançar a excelência jurídica.</div>
+            <div class="d-flex align-items-center gap-3">
+              <input type="number" class="j-input" id="j-meta-diaria" value="8" min="1" max="16" style="width:100px;">
+              <span class="j-text-white">horas/dia</span>
+              <button class="j-btn-primary" id="j-salvar-meta-diaria">Salvar</button>
+            </div>
+            <div class="j-progress-bar mt-3">
+              <div class="j-progress-fill" id="j-meta-progress-bar" style="width:0%;"></div>
+            </div>
+            <div class="j-text-muted mt-1" id="j-meta-progress-text">0h estudadas hoje</div>
+          </div>
+          <div class="j-meta-card">
+            <div class="j-meta-title"><i class="fas fa-calendar-check me-2"></i>Meta Semanal</div>
+            <div class="j-meta-desc">Total de horas de estudo na semana atual.</div>
+            <div id="j-meta-semanal-display" style="font-size:2rem;font-weight:700;color:#c9a84c;">0h <span style="font-size:1rem;color:rgba(255,255,255,0.4);">/ 40h meta</span></div>
+            <div class="j-progress-bar mt-2"><div class="j-progress-fill" id="j-meta-sem-bar" style="width:0%;"></div></div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="j-card">
+            <div class="j-card-title mb-4"><i class="fas fa-road me-2" style="color:#c9a84c;"></i>Roteiro do Jurista de Alta Performance</div>
+            <div id="j-roteiro-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- ===== FIM PAINEL JURISTA ===== -->
+
 
 <!-- Botão para sair da tela cheia em visualizador de documentos -->
 <button class="btn-exit-fullscreen" id="exitFullscreenBtn">
@@ -2654,7 +3056,7 @@
 <!-- Botão de sair da tela cheia dentro do modal de nota -->
 <button class="fullscreen-exit-btn" id="fullscreenNoteExitBtn" style="display: none;"><i class="fas fa-compress"></i> Sair da tela cheia</button>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // ========== CÓDIGO OTIMIZADO PARA CARREGAMENTO RÁPIDO ==========
 document.addEventListener('DOMContentLoaded', function() {
@@ -2932,7 +3334,7 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'links': renderLinks(data); break;
             case 'financeiro': renderFinanceiro(data); break;
             case 'relatorios': renderRelatorios(data); break;
-            case 'configuracoes': /* estático */ break;
+            case 'jurista': renderJurista(); break;
         }
         populateDisciplinaSelects(data);
         updateFixedBackButton(); 
@@ -2955,12 +3357,12 @@ document.addEventListener('DOMContentLoaded', function() {
             { id:'links', title:'Links Importantes', icon:'fas fa-link' },
             { id:'financeiro', title:'Financeiro', icon:'fas fa-dollar-sign' },
             { id:'relatorios', title:'Relatórios', icon:'fas fa-chart-pie' },
-            { id:'configuracoes', title:'Configurações', icon:'fas fa-cog' }
+            { id:'jurista', title:'Jurista de Alta Performance', icon:'fas fa-balance-scale' },
         ];
         const colors = {
             dashboard:'var(--info)', disciplinas:'var(--primary)', horarios:'var(--purple)', trabalhos:'var(--accent)',
             provas:'var(--warning)', agenda:'var(--orange)', biblioteca:'var(--danger)', filmes:'#607D8B', caderno:'#8E44AD',
-            links:'#16A085', financeiro:'var(--success)', relatorios:'var(--secondary)', configuracoes:'#2c3e50'
+            links:'#16A085', financeiro:'var(--success)', relatorios:'var(--secondary)', configuracoes:'#2c3e50', jurista:'#8B6914'
         };
         panels.forEach(p => {
             container.innerHTML += `<div class="col-6 col-md-4 col-lg-3 mb-4"><div class="card card-link" data-target="${p.id}" style="--card-color: ${colors[p.id]};"><div class="card-body"><div class="icon-wrapper"><i class="${p.icon}"></i></div><h5>${p.title}</h5></div></div></div>`;
@@ -6040,8 +6442,555 @@ document.addEventListener('DOMContentLoaded', function() {
         await saveData('links', link[0]);
     }
 
-    if ('serviceWorker' in navigator) window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(console.error));
+    // ===== JURISTA DE ALTA PERFORMANCE =====
+    const JURISTA_KEY = 'juristaData_v3';
+    let juristaData = null;
+
+    function loadJuristaData() {
+      try { juristaData = JSON.parse(localStorage.getItem(JURISTA_KEY)) || {}; } catch(e) { juristaData = {}; }
+      juristaData.sessions = juristaData.sessions || [];
+      juristaData.livros = juristaData.livros || [];
+      juristaData.materiasDone = juristaData.materiasDone || {};
+      juristaData.metaDiaria = juristaData.metaDiaria || 8;
+      juristaData.fase = juristaData.fase || 'base';
+      return juristaData;
+    }
+    function saveJuristaData() { localStorage.setItem(JURISTA_KEY, JSON.stringify(juristaData)); }
+
+    // Dados do currículo de Direito
+    const SEMESTRES = [
+      { num:1, titulo:'1º Semestre — Fundamentos', materias:[
+        {id:'tgd1', nome:'Teoria Geral do Direito I', horas:60},{id:'hist1', nome:'História do Direito', horas:60},
+        {id:'intro', nome:'Introdução ao Estudo do Direito', horas:60},{id:'socio', nome:'Sociologia Jurídica', horas:60},
+        {id:'portug', nome:'Português Jurídico', horas:45},{id:'filos1', nome:'Filosofia do Direito I', horas:60}
+      ]},
+      { num:2, titulo:'2º Semestre — Bases Dogmáticas', materias:[
+        {id:'const1', nome:'Direito Constitucional I', horas:90},{id:'civil1', nome:'Direito Civil I — Parte Geral', horas:90},
+        {id:'penal1', nome:'Direito Penal I — Parte Geral', horas:90},{id:'tgd2', nome:'Teoria Geral do Direito II', horas:60},
+        {id:'filos2', nome:'Filosofia do Direito II', horas:60}
+      ]},
+      { num:3, titulo:'3º Semestre — Direito Público e Privado', materias:[
+        {id:'const2', nome:'Direito Constitucional II', horas:90},{id:'civil2', nome:'Direito Civil II — Obrigações', horas:90},
+        {id:'penal2', nome:'Direito Penal II — Crimes contra Pessoa', horas:90},{id:'adm1', nome:'Direito Administrativo I', horas:90},
+        {id:'proc_civ1', nome:'Teoria Geral do Processo', horas:60}
+      ]},
+      { num:4, titulo:'4º Semestre — Aprofundamento', materias:[
+        {id:'civil3', nome:'Direito Civil III — Contratos', horas:90},{id:'civil4', nome:'Direito Civil IV — Responsabilidade Civil', horas:60},
+        {id:'penal3', nome:'Direito Penal III — Patrimônio', horas:90},{id:'adm2', nome:'Direito Administrativo II', horas:90},
+        {id:'proc_civ2', nome:'Processo Civil I — Cognição', horas:90}
+      ]},
+      { num:5, titulo:'5º Semestre — Direito Social e Empresarial', materias:[
+        {id:'trab1', nome:'Direito do Trabalho I', horas:90},{id:'emp1', nome:'Direito Empresarial I', horas:90},
+        {id:'proc_pen1', nome:'Processo Penal I', horas:90},{id:'proc_civ3', nome:'Processo Civil II — Recursos', horas:90},
+        {id:'trib1', nome:'Direito Tributário I', horas:90}
+      ]},
+      { num:6, titulo:'6º Semestre — Especialização', materias:[
+        {id:'trab2', nome:'Direito do Trabalho II — Processo do Trabalho', horas:90},{id:'emp2', nome:'Direito Empresarial II', horas:60},
+        {id:'proc_pen2', nome:'Processo Penal II — Execução', horas:90},{id:'trib2', nome:'Direito Tributário II', horas:60},
+        {id:'civil5', nome:'Direito Civil V — Família', horas:90}
+      ]},
+      { num:7, titulo:'7º Semestre — Áreas Especializadas', materias:[
+        {id:'civil6', nome:'Direito Civil VI — Sucessões', horas:60},{id:'ambiental', nome:'Direito Ambiental', horas:60},
+        {id:'consumidor', nome:'Direito do Consumidor', horas:60},{id:'previdencia', nome:'Direito Previdenciário', horas:60},
+        {id:'intl', nome:'Direito Internacional', horas:60},{id:'exec', nome:'Processo de Execução', horas:60}
+      ]},
+      { num:8, titulo:'8º Semestre — Prática e Integração', materias:[
+        {id:'etica', nome:'Ética e Estatuto da OAB', horas:60},{id:'estagio1', nome:'Estágio Supervisionado I', horas:120},
+        {id:'eleitor', nome:'Direito Eleitoral', horas:45},{id:'digital', nome:'Direito Digital e Cyber', horas:45},
+        {id:'arb', nome:'Arbitragem e Mediação', horas:45}
+      ]},
+      { num:9, titulo:'9º Semestre — Monografia e Prática', materias:[
+        {id:'mono1', nome:'Monografia I — Projeto', horas:60},{id:'estagio2', nome:'Estágio Supervisionado II', horas:120},
+        {id:'clinica', nome:'Clínica Jurídica', horas:90},{id:'dir_pub', nome:'Direito Público Contemporâneo', horas:45}
+      ]},
+      { num:10, titulo:'10º Semestre — Conclusão', materias:[
+        {id:'mono2', nome:'Monografia II — Defesa', horas:60},{id:'estagio3', nome:'Estágio Supervisionado III', horas:120},
+        {id:'oab_prep', nome:'Preparação OAB', horas:120},{id:'revisao_geral', nome:'Revisão Integrada', horas:90}
+      ]}
+    ];
+
+    const LIVROS_BASE = [
+      {titulo:'Constituição Federal Comentada', autor:'Alexandre de Moraes', cat:'Constitucional', emoji:'📘'},
+      {titulo:'Manual de Direito Civil', autor:'Flávio Tartuce', cat:'Civil', emoji:'📗'},
+      {titulo:'Código Penal Comentado', autor:'Rogério Greco', cat:'Penal', emoji:'📕'},
+      {titulo:'Direito Processual Civil', autor:'Daniel Neves', cat:'Processual', emoji:'📙'},
+      {titulo:'Direito Administrativo', autor:'Carvalho Filho / Hely Meirelles', cat:'Administrativo', emoji:'📒'},
+      {titulo:'CLT Comentada + Processo do Trabalho', autor:'Sérgio Martins', cat:'Trabalho', emoji:'📔'},
+      {titulo:'Curso de Direito Tributário', autor:'Hugo de Brito Machado', cat:'Tributário', emoji:'📓'},
+      {titulo:'Teoria Pura do Direito', autor:'Hans Kelsen', cat:'Filosofia', emoji:'🏛️'},
+      {titulo:'O Conceito de Direito', autor:'H.L.A. Hart', cat:'Filosofia', emoji:'🏛️'},
+      {titulo:'Ética a Nicômaco', autor:'Aristóteles', cat:'Filosofia', emoji:'📜'},
+      {titulo:'Leviatã', autor:'Thomas Hobbes', cat:'Filosofia', emoji:'📜'},
+      {titulo:'O Contrato Social', autor:'Rousseau', cat:'Filosofia', emoji:'📜'},
+      {titulo:'Manual do Advogado (OAB)', autor:'Vários autores', cat:'Outros', emoji:'⚖️'},
+    ];
+
+    const CRONOGRAMA_DIA = [
+      {hora:'05:30-06:00', ativ:'Acordar, higiene, meditação/oração', tipo:'prep', icon:'🌅'},
+      {hora:'06:00-08:00', ativ:'Bloco 1 — Matéria Dogmática Principal', tipo:'estudo', icon:'📚'},
+      {hora:'08:00-08:15', ativ:'Pausa ativa (alongamento, água)', tipo:'pausa', icon:'🧘'},
+      {hora:'08:15-10:15', ativ:'Bloco 2 — Leitura de Doutrina', tipo:'estudo', icon:'📖'},
+      {hora:'10:15-10:30', ativ:'Pausa — Lanche leve', tipo:'pausa', icon:'🍎'},
+      {hora:'10:30-12:00', ativ:'Bloco 3 — Resolução de Questões / Jurisprudência', tipo:'estudo', icon:'✏️'},
+      {hora:'12:00-13:30', ativ:'Almoço e descanso', tipo:'pausa', icon:'🍽️'},
+      {hora:'13:30-15:30', ativ:'Bloco 4 — 2ª Matéria Principal', tipo:'estudo', icon:'📚'},
+      {hora:'15:30-15:45', ativ:'Pausa ativa', tipo:'pausa', icon:'🧘'},
+      {hora:'15:45-17:45', ativ:'Bloco 5 — Processo / Prática Forense', tipo:'estudo', icon:'⚖️'},
+      {hora:'17:45-18:00', ativ:'Revisão flash do dia (fichas)', tipo:'revisao', icon:'🔁'},
+      {hora:'18:00-19:00', ativ:'Exercício físico / atividade pessoal', tipo:'pausa', icon:'🏃'},
+      {hora:'19:00-20:00', ativ:'Jantar e descanso', tipo:'pausa', icon:'🍽️'},
+      {hora:'20:00-22:00', ativ:'Bloco 6 — Leitura Filosófica / Doutrina Clássica', tipo:'estudo', icon:'🏛️'},
+      {hora:'22:00-22:30', ativ:'Resumo do dia — diário de estudos', tipo:'revisao', icon:'📝'},
+      {hora:'22:30', ativ:'Dormir (sono reparador — 7h)', tipo:'prep', icon:'😴'},
+    ];
+
+    const GRADE_SEMANA = {
+      dias: ['Seg','Ter','Qua','Qui','Sex','Sáb'],
+      turnos: ['Manhã\n06-12h','Tarde\n13-18h','Noite\n20-22h'],
+      materias: [
+        ['Constitucional + Civil','Penal + Processo Civil','Administrativo + Tributário','Civil + Trabalho','Constitucional + Empresarial','Revisão Geral Intensiva'],
+        ['Questões OAB/Concurso','Jurisprudência STF/STJ','Doutrina Clássica','Prática Forense','Resolução de Casos','Simulado Completo'],
+        ['Filosofia do Direito','Leitura de Doutrina','Processo Penal','Tributário / Empresarial','Revisão da Semana','Livre/Descanso'],
+      ]
+    };
+
+    const ROTEIRO = [
+      {fase:'Ano 1 — Fundamentos',desc:'Dominar Teoria Geral do Direito, Constitucional básico, Civil (Parte Geral). Ler Kelsen, Hart e Aristóteles. Hábito: 4-6h/dia.',done:false,key:'r1'},
+      {fase:'Ano 2 — Dogmática Central',desc:'Civil Completo, Penal completo, Adm I e II. Resolver 2.000 questões. Hábito: 6-8h/dia.',done:false,key:'r2'},
+      {fase:'Ano 3 — Processo e Especialização',desc:'Processo Civil e Penal, Tributário, Trabalho. Iniciar estágio forense. 8h/dia.',done:false,key:'r3'},
+      {fase:'Ano 4-5 — Alta Performance',desc:'Monografia, preparação OAB, simulados. Clínica jurídica. 8-10h/dia. Aprovação OAB.',done:false,key:'r4'},
+      {fase:'Pós-graduação / Concursos',desc:'Especialização ou preparação para magistratura/MP/Delegado. 10h+/dia nos 6 meses finais.',done:false,key:'r5'},
+    ];
+
+    // Timer state
+    let jTimer = { interval: null, seconds: 0, running: false, paused: false, target: 0, startTs: null };
+
+    function jFmtTime(s) {
+      const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+      return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    }
+    function jFmtDuration(s) {
+      const h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+      if(h>0) return `${h}h ${m}m`; return `${m}m`;
+    }
+
+    function getTodaySessions() {
+      const today = new Date().toDateString();
+      return (juristaData.sessions||[]).filter(s => new Date(s.ts).toDateString() === today);
+    }
+    function getTodaySeconds() { return getTodaySessions().reduce((a,s)=>a+s.dur,0); }
+    function getWeekSessions() {
+      const now = new Date(); const day = now.getDay(); const monday = new Date(now);
+      monday.setDate(now.getDate() - (day === 0 ? 6 : day-1)); monday.setHours(0,0,0,0);
+      return (juristaData.sessions||[]).filter(s=>new Date(s.ts)>=monday);
+    }
+    function getTotalSeconds() { return (juristaData.sessions||[]).reduce((a,s)=>a+s.dur,0); }
+    function getStreak() {
+      let streak=0, d=new Date(); d.setHours(0,0,0,0);
+      while(true) {
+        const ds = d.toDateString();
+        const dayS = (juristaData.sessions||[]).filter(s=>new Date(s.ts).toDateString()===ds).reduce((a,s)=>a+s.dur,0);
+        if(dayS < 600) break; // menos de 10 min = sem streak
+        streak++; d.setDate(d.getDate()-1);
+      }
+      return streak;
+    }
+
+    function updateJuristaStats() {
+      const todaySec = getTodaySeconds(); const weekSec = getWeekSessions().reduce((a,s)=>a+s.dur,0);
+      const totalSec = getTotalSeconds(); const streak = getStreak();
+      const meta = (juristaData.metaDiaria||8)*3600;
+      const pct = Math.min(100, Math.round(todaySec/meta*100));
+      document.getElementById('j-total-hoje').textContent = jFmtDuration(todaySec);
+      document.getElementById('j-total-semana').textContent = jFmtDuration(weekSec);
+      document.getElementById('j-total-geral').textContent = jFmtDuration(totalSec);
+      document.getElementById('j-streak').textContent = streak;
+      document.getElementById('j-meta-pct').textContent = pct+'%';
+    }
+
+    function renderTimerTab() {
+      // Heatmap
+      const hm = document.getElementById('j-heatmap'); if(!hm) return;
+      hm.innerHTML='';
+      const today = new Date();
+      for(let i=27;i>=0;i--) {
+        const d = new Date(today); d.setDate(today.getDate()-i); const ds = d.toDateString();
+        const s = (juristaData.sessions||[]).filter(x=>new Date(x.ts).toDateString()===ds).reduce((a,x)=>a+x.dur,0);
+        const lvl = s<600?0:s<3600?1:s<7200?2:s<10800?3:4;
+        const cell = document.createElement('div');
+        cell.className = `j-heatmap-cell j-heat-${lvl}`;
+        cell.title = `${d.toLocaleDateString('pt-BR')}: ${jFmtDuration(s)}`;
+        hm.appendChild(cell);
+      }
+      // Hoje breakdown
+      const bd = document.getElementById('j-hoje-breakdown'); if(!bd) return;
+      const ts = getTodaySessions();
+      if(!ts.length) { bd.innerHTML='<p class="j-text-muted text-center" style="padding:20px 0;">Nenhuma sessão hoje.</p>'; return; }
+      const byMat = {};
+      ts.forEach(s=>{ byMat[s.mat]=(byMat[s.mat]||0)+s.dur; });
+      const maxSec = Math.max(...Object.values(byMat));
+      bd.innerHTML = Object.entries(byMat).map(([mat,sec])=>`
+        <div class="mb-2"><div class="d-flex justify-content-between mb-1"><span class="j-text-white" style="font-size:0.83rem;">${mat||'Livre'}</span><span style="font-size:0.8rem;color:#c9a84c;">${jFmtDuration(sec)}</span></div>
+        <div class="j-progress-bar"><div class="j-progress-fill" style="width:${Math.round(sec/maxSec*100)}%"></div></div></div>
+      `).join('');
+    }
+
+    function renderCronogramaTab() {
+      const cl = document.getElementById('j-cronograma-list'); if(!cl) return;
+      cl.innerHTML = CRONOGRAMA_DIA.map(c=>{
+        const cor = c.tipo==='estudo'?'rgba(201,168,76,0.15)':c.tipo==='revisao'?'rgba(52,152,219,0.12)':'rgba(255,255,255,0.05)';
+        const borderCor = c.tipo==='estudo'?'rgba(201,168,76,0.4)':c.tipo==='revisao'?'rgba(52,152,219,0.4)':'rgba(255,255,255,0.1)';
+        return `<div class="d-flex align-items-center gap-3 mb-2 p-2 rounded" style="background:${cor};border-left:3px solid ${borderCor};">
+          <span style="font-size:1.3rem;">${c.icon}</span>
+          <span style="font-size:0.75rem;color:#c9a84c;min-width:110px;font-weight:600;">${c.hora}</span>
+          <span style="font-size:0.83rem;color:#e8dcc8;">${c.ativ}</span>
+        </div>`;
+      }).join('');
+      // Grade semanal
+      const wg = document.getElementById('j-week-grid'); if(!wg) return;
+      wg.innerHTML='';
+      wg.innerHTML += '<div></div>'; // corner
+      GRADE_SEMANA.dias.forEach(d=>{ wg.innerHTML+=`<div class="j-week-header">${d}</div>`; });
+      GRADE_SEMANA.turnos.forEach((t,ti)=>{
+        wg.innerHTML+=`<div class="j-week-time" style="font-size:0.68rem;white-space:pre-line;">${t}</div>`;
+        GRADE_SEMANA.dias.forEach((d,di)=>{
+          const mat = GRADE_SEMANA.materias[ti][di];
+          wg.innerHTML+=`<div class="j-week-cell ${mat?'filled':''}"><div class="j-week-cell-text">${mat||''}</div></div>`;
+        });
+      });
+      // Fase select
+      const fs = document.getElementById('j-fase-select'); if(fs) fs.value = juristaData.fase||'base';
+      const mh = document.getElementById('j-meta-horas-input'); if(mh) mh.value = juristaData.metaDiaria||8;
+    }
+
+    function renderMateriasTab() {
+      const c = document.getElementById('j-semestres-container'); if(!c) return;
+      c.innerHTML='';
+      SEMESTRES.forEach(sem=>{
+        const total = sem.materias.length;
+        const done = sem.materias.filter(m=>juristaData.materiasDone[m.id]).length;
+        const pct = Math.round(done/total*100);
+        let mhtml = sem.materias.map(m=>{
+          const isDone = !!juristaData.materiasDone[m.id];
+          return `<div class="j-materia-item ${isDone?'concluida':''}" data-mid="${m.id}">
+            <div class="j-materia-check ${isDone?'checked':''}"><i class="fas fa-check" style="font-size:0.7rem;${isDone?'':'display:none;'}"></i></div>
+            <span class="j-materia-nome">${m.nome}</span>
+            <span class="j-materia-horas">${m.horas}h</span>
+          </div>`;
+        }).join('');
+        c.innerHTML+=`<div class="j-semestre-block">
+          <div class="j-semestre-title"><span class="j-semestre-num">${sem.num}º</span>${sem.titulo} <span style="margin-left:auto;font-size:0.8rem;color:rgba(255,255,255,0.45);">${done}/${total} — ${pct}%</span></div>
+          <div class="j-progress-bar mb-3"><div class="j-progress-fill" style="width:${pct}%"></div></div>
+          ${mhtml}
+        </div>`;
+      });
+      // Events
+      c.querySelectorAll('.j-materia-item').forEach(el=>{
+        el.addEventListener('click',()=>{
+          const mid = el.dataset.mid;
+          juristaData.materiasDone[mid] = !juristaData.materiasDone[mid];
+          saveJuristaData(); renderMateriasTab();
+        });
+      });
+    }
+
+    function renderLeiturasTab() {
+      const ll = document.getElementById('j-livros-list'); if(!ll) return;
+      const allLivros = [...LIVROS_BASE.filter(l=>!juristaData.livros.find(x=>x.titulo===l.titulo)), ...juristaData.livros];
+      const merged = allLivros.map(l=>({
+        ...l,
+        pct: (juristaData.livros.find(x=>x.titulo===l.titulo)||{}).pct || 0,
+        lido: (juristaData.livros.find(x=>x.titulo===l.titulo)||{}).lido || false
+      }));
+      ll.innerHTML = merged.map((l,i)=>`
+        <div class="j-livro-card">
+          <div class="j-livro-cover">${l.emoji||'📚'}</div>
+          <div class="j-livro-info">
+            <div class="j-livro-title">${l.titulo}</div>
+            <div class="j-livro-author">${l.autor} · <span class="j-badge j-badge-blue" style="font-size:0.65rem;">${l.cat}</span></div>
+            <div class="j-livro-progress">
+              <input type="range" min="0" max="100" value="${l.pct}" style="flex:1;accent-color:#c9a84c;" data-idx="${i}" data-titulo="${l.titulo}" class="j-livro-range">
+              <span class="j-livro-pct" id="jpct-${i}">${l.pct}%</span>
+            </div>
+          </div>
+          <div class="j-livro-actions">
+            <button class="j-btn-sm j-concluir-livro" data-titulo="${l.titulo.replace(/"/g,'&quot;')}" data-pct="100">${l.pct>=100?'✅ Lido':'Concluir'}</button>
+          </div>
+        </div>
+      `).join('');
+      ll.querySelectorAll('.j-livro-range').forEach(inp=>{
+        inp.addEventListener('input',function(){
+          const idx = this.dataset.idx; document.getElementById('jpct-'+idx).textContent=this.value+'%';
+          juristaSetLivro(this.dataset.titulo, parseInt(this.value));
+        });
+      });
+      ll.querySelectorAll('.j-concluir-livro').forEach(btn=>{
+        btn.addEventListener('click',function(){
+          juristaSetLivro(this.dataset.titulo, parseInt(this.dataset.pct));
+        });
+      });
+      // Stats
+      const ls = document.getElementById('j-leitura-stats'); if(!ls) return;
+      const total = merged.length; const lidos = merged.filter(l=>l.pct>=100).length;
+      const emAndamento = merged.filter(l=>l.pct>0&&l.pct<100).length;
+      ls.innerHTML=`
+        <div class="mb-2 d-flex justify-content-between"><span class="j-text-muted">Total de obras</span><span style="color:#c9a84c;font-weight:700;">${total}</span></div>
+        <div class="mb-2 d-flex justify-content-between"><span class="j-text-muted">Lidos (100%)</span><span style="color:#58d68d;font-weight:700;">${lidos}</span></div>
+        <div class="mb-2 d-flex justify-content-between"><span class="j-text-muted">Em andamento</span><span style="color:#5dade2;font-weight:700;">${emAndamento}</span></div>
+        <div class="j-progress-bar mt-3"><div class="j-progress-fill" style="width:${Math.round(lidos/total*100)}%"></div></div>
+        <div class="j-text-muted mt-1" style="font-size:0.78rem;">${Math.round(lidos/total*100)}% da biblioteca concluída</div>
+      `;
+    }
+
+    window.juristaSetLivro = function(titulo, pct) {
+      let lv = juristaData.livros.find(x=>x.titulo===titulo);
+      if(!lv) { const base = LIVROS_BASE.find(x=>x.titulo===titulo)||{}; lv={...base,titulo,pct:0}; juristaData.livros.push(lv); }
+      lv.pct = pct; lv.lido = pct>=100;
+      saveJuristaData(); renderLeiturasTab();
+    };
+
+    function renderHistoricoTab() {
+      const sl = document.getElementById('j-sessions-list'); if(!sl) return;
+      const sessions = [...(juristaData.sessions||[])].reverse().slice(0,50);
+      if(!sessions.length) { sl.innerHTML='<p class="j-text-muted text-center" style="padding:30px 0;">Nenhuma sessão ainda.</p>'; }
+      else sl.innerHTML = sessions.map(s=>`
+        <div class="j-session-item">
+          <div style="font-size:1.1rem;">📚</div>
+          <div class="j-session-mat">${s.mat||'Livre'}</div>
+          <div class="j-session-dur">${jFmtDuration(s.dur)}</div>
+          <div class="j-session-date">${new Date(s.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+      `).join('');
+      // Week summary
+      const ws = document.getElementById('j-week-summary'); if(!ws) return;
+      const wss = getWeekSessions(); const byDay = {};
+      ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach(d=>byDay[d]=0);
+      const dayNames = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+      wss.forEach(s=>{ const d = dayNames[new Date(s.ts).getDay()]; byDay[d]=(byDay[d]||0)+s.dur; });
+      const maxDay = Math.max(...Object.values(byDay), 1);
+      ws.innerHTML = Object.entries(byDay).map(([d,sec])=>`
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span style="width:28px;font-size:0.75rem;color:rgba(255,255,255,0.45);">${d}</span>
+          <div class="j-progress-bar" style="flex:1;margin:0;"><div class="j-progress-fill" style="width:${Math.round(sec/maxDay*100)}%;"></div></div>
+          <span style="font-size:0.75rem;color:#c9a84c;min-width:36px;text-align:right;">${sec>0?jFmtDuration(sec):'-'}</span>
+        </div>
+      `).join('');
+      // Conquistas
+      const cq = document.getElementById('j-conquistas'); if(!cq) return;
+      const total = getTotalSeconds(); const streak = getStreak();
+      const conquistas = [
+        {icon:'🏁', nome:'Primeira Sessão', cond: (juristaData.sessions||[]).length>0, desc:'Começou sua jornada'},
+        {icon:'⏰', nome:'10 Horas Acumuladas', cond: total>=36000, desc:'10h estudadas'},
+        {icon:'🔥', nome:'Streak 3 Dias', cond: streak>=3, desc:'3 dias seguidos'},
+        {icon:'🎯', nome:'Meta Diária', cond: getTodaySeconds()>=(juristaData.metaDiaria||8)*3600, desc:'Meta de hoje batida'},
+        {icon:'💯', nome:'100 Horas', cond: total>=360000, desc:'100h acumuladas'},
+        {icon:'🏆', nome:'Streak 7 Dias', cond: streak>=7, desc:'1 semana seguida'},
+      ];
+      cq.innerHTML = conquistas.map(c=>`
+        <div class="d-flex align-items-center gap-3 p-2 mb-1 rounded" style="background:rgba(255,255,255,0.04);opacity:${c.cond?1:0.35};">
+          <span style="font-size:1.3rem;">${c.icon}</span>
+          <div><div style="font-size:0.83rem;color:#e8dcc8;font-weight:600;">${c.nome}</div><div style="font-size:0.73rem;color:rgba(255,255,255,0.4);">${c.desc}</div></div>
+          ${c.cond?'<span class="j-badge j-badge-green ms-auto">✓</span>':''}
+        </div>
+      `).join('');
+    }
+
+    function renderMetasTab() {
+      const mp = document.getElementById('j-meta-progress-bar'); const mt = document.getElementById('j-meta-progress-text');
+      const msb = document.getElementById('j-meta-sem-bar'); const msd = document.getElementById('j-meta-semanal-display');
+      const md = document.getElementById('j-meta-diaria');
+      if(md) md.value = juristaData.metaDiaria||8;
+      const todaySec = getTodaySeconds(); const meta = (juristaData.metaDiaria||8)*3600;
+      const pct = Math.min(100, Math.round(todaySec/meta*100));
+      if(mp) mp.style.width=pct+'%';
+      if(mt) mt.textContent = `${jFmtDuration(todaySec)} estudadas hoje · meta: ${juristaData.metaDiaria||8}h`;
+      const weekSec = getWeekSessions().reduce((a,s)=>a+s.dur,0);
+      const weekMeta = (juristaData.metaDiaria||8)*5*3600;
+      if(msb) msb.style.width=Math.min(100,Math.round(weekSec/weekMeta*100))+'%';
+      if(msd) msd.innerHTML=`${jFmtDuration(weekSec)} <span style="font-size:1rem;color:rgba(255,255,255,0.4);">/ ${jFmtDuration(weekMeta)} meta</span>`;
+      // Roteiro
+      const rl = document.getElementById('j-roteiro-list'); if(!rl) return;
+      rl.innerHTML = ROTEIRO.map((r,i)=>{
+        const done = juristaData[r.key]||false;
+        return `<div class="d-flex gap-3 p-3 mb-2 rounded" style="background:rgba(255,255,255,0.04);border-left:3px solid ${done?'#27ae60':'rgba(201,168,76,0.3)'};">
+          <div style="cursor:pointer;font-size:1.3rem;" onclick="juristaToggleRoteiro('${r.key}')">${done?'✅':'⭕'}</div>
+          <div><div style="font-size:0.88rem;font-weight:700;color:#e8dcc8;">${r.fase}</div><div style="font-size:0.78rem;color:rgba(255,255,255,0.45);">${r.desc}</div></div>
+        </div>`;
+      }).join('');
+    }
+    window.juristaToggleRoteiro = function(key) {
+      juristaData[key] = !juristaData[key]; saveJuristaData(); renderMetasTab();
+    };
+
+    function setupTimerEvents() {
+      const display = document.getElementById('j-timer-display');
+      const btnStart = document.getElementById('j-btn-start');
+      const btnPause = document.getElementById('j-btn-pause');
+      const btnStop = document.getElementById('j-btn-stop');
+      const btnReset = document.getElementById('j-btn-reset');
+      const pomoProgress = document.getElementById('j-pomo-progress');
+      const pomoStatus = document.getElementById('j-pomo-status');
+      const modeLabel = document.getElementById('j-timer-mode-label');
+      if(!display||!btnStart) return;
+
+      document.querySelectorAll('.pomo-btn').forEach(b=>{
+        b.addEventListener('click',function(){
+          document.querySelectorAll('.pomo-btn').forEach(x=>x.classList.remove('active'));
+          this.classList.add('active');
+          const dur = parseInt(this.dataset.dur);
+          jTimer.target = dur*60;
+          if(dur>0) { if(modeLabel) modeLabel.textContent = `POMODORO — ${dur} MINUTOS`; }
+          else { if(modeLabel) modeLabel.textContent = 'SESSÃO LIVRE'; }
+          if(!jTimer.running&&!jTimer.paused) { jTimer.seconds=0; if(display) display.textContent=jFmtTime(0); }
+        });
+      });
+
+      function tick() {
+        jTimer.seconds++;
+        if(display) { display.textContent = jFmtTime(jTimer.seconds); }
+        if(jTimer.target>0&&pomoProgress) {
+          const pct = Math.min(100, jTimer.seconds/jTimer.target*100);
+          pomoProgress.style.width = pct+'%';
+          const rem = jTimer.target - jTimer.seconds;
+          if(pomoStatus&&rem>0) pomoStatus.textContent = `Restam ${jFmtDuration(rem)}`;
+          if(rem<=0) { stopTimer(true); }
+        }
+        updateJuristaStats();
+      }
+
+      function startTimer() {
+        if(jTimer.running) return;
+        jTimer.running=true; jTimer.paused=false;
+        jTimer.interval = setInterval(tick, 1000);
+        if(display) display.classList.add('running');
+        btnStart.style.display='none'; btnPause.style.display=''; btnStop.style.display='';
+        if(pomoStatus) pomoStatus.textContent = 'Cronômetro rodando...';
+      }
+
+      function pauseTimer() {
+        if(!jTimer.running) return;
+        clearInterval(jTimer.interval); jTimer.running=false; jTimer.paused=true;
+        if(display) display.classList.remove('running');
+        btnPause.textContent='▶ Retomar'; btnPause.style.background='linear-gradient(135deg,#27ae60,#1e8449)';
+        btnPause.onclick = resumeTimer;
+        if(pomoStatus) pomoStatus.textContent = '⏸ Pausado';
+      }
+
+      function resumeTimer() {
+        if(jTimer.running) return;
+        jTimer.running=true; jTimer.paused=false;
+        jTimer.interval = setInterval(tick, 1000);
+        if(display) display.classList.add('running');
+        btnPause.innerHTML='<i class="fas fa-pause me-2"></i>Pausar'; btnPause.style.background='linear-gradient(135deg,#e67e22,#d35400)';
+        btnPause.onclick = pauseTimer;
+      }
+
+      function stopTimer(auto=false) {
+        clearInterval(jTimer.interval); jTimer.running=false; jTimer.paused=false;
+        if(display) display.classList.remove('running');
+        const dur = jTimer.seconds;
+        if(dur>=30) { // Só salva se >= 30s
+          const mat = document.getElementById('j-timer-subject').value || 'Livre';
+          juristaData.sessions = juristaData.sessions||[];
+          juristaData.sessions.push({dur, mat, ts: Date.now()});
+          saveJuristaData();
+          if(pomoStatus) pomoStatus.textContent = `✅ Sessão salva: ${jFmtDuration(dur)} de ${mat}`;
+        } else {
+          if(pomoStatus) pomoStatus.textContent = 'Sessão muito curta (mín. 30s para salvar)';
+        }
+        jTimer.seconds=0; jTimer.target=0;
+        if(display) display.textContent='00:00:00';
+        if(pomoProgress) pomoProgress.style.width='0%';
+        btnStart.style.display=''; btnPause.style.display='none'; btnStop.style.display='none';
+        btnPause.innerHTML='<i class="fas fa-pause me-2"></i>Pausar'; btnPause.style.background='linear-gradient(135deg,#e67e22,#d35400)';
+        btnPause.onclick=pauseTimer;
+        updateJuristaStats(); renderTimerTab(); renderHistoricoTab();
+        if(auto) setTimeout(()=>{ if(confirm('⏰ Pomodoro concluído! Fazer pausa de 5 minutos?')) {} },100);
+      }
+
+      btnStart.addEventListener('click', startTimer);
+      btnPause.addEventListener('click', pauseTimer);
+      btnStop.addEventListener('click', ()=>stopTimer(false));
+      btnReset.addEventListener('click', ()=>{ clearInterval(jTimer.interval); jTimer={interval:null,seconds:0,running:false,paused:false,target:0}; if(display){display.textContent='00:00:00';display.classList.remove('running');} if(pomoProgress)pomoProgress.style.width='0%'; btnStart.style.display=''; btnPause.style.display='none'; btnStop.style.display='none'; if(pomoStatus)pomoStatus.textContent='Cronômetro reiniciado.'; });
+    }
+
+    function setupJuristaEvents() {
+      // Tabs
+      document.querySelectorAll('[data-jtab]').forEach(btn=>{
+        btn.addEventListener('click',function(){
+          document.querySelectorAll('[data-jtab]').forEach(b=>b.classList.remove('active'));
+          document.querySelectorAll('.j-tab-content').forEach(c=>c.classList.remove('active'));
+          this.classList.add('active');
+          const tab = this.dataset.jtab;
+          const tc = document.getElementById('jtab-'+tab);
+          if(tc) tc.classList.add('active');
+          if(tab==='cronometro') renderTimerTab();
+          else if(tab==='cronograma') renderCronogramaTab();
+          else if(tab==='materias') renderMateriasTab();
+          else if(tab==='leituras') renderLeiturasTab();
+          else if(tab==='historico') renderHistoricoTab();
+          else if(tab==='metas') renderMetasTab();
+        });
+      });
+      // Salvar meta (cronograma tab)
+      const sm = document.getElementById('j-salvar-meta');
+      if(sm) sm.addEventListener('click',()=>{
+        juristaData.metaDiaria = parseFloat(document.getElementById('j-meta-horas-input').value)||8;
+        juristaData.fase = document.getElementById('j-fase-select').value||'base';
+        saveJuristaData(); updateJuristaStats();
+        alert('✅ Configurações salvas!');
+      });
+      // Salvar meta (metas tab)
+      const smd = document.getElementById('j-salvar-meta-diaria');
+      if(smd) smd.addEventListener('click',()=>{
+        juristaData.metaDiaria = parseFloat(document.getElementById('j-meta-diaria').value)||8;
+        saveJuristaData(); renderMetasTab(); updateJuristaStats();
+      });
+      // Limpar sessões
+      const cs = document.getElementById('j-clear-sessions');
+      if(cs) cs.addEventListener('click',()=>{ if(confirm('Limpar todo o histórico?')){ juristaData.sessions=[]; saveJuristaData(); renderHistoricoTab(); updateJuristaStats(); } });
+      // Add livro
+      const al = document.getElementById('j-add-livro-btn');
+      if(al) al.addEventListener('click',()=>{
+        const t = document.getElementById('j-livro-titulo-input').value.trim();
+        const a = document.getElementById('j-livro-autor-input').value.trim();
+        const c = document.getElementById('j-livro-cat-input').value;
+        if(!t) return alert('Informe o título');
+        juristaData.livros.push({titulo:t, autor:a||'Desconhecido', cat:c, pct:0, emoji:'📚'});
+        saveJuristaData(); renderLeiturasTab();
+        document.getElementById('j-livro-titulo-input').value='';
+        document.getElementById('j-livro-autor-input').value='';
+      });
+      setupTimerEvents();
+    }
+
+    let juristaEventsSetup = false;
+
+    function renderJurista() {
+      loadJuristaData();
+      updateJuristaStats();
+      renderTimerTab();
+      renderCronogramaTab();
+      renderMateriasTab();
+      renderLeiturasTab();
+      renderHistoricoTab();
+      renderMetasTab();
+      if (!juristaEventsSetup) {
+        setupJuristaEvents();
+        juristaEventsSetup = true;
+      }
+      document.querySelectorAll('[data-jtab]').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.j-tab-content').forEach(c => c.classList.remove('active'));
+      const ft = document.querySelector('[data-jtab="cronometro"]');
+      const fc = document.getElementById('jtab-cronometro');
+      if (ft) ft.classList.add('active');
+      if (fc) fc.classList.add('active');
+    }
+    // ===== FIM JURISTA =====
+
+    // ===== INICIALIZAÇÃO DO APP =====
     init();
+    
 });
 </script>
 
