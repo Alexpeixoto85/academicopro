@@ -3893,13 +3893,18 @@ document.addEventListener('DOMContentLoaded', function() {
         ].sort((a,b)=>(a.time||'23:59').localeCompare(b.time||'23:59'));
     }
 
+    let _renderEventsGeneration = 0; // token para cancelar renders obsoletos
+
     async function renderEventsForDay(dateStr, data) {
+        const myGen = ++_renderEventsGeneration;
         selectedCalendarDateStr = dateStr; // always keep track of what is shown
         document.querySelectorAll('.calendar-day.active').forEach(el=>el.classList.remove('active'));
         let day = document.querySelector(`.calendar-day[data-date="${dateStr}"]`);
         if (day) day.classList.add('active');
         let container = document.getElementById('agenda-eventos-dia');
         let events = await getEventsForDate(dateStr, data);
+        // Se um render mais recente foi iniciado, aborta este
+        if (myGen !== _renderEventsGeneration) return;
         let fd = new Date(dateStr+'T00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
         container.innerHTML = `<h5 class="card-title mb-3">${fd}</h5><p class="text-muted small mb-3"><i class="fas fa-hand-point-up me-1"></i>Duplo clique na data para novo evento</p>`;
         if (!events.length) { container.innerHTML += `<div class="empty-state"><p>Nenhum evento para este dia.</p><button class="btn btn-sm btn-outline-primary mt-2 btn-novo-evento-dia" data-date="${dateStr}"><i class="fas fa-plus"></i> Adicionar evento</button></div>`; return; }
@@ -6144,6 +6149,12 @@ document.addEventListener('DOMContentLoaded', function() {
             let calDay = e.target.closest('.calendar-day:not(.empty)');
             if (calDay && calDay.dataset.date) {
                 selectedCalendarDateStr = calDay.dataset.date; // persist selection across re-renders
+                // FIX: limpa imediatamente o painel de eventos antes do await,
+                // evitando que o usuário clique em eventos de datas anteriores ainda no DOM
+                document.querySelectorAll('.calendar-day.active').forEach(el => el.classList.remove('active'));
+                calDay.classList.add('active');
+                const _evContainer = document.getElementById('agenda-eventos-dia');
+                if (_evContainer) _evContainer.innerHTML = '<div class="text-center text-muted mt-4 py-3"><i class="fas fa-spinner fa-spin fa-lg mb-2"></i><p class="mb-0 small">Carregando eventos...</p></div>';
                 let data = await getProfileData();
                 renderEventsForDay(selectedCalendarDateStr, data);
                 return;
@@ -6166,12 +6177,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (btnEditTrabalho) {
                 e.preventDefault(); e.stopPropagation();
                 await editTrabalho(btnEditTrabalho.dataset.id);
+                return;
             }
             // Botão editar prova direto na agenda
             let btnEditProva = e.target.closest('.btn-event-edit-prova');
             if (btnEditProva) {
                 e.preventDefault(); e.stopPropagation();
                 await handleEdit('provas', 'prova', btnEditProva.dataset.id);
+                return;
             }
             // Botão excluir trabalho/prova direto na agenda
             let btnDeleteItem = e.target.closest('.btn-event-delete-item');
@@ -6185,6 +6198,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     await loadProfileData();
                     renderCurrentPanel();
                 }
+                return;
             }
             // Botão ver detalhes do evento
             let btnDetail = e.target.closest('.btn-event-detail');
@@ -6192,6 +6206,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 e.stopPropagation();
                 await openEventDetail(btnDetail.dataset.id, btnDetail.dataset.type);
+                return;
             }
             // Botão editar evento direto
             let btnEventEdit = e.target.closest('.btn-event-edit');
@@ -6199,6 +6214,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 e.stopPropagation();
                 await editEvent(btnEventEdit.dataset.id);
+                return;
             }
             // Botão excluir evento direto
             let btnEventDelete = e.target.closest('.btn-event-delete');
@@ -6211,6 +6227,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     await loadProfileData();
                     renderCurrentPanel();
                 }
+                return;
             }
             // Visualizar/baixar anexo no modal de detalhe
             let btnDetailView = e.target.closest('.detail-view-anexo');
@@ -6332,7 +6349,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             let evItem = e.target.closest('.event-item');
-            if (evItem && !e.target.closest('.btn-event-detail') && !e.target.closest('.btn-event-edit') && !e.target.closest('.btn-event-delete')) {
+            if (evItem &&
+                !e.target.closest('.btn-event-detail') &&
+                !e.target.closest('.btn-event-edit') &&
+                !e.target.closest('.btn-event-delete') &&
+                !e.target.closest('.btn-event-edit-trabalho') &&
+                !e.target.closest('.btn-event-edit-prova') &&
+                !e.target.closest('.btn-event-delete-item') &&
+                !e.target.closest('.agenda-change-status') &&
+                !e.target.closest('.quick-attach-btn')) {
                 let type = evItem.dataset.eventType, eid = evItem.dataset.eventId;
                 if (type && eid) await openEventDetail(eid, type);
             }
