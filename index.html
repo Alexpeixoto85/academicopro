@@ -1670,6 +1670,94 @@
         color: var(--text-light);
     }
 
+    /* === CERTIFICADOS === */
+    .cert-card {
+        border-radius: 16px;
+        border: none;
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+        background: white;
+        height: 100%;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    .cert-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, var(--accent), var(--info));
+    }
+    .cert-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    }
+    .cert-card .card-body { padding: 1.5rem; }
+    .cert-icon-wrapper {
+        width: 56px; height: 56px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--accent), var(--info));
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.6rem; color: white;
+        margin-bottom: 1rem;
+        flex-shrink: 0;
+    }
+    .cert-title { font-size: 1rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+    .cert-emissor { font-size: 0.82rem; color: var(--text-light); margin-bottom: 8px; }
+    .cert-meta { font-size: 0.8rem; color: var(--text-light); }
+    .cert-meta i { color: var(--accent); width: 16px; }
+    .cert-badge {
+        display: inline-block; padding: 3px 10px; border-radius: 20px;
+        font-size: 0.72rem; font-weight: 600;
+    }
+    .cert-badge-valido { background: rgba(39,174,96,0.15); color: var(--success); border: 1px solid rgba(39,174,96,0.3); }
+    .cert-badge-arquivado { background: rgba(127,140,141,0.15); color: var(--text-light); border: 1px solid rgba(127,140,141,0.3); }
+    .cert-badge-pendente { background: rgba(241,196,15,0.15); color: #d4a017; border: 1px solid rgba(241,196,15,0.3); }
+    .cert-attachment-strip {
+        margin-top: 12px; padding-top: 10px; border-top: 1px solid #f0f0f0;
+        display: flex; align-items: center; gap: 8px; font-size: 0.82rem;
+        color: var(--info);
+    }
+    .cert-attachment-strip i { font-size: 1rem; }
+    .cert-filters {
+        background: white; border-radius: 12px; padding: 15px 20px;
+        margin-bottom: 20px; box-shadow: var(--shadow);
+        display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+    }
+    .cert-filter-btn {
+        border: 1.5px solid #ddd; background: transparent; border-radius: 20px;
+        padding: 5px 16px; font-size: 0.82rem; cursor: pointer; transition: all 0.2s;
+        color: var(--text-light);
+    }
+    .cert-filter-btn.active, .cert-filter-btn:hover {
+        background: var(--accent); color: white; border-color: var(--accent);
+    }
+    .cert-search {
+        flex: 1; min-width: 180px; max-width: 280px;
+        border: 1.5px solid #ddd; border-radius: 20px; padding: 5px 14px;
+        font-size: 0.85rem; outline: none; transition: border-color 0.2s;
+    }
+    .cert-search:focus { border-color: var(--accent); }
+    .cert-upload-area {
+        border: 2.5px dashed var(--accent); border-radius: 12px;
+        padding: 24px 16px; text-align: center; background: #f8fffe;
+        cursor: pointer; transition: all 0.2s; margin-bottom: 10px;
+    }
+    .cert-upload-area:hover, .cert-upload-area.dragover {
+        background: #e8faf6; border-color: #16a085; transform: scale(1.01);
+    }
+    .cert-file-preview {
+        display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+        background: #f0f8ff; border: 1px solid var(--info); border-radius: 8px;
+        font-size: 0.85rem; margin-top: 8px;
+    }
+    .cert-file-preview i { color: var(--info); }
+    .cert-file-preview .remove-cert-file {
+        margin-left: auto; background: none; border: none; color: var(--danger);
+        cursor: pointer; font-size: 0.85rem; padding: 0;
+    }
+
     /* === BIBLIOTECA: Estilos de anexos e links === */
     .livro-anexo-area {
         margin-top: 12px;
@@ -2512,6 +2600,69 @@
           </div>
       </div>
   </div>
+  <!-- ===== PAINEL CERTIFICADOS ===== -->
+  <div class="content-panel" id="certificados">
+    <div class="content-header">
+      <h2><i class="fas fa-certificate me-2" style="color:var(--accent);"></i>Certificados</h2>
+      <div class="btn-group">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#certificadoModal" id="novoCertBtn">
+          <i class="fas fa-plus"></i> Novo Certificado
+        </button>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="cert-filters">
+      <input type="text" id="cert-search" class="cert-search" placeholder="🔍 Buscar certificado...">
+      <button class="cert-filter-btn active" data-cert-filter="todos">Todos</button>
+      <button class="cert-filter-btn" data-cert-filter="Válido">Válidos</button>
+      <button class="cert-filter-btn" data-cert-filter="Pendente">Pendentes</button>
+      <button class="cert-filter-btn" data-cert-filter="Arquivado">Arquivados</button>
+    </div>
+
+    <!-- Contadores -->
+    <div class="row g-3 mb-4" id="cert-stats-row">
+      <div class="col-6 col-md-3">
+        <div class="card card-dashboard text-center">
+          <div class="card-body py-3">
+            <h3 class="mb-0 text-accent" id="cert-stat-total" style="color:var(--accent);">0</h3>
+            <p class="text-muted small mb-0">Total</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card card-dashboard text-center">
+          <div class="card-body py-3">
+            <h3 class="mb-0" id="cert-stat-validos" style="color:var(--success);">0</h3>
+            <p class="text-muted small mb-0">Válidos</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card card-dashboard text-center">
+          <div class="card-body py-3">
+            <h3 class="mb-0" id="cert-stat-pendentes" style="color:#d4a017;">0</h3>
+            <p class="text-muted small mb-0">Pendentes</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card card-dashboard text-center">
+          <div class="card-body py-3">
+            <h3 class="mb-0" id="cert-stat-arquivados" style="color:var(--text-light);">0</h3>
+            <p class="text-muted small mb-0">Arquivados</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cards dos certificados -->
+    <div class="row g-4" id="certificados-lista">
+      <div class="col-12"><div class="empty-state card-dashboard p-4"><i class="fas fa-certificate fa-3x mb-3" style="color:var(--accent);opacity:0.3;display:block;text-align:center;"></i><p class="text-center">Nenhum certificado cadastrado. Clique em "Novo Certificado" para começar.</p></div></div>
+    </div>
+  </div>
+  <!-- ===== FIM PAINEL CERTIFICADOS ===== -->
+
   <!-- ===== PAINEL JURISTA DE ALTA PERFORMANCE ===== -->
   <div class="content-panel" id="jurista" style="background: #0f1520; min-height: 100vh; margin: -20px; padding: 28px; border-radius: 0;">
 
@@ -3060,7 +3211,7 @@
 <script>
 // ========== CÓDIGO OTIMIZADO PARA CARREGAMENTO RÁPIDO ==========
 document.addEventListener('DOMContentLoaded', function() {
-    const DB_NAME = 'academicoProDB', DB_VERSION = 2;
+    const DB_NAME = 'academicoProDB', DB_VERSION = 3;
     let db;
     let currentCalendarDate = new Date();
     let nextEventInterval, proximoEventoGlobal;
@@ -3193,7 +3344,7 @@ document.addEventListener('DOMContentLoaded', function() {
             request.onsuccess = e => { db = e.target.result; resolve(db); };
             request.onupgradeneeded = e => {
                 const db = e.target.result;
-                const stores = ['profiles', 'disciplinas', 'horarios', 'trabalhos', 'provas', 'eventos', 'financeiro', 'biblioteca', 'filmes', 'notas', 'links'];
+                const stores = ['profiles', 'disciplinas', 'horarios', 'trabalhos', 'provas', 'eventos', 'financeiro', 'biblioteca', 'filmes', 'notas', 'links', 'certificados'];
                 stores.forEach(name => {
                     if (!db.objectStoreNames.contains(name)) {
                         const store = db.createObjectStore(name, { keyPath: 'id', autoIncrement: true });
@@ -3287,12 +3438,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function loadProfileData(forceRefresh = false) {
         const pid = await getCurrentProfileId();
-        const [disciplinas, horarios, trabalhos, provas, eventos, financeiro, biblioteca, filmes, notas, links] = await Promise.all([
+        const [disciplinas, horarios, trabalhos, provas, eventos, financeiro, biblioteca, filmes, notas, links, certificados] = await Promise.all([
             getAllData('disciplinas', 'profileId', pid), getAllData('horarios', 'profileId', pid),
             getAllData('trabalhos', 'profileId', pid), getAllData('provas', 'profileId', pid),
             getAllData('eventos', 'profileId', pid), getAllData('financeiro', 'profileId', pid),
             getAllData('biblioteca', 'profileId', pid), getAllData('filmes', 'profileId', pid),
-            getAllData('notas', 'profileId', pid), getAllData('links', 'profileId', pid)
+            getAllData('notas', 'profileId', pid), getAllData('links', 'profileId', pid),
+            getAllData('certificados', 'profileId', pid)
         ]);
         // Migração de anexos antigos (único) para array em trabalhos
         trabalhos.forEach(t => {
@@ -3310,7 +3462,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 t.anexos = [];
             }
         });
-        profileDataCache = { disciplinas, horarios, trabalhos, provas, eventos, financeiro, biblioteca, filmes, notas, links };
+        profileDataCache = { disciplinas, horarios, trabalhos, provas, eventos, financeiro, biblioteca, filmes, notas, links, certificados };
         return profileDataCache;
     }
 
@@ -3334,6 +3486,7 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'links': renderLinks(data); break;
             case 'financeiro': renderFinanceiro(data); break;
             case 'relatorios': renderRelatorios(data); break;
+            case 'certificados': renderCertificados(data); break;
             case 'jurista': renderJurista(); break;
         }
         populateDisciplinaSelects(data);
@@ -3357,12 +3510,13 @@ document.addEventListener('DOMContentLoaded', function() {
             { id:'links', title:'Links Importantes', icon:'fas fa-link' },
             { id:'financeiro', title:'Financeiro', icon:'fas fa-dollar-sign' },
             { id:'relatorios', title:'Relatórios', icon:'fas fa-chart-pie' },
+            { id:'certificados', title:'Certificados', icon:'fas fa-certificate' },
             { id:'jurista', title:'Jurista de Alta Performance', icon:'fas fa-balance-scale' },
         ];
         const colors = {
             dashboard:'var(--info)', disciplinas:'var(--primary)', horarios:'var(--purple)', trabalhos:'var(--accent)',
             provas:'var(--warning)', agenda:'var(--orange)', biblioteca:'var(--danger)', filmes:'#607D8B', caderno:'#8E44AD',
-            links:'#16A085', financeiro:'var(--success)', relatorios:'var(--secondary)', configuracoes:'#2c3e50', jurista:'#8B6914'
+            links:'#16A085', financeiro:'var(--success)', relatorios:'var(--secondary)', configuracoes:'#2c3e50', jurista:'#8B6914', certificados:'#1565C0'
         };
         panels.forEach(p => {
             container.innerHTML += `<div class="col-6 col-md-4 col-lg-3 mb-4"><div class="card card-link" data-target="${p.id}" style="--card-color: ${colors[p.id]};"><div class="card-body"><div class="icon-wrapper"><i class="${p.icon}"></i></div><h5>${p.title}</h5></div></div></div>`;
@@ -6415,6 +6569,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         loadTheme();
+        setupCertificadosEvents();
     }
 
     async function createInitialData() {
@@ -6441,6 +6596,260 @@ document.addEventListener('DOMContentLoaded', function() {
         const link = [ {id:id, profileId:pid, titulo:"Biblioteca", url:"https://example.com", categoria:"Recursos", descricao:""} ];
         await saveData('links', link[0]);
     }
+
+    // ===== CERTIFICADOS =====
+    let certArquivoData = null;
+    let certArquivoNomeLocal = '';
+    let certArquivoTipoLocal = '';
+    let certArquivoExistenteRemovido = false;
+    let certFiltroAtivo = 'todos';
+
+    function getCertIcon(tipo, nome) {
+        if (!tipo && !nome) return 'fa-file';
+        if (tipo === 'application/pdf' || (nome||'').endsWith('.pdf')) return 'fa-file-pdf';
+        if ((tipo||'').includes('word') || (nome||'').endsWith('.docx')) return 'fa-file-word';
+        if ((tipo||'').includes('presentation') || (nome||'').endsWith('.pptx')) return 'fa-file-powerpoint';
+        if ((tipo||'').startsWith('image/')) return 'fa-file-image';
+        return 'fa-file';
+    }
+
+    function getCertIconColor(tipo, nome) {
+        if (tipo === 'application/pdf' || (nome||'').endsWith('.pdf')) return 'text-danger';
+        if ((tipo||'').includes('word') || (nome||'').endsWith('.docx')) return 'text-primary';
+        if ((tipo||'').includes('presentation') || (nome||'').endsWith('.pptx')) return 'text-warning';
+        if ((tipo||'').startsWith('image/')) return 'text-success';
+        return 'text-secondary';
+    }
+
+    async function renderCertificados(data) {
+        const certs = data.certificados || [];
+        document.getElementById('cert-stat-total').textContent = certs.length;
+        document.getElementById('cert-stat-validos').textContent = certs.filter(c=>c.status==='Válido').length;
+        document.getElementById('cert-stat-pendentes').textContent = certs.filter(c=>c.status==='Pendente').length;
+        document.getElementById('cert-stat-arquivados').textContent = certs.filter(c=>c.status==='Arquivado').length;
+
+        const container = document.getElementById('certificados-lista');
+        if (!container) return;
+        const searchVal = (document.getElementById('cert-search')?.value || '').toLowerCase();
+        let filtered = [...certs];
+        if (certFiltroAtivo !== 'todos') filtered = filtered.filter(c => c.status === certFiltroAtivo);
+        if (searchVal) filtered = filtered.filter(c =>
+            (c.titulo||'').toLowerCase().includes(searchVal) ||
+            (c.emissor||'').toLowerCase().includes(searchVal) ||
+            (c.categoria||'').toLowerCase().includes(searchVal) ||
+            (c.descricao||'').toLowerCase().includes(searchVal)
+        );
+        filtered.sort((a,b) => (b.dataEmissao||'').localeCompare(a.dataEmissao||''));
+
+        if (!filtered.length) {
+            container.innerHTML = `<div class="col-12"><div class="empty-state card-dashboard p-4">
+                <i class="fas fa-certificate fa-3x mb-3" style="color:var(--accent);opacity:0.3;display:block;text-align:center;"></i>
+                <p class="text-center">${certs.length ? 'Nenhum certificado encontrado com os filtros atuais.' : 'Nenhum certificado cadastrado. Clique em "Novo Certificado" para começar.'}</p>
+            </div></div>`;
+            return;
+        }
+
+        container.innerHTML = '';
+        filtered.forEach(cert => {
+            const badgeClass = cert.status==='Válido'?'cert-badge-valido':cert.status==='Pendente'?'cert-badge-pendente':'cert-badge-arquivado';
+            const emissaoFmt = cert.dataEmissao ? new Date(cert.dataEmissao+'T00:00').toLocaleDateString('pt-BR') : '—';
+            const vencimentoFmt = cert.dataVencimento ? new Date(cert.dataVencimento+'T00:00').toLocaleDateString('pt-BR') : '—';
+            const arquivoHtml = cert.arquivoNome ? `
+                <div class="cert-attachment-strip">
+                    <i class="fas ${getCertIcon(cert.arquivoTipo, cert.arquivoNome)} ${getCertIconColor(cert.arquivoTipo, cert.arquivoNome)}"></i>
+                    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${cert.arquivoNome}</span>
+                    <button class="btn btn-sm btn-outline-info cert-open-file" data-id="${cert.id}" style="font-size:0.72rem;padding:2px 8px;flex-shrink:0;">
+                        <i class="fas fa-external-link-alt"></i> Abrir
+                    </button>
+                </div>` : '';
+            const col = document.createElement('div');
+            col.className = 'col-md-6 col-lg-4';
+            col.innerHTML = `
+                <div class="card cert-card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start gap-3 mb-2">
+                            <div class="cert-icon-wrapper"><i class="fas fa-certificate"></i></div>
+                            <div style="flex:1;min-width:0;">
+                                <div class="cert-title">${cert.titulo}</div>
+                                <div class="cert-emissor">${cert.emissor||'—'}</div>
+                                <span class="cert-badge ${badgeClass}">${cert.status}</span>
+                                ${cert.categoria?`<span class="badge bg-light text-secondary ms-1" style="font-size:0.7rem;">${cert.categoria}</span>`:''}
+                            </div>
+                        </div>
+                        <div class="cert-meta mb-1"><i class="fas fa-calendar-alt me-1"></i><strong>Emissão:</strong> ${emissaoFmt}</div>
+                        ${cert.dataVencimento?`<div class="cert-meta mb-1"><i class="fas fa-hourglass-end me-1"></i><strong>Vencimento:</strong> ${vencimentoFmt}</div>`:''}
+                        ${cert.cargaHoraria?`<div class="cert-meta mb-1"><i class="fas fa-clock me-1"></i><strong>Carga Horária:</strong> ${cert.cargaHoraria}h</div>`:''}
+                        ${cert.codigoCert?`<div class="cert-meta mb-2"><i class="fas fa-hashtag me-1"></i><strong>Código:</strong> ${cert.codigoCert}</div>`:''}
+                        ${cert.descricao?`<p class="small text-muted mt-2 mb-0" style="overflow:hidden;max-height:48px;">${cert.descricao}</p>`:''}
+                        ${arquivoHtml}
+                        <div class="card-action-bar">
+                            <button class="btn btn-sm btn-edit-card cert-edit-btn" data-id="${cert.id}"><i class="fas fa-edit"></i> Editar</button>
+                            <button class="btn btn-sm btn-delete-card cert-delete-btn" data-id="${cert.id}"><i class="fas fa-trash"></i> Excluir</button>
+                        </div>
+                    </div>
+                </div>`;
+            container.appendChild(col);
+        });
+
+        container.querySelectorAll('.cert-edit-btn').forEach(btn => {
+            btn.addEventListener('click', () => openCertModal(parseInt(btn.dataset.id)));
+        });
+        container.querySelectorAll('.cert-delete-btn').forEach(btn => {
+            btn.addEventListener('click', () => deleteCertificado(parseInt(btn.dataset.id)));
+        });
+        container.querySelectorAll('.cert-open-file').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const d2 = await getProfileData();
+                const cert = d2.certificados.find(c=>c.id===parseInt(btn.dataset.id));
+                if (cert && cert.arquivoDados) window.visualizarAnexo(cert.arquivoDados, cert.arquivoTipo, cert.arquivoNome);
+            });
+        });
+    }
+
+    async function openCertModal(id = null) {
+        certArquivoData = null; certArquivoNomeLocal = ''; certArquivoTipoLocal = '';
+        certArquivoExistenteRemovido = false;
+        document.getElementById('certificadoForm').reset();
+        document.getElementById('certId').value = '';
+        document.getElementById('certArquivoPreview').classList.add('d-none');
+        document.getElementById('certArquivoExistente').classList.add('d-none');
+        document.getElementById('certArquivoInput').value = '';
+        document.getElementById('deleteCert').classList.add('d-none');
+        document.getElementById('certificadoModalLabel').innerHTML = '<i class="fas fa-certificate me-2"></i>Novo Certificado';
+
+        if (id) {
+            const data = await getProfileData();
+            const cert = data.certificados.find(c=>c.id===id);
+            if (!cert) return;
+            document.getElementById('certificadoModalLabel').innerHTML = '<i class="fas fa-edit me-2"></i>Editar Certificado';
+            document.getElementById('certId').value = cert.id;
+            document.getElementById('certTitulo').value = cert.titulo||'';
+            document.getElementById('certStatus').value = cert.status||'Válido';
+            document.getElementById('certEmissor').value = cert.emissor||'';
+            document.getElementById('certDataEmissao').value = cert.dataEmissao||'';
+            document.getElementById('certDataVencimento').value = cert.dataVencimento||'';
+            document.getElementById('certCategoria').value = cert.categoria||'';
+            document.getElementById('certCargaHoraria').value = cert.cargaHoraria||'';
+            document.getElementById('certCodigoCert').value = cert.codigoCert||'';
+            document.getElementById('certDescricao').value = cert.descricao||'';
+            document.getElementById('deleteCert').classList.remove('d-none');
+            if (cert.arquivoNome) {
+                document.getElementById('certArquivoExistenteNome').textContent = cert.arquivoNome;
+                document.getElementById('certArquivoExistente').classList.remove('d-none');
+            }
+        }
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('certificadoModal')).show();
+    }
+
+    async function saveCertificado() {
+        const titulo = document.getElementById('certTitulo').value.trim();
+        if (!titulo) { alert('Informe o título do certificado.'); return; }
+        const id = document.getElementById('certId').value;
+        const data = await getProfileData();
+        const existente = id ? data.certificados.find(c=>c.id===parseInt(id)) : null;
+
+        let arquivoDados = existente ? existente.arquivoDados : null;
+        let arquivoNome = existente ? existente.arquivoNome : null;
+        let arquivoTipo = existente ? existente.arquivoTipo : null;
+        if (certArquivoExistenteRemovido) { arquivoDados = null; arquivoNome = null; arquivoTipo = null; }
+        if (certArquivoData) { arquivoDados = certArquivoData; arquivoNome = certArquivoNomeLocal; arquivoTipo = certArquivoTipoLocal; }
+
+        const cert = {
+            id: existente ? existente.id : await getNewId('certificados'),
+            profileId: currentProfileId,
+            titulo,
+            status: document.getElementById('certStatus').value,
+            emissor: document.getElementById('certEmissor').value.trim(),
+            dataEmissao: document.getElementById('certDataEmissao').value,
+            dataVencimento: document.getElementById('certDataVencimento').value,
+            categoria: document.getElementById('certCategoria').value,
+            cargaHoraria: document.getElementById('certCargaHoraria').value,
+            codigoCert: document.getElementById('certCodigoCert').value.trim(),
+            descricao: document.getElementById('certDescricao').value.trim(),
+            arquivoDados, arquivoNome, arquivoTipo,
+            createdAt: existente ? existente.createdAt : Date.now()
+        };
+
+        await saveData('certificados', cert);
+        profileDataCache = null;
+        bootstrap.Modal.getInstance(document.getElementById('certificadoModal')).hide();
+        const newData = await getProfileData();
+        renderCertificados(newData);
+    }
+
+    async function deleteCertificado(id) {
+        if (!confirm('Excluir este certificado? Esta ação não pode ser desfeita.')) return;
+        await deleteData('certificados', id);
+        profileDataCache = null;
+        bootstrap.Modal.getInstance(document.getElementById('certificadoModal'))?.hide();
+        const data = await getProfileData();
+        renderCertificados(data);
+    }
+
+    function handleCertFile(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            certArquivoData = e.target.result;
+            certArquivoNomeLocal = file.name;
+            certArquivoTipoLocal = file.type;
+            const icon = getCertIcon(file.type, file.name);
+            const iconColor = getCertIconColor(file.type, file.name);
+            document.getElementById('certArquivoIcon').className = `fas ${icon} ${iconColor}`;
+            document.getElementById('certArquivoNome').textContent = file.name;
+            document.getElementById('certArquivoPreview').classList.remove('d-none');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function setupCertificadosEvents() {
+        document.getElementById('saveCert').addEventListener('click', saveCertificado);
+        document.getElementById('deleteCert').addEventListener('click', async () => {
+            const id = parseInt(document.getElementById('certId').value);
+            if (id) deleteCertificado(id);
+        });
+        document.getElementById('novoCertBtn').addEventListener('click', () => openCertModal());
+
+        const dropzone = document.getElementById('certDropzone');
+        dropzone.addEventListener('click', () => document.getElementById('certArquivoInput').click());
+        dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+        dropzone.addEventListener('drop', e => {
+            e.preventDefault(); dropzone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleCertFile(e.dataTransfer.files[0]);
+        });
+        document.getElementById('certArquivoInput').addEventListener('change', function() {
+            if (this.files.length) handleCertFile(this.files[0]);
+        });
+        document.getElementById('certArquivoRemover').addEventListener('click', () => {
+            certArquivoData = null; certArquivoNomeLocal = ''; certArquivoTipoLocal = '';
+            document.getElementById('certArquivoPreview').classList.add('d-none');
+            document.getElementById('certArquivoInput').value = '';
+        });
+        document.getElementById('certArquivoExistenteRemover').addEventListener('click', () => {
+            certArquivoExistenteRemovido = true;
+            document.getElementById('certArquivoExistente').classList.add('d-none');
+        });
+        document.querySelectorAll('[data-cert-filter]').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                document.querySelectorAll('[data-cert-filter]').forEach(b=>b.classList.remove('active'));
+                this.classList.add('active');
+                certFiltroAtivo = this.dataset.certFilter;
+                const data = await getProfileData();
+                renderCertificados(data);
+            });
+        });
+        let searchTimeout;
+        document.getElementById('cert-search').addEventListener('input', async () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(async () => {
+                const data = await getProfileData();
+                renderCertificados(data);
+            }, 300);
+        });
+    }
+
+    let certEventsSetup = false;
+    // ===== FIM CERTIFICADOS =====
 
     // ===== JURISTA DE ALTA PERFORMANCE =====
     const JURISTA_KEY = 'juristaData_v3';
@@ -6993,6 +7402,110 @@ document.addEventListener('DOMContentLoaded', function() {
     
 });
 </script>
+
+<!-- Modal Certificado -->
+<div class="modal fade" id="certificadoModal" tabindex="-1" aria-labelledby="certificadoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, var(--accent), var(--info));">
+        <h5 class="modal-title text-white" id="certificadoModalLabel"><i class="fas fa-certificate me-2"></i>Novo Certificado</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="certificadoForm">
+          <input type="hidden" id="certId">
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label for="certTitulo" class="form-label fw-semibold">Título do Certificado <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="certTitulo" placeholder="Ex: Certificado de Conclusão em Direito Constitucional" required>
+            </div>
+            <div class="col-md-4">
+              <label for="certStatus" class="form-label fw-semibold">Status</label>
+              <select class="form-select" id="certStatus">
+                <option value="Válido">✅ Válido</option>
+                <option value="Pendente">⏳ Pendente</option>
+                <option value="Arquivado">📦 Arquivado</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label for="certEmissor" class="form-label fw-semibold">Emissor / Instituição</label>
+              <input type="text" class="form-control" id="certEmissor" placeholder="Ex: OAB, USP, Coursera...">
+            </div>
+            <div class="col-md-3">
+              <label for="certDataEmissao" class="form-label fw-semibold">Data de Emissão</label>
+              <input type="date" class="form-control" id="certDataEmissao">
+            </div>
+            <div class="col-md-3">
+              <label for="certDataVencimento" class="form-label fw-semibold">Vencimento (opcional)</label>
+              <input type="date" class="form-control" id="certDataVencimento">
+            </div>
+            <div class="col-md-4">
+              <label for="certCategoria" class="form-label fw-semibold">Categoria</label>
+              <select class="form-select" id="certCategoria">
+                <option value="">— Selecione —</option>
+                <option value="Graduação">Graduação</option>
+                <option value="Pós-graduação">Pós-graduação</option>
+                <option value="Curso livre">Curso livre</option>
+                <option value="Extensão">Extensão</option>
+                <option value="Congresso/Evento">Congresso / Evento</option>
+                <option value="OAB / Concurso">OAB / Concurso</option>
+                <option value="Idiomas">Idiomas</option>
+                <option value="Tecnologia">Tecnologia</option>
+                <option value="Outros">Outros</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="certCargaHoraria" class="form-label fw-semibold">Carga Horária (h)</label>
+              <input type="number" class="form-control" id="certCargaHoraria" min="0" placeholder="Ex: 40">
+            </div>
+            <div class="col-md-4">
+              <label for="certCodigoCert" class="form-label fw-semibold">Código / Nº do Certificado</label>
+              <input type="text" class="form-control" id="certCodigoCert" placeholder="Opcional">
+            </div>
+            <div class="col-12">
+              <label for="certDescricao" class="form-label fw-semibold">Descrição / Observações</label>
+              <textarea class="form-control" id="certDescricao" rows="3" placeholder="Descreva o conteúdo, competências adquiridas, etc."></textarea>
+            </div>
+            <!-- Upload do arquivo do certificado -->
+            <div class="col-12">
+              <label class="form-label fw-semibold"><i class="fas fa-paperclip me-1" style="color:var(--info);"></i>Arquivo do Certificado</label>
+              <div class="cert-upload-area" id="certDropzone">
+                <i class="fas fa-cloud-upload-alt fa-2x mb-2" style="color:var(--accent);"></i>
+                <p class="mb-1 fw-semibold">Clique para selecionar ou arraste o arquivo aqui</p>
+                <p class="text-muted small mb-0">PDF, imagem (JPG, PNG), Word, PowerPoint</p>
+                <input type="file" id="certArquivoInput" class="d-none" accept=".pdf,.docx,.pptx,.jpg,.jpeg,.png,.gif,image/*,application/pdf">
+              </div>
+              <div id="certArquivoPreview" class="d-none">
+                <div class="cert-file-preview">
+                  <i class="fas fa-file" id="certArquivoIcon"></i>
+                  <span id="certArquivoNome"></span>
+                  <button type="button" class="remove-cert-file" id="certArquivoRemover" title="Remover arquivo">
+                    <i class="fas fa-times-circle"></i>
+                  </button>
+                </div>
+              </div>
+              <div id="certArquivoExistente" class="d-none mt-2">
+                <div class="cert-file-preview" style="background:#fff3cd;border-color:#d4a017;">
+                  <i class="fas fa-file-check text-warning"></i>
+                  <span id="certArquivoExistenteNome" class="text-warning"></span>
+                  <small class="text-muted ms-1">(arquivo já salvo)</small>
+                  <button type="button" class="remove-cert-file" id="certArquivoExistenteRemover" title="Remover arquivo salvo">
+                    <i class="fas fa-times-circle"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger me-auto d-none" id="deleteCert"><i class="fas fa-trash"></i> Excluir</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="saveCert"><i class="fas fa-save me-1"></i>Salvar Certificado</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Modal Anexar Arquivo Rápido -->
 <div class="modal fade" id="quickAttachModal" tabindex="-1" aria-labelledby="quickAttachModalLabel" aria-hidden="true">
