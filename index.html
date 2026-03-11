@@ -3234,6 +3234,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const DB_NAME = 'academicoProDB', DB_VERSION = 3;
     let db;
     let currentCalendarDate = new Date();
+    let selectedCalendarDateStr = null; // tracks which day is selected in the calendar
     let nextEventInterval, proximoEventoGlobal;
     let currentVideoPlayer, currentVideoId, videoInterval, currentVideoTime = 0;
     let isDrawing = false, lastX, lastY, currentTool = 'pencil', currentColor = '#000000', currentBrushSize = 3;
@@ -3815,20 +3816,72 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('calendar-month-year').textContent = `${["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"][month]} ${year}`;
         const weekdays = document.getElementById('calendar-weekdays'), days = document.getElementById('calendar-days');
         weekdays.innerHTML = ''; days.innerHTML = '';
-        ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach(d => weekdays.innerHTML += `<div class="col text-center small"><strong>${d}</strong></div>`);
+        ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach(label => {
+            const wdiv = document.createElement('div');
+            wdiv.className = 'col text-center small';
+            wdiv.innerHTML = '<strong>' + label + '</strong>';
+            weekdays.appendChild(wdiv);
+        });
         const firstDay = new Date(year, month, 1).getDay(), daysInMonth = new Date(year, month+1, 0).getDate();
-        const todayStr = new Date().toISOString().split('T')[0];
-        let row = document.createElement('div'); row.className = 'row mb-2';
-        for (let i=0; i<firstDay; i++) row.innerHTML += `<div class="col calendar-day empty"></div>`;
-        for (let d=1; d<=daysInMonth; d++) {
-            let dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            let ev = await getEventsForDate(dateStr, data);
-            let ind = ev.length ? '<div class="event-indicator">'+ (ev.some(e=>e.type==='assignment')?'<span class="event-dot assignment"></span>':'') + (ev.some(e=>e.type==='exam')?'<span class="event-dot exam"></span>':'') + (ev.some(e=>e.type==='financeiro')?'<span class="event-dot financeiro"></span>':'') + (ev.some(e=>['other','class'].includes(e.type))?'<span class="event-dot other"></span>':'') +'</div>' : '';
-            let cls = 'calendar-day' + (ev.length?' has-event':'') + (dateStr===todayStr?' current':'');
-            row.innerHTML += `<div class="col ${cls}" data-date="${dateStr}">${d}${ind}</div>`;
-            if ((d+firstDay)%7===0 || d===daysInMonth) { days.appendChild(row); row = document.createElement('div'); row.className = 'row mb-2'; }
+        // Fix timezone: use local date (not UTC) to avoid off-by-one errors in Brazil
+        const _today = new Date();
+        const todayStr = _today.getFullYear() + '-' + String(_today.getMonth()+1).padStart(2,'0') + '-' + String(_today.getDate()).padStart(2,'0');
+
+        let row = document.createElement('div');
+        row.className = 'row mb-2';
+        days.appendChild(row);
+
+        for (let i = 0; i < firstDay; i++) {
+            const empty = document.createElement('div');
+            empty.className = 'col calendar-day empty';
+            row.appendChild(empty);
         }
-        renderEventsForDay(todayStr, data);
+
+        // Build each day cell via DOM API — data-date set with setAttribute so it is never corrupted
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+            const ev = await getEventsForDate(dateStr, data);
+
+            const cell = document.createElement('div');
+            let cellCls = 'col calendar-day';
+            if (ev.length) cellCls += ' has-event';
+            if (dateStr === todayStr) cellCls += ' current';
+            cell.className = cellCls;
+            cell.setAttribute('data-date', dateStr);
+            cell.textContent = String(d);
+
+            if (ev.length) {
+                const ind = document.createElement('div');
+                ind.className = 'event-indicator';
+                [['assignment', ev.some(function(e){return e.type==='assignment';})],
+                 ['exam',       ev.some(function(e){return e.type==='exam';})],
+                 ['financeiro', ev.some(function(e){return e.type==='financeiro';})],
+                 ['other',      ev.some(function(e){return e.type==='other'||e.type==='class';})]
+                ].forEach(function(pair){
+                    if (pair[1]) {
+                        const dot = document.createElement('span');
+                        dot.className = 'event-dot ' + pair[0];
+                        ind.appendChild(dot);
+                    }
+                });
+                cell.appendChild(ind);
+            }
+
+            row.appendChild(cell);
+
+            if ((d + firstDay) % 7 === 0 && d < daysInMonth) {
+                row = document.createElement('div');
+                row.className = 'row mb-2';
+                days.appendChild(row);
+            }
+        }
+
+        // Preserve selected day across re-renders; fall back to today if month changed
+        const currentMonthStr = year + '-' + String(month+1).padStart(2,'0');
+        const displayDate = (selectedCalendarDateStr && selectedCalendarDateStr.startsWith(currentMonthStr))
+            ? selectedCalendarDateStr
+            : todayStr;
+        renderEventsForDay(displayDate, data);
     }
 
     async function getEventsForDate(dateStr, data) {
@@ -3841,6 +3894,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function renderEventsForDay(dateStr, data) {
+        selectedCalendarDateStr = dateStr; // always keep track of what is shown
         document.querySelectorAll('.calendar-day.active').forEach(el=>el.classList.remove('active'));
         let day = document.querySelector(`.calendar-day[data-date="${dateStr}"]`);
         if (day) day.classList.add('active');
@@ -5197,6 +5251,12 @@ document.addEventListener('DOMContentLoaded', function() {
         await saveData('eventos', e); 
         profileDataCache = null;
         await loadProfileData();
+        // Navigate to the event's month and highlight the saved date
+        if (e.date) {
+            const _ep = e.date.split('-');
+            currentCalendarDate = new Date(parseInt(_ep[0]), parseInt(_ep[1])-1, 1);
+            selectedCalendarDateStr = e.date;
+        }
         renderCurrentPanel();
         bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
     }
@@ -5924,13 +5984,14 @@ document.addEventListener('DOMContentLoaded', function() {
             saveScheduleFilter();
             if (activePanel === 'horarios') renderCurrentPanel();
         });
-        document.getElementById('prev-month').addEventListener('click', ()=>{ currentCalendarDate.setMonth(currentCalendarDate.getMonth()-1); if (activePanel === 'agenda') renderCurrentPanel(); });
-        document.getElementById('next-month').addEventListener('click', ()=>{ currentCalendarDate.setMonth(currentCalendarDate.getMonth()+1); if (activePanel === 'agenda') renderCurrentPanel(); });
+        document.getElementById('prev-month').addEventListener('click', ()=>{ currentCalendarDate.setMonth(currentCalendarDate.getMonth()-1); selectedCalendarDateStr = null; if (activePanel === 'agenda') renderCurrentPanel(); });
+        document.getElementById('next-month').addEventListener('click', ()=>{ currentCalendarDate.setMonth(currentCalendarDate.getMonth()+1); selectedCalendarDateStr = null; if (activePanel === 'agenda') renderCurrentPanel(); });
 
         // Duplo clique na data do calendário: abre modal de novo evento
         document.getElementById('calendar-days').addEventListener('dblclick', (e) => {
             let calDay = e.target.closest('.calendar-day:not(.empty)');
             if (calDay && calDay.dataset.date) {
+                selectedCalendarDateStr = calDay.dataset.date; // keep selection in sync
                 document.getElementById('eventModalLabel').textContent = 'Novo Evento';
                 document.getElementById('eventId').value = '';
                 document.getElementById('eventDate').value = calDay.dataset.date;
@@ -6081,9 +6142,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             let calDay = e.target.closest('.calendar-day:not(.empty)');
-            if (calDay) {
+            if (calDay && calDay.dataset.date) {
+                selectedCalendarDateStr = calDay.dataset.date; // persist selection across re-renders
                 let data = await getProfileData();
-                renderEventsForDay(calDay.dataset.date, data);
+                renderEventsForDay(selectedCalendarDateStr, data);
+                return;
             }
             // Botão "adicionar evento" no dia vazio
             let btnNovoEventoDia = e.target.closest('.btn-novo-evento-dia');
