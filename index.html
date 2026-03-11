@@ -2328,6 +2328,22 @@
         flex: 1 1 auto;
       }
     }
+
+    /* ===== STATUS BADGES (Pendente / Feito / Entregue) ===== */
+    .badge-status-pendente  { background-color: #f1c40f; color: #2c3e50; }
+    .badge-status-feito     { background-color: #3498db; color: #fff; }
+    .badge-status-entregue  { background-color: #27ae60; color: #fff; }
+
+    /* Quick status buttons row */
+    .status-btn-group { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+    .status-btn-group .btn { font-size: 0.75rem; padding: 3px 10px; border-radius: 20px; }
+    .btn-status-pendente  { background: rgba(241,196,15,0.15); border:1.5px solid #f1c40f; color:#9a7d0a; }
+    .btn-status-pendente:hover  { background:#f1c40f; color:#2c3e50; }
+    .btn-status-feito     { background: rgba(52,152,219,0.12); border:1.5px solid #3498db; color:#1a5276; }
+    .btn-status-feito:hover     { background:#3498db; color:#fff; }
+    .btn-status-entregue  { background: rgba(39,174,96,0.12); border:1.5px solid #27ae60; color:#1e8449; }
+    .btn-status-entregue:hover  { background:#27ae60; color:#fff; }
+    .btn-status-active { opacity:0.45; cursor:default; pointer-events:none; }
   </style>
 </head>
 <body>
@@ -2949,7 +2965,7 @@
                         <textarea class="form-control" id="trabalhoParticipantes" rows="3" placeholder="Nome do aluno 1&#10;Nome do aluno 2&#10;Nome do aluno 3"></textarea>
                     </div>
                     <div class="mb-3"><label for="trabalhoEntrega" class="form-label">Data de Entrega</label><input type="date" class="form-control" id="trabalhoEntrega" required></div>
-                    <div class="mb-3"><label for="trabalhoStatus" class="form-label">Status</label><select class="form-select" id="trabalhoStatus"><option value="Pendente">Pendente</option><option value="Entregue">Entregue</option></select></div>
+                    <div class="mb-3"><label for="trabalhoStatus" class="form-label">Status</label><select class="form-select" id="trabalhoStatus"><option value="Pendente">⏳ Pendente</option><option value="Feito">✅ Feito</option><option value="Entregue">📬 Entregue</option></select></div>
                     <div class="mb-3"><label for="trabalhoPrioridade" class="form-label">Prioridade</label><select class="form-select" id="trabalhoPrioridade"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></div>
                     <div class="mb-3"><label for="trabalhoNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="trabalhoNota" min="0" max="10"></div>
                     <div class="mb-3"><label for="trabalhoObservacoes" class="form-label">Observações</label><textarea class="form-control" id="trabalhoObservacoes" rows="3"></textarea></div>
@@ -2980,6 +2996,7 @@
 
 <!-- Modal Evento com múltiplos anexos -->
 <div class="modal fade" id="eventModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="eventModalLabel">Novo Evento</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="eventForm"><input type="hidden" id="eventId"><div class="mb-3"><label for="eventTitle" class="form-label">Título</label><input type="text" class="form-control" id="eventTitle" required></div><div class="mb-3"><label for="eventType" class="form-label">Tipo</label><select class="form-select" id="eventType"><option value="other">Outro</option><option value="assignment">Trabalho</option><option value="exam">Prova</option><option value="class">Aula</option><option value="financeiro">Financeiro</option></select></div><div class="mb-3"><label for="eventDate" class="form-label">Data</label><input type="date" class="form-control" id="eventDate" required></div><div class="mb-3"><label for="eventTime" class="form-label">Hora</label><input type="time" class="form-control" id="eventTime"></div><div class="mb-3"><label for="eventDescription" class="form-label">Descrição</label><textarea class="form-control" id="eventDescription" rows="2"></textarea></div>
+<div class="mb-3"><label for="eventStatus" class="form-label">Status</label><select class="form-select" id="eventStatus"><option value="Pendente">⏳ Pendente</option><option value="Feito">✅ Feito</option><option value="Entregue">📬 Entregue</option></select></div>
 <div class="mb-3">
     <label class="form-label">Anexos (PDF, imagem, Word, PowerPoint)</label>
     <input type="file" class="form-control" id="eventAnexos" accept=".pdf,.docx,.pptx,image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation" multiple>
@@ -3531,7 +3548,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (nextEventInterval) clearInterval(nextEventInterval);
         const hoje = new Date();
         const todos = [
-            ...data.trabalhos.filter(t=>t.status==='Pendente').map(t=>({...t, type:'assignment', date:t.entrega, title:t.titulo, time:'23:59', eventType:'trabalhos', disciplinaId:t.disciplinaId})),
+            ...data.trabalhos.filter(t=>t.status==='Pendente'||t.status==='Feito').map(t=>({...t, type:'assignment', date:t.entrega, title:t.titulo, time:'23:59', eventType:'trabalhos', disciplinaId:t.disciplinaId})),
             ...data.provas.filter(p=>p.status==='Agendada').map(p=>({...p, type:'exam', date:p.data, title:p.conteudo, time:p.hora||'08:00', eventType:'provas', disciplinaId:p.disciplinaId})),
             ...data.financeiro.filter(f=>f.tipo==='despesa' && f.status==='pendente').map(f=>({...f, type:'financeiro', date:f.data, title:f.descricao, time:'23:59', eventType:'financeiro'})),
             ...data.eventos.map(e=>({...e, time:e.time||'00:00', eventType:'eventos'}))
@@ -3580,7 +3597,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function renderDashboard(data) {
         document.getElementById('dashboard-disciplinas-count').textContent = data.disciplinas.length;
-        document.getElementById('dashboard-trabalhos-pendentes').textContent = data.trabalhos.filter(t=>t.status==='Pendente').length;
+        document.getElementById('dashboard-trabalhos-pendentes').textContent = data.trabalhos.filter(t=>t.status==='Pendente'||t.status==='Feito').length;
         document.getElementById('dashboard-provas-agendadas').textContent = data.provas.filter(p=>p.status==='Agendada').length;
         let notas = [];
         data.trabalhos.forEach(t=>{if(t.nota!==null) notas.push(+t.nota);});
@@ -3602,7 +3619,7 @@ document.addEventListener('DOMContentLoaded', function() {
         eventos.innerHTML = '';
         const hoje = new Date(); hoje.setHours(0,0,0,0);
         const todos = [
-            ...data.trabalhos.filter(t=>t.status==='Pendente').map(t=>({...t, type:'assignment', date:t.entrega, title:t.titulo})),
+            ...data.trabalhos.filter(t=>t.status==='Pendente'||t.status==='Feito').map(t=>({...t, type:'assignment', date:t.entrega, title:t.titulo})),
             ...data.provas.filter(p=>p.status==='Agendada').map(p=>({...p, type:'exam', date:p.data, title:p.conteudo})),
             ...data.financeiro.filter(f=>f.tipo==='despesa' && f.status==='pendente').map(f=>({...f, type:'financeiro', date:f.data, title:f.descricao})),
             ...data.eventos.map(e=>({...e}))
@@ -3737,7 +3754,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="mb-2">${tipoBadge}</div>
                         ${participantesHtml}
                         <p class="text-muted small mb-1"><i class="fas fa-calendar"></i> <strong>Entrega:</strong> ${new Date(t.entrega+'T00:00').toLocaleDateString('pt-BR')}</p>
-                        <p class="text-muted small mb-2"><span class="badge ${t.status==='Pendente'?'bg-warning text-dark':'bg-success'}">${t.status}</span></p>
+                        <p class="text-muted small mb-1"><span class="badge ${t.status==='Pendente'?'badge-status-pendente':t.status==='Feito'?'badge-status-feito':'badge-status-entregue'}">${t.status==='Pendente'?'⏳ Pendente':t.status==='Feito'?'✅ Feito':'📬 Entregue'}</span></p>
+                        <div class="status-btn-group mb-2">
+                            <button class="btn btn-status-pendente ${t.status==='Pendente'?'btn-status-active':''} change-trabalho-status" data-id="${t.id}" data-status="Pendente" title="Marcar como Pendente">⏳ Pendente</button>
+                            <button class="btn btn-status-feito ${t.status==='Feito'?'btn-status-active':''} change-trabalho-status" data-id="${t.id}" data-status="Feito" title="Marcar como Feito">✅ Feito</button>
+                            <button class="btn btn-status-entregue ${t.status==='Entregue'?'btn-status-active':''} change-trabalho-status" data-id="${t.id}" data-status="Entregue" title="Marcar como Entregue">📬 Entregue</button>
+                        </div>
                         <p class="card-text">${t.observacoes?t.observacoes.substring(0,80)+'...':''}</p>
                         ${attachmentHtml ? `<div class="attachment-area mb-2">${attachmentHtml}</div>` : ''}
                         <div class="card-action-bar">
@@ -3811,7 +3833,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function getEventsForDate(dateStr, data) {
         return [
-            ...data.trabalhos.filter(t=>t.entrega===dateStr).map(t=>({...t, type:'assignment', date:t.entrega, title:t.titulo})),
+            ...data.trabalhos.filter(t=>t.entrega===dateStr && (t.status==='Pendente'||t.status==='Feito')).map(t=>({...t, type:'assignment', date:t.entrega, title:t.titulo})),
             ...data.provas.filter(p=>p.data===dateStr).map(p=>({...p, type:'exam', date:p.data, title:p.conteudo})),
             ...data.financeiro.filter(f=>f.data===dateStr && f.tipo==='despesa' && f.status==='pendente').map(f=>({...f, type:'financeiro', date:f.data, title:f.descricao})),
             ...data.eventos.filter(e=>e.date===dateStr)
@@ -3845,12 +3867,24 @@ document.addEventListener('DOMContentLoaded', function() {
             div.className = `event-item ${e.type}`;
             div.dataset.eventType = eventType;
             div.dataset.eventId = e.id;
+            const sMap = {Pendente:'badge-status-pendente',Feito:'badge-status-feito',Entregue:'badge-status-entregue'};
+            const sLabel = {Pendente:'⏳ Pendente',Feito:'✅ Feito',Entregue:'📬 Entregue'};
+            const evStatus = e.status;
+            const statusBadge = evStatus && sMap[evStatus] ? `<span class="badge ${sMap[evStatus]} ms-1" style="font-size:0.68rem;">${sLabel[evStatus]}</span>` : '';
+            const canChangeStatus = (eventType === 'eventos' || eventType === 'trabalhos');
+            const statusBtns = canChangeStatus ? `
+            <div class="status-btn-group mt-1">
+                <button class="btn btn-status-pendente ${evStatus==='Pendente'?'btn-status-active':''} agenda-change-status" data-id="${e.id}" data-type="${eventType}" data-status="Pendente" title="Pendente">⏳</button>
+                <button class="btn btn-status-feito ${evStatus==='Feito'?'btn-status-active':''} agenda-change-status" data-id="${e.id}" data-type="${eventType}" data-status="Feito" title="Feito">✅</button>
+                <button class="btn btn-status-entregue ${evStatus==='Entregue'?'btn-status-active':''} agenda-change-status" data-id="${e.id}" data-type="${eventType}" data-status="Entregue" title="Entregue">📬</button>
+            </div>` : '';
             div.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center">
                     <h6 class="mb-0 small fw-semibold">${e.title||e.conteudo||e.descricao}</h6>
-                    <span class="small text-muted">${e.time||''}</span>
+                    <div class="d-flex align-items-center gap-1"><span class="small text-muted">${e.time||''}</span>${statusBadge}</div>
                 </div>
                 ${disc?`<p class="mb-0 small text-muted mt-1"><i class="fas fa-book me-1"></i>${disc.nome}</p>`:''}
+                ${statusBtns}
                 <div class="event-item-actions">
                     ${viewBtn}${editBtn}${deleteBtn}${attachBtn}
                     ${anexoBadge ? `<span class="badge bg-info"><i class="fas fa-paperclip"></i> Anexos</span>` : ''}
@@ -5134,6 +5168,7 @@ document.addEventListener('DOMContentLoaded', function() {
             date: document.getElementById('eventDate').value, 
             time: document.getElementById('eventTime').value, 
             description: document.getElementById('eventDescription').value,
+            status: document.getElementById('eventStatus').value || 'Pendente',
             anexos: []
         };
         if (!e.title || !e.date) return alert('Título e data obrigatórios.');
@@ -5180,6 +5215,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('eventDate').value = item.date||'';
         document.getElementById('eventTime').value = item.time||'';
         document.getElementById('eventDescription').value = item.description||'';
+        document.getElementById('eventStatus').value = item.status||'Pendente';
         document.getElementById('eventAnexosRemovidos').value = '';
         document.getElementById('deleteEvent').classList.remove('d-none');
         renderAnexosList(item.anexos||[], 'eventAnexosPreview', 'event');
@@ -5234,7 +5270,20 @@ document.addEventListener('DOMContentLoaded', function() {
         let bodyHtml = `<div class="mb-3">`;
         if (event.date) bodyHtml += `<div class="event-detail-info"><i class="fas fa-calendar"></i> <strong>Data:</strong> ${new Date(event.date+'T00:00').toLocaleDateString('pt-BR', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}${event.time ? ' às '+event.time : ''}</div>`;
         if (event.disciplina) bodyHtml += `<div class="event-detail-info"><i class="fas fa-book"></i> <strong>Disciplina:</strong> ${event.disciplina}</div>`;
-        if (event.status) bodyHtml += `<div class="event-detail-info"><i class="fas fa-info-circle"></i> <strong>Status:</strong> ${event.status}</div>`;
+        if (event.status) {
+            const sDivMap = {Pendente:'badge-status-pendente',Feito:'badge-status-feito',Entregue:'badge-status-entregue'};
+            const sLblMap = {Pendente:'⏳ Pendente',Feito:'✅ Feito',Entregue:'📬 Entregue'};
+            const isStatusChangeable = (type === 'trabalhos' || type === 'eventos');
+            bodyHtml += `<div class="event-detail-info"><i class="fas fa-info-circle"></i> <strong>Status:</strong> <span class="badge ${sDivMap[event.status]||'bg-secondary'} ms-1">${sLblMap[event.status]||event.status}</span>`;
+            if (isStatusChangeable) {
+                bodyHtml += ` <div class="status-btn-group d-inline-flex ms-2">
+                    <button class="btn btn-status-pendente ${event.status==='Pendente'?'btn-status-active':''} detail-change-status" data-id="${id}" data-type="${type}" data-status="Pendente" title="Pendente">⏳</button>
+                    <button class="btn btn-status-feito ${event.status==='Feito'?'btn-status-active':''} detail-change-status" data-id="${id}" data-type="${type}" data-status="Feito" title="Feito">✅</button>
+                    <button class="btn btn-status-entregue ${event.status==='Entregue'?'btn-status-active':''} detail-change-status" data-id="${id}" data-type="${type}" data-status="Entregue" title="Entregue">📬</button>
+                </div>`;
+            }
+            bodyHtml += `</div>`;
+        }
         if (event.nota !== undefined && event.nota !== null) bodyHtml += `<div class="event-detail-info"><i class="fas fa-star"></i> <strong>Nota:</strong> ${event.nota}</div>`;
         if (event.valor !== undefined) bodyHtml += `<div class="event-detail-info"><i class="fas fa-dollar-sign"></i> <strong>Valor:</strong> R$ ${event.valor.toFixed(2)}</div>`;
         if (event.prioridade) bodyHtml += `<div class="event-detail-info"><i class="fas fa-flag"></i> <strong>Prioridade:</strong> ${event.prioridade === 'high' ? 'Alta' : event.prioridade === 'medium' ? 'Média' : 'Baixa'}</div>`;
@@ -5278,6 +5327,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const editBtn = document.getElementById('eventDetailEditBtn');
         const deleteBtn = document.getElementById('eventDetailDeleteBtn');
         
+        // Botão de mudança de status no detalhe
+        document.getElementById('eventDetailBody').querySelectorAll('.detail-change-status').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault(); e.stopPropagation();
+                const dtype = btn.dataset.type;
+                const did = btn.dataset.id;
+                const dstatus = btn.dataset.status;
+                if (dtype === 'trabalhos') {
+                    await changeTrabalhoStatus(did, dstatus);
+                } else if (dtype === 'eventos') {
+                    await changeEventoStatus(did, dstatus);
+                }
+                bootstrap.Modal.getInstance(document.getElementById('eventDetailModal')).hide();
+            });
+        });
+
         // Botão de anexar arquivo no detalhe (para trabalhos e provas)
         let attachBtnContainer = document.getElementById('eventDetailAttachContainer');
         if (!attachBtnContainer) {
@@ -5499,6 +5564,61 @@ document.addEventListener('DOMContentLoaded', function() {
                 await openQuickAttach(btn.dataset.id, btn.dataset.type);
             }
         });
+
+
+    // ========== CHANGE STATUS FUNCTIONS ==========
+    async function changeTrabalhoStatus(id, newStatus) {
+        let item = await getData('trabalhos', parseInt(id));
+        if (!item) return;
+        item.status = newStatus;
+        await saveData('trabalhos', item);
+        profileDataCache = null;
+        await loadProfileData();
+        renderCurrentPanel();
+        // toast feedback
+        const toastEl = document.createElement('div');
+        toastEl.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;';
+        const icons = {Pendente:'⏳',Feito:'✅',Entregue:'📬'};
+        toastEl.innerHTML = `<div class="alert alert-success alert-dismissible shadow" role="alert"><strong>${icons[newStatus]||''} Status atualizado: ${newStatus}</strong><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+        document.body.appendChild(toastEl);
+        setTimeout(()=>toastEl.remove(), 2800);
+    }
+
+    async function changeEventoStatus(id, newStatus) {
+        let item = await getData('eventos', parseInt(id));
+        if (!item) return;
+        item.status = newStatus;
+        await saveData('eventos', item);
+        profileDataCache = null;
+        await loadProfileData();
+        renderCurrentPanel();
+        const toastEl = document.createElement('div');
+        toastEl.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;';
+        const icons = {Pendente:'⏳',Feito:'✅',Entregue:'📬'};
+        toastEl.innerHTML = `<div class="alert alert-success alert-dismissible shadow" role="alert"><strong>${icons[newStatus]||''} Status atualizado: ${newStatus}</strong><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+        document.body.appendChild(toastEl);
+        setTimeout(()=>toastEl.remove(), 2800);
+    }
+
+    // Event delegation: handle quick status buttons on trabalhos cards
+    document.body.addEventListener('click', async function(e) {
+        const btn = e.target.closest('.change-trabalho-status');
+        if (btn) {
+            e.preventDefault(); e.stopPropagation();
+            await changeTrabalhoStatus(btn.dataset.id, btn.dataset.status);
+            return;
+        }
+        const btn2 = e.target.closest('.agenda-change-status');
+        if (btn2) {
+            e.preventDefault(); e.stopPropagation();
+            if (btn2.dataset.type === 'trabalhos') {
+                await changeTrabalhoStatus(btn2.dataset.id, btn2.dataset.status);
+            } else {
+                await changeEventoStatus(btn2.dataset.id, btn2.dataset.status);
+            }
+            return;
+        }
+    });
 
     }, 600);
 
@@ -5814,6 +5934,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('eventModalLabel').textContent = 'Novo Evento';
                 document.getElementById('eventId').value = '';
                 document.getElementById('eventDate').value = calDay.dataset.date;
+                document.getElementById('eventStatus').value = 'Pendente';
                 document.getElementById('deleteEvent').classList.add('d-none');
                 document.getElementById('eventAnexosRemovidos').value = '';
                 document.getElementById('eventAnexosPreview').innerHTML = '';
@@ -5862,6 +5983,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('deleteEvent').classList.add('d-none');
                     document.getElementById('eventAnexosPreview').innerHTML = '';
                     document.getElementById('eventAnexosRemovidos').value = '';
+                    const evStatusEl = document.getElementById('eventStatus');
+                    if (evStatusEl) evStatusEl.value = 'Pendente';
                 }
                 ['prova'].forEach(prefix => {
                     const preview = document.getElementById(prefix + 'AnexoPreview');
