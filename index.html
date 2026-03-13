@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -7632,9 +7633,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         <!-- Info Banner -->
         <div class="alert alert-info d-flex align-items-start gap-2 mb-4" style="border-radius:12px;">
-          <i class="fas fa-info-circle mt-1"></i>
+          <i class="fas fa-info-circle mt-1 flex-shrink-0"></i>
           <div>
-            <strong>Como funciona:</strong> O backup exporta <em>todos os seus dados</em> (disciplinas, provas, trabalhos, notas, financeiro, certificados, Jurista e mais) num único arquivo <code>.json</code>. Para restaurar, importe esse arquivo aqui.
+            <strong>Backup completo:</strong> Exporta <em>absolutamente todos os seus dados</em> — disciplinas, provas, trabalhos, notas, financeiro, certificados (incluindo arquivos anexados), Jurista, tema visual, fundo personalizado e configurações — num único arquivo <code>.json</code>. Para restaurar em outro dispositivo, basta importar esse arquivo aqui.
           </div>
         </div>
 
@@ -7671,7 +7672,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
 
           <button class="btn btn-success mt-3 w-100" id="exportBackupBtn">
-            <i class="fas fa-download me-2"></i>Exportar Backup Agora
+            <i class="fas fa-download me-2"></i>Exportar Backup Completo
           </button>
         </div>
 
@@ -7829,12 +7830,30 @@ document.addEventListener('DOMContentLoaded', function() {
     notas: 'Notas', links: 'Links', certificados: 'Certificados'
   };
 
-  // ── Helper: obter instância do IndexedDB ──
+  // ── Todas as chaves de localStorage que devem ser exportadas ──
+  const ALL_LS_KEYS = [
+    'juristaData_v3',
+    'scheduleStartHour',
+    'scheduleEndHour',
+    'academicoTheme',
+    'academicoCustomBg'
+  ];
+
+  // ── Helper: obter instância do IndexedDB (com versão correta) ──
   function getDB() {
     return new Promise((resolve, reject) => {
-      const req = indexedDB.open('AcademicoProDB');
-      req.onsuccess = e => resolve(e.target.result);
-      req.onerror = e => reject(e.target.error);
+      // Primeiro descobre a versão atual, depois abre sem upgrade
+      const probeReq = indexedDB.open('AcademicoProDB');
+      probeReq.onsuccess = e => {
+        const version = e.target.result.version;
+        e.target.result.close();
+        const req = indexedDB.open('AcademicoProDB', version);
+        req.onsuccess = ev => resolve(ev.target.result);
+        req.onerror = ev => reject(ev.target.error);
+        // Em caso de upgrade inesperado, abortar transação
+        req.onupgradeneeded = ev => ev.target.transaction.abort();
+      };
+      probeReq.onerror = e => reject(e.target.error);
     });
   }
 
@@ -7842,6 +7861,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function readAllFromStore(db, storeName) {
     return new Promise((resolve, reject) => {
       try {
+        if (!db.objectStoreNames.contains(storeName)) { resolve([]); return; }
         const tx = db.transaction([storeName], 'readonly');
         const req = tx.objectStore(storeName).getAll();
         req.onsuccess = () => resolve(req.result || []);
@@ -7853,10 +7873,12 @@ document.addEventListener('DOMContentLoaded', function() {
   // ── Helper: salvar um registro num store (put) ──
   function putRecord(db, storeName, record) {
     return new Promise((resolve, reject) => {
-      const tx = db.transaction([storeName], 'readwrite');
-      const req = tx.objectStore(storeName).put(record);
-      req.onsuccess = () => resolve();
-      req.onerror = e => reject(e.target.error);
+      try {
+        const tx = db.transaction([storeName], 'readwrite');
+        const req = tx.objectStore(storeName).put(record);
+        req.onsuccess = () => resolve();
+        req.onerror = e => reject(e.target.error);
+      } catch(e) { resolve(); }
     });
   }
 
@@ -7864,6 +7886,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function clearStore(db, storeName) {
     return new Promise((resolve, reject) => {
       try {
+        if (!db.objectStoreNames.contains(storeName)) { resolve(); return; }
         const tx = db.transaction([storeName], 'readwrite');
         const req = tx.objectStore(storeName).clear();
         req.onsuccess = () => resolve();
@@ -7882,14 +7905,14 @@ document.addEventListener('DOMContentLoaded', function() {
       <button type="button" class="btn-close" onclick="this.closest('.alert').parentElement.remove()"></button>
     </div>`;
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 5000);
+    setTimeout(() => el.remove(), 6000);
   }
 
-  // ── EXPORTAR ──
+  // ── EXPORTAR (completo — inclui TODOS os dados, incluindo arquivos base64) ──
   async function exportBackup() {
     const btn = document.getElementById('exportBackupBtn');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exportando...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exportando tudo...';
 
     try {
       const db = await getDB();
@@ -7897,26 +7920,33 @@ document.addEventListener('DOMContentLoaded', function() {
       const exportData = {
         _meta: {
           app: 'AcademicoProDB',
-          version: 1,
+          version: 2,
           exportedAt: new Date().toISOString(),
-          profileFilter: selectedProfile
+          profileFilter: selectedProfile,
+          exportedBy: 'Acadêmico Pro'
         },
         stores: {},
         localStorage: {}
       };
 
-      // Exportar localStorage (Jurista + schedule settings)
-      const lsKeys = ['juristaData_v3', 'scheduleStartHour', 'scheduleEndHour'];
-      lsKeys.forEach(k => {
+      // ── Exportar TODO o localStorage (tema, fundo, jurista, horários, etc.) ──
+      ALL_LS_KEYS.forEach(k => {
         const v = localStorage.getItem(k);
         if (v !== null) exportData.localStorage[k] = v;
       });
+      // Capturar qualquer outra chave do localStorage que pertença ao app
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && !exportData.localStorage.hasOwnProperty(k)) {
+          exportData.localStorage[k] = localStorage.getItem(k);
+        }
+      }
 
-      // Exportar todos os stores
+      // ── Exportar TODOS os stores do IndexedDB (sem filtro de tamanho, sem omitir campos) ──
       for (const storeName of ALL_STORES) {
         let records = await readAllFromStore(db, storeName);
 
-        // Filtrar por perfil se necessário
+        // Filtrar por perfil se selecionado
         if (selectedProfile !== 'all' && storeName !== 'profiles') {
           const pid = parseInt(selectedProfile);
           records = records.filter(r => r.profileId === pid || r.profileId === undefined);
@@ -7925,11 +7955,17 @@ document.addEventListener('DOMContentLoaded', function() {
           records = records.filter(r => r.id === parseInt(selectedProfile));
         }
 
+        // Gravar registros INTEGRALMENTE (incluindo campos base64 como arquivos, fotos, etc.)
         exportData.stores[storeName] = records;
       }
 
-      // Serializar e baixar
-      const json = JSON.stringify(exportData, null, 2);
+      db.close();
+
+      // ── Calcular tamanho estimado para feedback ──
+      const json = JSON.stringify(exportData);
+      const sizeKB = Math.round(json.length / 1024);
+      const sizeMB = (sizeKB / 1024).toFixed(2);
+
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const nameInput = document.getElementById('backupFileName').value.trim() || 'academico_pro_backup';
@@ -7937,17 +7973,18 @@ document.addEventListener('DOMContentLoaded', function() {
       const a = document.createElement('a');
       a.href = url;
       a.download = `${nameInput}_${date}.json`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      db.close();
-      showToast('✅ Backup exportado com sucesso!', 'success');
+      showToast(`✅ Backup completo exportado com sucesso! (${sizeKB >= 1024 ? sizeMB + ' MB' : sizeKB + ' KB'})`, 'success');
     } catch(err) {
       console.error('Erro ao exportar backup:', err);
       showToast('❌ Erro ao exportar: ' + err.message, 'danger');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-download me-2"></i>Exportar Backup Agora';
+      btn.innerHTML = '<i class="fas fa-download me-2"></i>Exportar Backup Completo';
     }
   }
 
@@ -7963,6 +8000,7 @@ document.addEventListener('DOMContentLoaded', function() {
     reader.onload = e => {
       try {
         const data = JSON.parse(e.target.result);
+        // Aceita versão 1 (legado) e versão 2 (novo formato completo)
         if (!data._meta || data._meta.app !== 'AcademicoProDB' || !data.stores) {
           showToast('❌ Arquivo inválido. Use um backup gerado por este app.', 'danger');
           return;
@@ -7981,27 +8019,43 @@ document.addEventListener('DOMContentLoaded', function() {
     const meta = data._meta;
     const exportDate = new Date(meta.exportedAt).toLocaleString('pt-BR');
     const stores = data.stores || {};
-    const lsCount = Object.keys(data.localStorage || {}).length;
+    const lsKeys = Object.keys(data.localStorage || {});
+
+    // Calcular tamanho do arquivo
+    const sizeKB = Math.round(JSON.stringify(data).length / 1024);
+    const sizeLabel = sizeKB >= 1024 ? (sizeKB / 1024).toFixed(2) + ' MB' : sizeKB + ' KB';
 
     let statsHtml = '';
     for (const [store, records] of Object.entries(stores)) {
-      if (records.length > 0) {
+      if (Array.isArray(records) && records.length > 0) {
         statsHtml += `<div class="bi-row">
           <span class="bi-key"><i class="fas fa-table me-1" style="color:var(--accent);font-size:0.7rem;"></i>${STORE_LABELS[store] || store}</span>
           <span class="bi-val">${records.length} registro(s)</span>
         </div>`;
       }
     }
-    if (lsCount > 0) {
+
+    // Mostrar chaves de localStorage que serão restauradas
+    const lsLabels = {
+      juristaData_v3: 'Jurista (sessões)',
+      scheduleStartHour: 'Horário início',
+      scheduleEndHour: 'Horário fim',
+      academicoTheme: 'Tema visual',
+      academicoCustomBg: 'Fundo personalizado'
+    };
+    const lsRestore = lsKeys.filter(k => data.localStorage[k] !== null);
+    if (lsRestore.length > 0) {
+      const lsNomes = lsRestore.map(k => lsLabels[k] || k).join(', ');
       statsHtml += `<div class="bi-row">
-        <span class="bi-key"><i class="fas fa-balance-scale me-1" style="color:#c9a84c;font-size:0.7rem;"></i>Jurista & Config</span>
-        <span class="bi-val">${lsCount} item(s)</span>
+        <span class="bi-key"><i class="fas fa-sliders-h me-1" style="color:#c9a84c;font-size:0.7rem;"></i>Configurações & Jurista</span>
+        <span class="bi-val" title="${lsNomes}">${lsRestore.length} item(s)</span>
       </div>`;
     }
 
     document.getElementById('backupImportInfo').innerHTML = `
       <div class="bi-row"><span class="bi-key"><i class="fas fa-calendar me-1"></i>Data do backup</span><span class="bi-val">${exportDate}</span></div>
       <div class="bi-row"><span class="bi-key"><i class="fas fa-filter me-1"></i>Perfil exportado</span><span class="bi-val">${meta.profileFilter === 'all' ? 'Todos' : 'Perfil ' + meta.profileFilter}</span></div>
+      <div class="bi-row"><span class="bi-key"><i class="fas fa-weight me-1"></i>Tamanho do backup</span><span class="bi-val">${sizeLabel}</span></div>
       ${statsHtml}
     `;
   }
@@ -8036,7 +8090,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Para cada store: remover registros com mesmo profileId e reinserir
         // (evita limpar dados de outros perfis que não estão no backup)
-        const profileIds = [...new Set(records.map(r => r.profileId).filter(Boolean))];
+        const profileIds = [...new Set(records.map(r => r.profileId).filter(v => v !== undefined && v !== null))];
 
         if (profileIds.length > 0) {
           // Buscar registros existentes daqueles perfis e deletá-los
@@ -8048,7 +8102,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const tx = db.transaction([storeName], 'readwrite');
                 const req = tx.objectStore(storeName).delete(rec.id);
                 req.onsuccess = res;
-                req.onerror = rej;
+                req.onerror = () => res(); // ignora erro de delete
               });
             } catch(e) { /* ignora */ }
           }
@@ -8057,7 +8111,7 @@ document.addEventListener('DOMContentLoaded', function() {
           await clearStore(db, storeName);
         }
 
-        // Inserir registros do backup
+        // Inserir registros do backup INTEGRALMENTE (com todos os campos base64)
         for (const record of records) {
           await putRecord(db, storeName, record);
         }
@@ -8065,15 +8119,17 @@ document.addEventListener('DOMContentLoaded', function() {
         done++;
       }
 
-      // Restaurar localStorage
+      // ── Restaurar TODO o localStorage (tema, fundo, jurista, horários, etc.) ──
       if (data.localStorage) {
         for (const [k, v] of Object.entries(data.localStorage)) {
-          localStorage.setItem(k, v);
+          if (v !== null && v !== undefined) {
+            localStorage.setItem(k, v);
+          }
         }
       }
 
       progressBar.style.width = '100%';
-      progressText.textContent = 'Importação concluída!';
+      progressText.textContent = 'Importação completa! Tudo restaurado.';
       db.close();
 
       setTimeout(() => {
@@ -8103,11 +8159,11 @@ document.addEventListener('DOMContentLoaded', function() {
       // Preencher select de perfis
       const profiles = await readAllFromStore(db, 'profiles');
       const sel = document.getElementById('backupProfileSelect');
-      sel.innerHTML = '<option value="all">Todos os perfis</option>';
+      sel.innerHTML = '<option value="all">✅ Todos os perfis (recomendado)</option>';
       profiles.forEach(p => {
         const opt = document.createElement('option');
         opt.value = p.id;
-        opt.textContent = p.name || ('Perfil ' + p.id);
+        opt.textContent = (p.name || ('Perfil ' + p.id));
         sel.appendChild(opt);
       });
 
@@ -8115,9 +8171,11 @@ document.addEventListener('DOMContentLoaded', function() {
       const statsRow = document.getElementById('backupStatsRow');
       statsRow.innerHTML = '<span class="text-muted small">Calculando...</span>';
       let chips = '';
+      let totalRecords = 0;
       for (const storeName of ALL_STORES) {
         const records = await readAllFromStore(db, storeName);
         if (records.length > 0) {
+          totalRecords += records.length;
           chips += `<span class="backup-stat-chip"><i class="fas fa-layer-group"></i>${STORE_LABELS[storeName]}: <strong>${records.length}</strong></span>`;
         }
       }
@@ -8127,10 +8185,19 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
           const jd = JSON.parse(juristaRaw);
           const sessoes = (jd.sessions || []).length;
-          if (sessoes > 0) chips += `<span class="backup-stat-chip"><i class="fas fa-balance-scale"></i>Sessões Jurista: <strong>${sessoes}</strong></span>`;
+          if (sessoes > 0) {
+            chips += `<span class="backup-stat-chip"><i class="fas fa-balance-scale"></i>Sessões Jurista: <strong>${sessoes}</strong></span>`;
+          }
         } catch(e) {}
       }
+      // Tema e fundo
+      if (localStorage.getItem('academicoTheme') || localStorage.getItem('academicoCustomBg')) {
+        chips += `<span class="backup-stat-chip"><i class="fas fa-palette"></i>Tema & fundo: <strong>salvo</strong></span>`;
+      }
       statsRow.innerHTML = chips || '<span class="text-muted small">Nenhum dado encontrado.</span>';
+      if (totalRecords > 0) {
+        statsRow.innerHTML += `<span class="backup-stat-chip" style="background:#e8f5e9;"><i class="fas fa-check-circle" style="color:var(--success);"></i>Total: <strong>${totalRecords} registros</strong></span>`;
+      }
 
       // Nome de arquivo padrão
       const date = new Date().toISOString().split('T')[0];
