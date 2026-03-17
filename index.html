@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2392,6 +2393,103 @@
     .btn-status-entregue  { background: rgba(39,174,96,0.12); border:1.5px solid #27ae60; color:#1e8449; }
     .btn-status-entregue:hover  { background:#27ae60; color:#fff; }
     .btn-status-active { opacity:0.45; cursor:default; pointer-events:none; }
+
+    /* ===== FILE VIEWER OVERLAY (importado do ImobiPro) ===== */
+    .file-viewer-overlay {
+        position:fixed; top:0; left:0; width:100vw; height:100vh;
+        height: 100dvh;
+        background:rgba(0,0,0,0.97); z-index:99999;
+        display:none; flex-direction:column;
+        overflow: hidden;
+    }
+    .file-viewer-overlay.active { display:flex; animation: fvFadeIn 0.22s ease; }
+    @keyframes fvFadeIn { from { opacity:0; } to { opacity:1; } }
+    .file-viewer-header {
+        display:flex; align-items:center; gap:12px;
+        padding: calc(14px + env(safe-area-inset-top)) 16px 14px;
+        background: rgba(20,20,20,0.95); backdrop-filter:blur(10px);
+        -webkit-backdrop-filter:blur(10px);
+        flex-shrink:0;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .file-viewer-title { color:white; font-size:0.9rem; font-weight:700; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .file-viewer-counter {
+        color: rgba(255,255,255,0.55); font-size:0.75rem; font-weight:600;
+        flex-shrink:0; white-space:nowrap;
+    }
+    .file-viewer-close {
+        background: rgba(255,255,255,0.15); border:none; color:white;
+        width:36px; height:36px; border-radius:50%; cursor:pointer;
+        display:flex; align-items:center; justify-content:center; font-size:1rem;
+        flex-shrink:0;
+    }
+    .file-viewer-close:active { background: rgba(255,255,255,0.3); }
+    .file-viewer-body {
+        flex:1; overflow:auto; display:flex;
+        align-items:center; justify-content:center;
+        -webkit-overflow-scrolling: touch;
+        min-height: 0;
+        padding: 8px;
+        position: relative;
+    }
+    .file-viewer-body iframe {
+        width:100%; height:100%; border:none; display:block;
+    }
+    .file-viewer-body img {
+        max-width:100%; max-height:100%; object-fit:contain; border-radius:4px;
+        transform-origin: center center;
+        transition: transform 0.2s ease;
+    }
+    .fv-nav-arrow {
+        position: absolute; top: 50%; transform: translateY(-50%);
+        background: rgba(255,255,255,0.15); border: none; color: white;
+        width: 40px; height: 56px; border-radius: 8px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem; z-index: 10; transition: background 0.15s;
+        backdrop-filter: blur(6px);
+    }
+    .fv-nav-arrow:active { background: rgba(255,255,255,0.3); }
+    .fv-nav-arrow.left { left: 6px; }
+    .fv-nav-arrow.right { right: 6px; }
+    .fv-nav-arrow[disabled] { opacity: 0.25; pointer-events: none; }
+    .file-viewer-strip {
+        display: flex; gap: 6px; overflow-x: auto; align-items: center;
+        padding: 8px 12px; background: rgba(15,15,15,0.92);
+        -webkit-overflow-scrolling: touch;
+        border-top: 1px solid rgba(255,255,255,0.08);
+        flex-shrink: 0;
+    }
+    .file-viewer-strip::-webkit-scrollbar { height: 0; }
+    .fv-strip-thumb {
+        width: 48px; height: 48px; border-radius: 7px; flex-shrink: 0;
+        overflow: hidden; cursor: pointer; border: 2px solid transparent;
+        transition: border-color 0.15s, transform 0.15s;
+        background: rgba(255,255,255,0.08);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .fv-strip-thumb.active { border-color: #1abc9c; transform: scale(1.08); }
+    .fv-strip-thumb:active { transform: scale(0.94); }
+    .fv-strip-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .fv-strip-thumb-pdf { font-size: 1.5rem; }
+    .file-viewer-toolbar {
+        display:flex; gap:8px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+        background: rgba(20,20,20,0.95); backdrop-filter:blur(10px);
+        -webkit-backdrop-filter:blur(10px);
+        flex-shrink:0; justify-content:center;
+        border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .file-viewer-btn {
+        background:rgba(255,255,255,0.15); border:none; color:white;
+        padding: 8px 16px; border-radius:8px; cursor:pointer;
+        font-size:0.82rem; font-weight:600;
+        display:flex; align-items:center; gap:6px;
+        min-width: 44px; min-height: 44px;
+        justify-content: center;
+    }
+    .file-viewer-btn:active { background: rgba(255,255,255,0.3); }
+    @keyframes fvSpin { to { transform: rotate(360deg); } }
+    #academico-file-viewer-toolbar { flex-wrap: wrap; gap: 6px; }
+    #academico-pdf-page-info { color:white; font-size:0.8rem; font-weight:700; min-width:70px; text-align:center; display:flex; align-items:center; justify-content:center; }
   </style>
 </head>
 <body>
@@ -4021,36 +4119,90 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Mapa global: livroId → array de anexos (para o AcadViewer navegar)
+    const _bibliotecaAnexosMap = {};
+
     async function renderBiblioteca(data) {
         const container = document.getElementById('biblioteca-lista');
         container.innerHTML = '';
         if (!data.biblioteca.length) { container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Adicionar Livro".</p></div></div>'; return; }
+
         data.biblioteca.forEach(l => {
-            // Build anexos HTML
-            let anexosHtml = '';
             const anexos = l.anexos || [];
+
+            // Armazena a lista de anexos deste livro no mapa global
+            const livroIdSafe = 'livro_' + String(l.id).replace(/[^a-zA-Z0-9_-]/g, '');
+            _bibliotecaAnexosMap[livroIdSafe] = anexos;
+
+            // Build anexos HTML — botões que abrem o AcadViewer com lista completa
+            let anexosHtml = '';
             if (anexos.length > 0) {
-                anexosHtml = `<div class="livro-anexo-area"><div class="biblioteca-label-section"><i class="fas fa-paperclip"></i> Arquivos (${anexos.length})</div>`;
-                anexos.forEach(a => {
-                    const tipo = a.tipo || '';
-                    const nome = a.nome || 'arquivo';
-                    let iconClass = 'fa-file text-secondary';
-                    if (tipo === 'application/pdf' || nome.endsWith('.pdf')) iconClass = 'fa-file-pdf text-danger';
-                    else if (tipo.includes('word') || nome.endsWith('.docx')) iconClass = 'fa-file-word text-primary';
-                    else if (tipo.startsWith('image/')) iconClass = 'fa-image text-success';
-                    const dadosEncoded = encodeURIComponent(a.dados || '');
-                    const tipoEncoded = encodeURIComponent(tipo);
-                    const nomeEncoded = encodeURIComponent(nome);
-                    anexosHtml += `<div class="livro-anexo-item">
-                        <i class="fas ${iconClass}"></i>
-                        <span class="livro-anexo-nome" title="${nome}">${nome}</span>
-                        <div class="livro-anexo-actions">
-                            <button type="button" class="btn btn-xs btn-outline-info py-0 px-1 attachment-icon" style="font-size:0.75rem;" data-dados="${dadosEncoded}" data-tipo="${tipoEncoded}" data-nome="${nomeEncoded}" title="Visualizar"><i class="fas fa-eye"></i></button>
-                        </div>
-                    </div>`;
-                });
-                anexosHtml += `</div>`;
+                // Botão principal: abre o primeiro arquivo diretamente no viewer
+                const primeiro = anexos[0];
+                const tipoPrimeiro = primeiro.tipo || '';
+                const nomePrimeiro = primeiro.nome || 'arquivo';
+                const isPdf = tipoPrimeiro === 'application/pdf' || nomePrimeiro.toLowerCase().endsWith('.pdf');
+                const isImg = tipoPrimeiro.startsWith('image/');
+
+                let btnPrincipalIcon, btnPrincipalLabel, btnPrincipalStyle;
+                if (isPdf) {
+                    btnPrincipalIcon = 'fa-file-pdf';
+                    btnPrincipalLabel = anexos.length === 1 ? 'Abrir PDF' : `Abrir (${anexos.length} arquivos)`;
+                    btnPrincipalStyle = 'background:linear-gradient(135deg,#e74c3c,#c0392b);color:white;border:none;';
+                } else if (isImg) {
+                    btnPrincipalIcon = 'fa-image';
+                    btnPrincipalLabel = 'Ver imagem';
+                    btnPrincipalStyle = 'background:linear-gradient(135deg,#27ae60,#1e8449);color:white;border:none;';
+                } else {
+                    btnPrincipalIcon = 'fa-file';
+                    btnPrincipalLabel = 'Abrir arquivo';
+                    btnPrincipalStyle = 'background:linear-gradient(135deg,#3498db,#2980b9);color:white;border:none;';
+                }
+
+                // Se houver múltiplos arquivos, exibe lista com botão individual por arquivo
+                let itensHtml = '';
+                if (anexos.length > 1) {
+                    itensHtml = `<div class="livro-anexo-area mt-2" id="livro-anexos-lista-${livroIdSafe}" style="display:none;">`;
+                    anexos.forEach((a, idx) => {
+                        const tipo = a.tipo || '';
+                        const nome = a.nome || 'arquivo';
+                        let icone = 'fa-file text-secondary';
+                        if (tipo === 'application/pdf' || nome.toLowerCase().endsWith('.pdf')) icone = 'fa-file-pdf text-danger';
+                        else if (tipo.includes('word') || nome.toLowerCase().endsWith('.docx')) icone = 'fa-file-word text-primary';
+                        else if (tipo.startsWith('image/')) icone = 'fa-image text-success';
+                        itensHtml += `<div class="livro-anexo-item">
+                            <i class="fas ${icone}"></i>
+                            <span class="livro-anexo-nome" title="${nome.replace(/"/g,'&quot;')}">${nome}</span>
+                            <div class="livro-anexo-actions">
+                                <button type="button" class="btn btn-xs btn-outline-primary py-0 px-1 livro-open-viewer"
+                                    data-livro-id="${livroIdSafe}" data-anexo-idx="${idx}"
+                                    style="font-size:0.72rem;" title="Abrir no leitor">
+                                    <i class="fas fa-eye"></i> Ver
+                                </button>
+                            </div>
+                        </div>`;
+                    });
+                    itensHtml += `</div>`;
+                }
+
+                anexosHtml = `<div class="mt-3">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <button type="button" class="btn btn-sm livro-open-viewer"
+                            data-livro-id="${livroIdSafe}" data-anexo-idx="0"
+                            style="${btnPrincipalStyle} border-radius:8px; padding:7px 14px; font-size:0.82rem; font-weight:700; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(0,0,0,0.18); transition:opacity 0.15s;"
+                            onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                            <i class="fas ${btnPrincipalIcon}"></i> ${btnPrincipalLabel}
+                        </button>
+                        ${anexos.length > 1 ? `<button type="button" class="btn btn-sm btn-outline-secondary livro-toggle-lista"
+                            data-target="livro-anexos-lista-${livroIdSafe}"
+                            style="border-radius:8px; font-size:0.78rem; padding:6px 12px;">
+                            <i class="fas fa-list"></i> Ver lista
+                        </button>` : ''}
+                    </div>
+                    ${itensHtml}
+                </div>`;
             }
+
             // Build link HTML
             let linkHtml = '';
             if (l.link) {
@@ -4077,6 +4229,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 ${linkHtml}
                 ${anexosHtml}
             </div></div></div>`;
+        });
+
+        // Delegação de eventos para botões do viewer da biblioteca
+        container.querySelectorAll('.livro-open-viewer').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.preventDefault();
+                const livroId = btn.dataset.livroId;
+                const idx = parseInt(btn.dataset.anexoIdx) || 0;
+                const lista = _bibliotecaAnexosMap[livroId];
+                if (!lista || !lista[idx]) { console.warn('Anexo não encontrado:', livroId, idx); return; }
+                const a = lista[idx];
+                if (!a.dados) { alert('Este arquivo não possui dados armazenados para visualização.'); return; }
+                AcadViewer.openFromBase64(a.dados, a.tipo || 'application/octet-stream', a.nome || 'arquivo', lista, idx);
+            });
+        });
+
+        container.querySelectorAll('.livro-toggle-lista').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.preventDefault();
+                const target = document.getElementById(btn.dataset.target);
+                if (!target) return;
+                const isVisible = target.style.display !== 'none';
+                target.style.display = isVisible ? 'none' : 'block';
+                btn.innerHTML = isVisible
+                    ? '<i class="fas fa-list"></i> Ver lista'
+                    : '<i class="fas fa-chevron-up"></i> Ocultar lista';
+            });
         });
     }
 
@@ -8604,6 +8783,468 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 </div>
+
+<!-- ===== FILE VIEWER OVERLAY (importado do ImobiPro) ===== -->
+<div class="file-viewer-overlay" id="academico-file-viewer-overlay">
+    <div class="file-viewer-header">
+        <button class="file-viewer-close" onclick="AcadViewer.closeViewer()"><i class="fas fa-times"></i></button>
+        <div class="file-viewer-title" id="academico-file-viewer-title">Arquivo</div>
+        <div class="file-viewer-counter" id="academico-file-viewer-counter"></div>
+        <button class="file-viewer-btn" onclick="AcadViewer.downloadCurrentFile()" style="padding:6px 12px;font-size:0.75rem;flex-shrink:0;" title="Baixar arquivo">
+            <i class="fas fa-download"></i>
+        </button>
+    </div>
+    <div class="file-viewer-body" id="academico-file-viewer-body">
+        <button class="fv-nav-arrow left" id="academico-fv-arrow-prev" onclick="AcadViewer.viewerPrevFile()" style="display:none;"><i class="fas fa-chevron-left"></i></button>
+        <button class="fv-nav-arrow right" id="academico-fv-arrow-next" onclick="AcadViewer.viewerNextFile()" style="display:none;"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div class="file-viewer-strip" id="academico-file-viewer-strip" style="display:none;"></div>
+    <div class="file-viewer-toolbar" id="academico-file-viewer-toolbar">
+        <button class="file-viewer-btn" onclick="AcadViewer.zoomOut()"><i class="fas fa-search-minus"></i></button>
+        <button class="file-viewer-btn" id="academico-zoom-pct-label" onclick="AcadViewer.zoomReset()">100%</button>
+        <button class="file-viewer-btn" onclick="AcadViewer.zoomIn()"><i class="fas fa-search-plus"></i></button>
+    </div>
+</div>
+
+<script>
+// ===== AcadViewer — Viewer de arquivos completo (baseado no ImobiPro) =====
+const AcadViewer = {
+    _viewerFile: null,
+    _activeBlob: null,
+    _currentBlobURL: null,
+    _viewerZoom: 1,
+    _pdfDoc: null,
+    _pdfPage: 1,
+    _pdfTotalPages: 1,
+    _renderTask: null,
+    _pdfjsReady: null,
+    _viewerAnexos: null,
+    _viewerAnexoIdx: 0,
+
+    // Abre um arquivo a partir de base64 + tipo + nome
+    openFromBase64(base64, tipo, nome, allAnexos, activeIdx) {
+        const overlay = document.getElementById('academico-file-viewer-overlay');
+        if (!overlay) return;
+        overlay.classList.add('active');
+        this._initViewerSwipe();
+
+        this._viewerAnexos = allAnexos || [{ dados: base64, tipo, nome }];
+        this._viewerAnexoIdx = activeIdx !== undefined ? activeIdx : 0;
+
+        const body = document.getElementById('academico-file-viewer-body');
+        const titleEl = document.getElementById('academico-file-viewer-title');
+        if (titleEl) titleEl.textContent = nome || 'Arquivo';
+
+        // Spinner
+        if (body) {
+            const arrows = Array.from(body.querySelectorAll('.fv-nav-arrow'));
+            body.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;gap:16px;padding:32px;width:100%;height:100%;">
+                <div style="width:48px;height:48px;border:4px solid rgba(255,255,255,0.15);border-top-color:#1abc9c;border-radius:50%;animation:fvSpin 0.8s linear infinite;"></div>
+                <div style="font-size:0.9rem;opacity:0.8;">Carregando...</div>
+            </div>`;
+            arrows.forEach(a => body.appendChild(a));
+        }
+
+        const blob = this._base64ToBlob(base64, tipo);
+        this._activeBlob = blob;
+        this._viewerFile = { dados: base64, tipo, nome };
+        this._viewerZoom = 1;
+        this._pdfDoc = null;
+        this._pdfPage = 1;
+
+        const toolbar = document.getElementById('academico-file-viewer-toolbar');
+        const isPdf = tipo === 'application/pdf' || (nome || '').toLowerCase().endsWith('.pdf');
+
+        if (isPdf && blob) {
+            this._renderPdfFromBlob(blob, body, toolbar, { dados: base64, tipo, nome });
+        } else if (tipo.startsWith('image/') || isPdf === false) {
+            this._renderImage(base64, tipo, nome, body, toolbar);
+        } else {
+            // Fallback genérico
+            this._openGenericFallback({ dados: base64, tipo, nome }, body, toolbar);
+        }
+
+        this._renderViewerStrip(this._viewerAnexos, this._viewerAnexoIdx);
+        this._updateNavArrows();
+    },
+
+    _renderImage(base64, tipo, nome, body, toolbar) {
+        const arrows = Array.from(body.querySelectorAll('.fv-nav-arrow'));
+        body.innerHTML = '';
+        arrows.forEach(a => body.appendChild(a));
+        const img = document.createElement('img');
+        img.id = 'academico-viewer-img';
+        img.alt = nome || 'Imagem';
+        img.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;border-radius:4px;transform-origin:center center;transition:transform 0.2s ease;cursor:zoom-in;';
+        img.ondblclick = () => { this._viewerZoom = this._viewerZoom === 1 ? 2 : 1; this._applyZoom(); };
+        img.onerror = () => {
+            body.querySelectorAll(':not(.fv-nav-arrow)').forEach(el => el.remove());
+            const errDiv = document.createElement('div');
+            errDiv.style.cssText = 'text-align:center;color:white;padding:32px;';
+            errDiv.innerHTML = '<div style="font-size:4rem;margin-bottom:16px;">🖼️</div><div style="font-size:0.85rem;opacity:0.7;">Não foi possível exibir a imagem</div>';
+            body.appendChild(errDiv);
+            if (toolbar) toolbar.style.display = 'none';
+        };
+        img.src = base64;
+        body.appendChild(img);
+        if (toolbar) {
+            toolbar.innerHTML = `
+                <button class="file-viewer-btn" onclick="AcadViewer.zoomOut()"><i class="fas fa-search-minus"></i></button>
+                <button class="file-viewer-btn" id="academico-zoom-pct-label" onclick="AcadViewer.zoomReset()">100%</button>
+                <button class="file-viewer-btn" onclick="AcadViewer.zoomIn()"><i class="fas fa-search-plus"></i></button>`;
+            toolbar.style.display = 'flex';
+        }
+    },
+
+    async _renderPdfFromBlob(blob, body, toolbar, meta) {
+        const arrows = Array.from(body.querySelectorAll('.fv-nav-arrow'));
+        body.innerHTML = `<div id="academico-pdf-loading" style="display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;gap:16px;padding:32px;width:100%;height:100%;"><div style="width:48px;height:48px;border:4px solid rgba(255,255,255,0.15);border-top-color:#1abc9c;border-radius:50%;animation:fvSpin 0.8s linear infinite;"></div><div style="font-size:0.9rem;opacity:0.8;">Carregando PDF...</div></div>`;
+        arrows.forEach(a => body.appendChild(a));
+        try {
+            const pdfjs = await this._loadPdfJs();
+            const arrayBuffer = await blob.arrayBuffer();
+            const uint8 = new Uint8Array(arrayBuffer);
+            const loadEl = document.getElementById('academico-pdf-loading');
+            if (loadEl) loadEl.remove();
+            const pdfDoc = await pdfjs.getDocument({ data: uint8 }).promise;
+            this._pdfDoc = pdfDoc;
+            this._pdfPage = 1;
+            this._pdfTotalPages = pdfDoc.numPages;
+            const arrs2 = Array.from(body.querySelectorAll('.fv-nav-arrow'));
+            body.innerHTML = `<div id="academico-pdf-viewer-wrap" style="display:flex;flex-direction:column;align-items:center;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:8px 4px;"><canvas id="academico-pdf-canvas" style="max-width:100%;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,0.5);display:block;"></canvas></div>`;
+            arrs2.forEach(a => body.appendChild(a));
+            toolbar.innerHTML = `
+                <button class="file-viewer-btn" onclick="AcadViewer.pdfPrevPage()" id="academico-pdf-prev-btn"><i class="fas fa-chevron-left"></i></button>
+                <span id="academico-pdf-page-info" style="color:white;font-size:0.8rem;font-weight:700;min-width:80px;text-align:center;display:flex;align-items:center;justify-content:center;">1 / ${pdfDoc.numPages}</span>
+                <button class="file-viewer-btn" onclick="AcadViewer.pdfNextPage()" id="academico-pdf-next-btn"><i class="fas fa-chevron-right"></i></button>
+                <div style="width:1px;height:28px;background:rgba(255,255,255,0.15);margin:0 2px;"></div>
+                <button class="file-viewer-btn" onclick="AcadViewer.zoomOut()"><i class="fas fa-search-minus"></i></button>
+                <button class="file-viewer-btn" id="academico-zoom-pct-label" onclick="AcadViewer.zoomReset()" style="min-width:52px;">100%</button>
+                <button class="file-viewer-btn" onclick="AcadViewer.zoomIn()"><i class="fas fa-search-plus"></i></button>
+                <div style="width:1px;height:28px;background:rgba(255,255,255,0.15);margin:0 2px;"></div>
+                <button class="file-viewer-btn" onclick="AcadViewer.downloadCurrentFile()" title="Baixar"><i class="fas fa-download"></i></button>`;
+            toolbar.style.display = 'flex';
+            await this._renderPdfPage(1);
+        } catch(e) {
+            console.error('PDF render falhou:', e);
+            const loadEl = document.getElementById('academico-pdf-loading');
+            if (loadEl) loadEl.remove();
+            this._pdfjsReady = null;
+            this._openPdfFallback(meta, body, toolbar);
+        }
+    },
+
+    async _renderPdfPage(pageNum) {
+        if (!this._pdfDoc) return;
+        const canvas = document.getElementById('academico-pdf-canvas');
+        if (!canvas) return;
+        if (this._renderTask) { try { this._renderTask.cancel(); } catch(_) {} }
+        const page = await this._pdfDoc.getPage(pageNum);
+        const wrap = document.getElementById('academico-pdf-viewer-wrap');
+        const maxW = Math.max((wrap ? wrap.clientWidth : window.innerWidth) - 24, 100);
+        const viewport = page.getViewport({ scale: 1 });
+        const dpr = window.devicePixelRatio || 1;
+        const scale = (maxW / viewport.width) * this._viewerZoom;
+        const scaledViewport = page.getViewport({ scale });
+        canvas.width = Math.floor(scaledViewport.width * dpr);
+        canvas.height = Math.floor(scaledViewport.height * dpr);
+        canvas.style.width = scaledViewport.width + 'px';
+        canvas.style.height = scaledViewport.height + 'px';
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        this._renderTask = page.render({ canvasContext: ctx, viewport: scaledViewport });
+        await this._renderTask.promise;
+        this._renderTask = null;
+        const info = document.getElementById('academico-pdf-page-info');
+        if (info) info.textContent = `${pageNum} / ${this._pdfTotalPages}`;
+        const lbl = document.getElementById('academico-zoom-pct-label');
+        if (lbl) lbl.textContent = Math.round(this._viewerZoom * 100) + '%';
+        const prev = document.getElementById('academico-pdf-prev-btn');
+        const next = document.getElementById('academico-pdf-next-btn');
+        if (prev) prev.style.opacity = pageNum <= 1 ? '0.4' : '1';
+        if (next) next.style.opacity = pageNum >= this._pdfTotalPages ? '0.4' : '1';
+    },
+
+    _openPdfFallback(meta, body, toolbar) {
+        const blobURL = this._activeBlob ? URL.createObjectURL(this._activeBlob) : null;
+        if (blobURL) this._currentBlobURL = blobURL;
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (blobURL && !isMobile) {
+            const arrows = Array.from(body.querySelectorAll('.fv-nav-arrow'));
+            body.innerHTML = '';
+            arrows.forEach(a => body.appendChild(a));
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;background:#fff;';
+            iframe.src = blobURL;
+            body.appendChild(iframe);
+            if (toolbar) toolbar.style.display = 'none';
+            let loaded = false;
+            const t = setTimeout(() => { if (!loaded) this._showPdfDownloadFallback(body, meta, blobURL); }, 5000);
+            iframe.onload = () => { loaded = true; clearTimeout(t); };
+            iframe.onerror = () => { clearTimeout(t); this._showPdfDownloadFallback(body, meta, blobURL); };
+        } else {
+            this._showPdfDownloadFallback(body, meta, blobURL);
+        }
+    },
+
+    _showPdfDownloadFallback(body, meta, blobURL) {
+        const arrows = Array.from(body.querySelectorAll('.fv-nav-arrow'));
+        body.innerHTML = '';
+        arrows.forEach(a => body.appendChild(a));
+        const nome = (meta.nome || 'PDF').replace(/[<>]/g, '');
+        const div = document.createElement('div');
+        div.style.cssText = 'text-align:center;color:white;padding:40px 20px;max-width:320px;margin:auto;';
+        div.innerHTML = `
+            <div style="font-size:4rem;margin-bottom:16px;">📑</div>
+            <div style="font-size:1rem;font-weight:700;margin-bottom:6px;">${nome}</div>
+            <div style="font-size:0.8rem;opacity:0.6;margin-bottom:28px;line-height:1.5;">Visualização inline não disponível. Use as opções abaixo.</div>
+            <div style="display:flex;flex-direction:column;gap:12px;align-items:center;">
+                ${blobURL ? `<button onclick="window.open('${blobURL}','_blank')" style="background:linear-gradient(135deg,#1abc9c,#27ae60);color:white;border:none;padding:14px 32px;border-radius:12px;font-size:0.95rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;width:100%;max-width:240px;justify-content:center;box-shadow:0 4px 16px rgba(26,188,156,0.4);">
+                    <i class="fas fa-external-link-alt"></i> Abrir PDF
+                </button>` : ''}
+                <button onclick="AcadViewer.downloadCurrentFile()" style="background:linear-gradient(135deg,#3498db,#2980b9);color:white;border:none;padding:14px 32px;border-radius:12px;font-size:0.95rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;width:100%;max-width:240px;justify-content:center;box-shadow:0 4px 16px rgba(52,152,219,0.4);">
+                    <i class="fas fa-download"></i> Baixar PDF
+                </button>
+            </div>`;
+        body.appendChild(div);
+    },
+
+    _openGenericFallback(meta, body, toolbar) {
+        const arrows = Array.from(body.querySelectorAll('.fv-nav-arrow'));
+        body.innerHTML = '';
+        arrows.forEach(a => body.appendChild(a));
+        const div = document.createElement('div');
+        div.style.cssText = 'text-align:center;color:white;padding:40px 20px;max-width:320px;margin:auto;';
+        div.innerHTML = `
+            <div style="font-size:4rem;margin-bottom:16px;">📄</div>
+            <div style="font-size:1rem;font-weight:700;margin-bottom:20px;">${(meta.nome||'Arquivo').replace(/[<>]/g,'')}</div>
+            <button onclick="AcadViewer.downloadCurrentFile()" style="background:linear-gradient(135deg,#3498db,#2980b9);color:white;border:none;padding:14px 32px;border-radius:12px;font-size:0.95rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;justify-content:center;box-shadow:0 4px 16px rgba(52,152,219,0.4);">
+                <i class="fas fa-download"></i> Baixar Arquivo
+            </button>`;
+        body.appendChild(div);
+        if (toolbar) toolbar.style.display = 'none';
+    },
+
+    async pdfNextPage() {
+        if (!this._pdfDoc || this._pdfPage >= this._pdfTotalPages) return;
+        this._pdfPage++;
+        await this._renderPdfPage(this._pdfPage);
+        const wrap = document.getElementById('academico-pdf-viewer-wrap');
+        if (wrap) wrap.scrollTop = 0;
+    },
+
+    async pdfPrevPage() {
+        if (!this._pdfDoc || this._pdfPage <= 1) return;
+        this._pdfPage--;
+        await this._renderPdfPage(this._pdfPage);
+        const wrap = document.getElementById('academico-pdf-viewer-wrap');
+        if (wrap) wrap.scrollTop = 0;
+    },
+
+    closeViewer() {
+        const overlay = document.getElementById('academico-file-viewer-overlay');
+        const body = document.getElementById('academico-file-viewer-body');
+        const strip = document.getElementById('academico-file-viewer-strip');
+        const counterEl = document.getElementById('academico-file-viewer-counter');
+        const toolbar = document.getElementById('academico-file-viewer-toolbar');
+        if (overlay) overlay.classList.remove('active');
+        if (body) {
+            const arrows = body.querySelectorAll('.fv-nav-arrow');
+            body.innerHTML = '';
+            arrows.forEach(a => { a.style.display = 'none'; body.appendChild(a); });
+            body._swipeInit = false;
+        }
+        if (strip) strip.style.display = 'none';
+        if (counterEl) counterEl.textContent = '';
+        if (this._currentBlobURL) { URL.revokeObjectURL(this._currentBlobURL); this._currentBlobURL = null; }
+        if (this._renderTask) { try { this._renderTask.cancel(); } catch(_) {} this._renderTask = null; }
+        this._viewerFile = null;
+        this._activeBlob = null;
+        this._viewerZoom = 1;
+        this._pdfDoc = null;
+        this._pdfPage = 1;
+        this._viewerAnexoIdx = 0;
+        this._viewerAnexos = null;
+        if (toolbar) toolbar.innerHTML = `
+            <button class="file-viewer-btn" onclick="AcadViewer.zoomOut()"><i class="fas fa-search-minus"></i></button>
+            <button class="file-viewer-btn" id="academico-zoom-pct-label" onclick="AcadViewer.zoomReset()">100%</button>
+            <button class="file-viewer-btn" onclick="AcadViewer.zoomIn()"><i class="fas fa-search-plus"></i></button>`;
+    },
+
+    zoomIn() {
+        this._viewerZoom = Math.min(3, this._viewerZoom + 0.25);
+        if (this._pdfDoc) { this._renderPdfPage(this._pdfPage); return; }
+        this._applyZoom();
+    },
+    zoomOut() {
+        this._viewerZoom = Math.max(0.5, this._viewerZoom - 0.25);
+        if (this._pdfDoc) { this._renderPdfPage(this._pdfPage); return; }
+        this._applyZoom();
+    },
+    zoomReset() {
+        this._viewerZoom = 1;
+        if (this._pdfDoc) { this._renderPdfPage(this._pdfPage); return; }
+        this._applyZoom();
+    },
+    _applyZoom() {
+        const img = document.getElementById('academico-viewer-img');
+        if (img) img.style.transform = `scale(${this._viewerZoom})`;
+        const lbl = document.getElementById('academico-zoom-pct-label');
+        if (lbl) lbl.textContent = Math.round(this._viewerZoom * 100) + '%';
+    },
+
+    downloadCurrentFile() {
+        const f = this._viewerFile;
+        if (!f) return;
+        if (this._activeBlob) {
+            const url = URL.createObjectURL(this._activeBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = f.nome || 'arquivo';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a); }, 1000);
+            return;
+        }
+        if (f.dados) {
+            const a = document.createElement('a');
+            a.href = f.dados;
+            a.download = f.nome || 'arquivo';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    },
+
+    _renderViewerStrip(anexos, activeIdx) {
+        const strip = document.getElementById('academico-file-viewer-strip');
+        if (!strip) return;
+        if (!anexos || anexos.length <= 1) { strip.style.display = 'none'; return; }
+        strip.style.display = 'flex';
+        strip.innerHTML = anexos.map((a, i) => {
+            const isPdf = a.tipo === 'application/pdf' || (a.nome||'').toLowerCase().endsWith('.pdf');
+            const isImg = a.tipo && a.tipo.startsWith('image/');
+            const thumbContent = isPdf
+                ? `<span class="fv-strip-thumb-pdf">📑</span>`
+                : (isImg && a.dados)
+                    ? `<img src="${a.dados}" alt="${a.nome||''}" style="width:100%;height:100%;object-fit:cover;" loading="lazy">`
+                    : `<span style="font-size:1.4rem;">📄</span>`;
+            return `<div class="fv-strip-thumb ${i === activeIdx ? 'active' : ''}" onclick="AcadViewer._viewerGoTo(${i})" title="${(a.nome||'').replace(/"/g,'&quot;')}">${thumbContent}</div>`;
+        }).join('');
+        const activThumb = strip.children[activeIdx];
+        if (activThumb) setTimeout(() => activThumb.scrollIntoView({ block:'nearest', inline:'center', behavior:'smooth' }), 80);
+    },
+
+    _updateNavArrows() {
+        const total = this._viewerAnexos ? this._viewerAnexos.length : 1;
+        const cur = this._viewerAnexoIdx;
+        const counterEl = document.getElementById('academico-file-viewer-counter');
+        const arrowPrev = document.getElementById('academico-fv-arrow-prev');
+        const arrowNext = document.getElementById('academico-fv-arrow-next');
+        if (counterEl) counterEl.textContent = total > 1 ? `${cur + 1} / ${total}` : '';
+        if (arrowPrev) { arrowPrev.style.display = total > 1 ? 'flex' : 'none'; arrowPrev.disabled = cur <= 0; }
+        if (arrowNext) { arrowNext.style.display = total > 1 ? 'flex' : 'none'; arrowNext.disabled = cur >= total - 1; }
+    },
+
+    _viewerGoTo(idx) {
+        if (!this._viewerAnexos || idx < 0 || idx >= this._viewerAnexos.length) return;
+        this._viewerAnexoIdx = idx;
+        const a = this._viewerAnexos[idx];
+        this.openFromBase64(a.dados, a.tipo, a.nome, this._viewerAnexos, idx);
+    },
+
+    viewerPrevFile() { this._viewerGoTo(this._viewerAnexoIdx - 1); },
+    viewerNextFile() { this._viewerGoTo(this._viewerAnexoIdx + 1); },
+
+    _initViewerSwipe() {
+        const body = document.getElementById('academico-file-viewer-body');
+        if (!body || body._swipeInit) return;
+        body._swipeInit = true;
+        let startX = 0, startY = 0;
+        body.addEventListener('touchstart', e => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        }, { passive: true });
+        body.addEventListener('touchend', e => {
+            const dx = e.changedTouches[0].clientX - startX;
+            const dy = e.changedTouches[0].clientY - startY;
+            if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+                const anexos = this._viewerAnexos || [];
+                if (anexos.length <= 1) return;
+                if (dx < 0) this.viewerNextFile();
+                else this.viewerPrevFile();
+            }
+        }, { passive: true });
+    },
+
+    _loadPdfJs() {
+        if (this._pdfjsReady) return this._pdfjsReady;
+        this._pdfjsReady = new Promise((resolve, reject) => {
+            if (window.pdfjsLib && window.pdfjsLib.getDocument) {
+                this._setupPdfjsWorker();
+                return resolve(window.pdfjsLib);
+            }
+            const tryLoad = (src, onFail) => {
+                const s = document.createElement('script');
+                s.crossOrigin = 'anonymous';
+                s.src = src;
+                s.onload = () => {
+                    if (!window.pdfjsLib) { onFail(); return; }
+                    this._setupPdfjsWorker();
+                    resolve(window.pdfjsLib);
+                };
+                s.onerror = onFail;
+                document.head.appendChild(s);
+            };
+            tryLoad(
+                'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js',
+                () => tryLoad(
+                    'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js',
+                    () => tryLoad(
+                        'https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.min.js',
+                        () => reject(new Error('PDF.js indisponível. Verifique sua conexão.'))
+                    )
+                )
+            );
+        });
+        return this._pdfjsReady;
+    },
+
+    _setupPdfjsWorker() {
+        if (!window.pdfjsLib || !window.pdfjsLib.GlobalWorkerOptions) return;
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+    },
+
+    _base64ToBlob(base64, mime) {
+        try {
+            const str = base64.includes(',') ? base64.split(',')[1] : base64;
+            const binaryStr = atob(str);
+            const bytes = new Uint8Array(binaryStr.length);
+            for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+            return new Blob([bytes], { type: mime || 'application/octet-stream' });
+        } catch(e) {
+            console.error('Erro ao converter base64 para blob:', e);
+            return null;
+        }
+    },
+};
+
+// Sobrescreve window.visualizarAnexo para usar o novo viewer
+window.visualizarAnexo = function(base64, tipo, nome) {
+    AcadViewer.openFromBase64(base64, tipo, nome, null, 0);
+};
+
+// Teclas de atalho no viewer
+document.addEventListener('keydown', (e) => {
+    const overlay = document.getElementById('academico-file-viewer-overlay');
+    if (!overlay || !overlay.classList.contains('active')) return;
+    if (e.key === 'Escape') AcadViewer.closeViewer();
+    else if (e.key === 'ArrowRight') AcadViewer.viewerNextFile();
+    else if (e.key === 'ArrowLeft') AcadViewer.viewerPrevFile();
+    else if (e.key === 'ArrowDown' && AcadViewer._pdfDoc) AcadViewer.pdfNextPage();
+    else if (e.key === 'ArrowUp' && AcadViewer._pdfDoc) AcadViewer.pdfPrevPage();
+});
+</script>
 
 </body>
 </html>
