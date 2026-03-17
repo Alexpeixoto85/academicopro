@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -11,6 +12,53 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* ===== NOTAS — FILTRO POR MATÉRIA ===== */
+    .notas-filter-bar {
+      background: white;
+      border-radius: 12px;
+      padding: 12px 16px;
+      box-shadow: var(--shadow);
+    }
+    .btn-filter-materia {
+      border-radius: 20px;
+      border: 2px solid #dee2e6;
+      background: white;
+      color: #34495e;
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 4px 14px;
+      transition: all 0.2s;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .btn-filter-materia:hover { border-color: #1abc9c; color: #1abc9c; }
+    .btn-filter-materia.active { background: #1abc9c; border-color: #1abc9c; color: white; }
+    .nota-materia-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(26,188,156,0.12);
+      color: #1abc9c;
+      border: 1px solid #1abc9c;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 10px;
+      margin-bottom: 6px;
+    }
+    .doc-materia-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(52,152,219,0.1);
+      color: #3498db;
+      border: 1px solid #3498db;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 10px;
+      margin-bottom: 6px;
+    }
     /* ===== ESTILOS ORIGINAIS (mantidos intactos) ===== */
     :root {
       --primary: #2c3e50;
@@ -2442,7 +2490,18 @@
     </div>
     
     <div class="tab-content" id="caderno-content">
-        <div class="tab-pane fade show active" id="notas-content" role="tabpanel"><div class="row g-4" id="notas-lista"></div></div>
+        <div class="tab-pane fade show active" id="notas-content" role="tabpanel">
+            <!-- Filtro por Matéria -->
+            <div class="notas-filter-bar mb-4" id="notasFilterBar">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="fw-semibold text-muted small me-1"><i class="fas fa-filter me-1"></i>Filtrar por:</span>
+                    <button class="btn btn-sm btn-filter-materia active" data-materia="todas">📚 Todas</button>
+                    <button class="btn btn-sm btn-filter-materia" data-materia="sem-materia">📌 Sem Matéria</button>
+                    <!-- Matérias dinâmicas injetadas por JS -->
+                </div>
+            </div>
+            <div class="row g-4" id="notas-lista"></div>
+        </div>
         
         <div class="tab-pane fade" id="desenho-content" role="tabpanel">
             <div class="card card-dashboard"><div class="card-body">
@@ -2473,7 +2532,7 @@
                 <div id="imageUploadArea" class="image-upload-area"><i class="fas fa-cloud-upload-alt fa-3x mb-3" style="color: var(--accent);"></i><h5>Clique para selecionar uma imagem</h5><p class="text-muted mb-0">ou arraste e solte aqui</p><input type="file" id="imageFileInput" accept="image/*" class="d-none"></div>
                 <div id="imagePreviewContainer" style="display: none;">
                     <div class="text-center mb-3"><div class="image-preview-container"><img id="imagePreview" class="image-preview" src="" alt="Preview"><button type="button" id="removeImageBtn" class="remove-image-btn"><i class="fas fa-times"></i></button></div></div>
-                    <form id="importImageForm"><div class="mb-3"><label for="importImageTitulo" class="form-label">Título da Imagem</label><input type="text" class="form-control" id="importImageTitulo" placeholder="Ex: Mapa Mental - Direito Civil" required></div><div class="mb-3"><label for="importImageDescricao" class="form-label">Descrição (opcional)</label><textarea class="form-control" id="importImageDescricao" rows="3" placeholder="Adicione uma descrição para esta imagem..."></textarea></div><button type="button" class="btn btn-primary" id="saveImportedImageBtn"><i class="fas fa-save"></i> Salvar Imagem como Nota</button></form>
+                    <form id="importImageForm"><div class="mb-3"><label for="importImageTitulo" class="form-label">Título da Imagem</label><input type="text" class="form-control" id="importImageTitulo" placeholder="Ex: Mapa Mental - Direito Civil" required></div><div class="mb-3"><label for="importImageDisciplina" class="form-label"><i class="fas fa-graduation-cap me-1 text-primary"></i>Matéria</label><select class="form-select" id="importImageDisciplina"><option value="">— Nenhuma matéria —</option></select></div><div class="mb-3"><label for="importImageDescricao" class="form-label">Descrição (opcional)</label><textarea class="form-control" id="importImageDescricao" rows="3" placeholder="Adicione uma descrição para esta imagem..."></textarea></div><button type="button" class="btn btn-primary" id="saveImportedImageBtn"><i class="fas fa-save"></i> Salvar Imagem como Nota</button></form>
                 </div>
             </div></div>
         </div>
@@ -2500,6 +2559,12 @@
                             <div class="mb-3">
                                 <label for="importDocumentTitulo" class="form-label">Título do Documento</label>
                                 <input type="text" class="form-control" id="importDocumentTitulo" placeholder="Ex: Resumo Direito Civil" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="importDocumentDisciplina" class="form-label"><i class="fas fa-graduation-cap me-1 text-primary"></i>Matéria</label>
+                                <select class="form-select" id="importDocumentDisciplina">
+                                    <option value="">— Nenhuma matéria —</option>
+                                </select>
                             </div>
                             <div class="mb-3">
                                 <label for="importDocumentDescricao" class="form-label">Descrição (opcional)</label>
@@ -3031,7 +3096,7 @@
 <!-- Modal Financeiro -->
 <div class="modal fade" id="financeiroModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Transação</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="financeiroForm"><input type="hidden" id="financeiroId"><input type="hidden" id="financeiroRecorrenteId" value=""><div class="mb-3"><label for="financeiroTipo" class="form-label">Tipo</label><select class="form-select" id="financeiroTipo"><option value="receita">Receita</option><option value="despesa">Despesa</option></select></div><div class="mb-3"><label for="financeiroDescricao" class="form-label">Descrição</label><input type="text" class="form-control" id="financeiroDescricao" required></div><div class="mb-3"><label for="financeiroValor" class="form-label">Valor</label><input type="number" step="0.01" class="form-control" id="financeiroValor" required></div><div class="mb-3"><label for="financeiroCategoria" class="form-label">Categoria</label><select class="form-select" id="financeiroCategoria"><option value="">Selecione</option><option value="Alimentação">Alimentação</option><option value="Transporte">Transporte</option><option value="Moradia">Moradia</option><option value="Educação">Educação</option><option value="Lazer">Lazer</option><option value="Saúde">Saúde</option><option value="Vestuário">Vestuário</option><option value="Outros">Outros</option></select></div><div class="mb-3"><label for="financeiroData" class="form-label">Data</label><input type="date" class="form-control" id="financeiroData" required></div><div class="mb-3" id="financeiroStatusWrapper" style="display: none;"><label for="financeiroStatus" class="form-label">Status</label><select class="form-select" id="financeiroStatus"><option value="pendente">Pendente</option><option value="pago">Pago</option></select></div><hr><div class="mb-3"><label for="financeiroRecurrence" class="form-label">Recorrência</label><select class="form-select" id="financeiroRecurrence"><option value="none" selected>Não repetir</option><option value="weekly">Semanalmente</option><option value="monthly">Mensalmente</option></select></div><div class="mb-3 d-none" id="financeiroRecurrenceEndDateWrapper"><label for="financeiroRecurrenceEndDate" class="form-label">Repetir até</label><input type="date" class="form-control" id="financeiroRecurrenceEndDate"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto d-none" id="deleteFinanceiro">Excluir</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveFinanceiro">Salvar</button></div></div></div></div>
 
-<div class="modal fade" id="notaModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Nota</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="notaForm"><input type="hidden" id="notaId"><div class="mb-3"><label for="notaTitulo" class="form-label">Título</label><input type="text" class="form-control" id="notaTitulo" required></div><div class="mb-3"><label for="notaConteudo" class="form-label">Conteúdo</label><textarea class="form-control" id="notaConteudo" rows="6"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto" id="deleteNota" style="display: none;">Excluir</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveNota">Salvar</button></div></div></div></div>
+<div class="modal fade" id="notaModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="notaModalLabel">Nova Nota</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="notaForm"><input type="hidden" id="notaId"><div class="mb-3"><label for="notaTitulo" class="form-label">Título</label><input type="text" class="form-control" id="notaTitulo" required></div><div class="mb-3"><label for="notaDisciplina" class="form-label"><i class="fas fa-graduation-cap me-1 text-primary"></i>Matéria <span class="text-muted small">(opcional)</span></label><select class="form-select" id="notaDisciplina"><option value="">— Nenhuma matéria —</option></select></div><div class="mb-3"><label for="notaConteudo" class="form-label">Conteúdo</label><textarea class="form-control" id="notaConteudo" rows="6"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto" id="deleteNota" style="display: none;">Excluir</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveNota">Salvar</button></div></div></div></div>
 
 <div class="modal fade" id="linkModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Link</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="linkForm"><input type="hidden" id="linkId"><div class="mb-3"><label for="linkTitulo" class="form-label">Título</label><input type="text" class="form-control" id="linkTitulo" required></div><div class="mb-3"><label for="linkUrl" class="form-label">URL</label><input type="url" class="form-control" id="linkUrl" placeholder="https://..." required></div><div class="mb-3"><label for="linkCategoria" class="form-label">Categoria</label><input type="text" class="form-control" id="linkCategoria"></div><div class="mb-3"><label for="linkDescricao" class="form-label">Descrição</label><textarea class="form-control" id="linkDescricao" rows="2"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveLink">Salvar</button></div></div></div></div>
 
@@ -3503,7 +3568,7 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'agenda': renderAgenda(data); break;
             case 'biblioteca': renderBiblioteca(data); break;
             case 'filmes': renderFilmes(data); break;
-            case 'caderno': renderNotas(data); renderDocumentos(data); renderGaleria(data); break;
+            case 'caderno': renderNotas(data); renderDocumentos(data); renderGaleria(data); populateNotaDisciplinaSelects(null); break;
             case 'links': renderLinks(data); break;
             case 'financeiro': renderFinanceiro(data); break;
             case 'relatorios': renderRelatorios(data); break;
@@ -4018,15 +4083,67 @@ document.addEventListener('DOMContentLoaded', function() {
     async function renderNotas(data) {
         const container = document.getElementById('notas-lista');
         container.innerHTML = '';
+        // Rebuild filter buttons based on disciplinas
+        const filterBar = document.getElementById('notasFilterBar');
+        if (filterBar) {
+            // Keep first two static buttons, remove old dynamic ones
+            const existing = filterBar.querySelectorAll('.btn-filter-materia[data-materia-dyn]');
+            existing.forEach(b => b.remove());
+            // Get disciplinas present in notes
+            const notasDisciplinas = new Set(data.notas.filter(n => n.tipo !== 'documento' && n.disciplinaId).map(n => n.disciplinaId));
+            notasDisciplinas.forEach(did => {
+                const d = data.disciplinas.find(d => d.id == did);
+                if (d) {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-sm btn-filter-materia';
+                    btn.dataset.materia = String(did);
+                    btn.dataset.materiaDyn = '1';
+                    btn.innerHTML = `<i class="fas fa-book me-1"></i>${d.nome}`;
+                    filterBar.querySelector('.d-flex').appendChild(btn);
+                    btn.addEventListener('click', () => {
+                        filterBar.querySelectorAll('.btn-filter-materia').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        renderNotasFiltered(data);
+                    });
+                }
+            });
+            // Re-wire static buttons
+            filterBar.querySelectorAll('.btn-filter-materia:not([data-materia-dyn])').forEach(btn => {
+                btn.onclick = () => {
+                    filterBar.querySelectorAll('.btn-filter-materia').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderNotasFiltered(data);
+                };
+            });
+        }
+        renderNotasFiltered(data);
+    }
+
+    function renderNotasFiltered(data) {
+        const container = document.getElementById('notas-lista');
+        container.innerHTML = '';
+        const filterBar = document.getElementById('notasFilterBar');
+        const activeBtn = filterBar ? filterBar.querySelector('.btn-filter-materia.active') : null;
+        const activeFilter = activeBtn ? activeBtn.dataset.materia : 'todas';
+
         let notas = data.notas.filter(n => n.tipo !== 'documento').sort((a,b)=>new Date(b.dataCriacao+'T12:00:00') - new Date(a.dataCriacao+'T12:00:00'));
-        if (!notas.length) { container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Nova Nota", desenhe algo ou importe imagem.</p></div></div>'; return; }
+
+        if (activeFilter === 'sem-materia') {
+            notas = notas.filter(n => !n.disciplinaId);
+        } else if (activeFilter !== 'todas') {
+            notas = notas.filter(n => String(n.disciplinaId) === activeFilter);
+        }
+
+        if (!notas.length) { container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Nenhuma nota encontrada para este filtro.</p></div></div>'; return; }
         notas.forEach(n => {
             let dataCri = new Date(n.dataCriacao+'T12:00:00').toLocaleDateString('pt-BR');
+            const disc = n.disciplinaId ? data.disciplinas.find(d => d.id == n.disciplinaId) : null;
+            const materiaTag = disc ? `<span class="nota-materia-badge"><i class="fas fa-graduation-cap"></i>${disc.nome}</span><br>` : '';
             if (n.imagem) {
-                container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-card card-dashboard" data-id="${n.id}"><div class="card-body"><div class="image-note-badge"><i class="fas fa-image"></i></div><div class="d-flex justify-content-between align-items-start mb-3"><h5 class="card-title">${n.titulo}</h5><div class="nota-acoes"><button class="btn btn-sm btn-outline-primary fullscreen-nota" data-id="${n.id}"><i class="fas fa-expand"></i></button><button class="btn btn-sm btn-outline-danger delete-nota" data-id="${n.id}"><i class="fas fa-trash"></i></button></div></div><div class="text-center"><img src="${n.imagem}" class="nota-imagem-preview" alt="${n.titulo}"></div>${n.conteudo?`<p class="card-text mt-2 small">${n.conteudo}</p>`:''}<div class="mt-3"><small class="nota-data">Criado em: ${dataCri}</small></div><button class="btn btn-sm btn-primary mt-2 view-image-btn" data-imagem="${n.imagem}" data-titulo="${n.titulo}"><i class="fas fa-eye"></i> Visualizar</button></div></div></div>`;
+                container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-card card-dashboard" data-id="${n.id}"><div class="card-body"><div class="image-note-badge"><i class="fas fa-image"></i></div>${materiaTag}<div class="d-flex justify-content-between align-items-start mb-3"><h5 class="card-title">${n.titulo}</h5><div class="nota-acoes"><button class="btn btn-sm btn-outline-primary fullscreen-nota" data-id="${n.id}"><i class="fas fa-expand"></i></button><button class="btn btn-sm btn-outline-danger delete-nota" data-id="${n.id}"><i class="fas fa-trash"></i></button></div></div><div class="text-center"><img src="${n.imagem}" class="nota-imagem-preview" alt="${n.titulo}"></div>${n.conteudo?`<p class="card-text mt-2 small">${n.conteudo}</p>`:''}<div class="mt-3"><small class="nota-data">Criado em: ${dataCri}</small></div><button class="btn btn-sm btn-primary mt-2 view-image-btn" data-imagem="${n.imagem}" data-titulo="${n.titulo}"><i class="fas fa-eye"></i> Visualizar</button></div></div></div>`;
             } else {
                 let preview = n.conteudo.length > 150 ? n.conteudo.substring(0,150)+'...' : n.conteudo;
-                container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-card card-dashboard" data-id="${n.id}"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-3"><h5 class="card-title">${n.titulo}</h5><div class="nota-acoes"><button class="btn btn-sm btn-outline-primary fullscreen-nota" data-id="${n.id}"><i class="fas fa-expand"></i></button><button class="btn btn-sm btn-outline-danger delete-nota" data-id="${n.id}"><i class="fas fa-trash"></i></button></div></div><div class="nota-conteudo"><p class="card-text">${preview.replace(/\n/g,'<br>')}</p></div><div class="mt-3"><small class="nota-data">Criado em: ${dataCri}</small></div></div></div></div>`;
+                container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-card card-dashboard" data-id="${n.id}"><div class="card-body">${materiaTag}<div class="d-flex justify-content-between align-items-start mb-3"><h5 class="card-title">${n.titulo}</h5><div class="nota-acoes"><button class="btn btn-sm btn-outline-primary fullscreen-nota" data-id="${n.id}"><i class="fas fa-expand"></i></button><button class="btn btn-sm btn-outline-danger delete-nota" data-id="${n.id}"><i class="fas fa-trash"></i></button></div></div><div class="nota-conteudo"><p class="card-text">${preview.replace(/\n/g,'<br>')}</p></div><div class="mt-3"><small class="nota-data">Criado em: ${dataCri}</small></div></div></div></div>`;
             }
         });
     }
@@ -4284,18 +4401,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function saveDrawingAsImage() {
         if (!canvas || ctx.getImageData(0,0,canvas.width,canvas.height).data.every(p=>p===0)) { alert('Canvas vazio!'); return; }
-        let titulo = prompt('Título do desenho:', `Desenho - ${new Date().toLocaleDateString('pt-BR')}`);
-        if (!titulo) return;
-        let imgData = canvas.toDataURL('image/png');
-        let pid = await getCurrentProfileId();
-        let nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: '', imagem: imgData, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'desenho' };
-        await saveData('notas', nota);
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        // Recarrega dados e renderiza painel atual
-        profileDataCache = null;
-        await loadProfileData();
-        if (activePanel === 'caderno') renderNotas(profileDataCache);
-        alert('Desenho salvo como imagem!');
+        await openQuickSaveModal('desenho', async (titulo, disciplinaId) => {
+            let imgData = canvas.toDataURL('image/png');
+            let pid = await getCurrentProfileId();
+            let nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: '', imagem: imgData, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'desenho', disciplinaId: disciplinaId || null };
+            await saveData('notas', nota);
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            profileDataCache = null;
+            await loadProfileData();
+            if (activePanel === 'caderno') renderNotas(profileDataCache);
+            alert('Desenho salvo como imagem!');
+        }, `Desenho - ${new Date().toLocaleDateString('pt-BR')}`);
     }
 
     function setupImageImport() {
@@ -4318,7 +4434,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!importedImageData) { alert('Nenhuma imagem.'); return; }
             if (!titulo.value.trim()) { alert('Título obrigatório.'); return; }
             let pid = await getCurrentProfileId();
-            let nota = { id: await getNewId('notas'), profileId: pid, titulo: titulo.value.trim(), conteudo: desc.value.trim(), imagem: importedImageData, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'imagem' };
+            let disciplinaIdImg = document.getElementById('importImageDisciplina').value;
+            let nota = { id: await getNewId('notas'), profileId: pid, titulo: titulo.value.trim(), conteudo: desc.value.trim(), imagem: importedImageData, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'imagem', disciplinaId: disciplinaIdImg ? parseInt(disciplinaIdImg) : null };
             await saveData('notas', nota);
             importedImageData = null; preview.src = ''; previewContainer.style.display = 'none'; area.style.display = 'block'; file.value = ''; titulo.value = ''; desc.value = '';
             profileDataCache = null;
@@ -4488,64 +4605,64 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function saveAsText() {
         if (!recognizedText) { alert('Nenhum texto reconhecido!'); return; }
-        const titulo = prompt('Título da nota:', `Texto Manual - ${new Date().toLocaleDateString('pt-BR')}`);
-        if (!titulo) return;
-        const pid = await getCurrentProfileId();
-        const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: recognizedText, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto' };
-        await saveData('notas', nota);
-        clearHandwriting(); 
-        profileDataCache = null;
-        await loadProfileData();
-        if (activePanel === 'caderno') renderNotas(profileDataCache);
-        alert('Texto salvo como nota!');
+        await openQuickSaveModal('texto', async (titulo, disciplinaId) => {
+            const pid = await getCurrentProfileId();
+            const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: recognizedText, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto', disciplinaId: disciplinaId || null };
+            await saveData('notas', nota);
+            clearHandwriting();
+            profileDataCache = null;
+            await loadProfileData();
+            if (activePanel === 'caderno') renderNotas(profileDataCache);
+            alert('Texto salvo como nota!');
+        }, `Texto Manual - ${new Date().toLocaleDateString('pt-BR')}`);
     }
 
     async function saveFullscreenAsText() {
         if (!fullscreenRecognizedText) { alert('Nenhum texto reconhecido!'); return; }
-        const titulo = prompt('Título da nota:', `Texto Manual - ${new Date().toLocaleDateString('pt-BR')}`);
-        if (!titulo) return;
-        const pid = await getCurrentProfileId();
-        const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: fullscreenRecognizedText, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto' };
-        await saveData('notas', nota);
-        handwritingStrokes = fullscreenHandwritingStrokes.map(s => s.map(p => ({...p})));
-        redrawHandwritingStrokes(); recognizedText = fullscreenRecognizedText;
-        document.getElementById('recognizedText').innerHTML = `<span class="fw-bold">${fullscreenRecognizedText}</span>`;
-        clearFullscreenHandwriting(); bootstrap.Modal.getInstance(document.getElementById('handwritingFullscreenModal')).hide();
-        profileDataCache = null;
-        await loadProfileData();
-        if (activePanel === 'caderno') renderNotas(profileDataCache);
-        alert('Texto salvo como nota!');
+        await openQuickSaveModal('texto', async (titulo, disciplinaId) => {
+            const pid = await getCurrentProfileId();
+            const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: fullscreenRecognizedText, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto', disciplinaId: disciplinaId || null };
+            await saveData('notas', nota);
+            handwritingStrokes = fullscreenHandwritingStrokes.map(s => s.map(p => ({...p})));
+            redrawHandwritingStrokes(); recognizedText = fullscreenRecognizedText;
+            document.getElementById('recognizedText').innerHTML = `<span class="fw-bold">${fullscreenRecognizedText}</span>`;
+            clearFullscreenHandwriting(); bootstrap.Modal.getInstance(document.getElementById('handwritingFullscreenModal')).hide();
+            profileDataCache = null;
+            await loadProfileData();
+            if (activePanel === 'caderno') renderNotas(profileDataCache);
+            alert('Texto salvo como nota!');
+        }, `Texto Manual - ${new Date().toLocaleDateString('pt-BR')}`);
     }
 
     async function saveAsImage() {
-        const titulo = prompt('Título da imagem da escrita:', `Escrita Manual - ${new Date().toLocaleDateString('pt-BR')}`);
-        if (!titulo) return;
-        const imageData = handwritingCanvas.toDataURL('image/png');
-        const pid = await getCurrentProfileId();
-        const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: recognizedText || '', imagem: imageData, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'imagem' };
-        await saveData('notas', nota);
-        clearHandwriting(); 
-        profileDataCache = null;
-        await loadProfileData();
-        if (activePanel === 'caderno') renderNotas(profileDataCache);
-        alert('Escrita salva como imagem!');
+        await openQuickSaveModal('imagem', async (titulo, disciplinaId) => {
+            const imageData = handwritingCanvas.toDataURL('image/png');
+            const pid = await getCurrentProfileId();
+            const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: recognizedText || '', imagem: imageData, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'imagem', disciplinaId: disciplinaId || null };
+            await saveData('notas', nota);
+            clearHandwriting();
+            profileDataCache = null;
+            await loadProfileData();
+            if (activePanel === 'caderno') renderNotas(profileDataCache);
+            alert('Escrita salva como imagem!');
+        }, `Escrita Manual - ${new Date().toLocaleDateString('pt-BR')}`);
     }
 
     async function saveFullscreenAsImage() {
-        const titulo = prompt('Título da imagem da escrita:', `Escrita Manual - ${new Date().toLocaleDateString('pt-BR')}`);
-        if (!titulo) return;
-        const imageData = fullscreenHandwritingCanvas.toDataURL('image/png');
-        const pid = await getCurrentProfileId();
-        const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: fullscreenRecognizedText || '', imagem: imageData, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'imagem' };
-        await saveData('notas', nota);
-        handwritingStrokes = fullscreenHandwritingStrokes.map(s => s.map(p => ({...p})));
-        redrawHandwritingStrokes(); recognizedText = fullscreenRecognizedText;
-        document.getElementById('recognizedText').innerHTML = `<span class="fw-bold">${fullscreenRecognizedText}</span>`;
-        clearFullscreenHandwriting(); bootstrap.Modal.getInstance(document.getElementById('handwritingFullscreenModal')).hide();
-        profileDataCache = null;
-        await loadProfileData();
-        if (activePanel === 'caderno') renderNotas(profileDataCache);
-        alert('Escrita salva como imagem!');
+        await openQuickSaveModal('imagem', async (titulo, disciplinaId) => {
+            const imageData = fullscreenHandwritingCanvas.toDataURL('image/png');
+            const pid = await getCurrentProfileId();
+            const nota = { id: await getNewId('notas'), profileId: pid, titulo, conteudo: fullscreenRecognizedText || '', imagem: imageData, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'imagem', disciplinaId: disciplinaId || null };
+            await saveData('notas', nota);
+            handwritingStrokes = fullscreenHandwritingStrokes.map(s => s.map(p => ({...p})));
+            redrawHandwritingStrokes(); recognizedText = fullscreenRecognizedText;
+            document.getElementById('recognizedText').innerHTML = `<span class="fw-bold">${fullscreenRecognizedText}</span>`;
+            clearFullscreenHandwriting(); bootstrap.Modal.getInstance(document.getElementById('handwritingFullscreenModal')).hide();
+            profileDataCache = null;
+            await loadProfileData();
+            if (activePanel === 'caderno') renderNotas(profileDataCache);
+            alert('Escrita salva como imagem!');
+        }, `Escrita Manual - ${new Date().toLocaleDateString('pt-BR')}`);
     }
 
     // ---------- Funções para documentos (incluindo Word, PPT) ----------
@@ -4605,6 +4722,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!tituloInput.value.trim()) { alert('Título obrigatório.'); return; }
             const pid = await getCurrentProfileId();
             const file = importedDocumentData.file;
+            const disciplinaIdDoc = document.getElementById('importDocumentDisciplina').value;
             const reader = new FileReader();
             reader.onload = async (e) => {
                 const arrayBuffer = e.target.result;
@@ -4617,6 +4735,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     conteudo: descInput.value.trim(),
                     dataCriacao: new Date().toISOString().split('T')[0],
                     tipo: 'documento',
+                    disciplinaId: disciplinaIdDoc ? parseInt(disciplinaIdDoc) : null,
                     documento: {
                         nome: file.name,
                         tipo: file.type,
@@ -4665,6 +4784,8 @@ document.addEventListener('DOMContentLoaded', function() {
             else if (isWord) { icon = 'fa-file-word'; cor = 'text-primary'; }
             else { icon = 'fa-file-powerpoint'; cor = 'text-warning'; }
             const tamanho = (doc.documento.tamanho / 1024).toFixed(1) + ' KB';
+            const disc = doc.disciplinaId ? data.disciplinas.find(d => d.id == doc.disciplinaId) : null;
+            const materiaTag = disc ? `<span class="doc-materia-badge"><i class="fas fa-graduation-cap"></i>${disc.nome}</span><br>` : '';
             container.innerHTML += `
                 <div class="col-md-6 col-lg-4">
                     <div class="card documento-card card-dashboard" data-id="${doc.id}">
@@ -4680,6 +4801,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </ul>
                                 </div>
                             </div>
+                            ${materiaTag}
                             <h5 class="card-title mt-2">${doc.titulo}</h5>
                             <p class="card-text small text-muted">${doc.documento.nome}</p>
                             <p class="documento-tamanho">${tamanho}</p>
@@ -5772,7 +5894,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function saveNota() {
         let pid = await getCurrentProfileId(), id = document.getElementById('notaId').value;
-        let n = { id: id?parseInt(id):await getNewId('notas'), profileId: pid, titulo: document.getElementById('notaTitulo').value, conteudo: document.getElementById('notaConteudo').value, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto' };
+        let disciplinaId = document.getElementById('notaDisciplina').value;
+        let n = { id: id?parseInt(id):await getNewId('notas'), profileId: pid, titulo: document.getElementById('notaTitulo').value, conteudo: document.getElementById('notaConteudo').value, dataCriacao: new Date().toISOString().split('T')[0], tipo: 'texto', disciplinaId: disciplinaId ? parseInt(disciplinaId) : null };
         if (!n.titulo) return alert('Título obrigatório.');
         await saveData('notas', n); 
         profileDataCache = null;
@@ -5784,6 +5907,39 @@ document.addEventListener('DOMContentLoaded', function() {
     async function deleteNota() {
         let id = document.getElementById('notaId').value;
         if (id && confirm('Excluir nota?')) { await deleteData('notas', parseInt(id)); profileDataCache = null; await loadProfileData(); renderCurrentPanel(); bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide(); }
+    }
+
+    // ===== HELPERS: Matéria em Notas =====
+    async function populateNotaDisciplinaSelects(selectedId) {
+        const data = await getProfileData();
+        const disciplinas = data.disciplinas || [];
+        const selects = ['notaDisciplina', 'quickNotaDisciplina', 'importImageDisciplina', 'importDocumentDisciplina'];
+        selects.forEach(selId => {
+            const sel = document.getElementById(selId);
+            if (!sel) return;
+            const cur = sel.value;
+            sel.innerHTML = '<option value="">— Nenhuma matéria —</option>';
+            disciplinas.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.textContent = d.nome;
+                if (selectedId && String(d.id) === String(selectedId)) opt.selected = true;
+                sel.appendChild(opt);
+            });
+            if (!selectedId && cur) sel.value = cur;
+        });
+    }
+
+    let _quickSaveCallback = null;
+    async function openQuickSaveModal(type, callback, defaultTitle) {
+        _quickSaveCallback = callback;
+        await populateNotaDisciplinaSelects(null);
+        document.getElementById('quickNotaTitulo').value = defaultTitle || '';
+        document.getElementById('quickNotaDisciplina').value = '';
+        document.getElementById('quickSaveNotaType').value = type;
+        const labelMap = { desenho: 'Salvar Desenho', texto: 'Salvar Texto', imagem: 'Salvar Imagem' };
+        document.getElementById('quickSaveNotaTitle').textContent = labelMap[type] || 'Salvar Nota';
+        new bootstrap.Modal(document.getElementById('quickSaveNotaModal')).show();
     }
 
     async function saveLink() {
@@ -6039,7 +6195,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('financeiroRecurrence').value='none';
                     document.getElementById('financeiroRecorrenteId').value = '';
                 }
-                if (m.id==='notaModal') { document.getElementById('deleteNota').style.display='none'; document.getElementById('saveNota').style.display='block'; document.getElementById('notaTitulo').readOnly=false; document.getElementById('notaConteudo').readOnly=false; }
+                if (m.id==='notaModal') { document.getElementById('deleteNota').style.display='none'; document.getElementById('saveNota').style.display='block'; document.getElementById('notaTitulo').readOnly=false; document.getElementById('notaConteudo').readOnly=false; document.getElementById('notaDisciplina').disabled=false; document.getElementById('notaId').value=''; document.getElementById('notaTitulo').value=''; document.getElementById('notaConteudo').value=''; document.getElementById('notaDisciplina').value=''; document.getElementById('notaModalLabel').textContent='Nova Nota'; }
                 if (m.id==='videoPlayerModal' && videoInterval) { clearInterval(videoInterval); videoInterval=null; currentVideoId=null; document.getElementById('videoPlayerContainer').innerHTML=''; }
                 if (m.id==='handwritingFullscreenModal') clearFullscreenHandwriting();
                 if (m.id==='trabalhoModal') {
@@ -6083,6 +6239,19 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('saveFinanceiro').addEventListener('click', saveFinanceiro);
         document.getElementById('saveNota').addEventListener('click', saveNota);
         document.getElementById('deleteNota').addEventListener('click', deleteNota);
+        // QuickSave modal (desenho/escrita)
+        document.getElementById('quickSaveNotaConfirm').addEventListener('click', async () => {
+            const titulo = document.getElementById('quickNotaTitulo').value.trim();
+            if (!titulo) { alert('Informe um título.'); return; }
+            const disciplinaVal = document.getElementById('quickNotaDisciplina').value;
+            const disciplinaId = disciplinaVal ? parseInt(disciplinaVal) : null;
+            bootstrap.Modal.getInstance(document.getElementById('quickSaveNotaModal')).hide();
+            if (_quickSaveCallback) await _quickSaveCallback(titulo, disciplinaId);
+        });
+        // Populate disciplina selects when notaModal opens
+        document.getElementById('notaModal').addEventListener('show.bs.modal', () => {
+            populateNotaDisciplinaSelects(null);
+        });
         document.getElementById('saveLink').addEventListener('click', saveLink);
         document.getElementById('saveFilme').addEventListener('click', saveFilme);
         document.getElementById('saveAnotacaoFilme').addEventListener('click', saveAnotacaoFilme);
@@ -6293,6 +6462,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById('notaConteudo').readOnly = true;
                         document.getElementById('saveNota').style.display = 'none';
                         document.getElementById('deleteNota').style.display = 'none';
+                        await populateNotaDisciplinaSelects(nota.disciplinaId);
+                        if (nota.disciplinaId) document.getElementById('notaDisciplina').value = nota.disciplinaId;
+                        document.getElementById('notaDisciplina').disabled = true;
                         new bootstrap.Modal(document.getElementById('notaModal')).show();
                     }
                 }
@@ -6480,6 +6652,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById('notaConteudo').readOnly = false;
                         document.getElementById('saveNota').style.display = 'block';
                         document.getElementById('deleteNota').style.display = 'block';
+                        await populateNotaDisciplinaSelects(nota.disciplinaId);
+                        if (nota.disciplinaId) document.getElementById('notaDisciplina').value = nota.disciplinaId;
                         new bootstrap.Modal(document.getElementById('notaModal')).show();
                     }
                 }
@@ -8261,6 +8435,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
 })();
 </script>
+
+<!-- Modal Salvar Nota Rápida (Desenho / Escrita Manual) -->
+<div class="modal fade" id="quickSaveNotaModal" tabindex="-1" aria-labelledby="quickSaveNotaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, var(--accent), var(--info));">
+        <h5 class="modal-title text-white" id="quickSaveNotaLabel"><i class="fas fa-save me-2"></i><span id="quickSaveNotaTitle">Salvar Nota</span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="quickNotaTitulo" class="form-label fw-semibold">Título da nota</label>
+          <input type="text" class="form-control" id="quickNotaTitulo" placeholder="Ex: Mapa Mental - Direito Civil">
+        </div>
+        <div class="mb-3">
+          <label for="quickNotaDisciplina" class="form-label fw-semibold"><i class="fas fa-graduation-cap me-1 text-primary"></i>Matéria <span class="text-muted small">(opcional)</span></label>
+          <select class="form-select" id="quickNotaDisciplina">
+            <option value="">— Nenhuma matéria —</option>
+          </select>
+        </div>
+        <input type="hidden" id="quickSaveNotaType">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="quickSaveNotaConfirm"><i class="fas fa-save me-1"></i>Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Modal Certificado -->
 <div class="modal fade" id="certificadoModal" tabindex="-1" aria-labelledby="certificadoModalLabel" aria-hidden="true">
