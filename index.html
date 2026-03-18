@@ -1,7 +1,3 @@
-
-
-
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8219,11 +8215,11 @@ document.addEventListener('DOMContentLoaded', function() {
   function getDB() {
     return new Promise((resolve, reject) => {
       // Primeiro descobre a versão atual, depois abre sem upgrade
-      const probeReq = indexedDB.open('AcademicoProDB');
+      const probeReq = indexedDB.open('academicoProDB');
       probeReq.onsuccess = e => {
         const version = e.target.result.version;
         e.target.result.close();
-        const req = indexedDB.open('AcademicoProDB', version);
+        const req = indexedDB.open('academicoProDB', version);
         req.onsuccess = ev => resolve(ev.target.result);
         req.onerror = ev => reject(ev.target.error);
         // Em caso de upgrade inesperado, abortar transação
@@ -8295,7 +8291,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const selectedProfile = document.getElementById('backupProfileSelect').value;
       const exportData = {
         _meta: {
-          app: 'AcademicoProDB',
+          app: 'academicoProDB',
           version: 2,
           exportedAt: new Date().toISOString(),
           profileFilter: selectedProfile,
@@ -8393,7 +8389,7 @@ document.addEventListener('DOMContentLoaded', function() {
           // Converter para formato v2
           const converted = {
             _meta: {
-              app: 'AcademicoProDB',
+              app: 'academicoProDB',
               version: 1,
               exportedAt: (data._config && data._config.backupDate) || new Date().toISOString(),
               profileFilter: 'all',
