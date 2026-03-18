@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -10,6 +13,50 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* ===== PDF TEXT LAYER — seleção e cópia de texto ===== */
+    #academico-pdf-viewer-wrap {
+        position: relative;
+    }
+    .academico-pdf-page-container {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 8px;
+    }
+    .academico-pdf-text-layer {
+        position: absolute;
+        top: 0; left: 0;
+        overflow: hidden;
+        line-height: 1;
+        pointer-events: all;
+        /* permite selecionar mas não bloqueia scroll */
+    }
+    .academico-pdf-text-layer > span {
+        color: transparent;
+        position: absolute;
+        white-space: pre;
+        cursor: text;
+        transform-origin: 0% 0%;
+        user-select: text;
+        -webkit-user-select: text;
+    }
+    .academico-pdf-text-layer ::selection {
+        background: rgba(26,188,156,0.35);
+        color: transparent;
+    }
+    /* Badge de página no card de livro */
+    .livro-pagina-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(26,188,156,0.12);
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        border-radius: 20px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        margin-top: 6px;
+    }
     /* ===== NOTAS — FILTRO POR MATÉRIA ===== */
     .notas-filter-bar {
       background: white;
@@ -4196,6 +4243,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             <i class="fas fa-list"></i> Ver lista
                         </button>` : ''}
                     </div>
+                    ${isPdf ? (() => {
+                        // Verifica se há uma página salva para o primeiro PDF
+                        const pdfKey = AcadViewer._getPdfPageKey(primeiro.dados || '', nomePrimeiro);
+                        let savedPage = 1;
+                        try { const v = localStorage.getItem(pdfKey); if (v) savedPage = parseInt(v); } catch(e) {}
+                        // Escapa o key para uso em data-attribute HTML
+                        const pdfKeyEsc = pdfKey.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+                        return `<span class="livro-pagina-badge" data-pdf-key="${pdfKeyEsc}"><i class="fas fa-bookmark"></i> Pág. ${savedPage}</span>`;
+                    })() : ''}
                     ${itensHtml}
                 </div>`;
             }
@@ -8840,6 +8896,36 @@ const AcadViewer = {
     _pdfTextCache: null,
     _searchToken: null,
     _searchDebounce: null,
+    _pdfPageKey: null, // chave usada para persistir a página no localStorage
+
+    // Gera uma chave estável para um arquivo (usa nome + tamanho aproximado do base64)
+    _getPdfPageKey(base64, nome) {
+        const len = (base64 || '').length;
+        const safeName = (nome || 'pdf').replace(/[^a-zA-Z0-9._-]/g, '_');
+        return 'acad_pdf_page__' + safeName + '__' + len;
+    },
+    _savePdfPage(page) {
+        if (!this._pdfPageKey) return;
+        try { localStorage.setItem(this._pdfPageKey, String(page)); } catch(e) {}
+        // Atualiza badge nos cards da biblioteca
+        this._updateBibliotecaBadge();
+    },
+    _loadPdfPage() {
+        if (!this._pdfPageKey) return 1;
+        try { const v = localStorage.getItem(this._pdfPageKey); return v ? Math.max(1, parseInt(v)) : 1; } catch(e) { return 1; }
+    },
+    _updateBibliotecaBadge() {
+        // Atualiza o badge de página nos cards de livro que exibem este PDF
+        if (!this._pdfPageKey || !this._pdfDoc) return;
+        const key = this._pdfPageKey;
+        // Usa atributo data- em vez de CSS.escape para compatibilidade
+        const badges = document.querySelectorAll('.livro-pagina-badge');
+        badges.forEach(badge => {
+            if (badge.dataset.pdfKey === key) {
+                badge.innerHTML = `<i class="fas fa-bookmark"></i> Pág. ${this._pdfPage} / ${this._pdfTotalPages}`;
+            }
+        });
+    },
 
     // Abre um arquivo a partir de base64 + tipo + nome
     openFromBase64(base64, tipo, nome, allAnexos, activeIdx) {
@@ -8876,6 +8962,7 @@ const AcadViewer = {
         const isPdf = tipo === 'application/pdf' || (nome || '').toLowerCase().endsWith('.pdf');
 
         if (isPdf && blob) {
+            this._pdfPageKey = this._getPdfPageKey(base64, nome);
             this._renderPdfFromBlob(blob, body, toolbar, { dados: base64, tipo, nome });
         } else if (tipo.startsWith('image/') || isPdf === false) {
             this._renderImage(base64, tipo, nome, body, toolbar);
@@ -8931,6 +9018,11 @@ const AcadViewer = {
             this._pdfPage = 1;
             this._pdfTotalPages = pdfDoc.numPages;
             this._pdfTextCache = new Map(); // reset cache para o novo documento
+            // Restaura a última página salva
+            const savedPage = this._loadPdfPage();
+            if (savedPage > 1 && savedPage <= pdfDoc.numPages) {
+                this._pdfPage = savedPage;
+            }
             const arrs2 = Array.from(body.querySelectorAll('.fv-nav-arrow'));
             body.innerHTML = `<div id="academico-pdf-viewer-wrap" style="display:flex;flex-direction:column;align-items:center;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:8px 4px;"><canvas id="academico-pdf-canvas" style="max-width:100%;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,0.5);display:block;"></canvas></div>`;
             arrs2.forEach(a => body.appendChild(a));
@@ -8947,7 +9039,7 @@ const AcadViewer = {
                 <div style="width:1px;height:28px;background:rgba(255,255,255,0.15);margin:0 2px;"></div>
                 <button class="file-viewer-btn" onclick="AcadViewer.downloadCurrentFile()" title="Baixar"><i class="fas fa-download"></i></button>`;
             toolbar.style.display = 'flex';
-            await this._renderPdfPage(1);
+            await this._renderPdfPage(this._pdfPage);
         } catch(e) {
             console.error('PDF render falhou:', e);
             const loadEl = document.getElementById('academico-pdf-loading');
@@ -8959,6 +9051,8 @@ const AcadViewer = {
 
     async _renderPdfPage(pageNum) {
         if (!this._pdfDoc) return;
+        this._pdfPage = pageNum;
+        this._savePdfPage(pageNum);
         const canvas = document.getElementById('academico-pdf-canvas');
         if (!canvas) return;
         if (this._renderTask) { try { this._renderTask.cancel(); } catch(_) {} }
@@ -8978,6 +9072,51 @@ const AcadViewer = {
         this._renderTask = page.render({ canvasContext: ctx, viewport: scaledViewport });
         await this._renderTask.promise;
         this._renderTask = null;
+
+        // ===== TEXT LAYER (seleção e cópia de texto) =====
+        // Envolve canvas num container relativo (se ainda não foi)
+        let container = canvas.parentElement;
+        if (!container || !container.classList.contains('academico-pdf-page-container')) {
+            const wrap2 = canvas.parentElement;
+            const newContainer = document.createElement('div');
+            newContainer.className = 'academico-pdf-page-container';
+            wrap2.insertBefore(newContainer, canvas);
+            newContainer.appendChild(canvas);
+            container = newContainer;
+        }
+        // Remove camada de texto antiga
+        let oldLayer = container.querySelector('.academico-pdf-text-layer');
+        if (oldLayer) oldLayer.remove();
+        // Cria nova camada de texto
+        try {
+            const textContent = await page.getTextContent();
+            const textLayer = document.createElement('div');
+            textLayer.className = 'academico-pdf-text-layer';
+            textLayer.style.width = scaledViewport.width + 'px';
+            textLayer.style.height = scaledViewport.height + 'px';
+            // Renderiza cada item de texto
+            const pageH = scaledViewport.height;
+            textContent.items.forEach(item => {
+                if (!item.str) return;
+                const span = document.createElement('span');
+                span.textContent = item.str;
+                // Calcula posição e escala a partir da transform do item
+                const tx = window.pdfjsLib.Util.transform(scaledViewport.transform, item.transform);
+                const angle = Math.atan2(tx[1], tx[0]);
+                const fontSize = Math.sqrt(tx[2]*tx[2] + tx[3]*tx[3]);
+                span.style.fontSize = fontSize + 'px';
+                span.style.left = tx[4] + 'px';
+                span.style.top = (pageH - tx[5]) + 'px';
+                if (Math.abs(angle) > 0.001) {
+                    span.style.transform = `rotate(${-angle}rad)`;
+                }
+                textLayer.appendChild(span);
+            });
+            container.appendChild(textLayer);
+        } catch(e) {
+            // falha silenciosa: texto não selecionável mas PDF ainda funciona
+        }
+
         const info = document.getElementById('academico-pdf-page-info');
         if (info) info.textContent = `${pageNum} / ${this._pdfTotalPages}`;
         const lbl = document.getElementById('academico-zoom-pct-label');
@@ -9304,6 +9443,8 @@ const AcadViewer = {
         const counterEl = document.getElementById('academico-file-viewer-counter');
         const toolbar = document.getElementById('academico-file-viewer-toolbar');
         if (overlay) overlay.classList.remove('active');
+        // Atualiza badge de página nos cards antes de limpar o estado
+        this._updateBibliotecaBadge();
         if (body) {
             const arrows = body.querySelectorAll('.fv-nav-arrow');
             body.innerHTML = '';
@@ -9319,6 +9460,7 @@ const AcadViewer = {
         this._viewerZoom = 1;
         this._pdfDoc = null;
         this._pdfPage = 1;
+        this._pdfPageKey = null;
         this._viewerAnexoIdx = 0;
         this._viewerAnexos = null;
         this._pdfSearchQuery = '';
