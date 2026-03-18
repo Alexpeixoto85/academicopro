@@ -2819,8 +2819,7 @@
               <p class="text-muted">Gerencie seus perfis acadêmicos e faça backup dos dados.</p>
               <div class="mt-4">
                   <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#profileManagementModal"><i class="fas fa-users"></i> Gerenciar Perfis</button>
-                  <button class="btn btn-outline-primary ms-2" id="backup-btn"><i class="fas fa-download"></i> Criar Backup</button>
-                  <label for="restore-input" class="btn btn-outline-secondary ms-2"><i class="fas fa-upload"></i> Restaurar Backup</label>
+                  <button class="btn btn-outline-primary ms-2" id="backup-btn" data-bs-toggle="modal" data-bs-target="#backupModal"><i class="fas fa-database"></i> Backup Completo</button>
                   <input type="file" id="restore-input" class="d-none" accept=".json">
               </div>
               <div class="alert alert-warning mt-4"><strong>Atenção:</strong> Restaurar um backup substituirá TODOS os perfis e dados atuais. Esta ação não pode ser desfeita.</div>
@@ -6490,150 +6489,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('saveAnotacaoFilme').addEventListener('click', saveAnotacaoFilme);
         document.getElementById('saveLivro').addEventListener('click', saveLivro);
         document.getElementById('deleteHorario').addEventListener('click', deleteHorario);
-        document.getElementById('backup-btn').addEventListener('click', async ()=>{
-            const btn = document.getElementById('backup-btn');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Gerando backup...';
-            try {
-                // Coleta todos os stores incluindo certificados
-                const allStores = ['profiles','disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links','certificados'];
-                let backup = {};
-                for (let s of allStores) {
-                    try { backup[s] = await getAllData(s); } catch(e) { backup[s] = []; }
-                }
-                // Inclui configurações do localStorage
-                backup._config = {
-                    academicoTheme: localStorage.getItem('academicoTheme'),
-                    academicoCustomBg: localStorage.getItem('academicoCustomBg'),
-                    scheduleStartHour: localStorage.getItem('scheduleStartHour'),
-                    scheduleEndHour: localStorage.getItem('scheduleEndHour'),
-                    backupVersion: '2.0',
-                    backupDate: new Date().toISOString(),
-                    appName: 'AcademicoPro'
-                };
-                const data = JSON.stringify(backup, null, 2);
-                const sizeKB = (new Blob([data]).size / 1024).toFixed(1);
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(new Blob([data],{type:'application/json'}));
-                const dateStr = new Date().toISOString().slice(0,10);
-                link.download = `AcademicoPro_backup_${dateStr}.json`;
-                document.body.appendChild(link);
-                link.click();
-                setTimeout(()=>{ URL.revokeObjectURL(link.href); document.body.removeChild(link); }, 1000);
-                // Feedback visual de sucesso
-                btn.innerHTML = '<i class="fas fa-check me-2"></i>Backup criado!';
-                btn.classList.remove('btn-primary');
-                btn.classList.add('btn-success');
-                setTimeout(()=>{
-                    btn.innerHTML = originalText;
-                    btn.classList.remove('btn-success');
-                    btn.classList.add('btn-primary');
-                    btn.disabled = false;
-                }, 3000);
-                // Toast de confirmação
-                const toast = document.createElement('div');
-                toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#27ae60;color:white;padding:12px 24px;border-radius:12px;z-index:9999;font-weight:600;box-shadow:0 4px 15px rgba(0,0,0,0.2);text-align:center;';
-                toast.innerHTML = `<i class="fas fa-check-circle me-2"></i>Backup completo! (${sizeKB} KB)<br><small style="font-weight:400;opacity:0.9;">Todos os módulos exportados com sucesso</small>`;
-                document.body.appendChild(toast);
-                setTimeout(()=>{ toast.remove(); }, 4000);
-            } catch(err) {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-                alert('Erro ao criar backup: ' + err.message);
-            }
-        });
-        document.getElementById('restore-input').addEventListener('change', async e=>{
-            let file = e.target.files[0];
-            if (!file) { e.target.value=''; return; }
-            // Lê o arquivo primeiro para mostrar informações antes de confirmar
-            let r = new FileReader();
-            r.onload = async (ev)=>{
-                try {
-                    let rest = JSON.parse(ev.target.result);
-                    // Detecta versão e mostra resumo
-                    const cfg = rest._config || {};
-                    const version = cfg.backupVersion || '1.0';
-                    const backupDate = cfg.backupDate ? new Date(cfg.backupDate).toLocaleString('pt-BR') : 'Data desconhecida';
-                    const stores = ['profiles','disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links','certificados'];
-                    let summary = '';
-                    for (let s of stores) {
-                        const count = rest[s] ? rest[s].length : 0;
-                        if (count > 0) {
-                            const labels = {profiles:'Perfis',disciplinas:'Disciplinas',horarios:'Horários',trabalhos:'Trabalhos',provas:'Provas',eventos:'Eventos',financeiro:'Finanças',biblioteca:'Livros',filmes:'Vídeos',notas:'Notas/Docs',links:'Links',certificados:'Certificados'};
-                            summary += `• ${labels[s]||s}: ${count} registro(s)\n`;
-                        }
-                    }
-                    const confirmMsg = `📦 RESTAURAR BACKUP\n\nVersão: ${version}\nData do backup: ${backupDate}\n\n${summary}\n⚠️ ATENÇÃO: Todos os dados atuais serão SUBSTITUÍDOS.\n\nDeseja continuar?`;
-                    if (!confirm(confirmMsg)) { e.target.value=''; return; }
-                    // Mostra overlay de progresso
-                    const overlay = document.createElement('div');
-                    overlay.id = 'restore-overlay';
-                    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;';
-                    overlay.innerHTML = `
-                        <div style="background:#2c3e50;border-radius:16px;padding:40px;max-width:400px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
-                            <i class="fas fa-sync-alt fa-spin fa-3x mb-3" style="color:#1abc9c;"></i>
-                            <h4 style="color:white;margin-bottom:8px;">Restaurando dados...</h4>
-                            <p id="restore-status" style="color:#bdc3c7;margin-bottom:20px;font-size:0.9rem;">Preparando...</p>
-                            <div style="background:#34495e;border-radius:8px;height:8px;overflow:hidden;">
-                                <div id="restore-progress-bar" style="height:100%;background:#1abc9c;transition:width 0.3s;width:0%;"></div>
-                            </div>
-                        </div>`;
-                    document.body.appendChild(overlay);
-                    const statusEl = document.getElementById('restore-status');
-                    const progressBar = document.getElementById('restore-progress-bar');
-                    try {
-                        const allStores = ['profiles','disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links','certificados'];
-                        // Limpa stores existentes
-                        statusEl.textContent = 'Limpando dados antigos...';
-                        progressBar.style.width = '10%';
-                        for (let s of allStores) {
-                            try {
-                                if (db.objectStoreNames.contains(s)) {
-                                    const tx = db.transaction([s],'readwrite');
-                                    await new Promise((res,rej)=>{ const req = tx.objectStore(s).clear(); req.onsuccess = res; req.onerror = rej; });
-                                }
-                            } catch(_) {}
-                        }
-                        // Restaura dados por store
-                        let storesDone = 0;
-                        const storeLabels = {profiles:'Perfis',disciplinas:'Disciplinas',horarios:'Horários',trabalhos:'Trabalhos',provas:'Provas',eventos:'Eventos',financeiro:'Finanças',biblioteca:'Biblioteca',filmes:'Vídeos/Filmes',notas:'Notas e Documentos',links:'Links',certificados:'Certificados'};
-                        for (let s of allStores) {
-                            if (rest[s] && rest[s].length > 0 && db.objectStoreNames.contains(s)) {
-                                statusEl.textContent = `Restaurando ${storeLabels[s]||s}... (${rest[s].length} itens)`;
-                                for (let item of rest[s]) {
-                                    try { await saveData(s, item); } catch(_) {}
-                                }
-                            }
-                            storesDone++;
-                            progressBar.style.width = (10 + (storesDone / allStores.length) * 80) + '%';
-                        }
-                        // Restaura configurações do localStorage
-                        if (rest._config) {
-                            statusEl.textContent = 'Restaurando configurações...';
-                            progressBar.style.width = '95%';
-                            if (rest._config.academicoTheme) localStorage.setItem('academicoTheme', rest._config.academicoTheme);
-                            if (rest._config.academicoCustomBg) localStorage.setItem('academicoCustomBg', rest._config.academicoCustomBg);
-                            if (rest._config.scheduleStartHour) localStorage.setItem('scheduleStartHour', rest._config.scheduleStartHour);
-                            if (rest._config.scheduleEndHour) localStorage.setItem('scheduleEndHour', rest._config.scheduleEndHour);
-                        }
-                        progressBar.style.width = '100%';
-                        statusEl.textContent = 'Concluído! Recarregando...';
-                        await new Promise(res => setTimeout(res, 800));
-                        overlay.remove();
-                        location.reload();
-                    } catch(err) {
-                        overlay.remove();
-                        alert('Erro ao restaurar: ' + err.message);
-                    }
-                } catch(parseErr) {
-                    alert('Arquivo inválido. Certifique-se de selecionar um backup válido do AcademicoPro.');
-                } finally {
-                    e.target.value='';
-                }
-            };
-            r.readAsText(file);
-        });
+        // Backup/Restore: handled by the dedicated backupModal system (see BACKUP JAVASCRIPT section)
 
         document.body.addEventListener('click', async e=>{
             // Primeiro trata ícones de anexo (novo método)
@@ -8520,14 +8376,47 @@ document.addEventListener('DOMContentLoaded', function() {
     reader.onload = e => {
       try {
         const data = JSON.parse(e.target.result);
-        // Aceita versão 1 (legado) e versão 2 (novo formato completo)
-        if (!data._meta || data._meta.app !== 'AcademicoProDB' || !data.stores) {
-          showToast('❌ Arquivo inválido. Use um backup gerado por este app.', 'danger');
+
+        // ── Formato novo (v2): tem _meta e stores ──
+        if (data._meta && data.stores) {
+          pendingImportData = data;
+          renderImportPreview(data);
+          document.getElementById('backupImportPreview').classList.remove('d-none');
           return;
         }
-        pendingImportData = data;
-        renderImportPreview(data);
-        document.getElementById('backupImportPreview').classList.remove('d-none');
+
+        // ── Formato legado (v1): objeto plano com arrays diretos ──
+        // Ex: { profiles:[…], disciplinas:[…], notas:[…], … }
+        const knownStores = ['profiles','disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links','certificados'];
+        const hasLegacyData = knownStores.some(s => Array.isArray(data[s]));
+        if (hasLegacyData) {
+          // Converter para formato v2
+          const converted = {
+            _meta: {
+              app: 'AcademicoProDB',
+              version: 1,
+              exportedAt: (data._config && data._config.backupDate) || new Date().toISOString(),
+              profileFilter: 'all',
+              exportedBy: 'Acadêmico Pro (legado)'
+            },
+            stores: {},
+            localStorage: {}
+          };
+          knownStores.forEach(s => { if (Array.isArray(data[s])) converted.stores[s] = data[s]; });
+          // Migrar _config do formato antigo para localStorage
+          if (data._config) {
+            if (data._config.academicoTheme) converted.localStorage.academicoTheme = data._config.academicoTheme;
+            if (data._config.academicoCustomBg) converted.localStorage.academicoCustomBg = data._config.academicoCustomBg;
+            if (data._config.scheduleStartHour) converted.localStorage.scheduleStartHour = data._config.scheduleStartHour;
+            if (data._config.scheduleEndHour) converted.localStorage.scheduleEndHour = data._config.scheduleEndHour;
+          }
+          pendingImportData = converted;
+          renderImportPreview(converted);
+          document.getElementById('backupImportPreview').classList.remove('d-none');
+          return;
+        }
+
+        showToast('❌ Arquivo inválido. Use um backup gerado por este app.', 'danger');
       } catch(err) {
         showToast('❌ Erro ao ler o arquivo: ' + err.message, 'danger');
       }
@@ -8736,6 +8625,17 @@ document.addEventListener('DOMContentLoaded', function() {
       populateBackupModal();
       bootstrap.Modal.getOrCreateInstance(document.getElementById('backupModal')).show();
     });
+
+    // "Backup Completo" button in Configurações panel — same action
+    const cfgBackupBtn = document.getElementById('backup-btn');
+    if (cfgBackupBtn) {
+      cfgBackupBtn.removeAttribute('data-bs-toggle');
+      cfgBackupBtn.removeAttribute('data-bs-target');
+      cfgBackupBtn.addEventListener('click', () => {
+        populateBackupModal();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('backupModal')).show();
+      });
+    }
 
     // Exportar
     document.getElementById('exportBackupBtn').addEventListener('click', exportBackup);
