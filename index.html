@@ -1,7 +1,3 @@
-
-
-
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8708,82 +8704,289 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ── IMPORTAR — leitura do arquivo ──
-  let pendingImportData = null;
+  // ═══════════════════════════════════════════════════════════════
+  // PARSER JSON STREAMING — processa arquivos de qualquer tamanho
+  // sem carregar tudo na memória de uma vez.
+  // Lê o arquivo em fatias de SLICE_SIZE bytes, mantendo apenas
+  // o objeto/array atual em memória e gravando no IndexedDB assim
+  // que cada registro é completamente lido.
+  // ═══════════════════════════════════════════════════════════════
 
-  function handleImportFile(file) {
-    if (!file || !file.name.endsWith('.json')) {
-      showToast('⚠️ Selecione um arquivo .json válido', 'warning'); return;
-    }
-    const sizeMB = file.size / (1024 * 1024);
-    if (sizeMB > 50 && !confirm(`O arquivo tem ${sizeMB.toFixed(1)} MB. Importar pode ser lento em mobile. Continuar?`)) return;
+  const SLICE_SIZE = 2 * 1024 * 1024; // 2 MB por fatia (seguro para mobile)
 
-    const reader = new FileReader();
-    reader.onerror = () => showToast('❌ Erro ao ler o arquivo. Tente novamente.', 'danger');
-    reader.onload = e => {
-      let data;
-      try { data = JSON.parse(e.target.result); }
-      catch(err) { showToast('❌ Arquivo corrompido: ' + err.message, 'danger'); return; }
-
-      // Formato v2
-      if (data._meta && data.stores) {
-        pendingImportData = data;
-        renderImportPreview(data);
-        document.getElementById('backupImportPreview').classList.remove('d-none');
-        return;
-      }
-      // Formato legado v1
-      const knownStores = ALL_STORES;
-      if (knownStores.some(s => Array.isArray(data[s]))) {
-        const converted = {
-          _meta: { app:'academicoProDB', version:1, exportedAt:(data._config&&data._config.backupDate)||new Date().toISOString(), profileFilter:'all', exportedBy:'Acadêmico Pro (legado)' },
-          stores: {}, localStorage: {}
-        };
-        knownStores.forEach(s => { if (Array.isArray(data[s])) converted.stores[s] = data[s]; });
-        if (data._config) {
-          if (data._config.academicoTheme) converted.localStorage.academicoTheme = data._config.academicoTheme;
-          if (data._config.academicoCustomBg) converted.localStorage.academicoCustomBg = data._config.academicoCustomBg;
-          if (data._config.scheduleStartHour) converted.localStorage.scheduleStartHour = data._config.scheduleStartHour;
-          if (data._config.scheduleEndHour) converted.localStorage.scheduleEndHour = data._config.scheduleEndHour;
-        }
-        pendingImportData = converted;
-        renderImportPreview(converted);
-        document.getElementById('backupImportPreview').classList.remove('d-none');
-        return;
-      }
-      showToast('❌ Arquivo inválido. Use um backup gerado por este app.', 'danger');
-    };
-    reader.readAsText(file, 'UTF-8');
+  // Lê uma fatia do File como texto
+  function readSlice(file, start, end) {
+    return new Promise((resolve, reject) => {
+      const slice = file.slice(start, end);
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Erro ao ler fatia do arquivo'));
+      reader.onload  = e => resolve(e.target.result);
+      reader.readAsText(slice, 'UTF-8');
+    });
   }
 
-  function renderImportPreview(data) {
-    const meta = data._meta;
-    const exportDate = new Date(meta.exportedAt).toLocaleString('pt-BR');
-    const stores = data.stores || {};
-    const lsKeys = Object.keys(data.localStorage || {});
-    const sizeKB = Math.round(JSON.stringify(data).length / 1024);
-    const sizeLabel = sizeKB >= 1024 ? (sizeKB/1024).toFixed(2)+' MB' : sizeKB+' KB';
+  // Lê só os primeiros N bytes para extrair _meta e localStorage
+  // (campos pequenos no início do JSON)
+  async function readHeader(file) {
+    // Lê até 512 KB — suficiente para _meta + localStorage
+    const headText = await readSlice(file, 0, Math.min(512 * 1024, file.size));
+
+    // Tenta encontrar e parsear _meta
+    const metaMatch = headText.match(/"_meta"\s*:\s*(\{[^}]+\})/);
+    if (!metaMatch) {
+      // Formato legado: sem _meta — retorna estrutura mínima
+      return { legacy: true, raw: headText };
+    }
+    let meta;
+    try { meta = JSON.parse(metaMatch[1]); } catch(e) { meta = {}; }
+
+    // Tenta extrair localStorage (campo pequeno)
+    let lsData = {};
+    const lsMatch = headText.match(/"localStorage"\s*:\s*(\{[\s\S]*?\})\s*,\s*"stores"/);
+    if (lsMatch) {
+      try { lsData = JSON.parse(lsMatch[1]); } catch(e) {}
+    }
+
+    return { legacy: false, meta, localStorage: lsData };
+  }
+
+  // ── Extrai todos os objetos de um store via streaming ──
+  // Localiza "storeName":[...] no arquivo e itera os objetos
+  // um a um sem parsear o array inteiro.
+  async function* streamStoreRecords(file, storeName, onProgress) {
+    const storeKey = `"${storeName}"`;
+    const fileSize = file.size;
+
+    // Fase 1: achar offset onde começa o array do store
+    // Varre em chunks de 2 MB até encontrar a chave
+    let arrayStart = -1;
+    let searchBuf  = '';
+    const SEARCH_CHUNK = 2 * 1024 * 1024;
+
+    for (let pos = 0; pos < fileSize && arrayStart === -1; pos += SEARCH_CHUNK) {
+      const chunk = await readSlice(file, pos, Math.min(pos + SEARCH_CHUNK, fileSize));
+      // Preserva sufixo do chunk anterior para não perder tokens na fronteira
+      const combined = searchBuf + chunk;
+      const idx = combined.indexOf(storeKey);
+      if (idx !== -1) {
+        // Encontrou a chave — avança até o '[' do array
+        const afterKey = combined.indexOf('[', idx + storeKey.length);
+        if (afterKey !== -1) {
+          // Offset real no arquivo
+          arrayStart = pos - searchBuf.length + afterKey;
+        }
+      }
+      // Mantém overlap de 200 bytes para não perder token na borda
+      searchBuf = combined.slice(-200);
+      await new Promise(r => setTimeout(r, 0)); // yield
+    }
+
+    if (arrayStart === -1) return; // store não encontrado no arquivo
+
+    // Fase 2: percorre o array caracter a caracter em chunks,
+    // extraindo objetos completos (rastreando profundidade de aninhamento)
+    let depth       = 0;
+    let inString    = false;
+    let escape      = false;
+    let objStart    = -1;
+    let buf         = '';
+    let filePos     = arrayStart;
+    let started     = false; // já passou o '[' inicial
+    let recordCount = 0;
+
+    outer: while (filePos < fileSize) {
+      const end   = Math.min(filePos + SLICE_SIZE, fileSize);
+      const chunk = await readSlice(file, filePos, end);
+      buf += chunk;
+
+      let i = 0;
+      while (i < buf.length) {
+        const c = buf[i];
+
+        if (escape) { escape = false; i++; continue; }
+        if (c === '\\' && inString) { escape = true; i++; continue; }
+        if (c === '"') { inString = !inString; i++; continue; }
+        if (inString) { i++; continue; }
+
+        if (!started) {
+          if (c === '[') { started = true; }
+          else if (c === ']') break outer; // array vazio
+          i++; continue;
+        }
+
+        if (c === '{') {
+          if (depth === 0) objStart = i;
+          depth++;
+        } else if (c === '}') {
+          depth--;
+          if (depth === 0 && objStart !== -1) {
+            // Objeto completo encontrado
+            const objStr = buf.slice(objStart, i + 1);
+            try {
+              const record = JSON.parse(objStr);
+              yield record;
+              recordCount++;
+            } catch(e) { /* registro malformado — ignora */ }
+            objStart = -1;
+            // Descarta buf processado, mantém apenas o resto
+            buf = buf.slice(i + 1);
+            i = 0;
+            if (onProgress) onProgress(filePos + end - filePos, fileSize);
+            await new Promise(r => setTimeout(r, 0)); // yield ao event loop
+            continue;
+          }
+        } else if (c === ']' && depth === 0) {
+          break outer; // fim do array
+        }
+        i++;
+      }
+
+      // Se buf ficou muito grande sem encontrar objeto, provavelmente
+      // um registro gigante (ex: certificado base64). Nesse caso
+      // mantemos todo o buf e continuamos acumulando.
+      if (buf.length > 50 * 1024 * 1024) {
+        // Segurança: se buf > 50 MB sem encontrar fechamento, descarta
+        // (evita OOM). Isso só acontece com dados corrompidos.
+        console.warn('[streaming] buf overflow em', storeName, '— descartando chunk');
+        buf = objStart !== -1 ? buf.slice(objStart) : '';
+        objStart = objStart !== -1 ? 0 : -1;
+      }
+
+      filePos = end;
+    }
+  }
+
+  // ── Conta registros num store (leve — apenas conta '{' no nível certo) ──
+  async function countStoreRecords(file, storeName) {
+    const storeKey = `"${storeName}":[`;
+    let count = 0;
+    let found = false;
+    let buf   = '';
+    let depth = 0;
+    let inStr = false;
+    let esc   = false;
+
+    for (let pos = 0; pos < file.size; pos += SLICE_SIZE) {
+      const chunk = await readSlice(file, pos, Math.min(pos + SLICE_SIZE, file.size));
+      buf += chunk;
+
+      if (!found) {
+        const idx = buf.indexOf(storeKey);
+        if (idx === -1) { buf = buf.slice(-storeKey.length - 5); continue; }
+        buf = buf.slice(idx + storeKey.length - 1); // começa no '['
+        found = true;
+      }
+
+      for (let i = 0; i < buf.length; i++) {
+        const c = buf[i];
+        if (esc)       { esc = false; continue; }
+        if (c==='\\' && inStr) { esc = true; continue; }
+        if (c==='"')   { inStr = !inStr; continue; }
+        if (inStr)     continue;
+        if (c==='{')   { if (depth===0) count++; depth++; }
+        else if (c==='}') depth--;
+        else if (c===']' && depth===0) return count;
+      }
+      buf = '';
+      await new Promise(r => setTimeout(r, 0));
+    }
+    return count;
+  }
+
+  // ── Estado da importação ──
+  let pendingImportFile   = null; // File object (não carregado na memória)
+  let pendingImportHeader = null; // { meta, localStorage, legacy }
+
+  function handleImportFile(file) {
+    if (!file) return;
+    if (!file.name.endsWith('.json') && file.type !== 'application/json') {
+      showToast('⚠️ Selecione um arquivo .json válido', 'warning'); return;
+    }
+
+    const sizeMB = file.size / (1024 * 1024);
+    const sizeLabel = sizeMB >= 1024
+      ? (sizeMB/1024).toFixed(2) + ' GB'
+      : sizeMB.toFixed(1) + ' MB';
+
+    // Mostra progresso de leitura do cabeçalho
+    document.getElementById('backupImportPreview').classList.add('d-none');
+    document.getElementById('backupImportProgress').classList.remove('d-none');
+    document.getElementById('backupProgressBar').style.width = '0%';
+    document.getElementById('backupProgressText').textContent = 'Lendo cabeçalho do arquivo...';
+
+    readHeader(file).then(header => {
+      document.getElementById('backupImportProgress').classList.add('d-none');
+
+      if (header.legacy) {
+        // Arquivo legado muito pequeno: tenta parse completo
+        if (file.size > 80 * 1024 * 1024) {
+          showToast('❌ Arquivo legado muito grande para importar.', 'danger'); return;
+        }
+        const reader = new FileReader();
+        reader.onerror = () => showToast('❌ Erro ao ler arquivo.', 'danger');
+        reader.onload = e => {
+          try {
+            const data = JSON.parse(e.target.result);
+            if (ALL_STORES.some(s => Array.isArray(data[s]))) {
+              pendingImportFile   = file;
+              pendingImportHeader = { legacy: true, legacyData: data };
+              renderImportPreviewFromHeader(sizeLabel, null, data);
+              document.getElementById('backupImportPreview').classList.remove('d-none');
+            } else {
+              showToast('❌ Arquivo inválido.', 'danger');
+            }
+          } catch(e) { showToast('❌ Arquivo corrompido: ' + e.message, 'danger'); }
+        };
+        reader.readAsText(file, 'UTF-8');
+        return;
+      }
+
+      if (!header.meta) {
+        showToast('❌ Arquivo inválido. Use um backup gerado por este app.', 'danger'); return;
+      }
+
+      pendingImportFile   = file;
+      pendingImportHeader = header;
+      renderImportPreviewFromHeader(sizeLabel, header.meta, null);
+      document.getElementById('backupImportPreview').classList.remove('d-none');
+
+    }).catch(err => {
+      document.getElementById('backupImportProgress').classList.add('d-none');
+      showToast('❌ Erro ao ler arquivo: ' + err.message, 'danger');
+    });
+  }
+
+  function renderImportPreviewFromHeader(sizeLabel, meta, legacyData) {
+    const exportDate = meta
+      ? new Date(meta.exportedAt).toLocaleString('pt-BR')
+      : 'Formato legado';
+    const profileLabel = meta
+      ? (meta.profileFilter === 'all' ? 'Todos' : 'Perfil ' + meta.profileFilter)
+      : 'Todos';
 
     let statsHtml = '';
-    for (const [store, records] of Object.entries(stores)) {
-      if (Array.isArray(records) && records.length > 0)
-        statsHtml += `<div class="bi-row"><span class="bi-key"><i class="fas fa-table me-1" style="color:var(--accent);font-size:0.7rem;"></i>${STORE_LABELS[store]||store}</span><span class="bi-val">${records.length} registro(s)</span></div>`;
+    if (legacyData) {
+      ALL_STORES.forEach(s => {
+        if (Array.isArray(legacyData[s]) && legacyData[s].length > 0)
+          statsHtml += `<div class="bi-row"><span class="bi-key"><i class="fas fa-table me-1" style="color:var(--accent);font-size:0.7rem;"></i>${STORE_LABELS[s]||s}</span><span class="bi-val">${legacyData[s].length} registro(s)</span></div>`;
+      });
+    } else {
+      statsHtml = `<div class="bi-row"><span class="bi-key"><i class="fas fa-info-circle me-1"></i>Registros</span><span class="bi-val">Contagem durante importação</span></div>`;
     }
-    const lsLabels = { juristaData_v3:'Jurista (sessões)', scheduleStartHour:'Horário início', scheduleEndHour:'Horário fim', academicoTheme:'Tema visual', academicoCustomBg:'Fundo personalizado' };
-    const lsRestore = lsKeys.filter(k => data.localStorage[k] !== null);
-    if (lsRestore.length > 0)
-      statsHtml += `<div class="bi-row"><span class="bi-key"><i class="fas fa-sliders-h me-1" style="color:#c9a84c;font-size:0.7rem;"></i>Configurações & Jurista</span><span class="bi-val">${lsRestore.length} item(s)</span></div>`;
 
     document.getElementById('backupImportInfo').innerHTML = `
       <div class="bi-row"><span class="bi-key"><i class="fas fa-calendar me-1"></i>Data do backup</span><span class="bi-val">${exportDate}</span></div>
-      <div class="bi-row"><span class="bi-key"><i class="fas fa-filter me-1"></i>Perfil exportado</span><span class="bi-val">${meta.profileFilter==='all'?'Todos':'Perfil '+meta.profileFilter}</span></div>
+      <div class="bi-row"><span class="bi-key"><i class="fas fa-filter me-1"></i>Perfil exportado</span><span class="bi-val">${profileLabel}</span></div>
       <div class="bi-row"><span class="bi-key"><i class="fas fa-weight me-1"></i>Tamanho</span><span class="bi-val">${sizeLabel}</span></div>
       ${statsHtml}`;
   }
 
-  // ── CONFIRMAR IMPORTAÇÃO — usa SOMENTE a conexão compartilhada do app ──
+  // ── CONFIRMAR IMPORTAÇÃO — streaming, sem carregar tudo na memória ──
   async function confirmImport() {
-    if (!pendingImportData) return;
-    const data = pendingImportData;
+    if (!pendingImportFile) return;
+    const file   = pendingImportFile;
+    const header = pendingImportHeader;
+
     const confirmBtn = document.getElementById('backupImportConfirm');
     const cancelBtn  = document.getElementById('backupImportCancel');
     confirmBtn.disabled = true;
@@ -8796,77 +8999,96 @@ document.addEventListener('DOMContentLoaded', function() {
     progress.classList.remove('d-none');
 
     try {
-      // Aguarda o app ter inicializado e o banco já aberto
-      progressText.textContent = 'Conectando ao banco...';
-      progressBar.style.width = '5%';
+      progressText.textContent = 'Conectando ao banco de dados...';
+      progressBar.style.width = '3%';
       const app = await waitForApp(15000);
 
-      const storeNames = Object.keys(data.stores || {});
-      const total = storeNames.length;
-      let done = 0;
-
-      for (const storeName of storeNames) {
-        if (!ALL_STORES.includes(storeName)) { done++; continue; }
-        progressText.textContent = `Importando ${STORE_LABELS[storeName] || storeName}...`;
-        progressBar.style.width = Math.round(5 + (done / total) * 85) + '%';
-
-        const records = data.stores[storeName];
-        if (!Array.isArray(records) || records.length === 0) { done++; continue; }
-
-        // Determinar quais profileIds estão no backup
-        const profileIds = [...new Set(records.map(r => r.profileId).filter(v => v !== undefined && v !== null))];
-
-        if (profileIds.length > 0) {
-          // Deletar registros existentes desses perfis em lote
-          const existingAll = await app.readAllFromStore(storeName);
-          const idsToDelete = existingAll.filter(r => profileIds.includes(r.profileId)).map(r => r.id);
-          if (idsToDelete.length > 0) await app.deleteRecordsBatch(storeName, idsToDelete);
-        } else {
-          // Store sem profileId (profiles): limpa tudo
+      // ── Caso legado: dados já estão em memória (arquivo era pequeno) ──
+      if (header.legacy && header.legacyData) {
+        const data = header.legacyData;
+        let done = 0;
+        for (const storeName of ALL_STORES) {
+          if (!Array.isArray(data[storeName]) || data[storeName].length === 0) { done++; continue; }
+          progressText.textContent = `Importando ${STORE_LABELS[storeName]}...`;
+          progressBar.style.width = Math.round(3 + (done / ALL_STORES.length) * 90) + '%';
           await app.clearStore(storeName);
+          const recs = data[storeName];
+          const CHUNK = 50;
+          for (let i = 0; i < recs.length; i += CHUNK) {
+            await app.putRecordsBatch(storeName, recs.slice(i, i + CHUNK));
+            await new Promise(r => setTimeout(r, 0));
+          }
+          done++;
+        }
+        // Migrar _config legado
+        if (data._config) {
+          const m = { academicoTheme:1, academicoCustomBg:1, scheduleStartHour:1, scheduleEndHour:1 };
+          Object.entries(data._config).forEach(([k,v]) => { if (m[k] && v) try { localStorage.setItem(k,v); } catch(e){} });
         }
 
-        // Inserir em lotes de 100 via transação única por lote
-        const CHUNK = 100;
-        for (let i = 0; i < records.length; i += CHUNK) {
-          await app.putRecordsBatch(storeName, records.slice(i, i + CHUNK));
-          // Yield ao event loop para não travar UI em mobile
-          await new Promise(r => setTimeout(r, 0));
+      } else {
+        // ── Caso normal: streaming por store ──
+        const storesToImport = ALL_STORES;
+        const total = storesToImport.length;
+        let storesDone = 0;
+
+        // Restaurar localStorage primeiro (já lido no header)
+        if (header.localStorage) {
+          for (const [k, v] of Object.entries(header.localStorage)) {
+            if (v !== null && v !== undefined)
+              try { localStorage.setItem(k, v); } catch(e) {}
+          }
         }
 
-        done++;
-      }
+        for (const storeName of storesToImport) {
+          const baseProgress = Math.round(3 + (storesDone / total) * 90);
+          progressText.textContent = `Importando ${STORE_LABELS[storeName] || storeName}...`;
+          progressBar.style.width = baseProgress + '%';
 
-      // Restaurar localStorage
-      if (data.localStorage) {
-        for (const [k, v] of Object.entries(data.localStorage)) {
-          if (v !== null && v !== undefined)
-            try { localStorage.setItem(k, v); } catch(e) {}
+          // Limpa store existente
+          const existingAll = await app.readAllFromStore(storeName);
+          if (existingAll.length > 0) {
+            await app.deleteRecordsBatch(storeName, existingAll.map(r => r.id));
+          }
+
+          // Stream registros do arquivo diretamente para o IndexedDB
+          // em lotes de 10 (menor lote = menos memória por vez)
+          const STREAM_BATCH = 10;
+          let batch = [];
+          let recCount = 0;
+
+          for await (const record of streamStoreRecords(file, storeName)) {
+            batch.push(record);
+            recCount++;
+            if (batch.length >= STREAM_BATCH) {
+              await app.putRecordsBatch(storeName, batch);
+              batch = [];
+              // Atualiza progresso visual
+              progressText.textContent = `${STORE_LABELS[storeName]}: ${recCount} registros...`;
+            }
+          }
+          // Flush do último lote
+          if (batch.length > 0) await app.putRecordsBatch(storeName, batch);
+
+          storesDone++;
         }
       }
 
       progressBar.style.width = '100%';
-      progressText.textContent = 'Dados gravados! Recarregando interface...';
-
-      // ── NÃO faz window.location.reload() ──
-      // Em vez disso, recarrega os dados usando a conexão já aberta
-      // e re-renderiza o painel atual. Zero risco de condição de corrida.
-      await new Promise(r => setTimeout(r, 600));
+      progressText.textContent = 'Concluído! Recarregando interface...';
+      await new Promise(r => setTimeout(r, 500));
 
       // Fecha modal
-      try {
-        const modal = bootstrap.Modal.getInstance(document.getElementById('backupModal'));
-        if (modal) modal.hide();
-      } catch(e){}
+      try { bootstrap.Modal.getInstance(document.getElementById('backupModal'))?.hide(); } catch(e){}
 
-      // Recarrega dados e re-renderiza (sem reload de página)
+      // Recarrega dados sem reload de página
       try { await app.reloadAfterImport(); } catch(e) { console.warn('reloadAfterImport:', e); }
 
-      pendingImportData = null;
+      pendingImportFile   = null;
+      pendingImportHeader = null;
       try { document.getElementById('backupFileInput').value = ''; } catch(e){}
       progress.classList.add('d-none');
-
-      showToast('✅ Backup restaurado! Dados atualizados.', 'success');
+      showToast('✅ Backup restaurado com sucesso!', 'success');
 
     } catch(err) {
       console.error('Erro ao importar backup:', err);
@@ -8956,13 +9178,15 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('backupImportConfirm').addEventListener('click', confirmImport);
 
     document.getElementById('backupImportCancel').addEventListener('click', () => {
-      pendingImportData = null;
+      pendingImportFile   = null;
+      pendingImportHeader = null;
       document.getElementById('backupImportPreview').classList.add('d-none');
       document.getElementById('backupFileInput').value = '';
     });
 
     document.getElementById('backupModal').addEventListener('hidden.bs.modal', () => {
-      pendingImportData = null;
+      pendingImportFile   = null;
+      pendingImportHeader = null;
       document.getElementById('backupImportPreview').classList.add('d-none');
       document.getElementById('backupImportProgress').classList.add('d-none');
       document.getElementById('backupFileInput').value = '';
