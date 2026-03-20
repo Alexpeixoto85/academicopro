@@ -1,3 +1,7 @@
+
+
+
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8708,6 +8712,48 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   /* ─── Extrai objetos JSON completos de um buffer ──────────── */
+  /* ─── Localiza offset exato de cada store dentro de "stores":{} ──
+     Navega o JSON respeitando profundidade — nunca confunde campos
+     internos de registros (ex: trabalho.notas) com o store "notas".
+     Retorna { storeName: charOffsetAposBracket, ... }               */
+  function localizarOffsetStores(texto) {
+    var offsets = {};
+    var si = texto.indexOf('"stores"');
+    if (si === -1) return offsets;
+    var oi = texto.indexOf('{', si + 8);
+    if (oi === -1) return offsets;
+    var i = oi + 1, n = texto.length;
+    var depth = 1, inStr = false, esc = false;
+    while (i < n && depth > 0) {
+      var c = texto[i];
+      if (esc)               { esc = false; i++; continue; }
+      if (c === '\\' && inStr) { esc = true;  i++; continue; }
+      if (c === '"')           { inStr = !inStr; i++; continue; }
+      if (inStr)               { i++; continue; }
+      if (c === '{' || c === '[') { depth++; i++; continue; }
+      if (c === '}' || c === ']') { depth--; i++; continue; }
+      if (c === ':' && depth === 1) {
+        var j = i - 1;
+        while (j >= 0 && ' \n\r\t'.indexOf(texto[j]) >= 0) j--;
+        if (j >= 0 && texto[j] === '"') {
+          var endKey = j;
+          var startKey = texto.lastIndexOf('"', endKey - 1);
+          if (startKey >= 0) {
+            var key = texto.slice(startKey + 1, endKey);
+            if (ALL_STORES.indexOf(key) !== -1) {
+              var k = i + 1;
+              while (k < n && ' \n\r\t'.indexOf(texto[k]) >= 0) k++;
+              if (k < n && texto[k] === '[') offsets[key] = k + 1;
+            }
+          }
+        }
+      }
+      i++;
+    }
+    return offsets;
+  }
+
+  /* ─── Extrai objetos JSON completos de um buffer ──────────── */
   function extrairObjetos(texto) {
     var objs = [];
     var i = 0, n = texto.length;
@@ -8738,89 +8784,167 @@ document.addEventListener('DOMContentLoaded', function() {
     return { objs: objs, resto: '', fimArray: false };
   }
 
-  /* ─── Importa um store por fatias ──────────────────────────── */
-  var FATIA = 6 * 1024 * 1024; // 6 MB
+  /* ─── Importa todos os stores por fatias ────────────────────── */
+  var FATIA = 6 * 1024 * 1024; // 6 MB por fatia
 
-  function importarStore(file, storeName, app, onProgresso) {
+  /* Lê as primeiras HEADER_READ bytes para pré-localizar todos os offsets.
+     Para arquivos onde "stores" fica nos primeiros bytes (< 1 MB),
+     isso é suficiente. Para arquivos grandes, varre até encontrar todos. */
+  var HEADER_READ = 2 * 1024 * 1024; // 2 MB — suficiente para o cabeçalho
+
+  function importarTodosStores(file, app, storesToImport, onStoreInicio, onStoreProgresso, onStoreFim) {
     return new Promise(function(resolve, reject) {
-      var marcador    = '"' + storeName + '"';
-      var buf         = '';
-      var dentroArray = false;
-      var pos         = 0;
-      var total       = file.size;
-      var contagem    = 0;
-      var fatiaN      = 0;
+      // Passo 1: lê os primeiros 2 MB para encontrar "stores":{
+      // e localizar os offsets de cada store no nível correto
+      diagLog('Pré-localizando offsets dos stores...');
+      readSlice(file, 0, Math.min(HEADER_READ, file.size)).then(function(cabecalho) {
+        var offsetsEncontrados = localizarOffsetStores(cabecalho);
+        diagLog('Offsets encontrados na leitura inicial: ' + Object.keys(offsetsEncontrados).length + ' stores');
+
+        // Passo 2: para cada store, importa a partir do offset correto
+        var si = 0;
+        function proximoStore() {
+          if (si >= storesToImport.length) { resolve(); return; }
+          var storeName = storesToImport[si]; si++;
+
+          if (onStoreInicio) onStoreInicio(storeName);
+
+          var offsetInicial = offsetsEncontrados[storeName];
+
+          if (offsetInicial !== undefined) {
+            // Offset conhecido — começa direto no array do store
+            diagLog(storeName + ': offset pré-localizado, importando...');
+            importarStoreDesdeOffset(file, storeName, offsetInicial, app, onStoreProgresso)
+              .then(function(count) {
+                if (onStoreFim) onStoreFim(storeName, count);
+                setTimeout(proximoStore, 0);
+              }).catch(function(err) {
+                diagLog('ERRO ' + storeName + ': ' + err.message);
+                if (onStoreFim) onStoreFim(storeName, 0);
+                setTimeout(proximoStore, 0);
+              });
+          } else {
+            // Offset não encontrado nos primeiros 2 MB — varre o arquivo
+            diagLog(storeName + ': buscando no arquivo completo...');
+            importarStoreVarrendoArquivo(file, storeName, app, onStoreProgresso)
+              .then(function(count) {
+                if (onStoreFim) onStoreFim(storeName, count);
+                setTimeout(proximoStore, 0);
+              }).catch(function(err) {
+                diagLog('ERRO ' + storeName + ': ' + err.message);
+                if (onStoreFim) onStoreFim(storeName, 0);
+                setTimeout(proximoStore, 0);
+              });
+          }
+        }
+        proximoStore();
+      }).catch(reject);
+    });
+  }
+
+  /* Importa um store a partir de um offset já conhecido no arquivo */
+  function importarStoreDesdeOffset(file, storeName, offsetInicial, app, onProgresso) {
+    return new Promise(function(resolve, reject) {
+      var buf = '';
+      var pos = offsetInicial;  // começa já dentro do array
+      var total = file.size;
+      var contagem = 0;
+      var fatiaN = 0;
+
+      // Calcula offset de arquivo para bytes (offsetInicial é char offset nos primeiros 2 MB)
+      // Como lemos os primeiros 2 MB como texto UTF-8, e o JSON do app é ASCII puro
+      // (base64 só usa chars ASCII), o char offset == byte offset
+      var byteOffset = offsetInicial;
 
       function proximaFatia() {
-        if (pos >= total) {
-          diagLog(storeName + ': fim arquivo sem fechar array (' + contagem + ' regs)');
-          resolve(contagem);
-          return;
-        }
-
-        var fim = Math.min(pos + FATIA, total);
+        if (byteOffset >= total) { diagLog(storeName + ': fim arquivo, ' + contagem + ' regs'); resolve(contagem); return; }
+        var fim = Math.min(byteOffset + FATIA, total);
         fatiaN++;
-        readSlice(file, pos, fim).then(function(chunk) {
-          pos = fim;
-          buf += chunk;
-          chunk = null;
-
-          if (!dentroArray) {
-            var ki = buf.indexOf(marcador);
-            if (ki === -1) {
-              buf = buf.slice(-(marcador.length + 50));
-              proximaFatia();
-              return;
-            }
-            // Verifica que é realmente a chave do store e não substring
-            // (ex: "notas" não deve casar com "notasExtra")
-            var charApos = buf[ki + marcador.length];
-            if (charApos && charApos !== '"' && charApos !== ' ' && charApos !== ':') {
-              // falso positivo — continua procurando depois desse ponto
-              buf = buf.slice(ki + marcador.length);
-              proximaFatia();
-              return;
-            }
-            var ai = buf.indexOf('[', ki + marcador.length);
-            if (ai === -1) { proximaFatia(); return; }
-            buf = buf.slice(ai + 1);
-            dentroArray = true;
-            diagLog(storeName + ': array encontrado, fatia ' + fatiaN);
-          }
-
+        readSlice(file, byteOffset, fim).then(function(chunk) {
+          byteOffset = fim;
+          buf += chunk; chunk = null;
           var r = extrairObjetos(buf);
           buf = r.resto;
-
           if (r.objs.length > 0) {
             app.putRecordsBatch(storeName, r.objs).then(function() {
               contagem += r.objs.length;
-              if (onProgresso) onProgresso(contagem);
-              if (r.fimArray) {
-                diagLog(storeName + ': concluído, ' + contagem + ' registros');
-                resolve(contagem);
-                return;
-              }
+              if (onProgresso) onProgresso(contagem, storeName);
+              if (r.fimArray) { diagLog(storeName + ': ' + contagem + ' regs (offset)'); resolve(contagem); return; }
               setTimeout(proximaFatia, 5);
-            }).catch(function(err) {
-              diagLog('ERRO putRecordsBatch ' + storeName + ': ' + err.message);
-              // Continua mesmo com erro no lote
+            }).catch(function() {
               if (r.fimArray) { resolve(contagem); return; }
               setTimeout(proximaFatia, 5);
             });
           } else {
-            if (r.fimArray) {
-              diagLog(storeName + ': array vazio');
-              resolve(contagem);
-              return;
-            }
+            if (r.fimArray) { diagLog(storeName + ': 0 regs (vazio)'); resolve(contagem); return; }
             setTimeout(proximaFatia, 5);
           }
-        }).catch(function(err) {
-          diagLog('ERRO readSlice ' + storeName + ': ' + err.message);
-          reject(err);
-        });
+        }).catch(reject);
       }
+      proximaFatia();
+    });
+  }
 
+  /* Varre o arquivo inteiro buscando o store (fallback para stores grandes) */
+  function importarStoreVarrendoArquivo(file, storeName, app, onProgresso) {
+    return new Promise(function(resolve, reject) {
+      // Usa a mesma lógica robusta: lê fatia a fatia buscando "stores"
+      // e só entra no array do store depois de passar por "stores":{
+      var buf = '';
+      var dentroStores = false;
+      var dentroArray  = false;
+      var pos = 0;
+      var total = file.size;
+      var contagem = 0;
+      var fatiaN = 0;
+      var marcadorStores = '"stores"';
+      var marcador = '"' + storeName + '"';
+
+      function proximaFatia() {
+        if (pos >= total) { diagLog(storeName + ': não encontrado no arquivo'); resolve(contagem); return; }
+        var fim = Math.min(pos + FATIA, total);
+        fatiaN++;
+        readSlice(file, pos, fim).then(function(chunk) {
+          pos = fim; buf += chunk; chunk = null;
+
+          if (!dentroArray) {
+            if (!dentroStores) {
+              var si2 = buf.indexOf(marcadorStores);
+              if (si2 === -1) { buf = buf.slice(-(marcadorStores.length + 200)); proximaFatia(); return; }
+              var oi2 = buf.indexOf('{', si2 + marcadorStores.length);
+              if (oi2 === -1) { proximaFatia(); return; }
+              buf = buf.slice(oi2); dentroStores = true;
+            }
+            // Agora usa localizarOffsetStores no buffer acumulado
+            var offs = localizarOffsetStores('{"stores":' + buf);
+            if (offs[storeName] !== undefined) {
+              var rel = offs[storeName] - '{"stores":'.length;
+              buf = buf.slice(rel); dentroArray = true;
+              diagLog(storeName + ': array localizado na varredura, fatia ' + fatiaN);
+            } else {
+              buf = buf.slice(-(marcador.length + 200));
+              proximaFatia(); return;
+            }
+          }
+
+          var r = extrairObjetos(buf);
+          buf = r.resto;
+          if (r.objs.length > 0) {
+            app.putRecordsBatch(storeName, r.objs).then(function() {
+              contagem += r.objs.length;
+              if (onProgresso) onProgresso(contagem, storeName);
+              if (r.fimArray) { diagLog(storeName + ': ' + contagem + ' regs (varredura)'); resolve(contagem); return; }
+              setTimeout(proximaFatia, 5);
+            }).catch(function() {
+              if (r.fimArray) { resolve(contagem); return; }
+              setTimeout(proximaFatia, 5);
+            });
+          } else {
+            if (r.fimArray) { diagLog(storeName + ': 0 regs'); resolve(contagem); return; }
+            setTimeout(proximaFatia, 5);
+          }
+        }).catch(reject);
+      }
       proximaFatia();
     });
   }
@@ -8914,6 +9038,8 @@ document.addEventListener('DOMContentLoaded', function() {
           if (prof !== 'all' && storeName === 'profiles')
             recs = recs.filter(function(r) { return r.id === parseInt(prof); });
 
+          diagLog('EXPORT ' + storeName + ': ' + recs.length + ' registros lidos do IDB');
+
           // Serializa o array deste store como string
           // e adiciona como parte do Blob imediatamente
           var sep    = primeiroStore ? '' : ',';
@@ -8942,7 +9068,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
           recs = null; // libera array
 
-          diagLog('  ' + storeName + ': ' + (recs === null ? 'OK' : '?') + ' — total acumulado: ' + (totalSize/1024/1024).toFixed(1) + ' MB');
+          var totalMB = (totalSize/1024/1024).toFixed(2);
+          diagLog('  ' + storeName + ' gravado no blob. Blob total: ' + totalMB + ' MB');
 
           // Pausa para não travar o thread do mobile
           setTimeout(proximoStore, 10);
@@ -9076,7 +9203,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return Promise.resolve();
       }
 
-      // Formato v2 — processa por fatias
+      // Formato v2 — importa com offset pré-localizado
       var lsData = header.localStorage || {};
       Object.keys(lsData).forEach(function(k) {
         var v = lsData[k];
@@ -9084,34 +9211,30 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       diagLog('localStorage restaurado: ' + Object.keys(lsData).length + ' chaves');
 
-      var si = 0;
-      function proximoStore() {
-        if (si >= ALL_STORES.length) {
-          finalizarImport(app, progressEl, progressBar, progressTxt, confirmBtn, cancelBtn);
-          return;
-        }
-        var storeName = ALL_STORES[si]; si++;
-        var pct = Math.round(5 + ((si-1) / ALL_STORES.length) * 90);
-        progressBar.style.width = pct + '%';
-        progressTxt.textContent = 'Limpando ' + (STORE_LABELS[storeName]||storeName) + '...';
-        diagLog('--- ' + storeName + ' ---');
-
-        app.clearStore(storeName).then(function() {
-          diagLog(storeName + ': store limpo');
+      importarTodosStores(
+        file, app, ALL_STORES,
+        // onStoreInicio
+        function(storeName) {
+          var pct = Math.round(5 + (ALL_STORES.indexOf(storeName) / ALL_STORES.length) * 90);
+          progressBar.style.width = pct + '%';
           progressTxt.textContent = 'Importando ' + (STORE_LABELS[storeName]||storeName) + '...';
-          return importarStore(file, storeName, app, function(count) {
-            progressTxt.textContent = (STORE_LABELS[storeName]||storeName) + ': ' + count + '...';
-          });
-        }).then(function(count) {
+          diagLog('--- ' + storeName + ' ---');
+          // Limpa store antes de importar
+          app.clearStore(storeName);
+        },
+        // onStoreProgresso
+        function(count, storeName) {
+          progressTxt.textContent = (STORE_LABELS[storeName]||storeName) + ': ' + count + '...';
+        },
+        // onStoreFim
+        function(storeName, count) {
           diagLog(storeName + ': ' + count + ' registros gravados ✓');
-          setTimeout(proximoStore, 0);
-        }).catch(function(err) {
-          diagLog('ERRO ' + storeName + ': ' + err.message);
-          setTimeout(proximoStore, 0);
-        });
-      }
-      proximoStore();
-      return Promise.resolve();
+        }
+      ).then(function() {
+        finalizarImport(app, progressEl, progressBar, progressTxt, confirmBtn, cancelBtn);
+      }).catch(function(err) {
+        erroImport(err, progressEl, confirmBtn, cancelBtn);
+      });
 
     }).catch(function(err) { erroImport(err, progressEl, confirmBtn, cancelBtn); });
   }
