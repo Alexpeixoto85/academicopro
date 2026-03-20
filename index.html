@@ -1,7 +1,3 @@
-
-
-
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -9682,5 +9678,643 @@ document.addEventListener('keydown', (e) => {
 });
 </script>
 
+<!-- ===== SISTEMA DE AUTOCORREÇÃO LOCAL DE PORTUGUÊS ===== -->
+<style>
+  /* Toast de notificação da correção */
+  #ptcorr-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 50px;
+    font-size: 0.82rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+    opacity: 0;
+    pointer-events: none;
+    max-width: 92vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #ptcorr-toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  #ptcorr-toast .ptcorr-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  #ptcorr-toast .ptcorr-spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #1abc9c;
+    border-radius: 50%;
+    animation: ptcorrSpin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes ptcorrSpin { to { transform: rotate(360deg); } }
+
+  /* Anel de estado no campo sendo corrigido */
+  .ptcorr-loading {
+    outline: 2px solid #f1c40f !important;
+    outline-offset: 1px;
+    transition: outline 0.2s;
+  }
+  .ptcorr-done {
+    outline: 2px solid #1abc9c !important;
+    outline-offset: 1px;
+    animation: ptcorrDonePulse 1.2s ease-out forwards;
+  }
+  @keyframes ptcorrDonePulse {
+    0%   { outline-color: #1abc9c; }
+    60%  { outline-color: #1abc9c; }
+    100% { outline-color: transparent; }
+  }
+
+  /* Botão flutuante de toggle */
+  #ptcorr-toggle-btn {
+    position: fixed;
+    bottom: 80px;
+    right: 18px;
+    z-index: 9990;
+    background: linear-gradient(135deg, #1abc9c, #16a085);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 9px 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    box-shadow: 0 4px 14px rgba(26,188,156,0.45);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.25s;
+    white-space: nowrap;
+  }
+  #ptcorr-toggle-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(26,188,156,0.55);
+  }
+  #ptcorr-toggle-btn.off {
+    background: linear-gradient(135deg, #7f8c8d, #95a5a6);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+  }
+  #ptcorr-toggle-btn .ptcorr-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+    flex-shrink: 0;
+  }
+  #ptcorr-toggle-btn.off .ptcorr-dot {
+    background: rgba(255,255,255,0.4);
+  }
+</style>
+
+<!-- Toast de status -->
+<div id="ptcorr-toast">
+  <span class="ptcorr-icon">✨</span>
+  <span id="ptcorr-toast-msg">Corrigindo...</span>
+</div>
+
+<!-- Botão de toggle -->
+<button id="ptcorr-toggle-btn" title="Autocorreção de Português">
+  <span class="ptcorr-dot"></span>
+  <i class="fas fa-spell-check"></i>
+  <span id="ptcorr-toggle-label">Correção PT</span>
+</button>
+
+<script>
+/* ================================================================
+   ACADÊMICO PRO — Motor de Autocorreção Local de Português BR
+   100% offline, sem API externa. Corrige automaticamente ao sair
+   de qualquer campo de texto dos formulários do sistema.
+   ================================================================ */
+(function () {
+  'use strict';
+
+  // ── IDs que NÃO devem ser corrigidos ──────────────────────────
+  const SKIP_IDS = new Set([
+    'linkUrl','bibliotecaLink','disciplinaEmail',
+    'financeiroValor','provaData','provaHora','provaNota',
+    'horarioInicio','horarioFim','filterStartHour','filterEndHour',
+    'horarioId','disciplinaId','trabalhoId','provaId',
+    'financeiroId','notaId','linkId','bibliotecaId',
+    'certId','eventoId','filmeId',
+    'disciplinaFrequencia','bibliotecaAno',
+    'bibliotecaAnexosRemovidos','financeiroRecorrenteId',
+    'customBackgroundImage','academicoSearchInput',
+    'academico-pdf-search-input'
+  ]);
+
+  const SKIP_TYPES = new Set([
+    'email','url','number','date','time','month','week',
+    'color','range','file','password','hidden',
+    'checkbox','radio','submit','button','reset'
+  ]);
+
+  // ── Dicionário de substituições exatas (minúsculas → correto) ─
+  // Palavra completa, case-insensitive na detecção, preservando a
+  // capitalização original da primeira letra.
+  const DICT = {
+    // Pronomes pessoais / tratamento
+    'voce':'você','voces':'vocês','vc':'você','vcs':'vocês',
+    'nao':'não','nao.':'não.','nao,':'não,','nao!':'não!','nao?':'não?',
+    'sao':'são','vao':'vão','dao':'dão','estao':'estão','farao':'farão',
+    'irao':'irão','serao':'serão','terao':'terão','darao':'darão',
+    'escreve':'escreve','tambem':'também','alem':'além',
+    'entao':'então','porem':'porém','apos':'após','ate':'até',
+    'so':'só','la':'lá','ca':'cá','la.':'lá.','ca.':'cá.',
+    'aqui':'aqui','aquem':'aquém','alem':'além',
+    'atraves':'através','ninguem':'ninguém','alguem':'alguém',
+    'quem':'quem','nenhum':'nenhum','algum':'algum',
+    'propria':'própria','proprio':'próprio','proprias':'próprias','proprios':'próprios',
+    'otima':'ótima','otimo':'ótimo','otimas':'ótimas','otimos':'ótimos',
+    'ultima':'última','ultimo':'último','ultimas':'últimas','ultimos':'últimos',
+    'unica':'única','unico':'único','unicas':'únicas','unicos':'únicos',
+    'musica':'música','musicas':'músicas',
+    'critica':'crítica','critico':'crítico','criticas':'críticas','criticos':'críticos',
+    'pratica':'prática','pratico':'prático','praticas':'práticas','praticos':'práticos',
+    'tecnica':'técnica','tecnico':'técnico','tecnicas':'técnicas','tecnicos':'técnicos',
+    'publica':'pública','publico':'público','publicas':'públicas','publicos':'públicos',
+    'classica':'clássica','classico':'clássico','classicas':'clássicas','classicos':'clássicos',
+    'fisica':'física','fisico':'físico','fisicas':'físicas','fisicos':'físicos',
+    'quimica':'química','quimico':'químico','quimicas':'químicas','quimicos':'químicos',
+    'matematica':'matemática','matematico':'matemático',
+    'historia':'história','historica':'histórica','historico':'histórico',
+    'geografica':'geográfica','geografico':'geográfico',
+    'filosofica':'filosófica','filosofico':'filosófico',
+    'economica':'econômica','economico':'econômico',
+    'politica':'política','politico':'político','politicas':'políticas','politicos':'políticos',
+    'juridica':'jurídica','juridico':'jurídico',
+    'pedagogica':'pedagógica','pedagogico':'pedagógico',
+    'logica':'lógica','logico':'lógico',
+    'organica':'orgânica','organico':'orgânico',
+    'biologica':'biológica','biologico':'biológico',
+    'periodica':'periódica','periodico':'periódico',
+    'academica':'acadêmica','academico':'acadêmico','academicas':'acadêmicas','academicos':'acadêmicos',
+    'sintetica':'sintética','sintetico':'sintético',
+    'analitica':'analítica','analitico':'analítico',
+    'especifica':'específica','especifico':'específico','especificas':'específicas','especificos':'específicos',
+    'generica':'genérica','generico':'genérico',
+    'autonoma':'autônoma','autonomo':'autônomo',
+    'cronica':'crônica','cronico':'crônico',
+    'sindrome':'síndrome',
+    'fenomeno':'fenômeno','fenomenos':'fenômenos',
+    'hipotese':'hipótese','hipoteses':'hipóteses',
+    'tese':'tese','antitese':'antítese','sintese':'síntese',
+    'analise':'análise','analises':'análises',
+    'acoes':'ações','opcoes':'opções','secoes':'seções','licoes':'lições',
+    'ocorrencia':'ocorrência','ocorrencias':'ocorrências',
+    'referencia':'referência','referencias':'referências',
+    'diferenca':'diferença','diferencas':'diferenças',
+    'importancia':'importância','importancias':'importâncias',
+    'relevancia':'relevância','relevancias':'relevâncias',
+    'eficiencia':'eficiência','eficiencias':'eficiências',
+    'frequencia':'frequência','frequencias':'frequências',
+    'tendencia':'tendência','tendencias':'tendências',
+    'evidencia':'evidência','evidencias':'evidências',
+    'vivencia':'vivência','vivencias':'vivências',
+    'competencia':'competência','competencias':'competências',
+    'consciencia':'consciência','consciencias':'consciências',
+    'experiencia':'experiência','experiencias':'experiências',
+    'audiencia':'audiência','audiencias':'audiências',
+    'sentenca':'sentença','sentencas':'sentenças',
+    'heranca':'herança','herancas':'heranças',
+    'crianca':'criança','criancas':'crianças',
+    'frances':'francês','ingles':'inglês','portugues':'português',
+    'japones':'japonês','chines':'chinês',
+    'mes':'mês','meses':'meses',
+    'pes':'pés','tres':'três',
+    'apos':'após','detras':'detrás','atras':'atrás',
+    'rapida':'rápida','rapido':'rápido','rapidas':'rápidas','rapidos':'rápidos',
+    'facil':'fácil','faceis':'fáceis',
+    'dificil':'difícil','dificeis':'difíceis',
+    'util':'útil','uteis':'úteis',
+    'fertil':'fértil','ferteis':'férteis',
+    'fragil':'frágil','frageis':'frágeis',
+    'agil':'ágil','ageis':'ágeis',
+    'habil':'hábil','habeis':'hábeis',
+    'docil':'dócil','doceis':'dóceis',
+    'flexivel':'flexível','flexiveis':'flexíveis',
+    'possivel':'possível','possiveis':'possíveis',
+    'impossivel':'impossível','impossiveis':'impossíveis',
+    'responsavel':'responsável','responsaveis':'responsáveis',
+    'disponivel':'disponível','disponiveis':'disponíveis',
+    'agradavel':'agradável','agradaveis':'agradáveis',
+    'razoavel':'razoável','razoaveis':'razoáveis',
+    'notavel':'notável','notaveis':'notáveis',
+    'amavel':'amável','amaveis':'amáveis',
+    'confortavel':'confortável','confortaveis':'confortáveis',
+    'favoravel':'favorável','favoraveis':'favoráveis',
+    'consideravel':'considerável','consideraveis':'consideráveis',
+    'variavel':'variável','variaveis':'variáveis',
+    'sustentavel':'sustentável','sustentaveis':'sustentáveis',
+    'incrivel':'incrível','incriveis':'incríveis',
+    'terrivel':'terrível','terriveis':'terríveis',
+    'horrivel':'horrível','horriveis':'horríveis',
+    'sensivel':'sensível','sensiveis':'sensíveis',
+    'compreensivel':'compreensível','compreensíveis':'compreensíveis',
+    'nivel':'nível','niveis':'níveis',
+    'movel':'móvel','moveis':'móveis',
+    'util':'útil',
+    // Verbos comuns sem acento
+    'esta':'está','estao':'estão',
+    'era':'era','sao':'são',
+    'ha':'há','havia':'havia',
+    'e':'é',  // tratado separadamente para evitar falsos positivos
+    'vem':'vem','tem':'tem','quer':'quer',
+    'fez':'fez','quis':'quis','soube':'soube',
+    // Conectivos e preposições
+    'pra':'para','pro':'para o','pros':'para os','pras':'para as',
+    'por isso':'por isso',
+    'por que':'por que','porque':'porque','porquê':'porquê',
+    'atraves de':'através de',
+    'alem de':'além de',
+    'alem disso':'além disso',
+    'aquém de':'aquém de',
+    'ate mesmo':'até mesmo','ate que':'até que',
+    // Expressões acadêmicas comuns
+    'etc':'etc.','ex.':'ex.:',
+    'obs':'Obs.:','obs.':'Obs.:',
+    'cf':'cf.','apud':'apud',
+    'idem':'idem','ibidem':'ibidem',
+    // Erros de digitação frequentes
+    'definiçao':'definição','definicao':'definição',
+    'organizacao':'organização','organizaçao':'organização',
+    'educacao':'educação','educaçao':'educação',
+    'formacao':'formação','formaçao':'formação',
+    'graduacao':'graduação','graduaçao':'graduação',
+    'apresentacao':'apresentação','presentaçao':'apresentação',
+    'aplicacao':'aplicação','aplicaçao':'aplicação',
+    'avaliacao':'avaliação','avaliaçao':'avaliação',
+    'comunicacao':'comunicação','comunicaçao':'comunicação',
+    'informacao':'informação','informaçao':'informação',
+    'atualizacao':'atualização','atualizaçao':'atualização',
+    'implantacao':'implantação','implantaçao':'implantação',
+    'implementacao':'implementação','implementaçao':'implementação',
+    'administracao':'administração','administraçao':'administração',
+    'fundamentacao':'fundamentação','fundamentaçao':'fundamentação',
+    'documentacao':'documentação','documentaçao':'documentação',
+    'elaboracao':'elaboração','elaboraçao':'elaboração',
+    'realizacao':'realização','realizaçao':'realização',
+    'utilizacao':'utilização','utilizaçao':'utilização',
+    'observacao':'observação','observaçao':'observação',
+    'publicacao':'publicação','publicaçao':'publicação',
+    'producao':'produção','produçao':'produção',
+    'condicao':'condição','condiçao':'condição',
+    'situacao':'situação','situaçao':'situação',
+    'solucao':'solução','soluçao':'solução',
+    'conclusao':'conclusão','conclusaão':'conclusão',
+    'introducao':'introdução','introduçao':'introdução',
+    'evolucao':'evolução','evoluçao':'evolução',
+    'revolucao':'revolução','revolucaão':'revolução',
+    'contribuicao':'contribuição','contribuiçao':'contribuição',
+    'restricao':'restrição','restricaão':'restrição',
+    'reducao':'redução','reduçao':'redução',
+    'atribuicao':'atribuição','atribuiçao':'atribuição',
+    'criacao':'criação','criaçao':'criação',
+    'ampliacao':'ampliação','ampliaçao':'ampliação',
+    'percepcao':'percepção','percepçao':'percepção',
+    'excecao':'exceção','exceçao':'exceção',
+    'protecao':'proteção','proteçao':'proteção',
+    'ligacao':'ligação','ligaçao':'ligação',
+    'relacao':'relação','relaçao':'relação',
+    'posicao':'posição','posiçao':'posição',
+    'funcao':'função','funçao':'função',
+    'versao':'versão','versaão':'versão',
+    'comissao':'comissão','comissaão':'comissão',
+    'emissao':'emissão','emissaão':'emissão',
+    'transmissao':'transmissão','transmissaão':'transmissão',
+    'permissao':'permissão','permissaão':'permissão',
+    'profissao':'profissão','profissaão':'profissão',
+    'agressao':'agressão','agressaão':'agressão',
+    'sessao':'sessão','sessaão':'sessão',
+    'expressao':'expressão','expressaão':'expressão',
+    'impressao':'impressão','impressaão':'impressão',
+    'discussao':'discussão','discussaão':'discussão',
+    'revisao':'revisão','revisaão':'revisão',
+    'divisao':'divisão','divisaão':'divisão',
+    'decisao':'decisão','decisaão':'decisão',
+    'precisao':'precisão','precisaão':'precisão',
+    'visao':'visão','visaão':'visão',
+    'missao':'missão','missaão':'missão',
+    'ocasiao':'ocasião','ocasiaão':'ocasião',
+    'campeao':'campeão','campiao':'campeão',
+    'irmao':'irmão','irmao.':'irmão.',
+    'mao':'mão','maos':'mãos',
+    'coracao':'coração','coraçao':'coração',
+    'pao':'pão','paes':'pães',
+    'cao':'cão','caes':'cães',
+    'nacao':'nação','naçao':'nação',
+    'acao':'ação','açao':'ação',
+    'lixao':'lixão','lixaão':'lixão',
+    'grao':'grão','graos':'grãos',
+    'parabens':'parabéns',
+    'tambem':'também',
+    'ninguem':'ninguém',
+    'alguem':'alguém',
+    'nenhum':'nenhum',
+    'rehm':'nenhum',
+    'qualquer':'qualquer',
+    'quaisquer':'quaisquer',
+    // Palavras com ô/ê/â frequentemente digitadas sem acento
+    'voce':'você','voces':'vocês',
+    'entao':'então','entao.':'então.',
+    'porem':'porém',
+    'tambem':'também',
+    'ninguem':'ninguém',
+    'alguem':'alguém',
+    'alem':'além',
+    'aquem':'aquém',
+    'apos':'após',
+    'ate':'até',
+    'atraves':'através',
+    'so':'só',
+    'la':'lá',
+    'ca':'cá',
+    'ha':'há',
+    'aqui':'aqui',
+    'nao':'não',
+    'sao':'são',
+    'vao':'vão',
+    'estao':'estão',
+    'serao':'serão',
+    'farao':'farão',
+    'terao':'terão',
+    'dao':'dão',
+    'irao':'irão',
+    'poderao':'poderão',
+    'precisao':'precisão',
+    'atuacao':'atuação',
+    'formacao':'formação',
+    'publicacao':'publicação',
+    'avaliacao':'avaliação',
+    'organizacao':'organização',
+    'aplicacao':'aplicação',
+    'educacao':'educação',
+    'situacao':'situação',
+    'condicao':'condição',
+    'posicao':'posição',
+    'funcao':'função',
+    'solucao':'solução',
+    'relacao':'relação',
+    'producao':'produção',
+    'conclusao':'conclusão',
+    'introducao':'introdução',
+    'evolucao':'evolução',
+    'revolucao':'revolução',
+    'agressao':'agressão',
+    'discussao':'discussão',
+    'decisao':'decisão',
+    'divisao':'divisão',
+    'revisao':'revisão',
+    'visao':'visão',
+    'missao':'missão',
+    'versao':'versão',
+    'emissao':'emissão',
+    'permissao':'permissão',
+    'profissao':'profissão',
+    'comissao':'comissão',
+    'sessao':'sessão',
+    'expressao':'expressão',
+    'impressao':'impressão',
+    'transmissao':'transmissão',
+    'ocasiao':'ocasião',
+    'nacao':'nação',
+    'acao':'ação',
+    'coracao':'coração',
+    'campeao':'campeão',
+    'irmao':'irmão',
+    'mao':'mão',
+    'cao':'cão',
+    'pao':'pão',
+    'grao':'grão',
+    'parabens':'parabéns',
+    // Substantivos comuns
+    'matematica':'matemática',
+    'historia':'história',
+    'biologia':'biologia',
+    'filosofia':'filosofia',
+    'sociologia':'sociologia',
+    'psicologia':'psicologia',
+    'pedagogia':'pedagogia',
+    'arquitetura':'arquitetura',
+    'engenharia':'engenharia',
+    'administracao':'administração',
+    'contabilidade':'contabilidade',
+    'economia':'economia',
+    'direito':'direito',
+    'medicina':'medicina',
+    'enfermagem':'enfermagem',
+    'farmacia':'farmácia',
+    'odontologia':'odontologia',
+    'fisioterapia':'fisioterapia',
+    'nutricao':'nutrição',
+    'veterinaria':'veterinária',
+    'agronomia':'agronomia',
+    'informatica':'informática',
+    'computacao':'computação',
+    'estatistica':'estatística',
+    // Dias da semana / meses sem acento
+    'segunda-feira':'segunda-feira','terca-feira':'terça-feira',
+    'sabado':'sábado','sabados':'sábados',
+    'janeiro':'janeiro','fevereiro':'fevereiro','marco':'março',
+    'abril':'abril','maio':'maio','junho':'junho','julho':'julho',
+    'agosto':'agosto','setembro':'setembro','outubro':'outubro',
+    'novembro':'novembro','dezembro':'dezembro',
+    // Abreviações/gírias acadêmicas
+    'prox':'próx.','proximo':'próximo','proxima':'próxima',
+    'obg':'obrigado','obgda':'obrigada',
+    'vc':'você','vcs':'vocês',
+    'tb':'também','tmb':'também',
+    'pq':'porque','pqe':'porque',
+    'q':'que','qdo':'quando','qto':'quanto',
+    'mt':'muito','mto':'muito','mta':'muita','mto':'muito',
+    'td':'tudo','tds':'todos','tdo':'tudo',
+    'cmg':'comigo','vc':'você',
+    // Erros de espaçamento em pontuação são tratados via regex abaixo
+  };
+
+  // ── Regex de normalização de pontuação e espaçamento ──────────
+  // Executadas em ordem após a substituição de palavras
+  const PUNCT_RULES = [
+    // Remove espaço ANTES de pontuação final e vírgula
+    [/\s+([.,;:!?])/g, '$1'],
+    // Garante espaço DEPOIS de pontuação (se não for fim de string ou número)
+    [/([.,;:!?])([^\s\d"'»)\]}\n])/g, '$1 $2'],
+    // Remove espaços múltiplos
+    [/  +/g, ' '],
+    // Corrige " ," → ","
+    [/ ,/g, ','],
+    // Corrige " ." → "."
+    [/ \./g, '.'],
+    // Corrige abre parêntese com espaço depois: "( texto" → "(texto"
+    [/\(\s+/g, '('],
+    // Corrige fecha parêntese com espaço antes: "texto )" → "texto)"
+    [/\s+\)/g, ')'],
+    // Corrige espaço após hífen em compostos: "pré - requisito" → "pré-requisito"
+    [/\s+-\s+/g, '-'],
+    // Remove espaço no início
+    [/^\s+/, ''],
+    // Remove espaço no fim
+    [/\s+$/, ''],
+    // "..." → "…" (reticências corretas) — opcional, mantem ...
+    // Capitaliza após ponto final + espaço
+    [/([.!?]\s+)([a-záàâãéèêíïóôõöúüç])/g, (m, p1, p2) => p1 + p2.toUpperCase()],
+  ];
+
+  // ── Capitalização da primeira letra da frase ──────────────────
+  function capitalizeFirst(str) {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  // ── Preserva capitalização original de uma palavra ────────────
+  function preserveCase(original, replacement) {
+    if (!original || !replacement) return replacement;
+    if (original === original.toUpperCase()) return replacement.toUpperCase();
+    if (original[0] === original[0].toUpperCase()) {
+      return replacement.charAt(0).toUpperCase() + replacement.slice(1);
+    }
+    return replacement;
+  }
+
+  // ── Motor principal de correção ───────────────────────────────
+  function corrigirTexto(texto) {
+    if (!texto || texto.trim().length < 2) return texto;
+
+    // 1. Protege URLs e e-mails para não serem alterados
+    const protegidos = [];
+    let protegido = texto.replace(
+      /https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/gi,
+      (match) => { const idx = protegidos.length; protegidos.push(match); return `\x00PROT${idx}\x00`; }
+    );
+
+    // 2. Substitui palavras via dicionário (word boundary)
+    protegido = protegido.replace(/[\wáàâãéèêíïóôõöúüçÁÀÂÃÉÈÊÍÏÓÔÕÖÚÜÇ]+/g, (word) => {
+      const lower = word.toLowerCase();
+      if (DICT[lower]) {
+        return preserveCase(word, DICT[lower]);
+      }
+      return word;
+    });
+
+    // 3. Aplica regras de pontuação e espaçamento
+    for (const [pattern, replacement] of PUNCT_RULES) {
+      protegido = protegido.replace(pattern, replacement);
+    }
+
+    // 4. Capitaliza primeira letra da string
+    protegido = capitalizeFirst(protegido);
+
+    // 5. Restaura URLs/e-mails protegidos
+    protegido = protegido.replace(/\x00PROT(\d+)\x00/g, (_, i) => protegidos[parseInt(i)]);
+
+    return protegido;
+  }
+
+  // ── IDs que NÃO devem ser corrigidos ─────────────────────────
+  function shouldCorrect(el) {
+    if (!el) return false;
+    const tag  = (el.tagName || '').toLowerCase();
+    const type = (el.type  || '').toLowerCase();
+    if (tag !== 'input' && tag !== 'textarea') return false;
+    if (SKIP_TYPES.has(type)) return false;
+    if (el.id && SKIP_IDS.has(el.id)) return false;
+    if (el.readOnly || el.disabled) return false;
+    const val = (el.value || '').trim();
+    if (val.length < 2) return false;
+    return true;
+  }
+
+  // ── Toast de notificação ──────────────────────────────────────
+  const toastEl  = document.getElementById('ptcorr-toast');
+  const toastMsg = document.getElementById('ptcorr-toast-msg');
+  let toastTimer = null;
+
+  function showToast(msg, icon, ms) {
+    if (!toastEl) return;
+    toastMsg.textContent = msg;
+    const iconEl = toastEl.querySelector('.ptcorr-icon');
+    if (iconEl) iconEl.textContent = icon || '✨';
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    if (ms > 0) toastTimer = setTimeout(() => toastEl.classList.remove('show'), ms);
+  }
+
+  function markField(el, state) {
+    el.classList.remove('ptcorr-loading','ptcorr-done');
+    if (state) el.classList.add(state);
+  }
+
+  // ── Handler de blur ───────────────────────────────────────────
+  function handleBlur(e) {
+    const el = e.target;
+    if (!shouldCorrect(el)) return;
+
+    const original = el.value;
+    const corrigido = corrigirTexto(original);
+
+    if (corrigido === original) return; // nada mudou
+
+    el.value = corrigido;
+    el.dispatchEvent(new Event('input',  { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+
+    markField(el, 'ptcorr-done');
+    showToast('Texto corrigido ✓', '✨', 2200);
+  }
+
+  // ── Delegação global ─────────────────────────────────────────
+  // 'blur' não bubbles, por isso usamos capture=true
+  document.addEventListener('blur', handleBlur, true);
+
+  // ── Botão de toggle (mantido para desativar se desejado) ──────
+  const toggleBtn   = document.getElementById('ptcorr-toggle-btn');
+  const toggleLabel = document.getElementById('ptcorr-toggle-label');
+  const STORAGE_KEY = 'ptcorr_enabled';
+  let enabled = localStorage.getItem(STORAGE_KEY) !== 'false';
+
+  function applyEnabled() {
+    if (enabled) {
+      document.addEventListener('blur', handleBlur, true);
+      toggleBtn && toggleBtn.classList.remove('off');
+      if (toggleLabel) toggleLabel.textContent = 'Correção PT';
+    } else {
+      document.removeEventListener('blur', handleBlur, true);
+      toggleBtn && toggleBtn.classList.add('off');
+      if (toggleLabel) toggleLabel.textContent = 'Correção OFF';
+    }
+  }
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      enabled = !enabled;
+      localStorage.setItem(STORAGE_KEY, enabled);
+      applyEnabled();
+      showToast(enabled ? 'Autocorreção ativada' : 'Autocorreção desativada',
+                enabled ? '✅' : '🔕', 1800);
+    });
+  }
+
+  // Inicializa — começa sempre ativo
+  applyEnabled();
+
+  console.log('[AcadêmicoPro] Autocorreção de Português: ATIVA (motor local)');
+})();
+</script>
+<!-- ===== FIM DO SISTEMA DE AUTOCORREÇÃO ===== -->
 </body>
 </html>
