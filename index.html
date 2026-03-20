@@ -2534,6 +2534,24 @@
   </style>
 </head>
 <body>
+
+<!-- ===== TELA DE CARREGAMENTO (bloqueia UI até dados estarem prontos) ===== -->
+<div id="app-loading-overlay" style="
+  position:fixed;inset:0;z-index:999999;
+  background:linear-gradient(135deg,#2c3e50,#34495e);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;transition:opacity 0.4s ease;
+">
+  <div style="text-align:center;">
+    <div style="font-size:3rem;margin-bottom:12px;">🎓</div>
+    <h2 style="color:white;font-family:'Playfair Display',serif;font-size:1.6rem;margin:0 0 6px;">Acadêmico Pro</h2>
+    <p id="app-loading-msg" style="color:rgba(255,255,255,0.75);font-size:0.9rem;margin:0;">Carregando dados...</p>
+  </div>
+  <div style="width:220px;height:6px;background:rgba(255,255,255,0.15);border-radius:3px;overflow:hidden;">
+    <div id="app-loading-bar" style="height:100%;width:0%;background:#1abc9c;border-radius:3px;transition:width 0.3s ease;"></div>
+  </div>
+</div>
+
 <div class="app-container">
   <header class="main-header">
       <h2 id="main-header-title">Acadêmico Pro</h2>
@@ -7145,31 +7163,76 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    async function init() {
-        await openDatabase();
-        loadScheduleFilter();
-        const pid = await getCurrentProfileId();
-        const disciplinas = await getAllData('disciplinas', 'profileId', pid);
-        if (!disciplinas.length) await createInitialData();
-        generateQuickLinks(); 
-        profileDataCache = null; // força carregamento inicial
-        await loadProfileData();
-        // Renderiza apenas o painel ativo (home)
-        renderCurrentPanel();
-        updateMainHeaderTitle(); 
-        setupEventListeners(); 
-        setupFooterNavigation();
-        // Inicialização preguiçosa dos canvases (só quando a aba for aberta)
-        setupImageImport(); 
-        setupDocumentImport();
-        
-        // Add change listener for trabalhoTipo to show/hide participantes wrapper
-        document.getElementById('trabalhoTipo').addEventListener('change', function() {
-            document.getElementById('grupoParticipantesWrapper').style.display = this.value === 'grupo' ? 'block' : 'none';
-        });
+    // ── Controle do overlay de carregamento ──
+    function setLoadingMsg(msg, pct) {
+        const el = document.getElementById('app-loading-msg');
+        const bar = document.getElementById('app-loading-bar');
+        if (el) el.textContent = msg;
+        if (bar) bar.style.width = (pct || 0) + '%';
+    }
+    function hideLoadingOverlay() {
+        const overlay = document.getElementById('app-loading-overlay');
+        if (!overlay) return;
+        overlay.style.opacity = '0';
+        setTimeout(() => { overlay.style.display = 'none'; }, 420);
+    }
 
-        loadTheme();
-        setupCertificadosEvents();
+    async function init() {
+        try {
+            setLoadingMsg('Abrindo banco de dados...', 10);
+            await openDatabase();
+
+            // ── Verificar se esta é uma recarga pós-importação ──
+            // A importação grava uma flag no localStorage antes de recarregar
+            const importFlag = sessionStorage.getItem('_academico_import_done');
+            if (importFlag) {
+                sessionStorage.removeItem('_academico_import_done');
+                setLoadingMsg('Aguardando dados do backup...', 30);
+                // Pequena espera extra para garantir que o IndexedDB terminou de gravar
+                await new Promise(r => setTimeout(r, 600));
+            }
+
+            setLoadingMsg('Carregando configurações...', 40);
+            loadScheduleFilter();
+
+            setLoadingMsg('Carregando perfil...', 55);
+            const pid = await getCurrentProfileId();
+            const disciplinas = await getAllData('disciplinas', 'profileId', pid);
+            if (!disciplinas.length) {
+                setLoadingMsg('Criando dados iniciais...', 65);
+                await createInitialData();
+            }
+
+            setLoadingMsg('Preparando interface...', 75);
+            generateQuickLinks();
+            profileDataCache = null;
+            await loadProfileData();
+
+            setLoadingMsg('Renderizando...', 90);
+            renderCurrentPanel();
+            updateMainHeaderTitle();
+            setupEventListeners();
+            setupFooterNavigation();
+            setupImageImport();
+            setupDocumentImport();
+
+            document.getElementById('trabalhoTipo').addEventListener('change', function() {
+                document.getElementById('grupoParticipantesWrapper').style.display = this.value === 'grupo' ? 'block' : 'none';
+            });
+
+            loadTheme();
+            setupCertificadosEvents();
+
+            setLoadingMsg('Pronto!', 100);
+            // Pequeno delay para o usuário ver "Pronto!" antes de esconder
+            setTimeout(hideLoadingOverlay, 250);
+
+        } catch(err) {
+            console.error('Erro na inicialização:', err);
+            setLoadingMsg('Erro ao carregar: ' + (err.message || err), 100);
+            // Mesmo com erro, tenta mostrar a interface após 2s
+            setTimeout(hideLoadingOverlay, 2000);
+        }
     }
 
     async function createInitialData() {
@@ -8844,7 +8907,12 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       progressBar.style.width = '100%';
-      progressText.textContent = 'Importação completa! Tudo restaurado.';
+      progressText.textContent = 'Tudo restaurado! Aguarde...';
+
+      // Verificação final: lê um store para confirmar que o IndexedDB persistiu tudo
+      try {
+        await readAllFromStore(db, 'profiles');
+      } catch(e) { /* ignora — apenas garante flush */ }
 
       // Fechar o banco ANTES de recarregar (crítico para iOS Safari)
       db.close();
@@ -8860,6 +8928,8 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch(e){}
         showToast('✅ Backup restaurado com sucesso! Recarregando...', 'success');
         setTimeout(() => {
+          // Sinaliza para o init() que esta é uma recarga pós-importação
+          try { sessionStorage.setItem('_academico_import_done', '1'); } catch(e){}
           // Recarregar sem cache para garantir dados frescos
           window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
         }, 1800);
