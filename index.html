@@ -1,3 +1,7 @@
+
+
+
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8597,445 +8601,373 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- ===== BACKUP JAVASCRIPT ===== -->
 <script>
-(function() {
+(function () {
   'use strict';
 
-  // ── Nomes dos stores IndexedDB que serão exportados/importados ──
-  const ALL_STORES = ['profiles', 'disciplinas', 'horarios', 'trabalhos', 'provas', 'eventos', 'financeiro', 'biblioteca', 'filmes', 'notas', 'links', 'certificados'];
+  const ALL_STORES = [
+    'profiles','disciplinas','horarios','trabalhos','provas','eventos',
+    'financeiro','biblioteca','filmes','notas','links','certificados'
+  ];
   const STORE_LABELS = {
-    profiles: 'Perfis', disciplinas: 'Disciplinas', horarios: 'Horários',
-    trabalhos: 'Trabalhos', provas: 'Provas', eventos: 'Eventos',
-    financeiro: 'Financeiro', biblioteca: 'Biblioteca', filmes: 'Filmes',
-    notas: 'Notas', links: 'Links', certificados: 'Certificados'
+    profiles:'Perfis', disciplinas:'Disciplinas', horarios:'Horários',
+    trabalhos:'Trabalhos', provas:'Provas', eventos:'Eventos',
+    financeiro:'Financeiro', biblioteca:'Biblioteca', filmes:'Filmes',
+    notas:'Notas', links:'Links', certificados:'Certificados'
   };
-
-  // ── Todas as chaves de localStorage que devem ser exportadas ──
   const ALL_LS_KEYS = [
-    'juristaData_v3', 'scheduleStartHour', 'scheduleEndHour',
-    'academicoTheme', 'academicoCustomBg'
+    'juristaData_v3','scheduleStartHour','scheduleEndHour',
+    'academicoTheme','academicoCustomBg'
   ];
 
-  // ── Aguarda o app principal expor a API (com timeout) ──
-  function waitForApp(timeout = 10000) {
-    return new Promise((resolve, reject) => {
-      if (window._acadApp && window._acadApp.getDb) { resolve(window._acadApp); return; }
-      const start = Date.now();
-      const poll = setInterval(() => {
-        if (window._acadApp && window._acadApp.getDb) {
-          clearInterval(poll);
-          resolve(window._acadApp);
-        } else if (Date.now() - start > timeout) {
-          clearInterval(poll);
-          reject(new Error('App não inicializado. Tente reabrir o app.'));
-        }
-      }, 100);
+  /* ── aguarda _acadApp ficar disponível ─────────────────────── */
+  function waitForApp(ms = 15000) {
+    return new Promise((ok, fail) => {
+      if (window._acadApp && window._acadApp.getDb) return ok(window._acadApp);
+      const t0 = Date.now();
+      const iv = setInterval(() => {
+        if (window._acadApp && window._acadApp.getDb) { clearInterval(iv); ok(window._acadApp); }
+        else if (Date.now() - t0 > ms)                { clearInterval(iv); fail(new Error('App não inicializado')); }
+      }, 80);
     });
   }
 
-  // ── Toast flutuante ──
+  /* ── toast ─────────────────────────────────────────────────── */
   function showToast(msg, type = 'success') {
-    const el = document.createElement('div');
-    el.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;min-width:280px;max-width:90vw;';
-    const icon = type === 'success' ? 'fa-check-circle' : type === 'danger' ? 'fa-times-circle' : 'fa-info-circle';
-    el.innerHTML = `<div class="alert alert-${type} alert-dismissible shadow d-flex align-items-center gap-2" role="alert" style="border-radius:12px;">
-      <i class="fas ${icon}"></i><span>${msg}</span>
-      <button type="button" class="btn-close" onclick="this.closest('.alert').parentElement.remove()"></button>
-    </div>`;
-    document.body.appendChild(el);
-    setTimeout(() => { if (el.parentNode) el.remove(); }, 6000);
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;min-width:280px;max-width:90vw;';
+    const ico = type === 'success' ? 'fa-check-circle' : type === 'danger' ? 'fa-times-circle' : 'fa-info-circle';
+    wrap.innerHTML = `<div class="alert alert-${type} alert-dismissible shadow d-flex align-items-center gap-2"
+      role="alert" style="border-radius:12px;">
+      <i class="fas ${ico}"></i><span>${msg}</span>
+      <button type="button" class="btn-close"
+        onclick="this.closest('.alert').parentElement.remove()"></button></div>`;
+    document.body.appendChild(wrap);
+    setTimeout(() => { try { wrap.remove(); } catch(e){} }, 7000);
   }
 
-  // ── EXPORTAR ──
+  /* ══════════════════════════════════════════════════════════════
+     EXPORTAR
+  ══════════════════════════════════════════════════════════════ */
   async function exportBackup() {
     const btn = document.getElementById('exportBackupBtn');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exportando tudo...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exportando...';
     try {
       const app = await waitForApp();
-      const selectedProfile = document.getElementById('backupProfileSelect').value;
-      const exportData = {
-        _meta: {
-          app: 'academicoProDB', version: 2,
-          exportedAt: new Date().toISOString(),
-          profileFilter: selectedProfile,
-          exportedBy: 'Acadêmico Pro'
-        },
-        stores: {}, localStorage: {}
-      };
+      const prof = document.getElementById('backupProfileSelect').value;
+      const out  = { _meta: { app:'academicoProDB', version:2,
+                               exportedAt: new Date().toISOString(),
+                               profileFilter: prof, exportedBy:'Acadêmico Pro' },
+                     stores: {}, localStorage: {} };
 
       // localStorage
-      ALL_LS_KEYS.forEach(k => {
-        const v = localStorage.getItem(k);
-        if (v !== null) exportData.localStorage[k] = v;
-      });
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && !exportData.localStorage.hasOwnProperty(k))
-          exportData.localStorage[k] = localStorage.getItem(k);
+        if (k) out.localStorage[k] = localStorage.getItem(k);
       }
 
-      // IndexedDB — usando conexão compartilhada
-      for (const storeName of ALL_STORES) {
-        let records = await app.readAllFromStore(storeName);
-        if (selectedProfile !== 'all' && storeName !== 'profiles')
-          records = records.filter(r => r.profileId === parseInt(selectedProfile) || r.profileId === undefined);
-        if (selectedProfile !== 'all' && storeName === 'profiles')
-          records = records.filter(r => r.id === parseInt(selectedProfile));
-        exportData.stores[storeName] = records;
+      // IndexedDB via conexão compartilhada
+      for (const s of ALL_STORES) {
+        let recs = await app.readAllFromStore(s);
+        if (prof !== 'all' && s !== 'profiles')
+          recs = recs.filter(r => r.profileId === parseInt(prof) || r.profileId === undefined);
+        if (prof !== 'all' && s === 'profiles')
+          recs = recs.filter(r => r.id === parseInt(prof));
+        out.stores[s] = recs;
       }
 
-      const json = JSON.stringify(exportData);
-      const sizeKB = Math.round(json.length / 1024);
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const nameInput = document.getElementById('backupFileName').value.trim() || 'academico_pro_backup';
-      const date = new Date().toISOString().split('T')[0];
-      const a = document.createElement('a');
-      a.href = url; a.download = `${nameInput}_${date}.json`;
+      const json    = JSON.stringify(out);
+      const sizeKB  = Math.round(json.length / 1024);
+      const blob    = new Blob([json], { type:'application/json' });
+      const url     = URL.createObjectURL(blob);
+      const name    = (document.getElementById('backupFileName').value.trim() || 'academico_pro_backup')
+                    + '_' + new Date().toISOString().split('T')[0] + '.json';
+      const a = Object.assign(document.createElement('a'), { href:url, download:name });
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 3000);
       showToast(`✅ Backup exportado! (${sizeKB >= 1024 ? (sizeKB/1024).toFixed(2)+' MB' : sizeKB+' KB'})`, 'success');
-    } catch(err) {
-      console.error('Erro exportar:', err);
-      showToast('❌ Erro ao exportar: ' + (err.message || err), 'danger');
+    } catch(e) {
+      showToast('❌ Erro ao exportar: ' + (e.message||e), 'danger');
     } finally {
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-download me-2"></i>Exportar Backup Completo';
     }
   }
 
-  // ── IMPORTAR — leitura do arquivo ──
-  // ═══════════════════════════════════════════════════════════════
-  // IMPORTAÇÃO ROBUSTA — compatível com todos os browsers mobile
-  //
-  // Estratégia: lê o arquivo em fatias de texto de 4 MB usando
-  // FileReader. Mantém um buffer acumulado e extrai objetos JSON
-  // completos do buffer usando rastreamento de profundidade {}.
-  // Grava no IndexedDB em lotes de 5 registros com pausa entre
-  // cada lote para não travar o thread principal.
-  //
-  // NÃO usa async generators (suporte falho em mobile antigo).
-  // NÃO usa JSON.parse no arquivo inteiro (estoura memória).
-  // ═══════════════════════════════════════════════════════════════
+  /* ══════════════════════════════════════════════════════════════
+     PARSER JSON PURO — sem async generators, sem FileReader em loop
+     
+     Lê o arquivo INTEIRO de uma vez (FileReader.readAsText),
+     depois extrai os arrays de cada store diretamente da string.
+     
+     Para arquivos de 120 MB isso é seguro porque:
+     1. readAsText é não-bloqueante (callback assíncrono)
+     2. A string resultante fica em memória apenas durante a gravação
+     3. Gravamos no IDB em lotes com setTimeout entre cada lote
+     4. Depois de gravar, a string pode ser coletada pelo GC
+  ══════════════════════════════════════════════════════════════ */
 
-  const SLICE_SIZE = 4 * 1024 * 1024; // 4 MB por fatia
+  // Extrai o array de um store diretamente da string JSON bruta.
+  // Retorna array de objetos JS. NÃO usa JSON.parse na string toda.
+  function parseStoreArray(jsonStr, storeName) {
+    const records = [];
+    const key     = '"' + storeName + '"';
+    let   ki      = jsonStr.indexOf(key);
+    if (ki === -1) return records;
 
-  function readSlice(file, start, end) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error('Erro lendo arquivo'));
-      reader.onload  = e  => resolve(e.target.result);
-      reader.readAsText(file.slice(start, end), 'UTF-8');
-    });
-  }
+    // Avança até '['
+    let ai = jsonStr.indexOf('[', ki + key.length);
+    if (ai === -1) return records;
+    ai++; // começa depois do '['
 
-  async function readHeader(file) {
-    const headText = await readSlice(file, 0, Math.min(512 * 1024, file.size));
-    const metaMatch = headText.match(/"_meta"\s*:\s*(\{[^}]+\})/);
-    if (!metaMatch) return { legacy: true };
-    let meta = {};
-    try { meta = JSON.parse(metaMatch[1]); } catch(e) {}
-    let lsData = {};
-    const lsMatch = headText.match(/"localStorage"\s*:\s*(\{[\s\S]*?\})\s*,\s*"stores"/);
-    if (lsMatch) { try { lsData = JSON.parse(lsMatch[1]); } catch(e) {} }
-    return { legacy: false, meta, localStorage: lsData };
-  }
-
-  // Extrai todos os objetos JSON completos de um texto.
-  // Retorna { objects: [...], remainder: string (incompleto no final) }
-  function extractObjects(text) {
-    const objects = [];
-    let i = 0;
-    const n = text.length;
+    let i       = ai;
+    const n     = jsonStr.length;
+    let inStr   = false;
+    let escaped = false;
 
     while (i < n) {
-      // Avança até '{' ou ']' (fim do array)
-      while (i < n && text[i] !== '{' && text[i] !== ']') i++;
+      // Pula espaços e vírgulas fora de strings
+      while (i < n && !inStr && (jsonStr[i] === ',' || jsonStr[i] === '\n' ||
+             jsonStr[i] === ' ' || jsonStr[i] === '\r' || jsonStr[i] === '\t')) i++;
       if (i >= n) break;
-      if (text[i] === ']') return { objects, remainder: '', arrayEnd: true };
 
-      const start  = i;
-      let depth    = 0;
-      let inStr    = false;
-      let escaped  = false;
+      const c = jsonStr[i];
+      if (c === ']' && !inStr) break; // fim do array
+      if (c !== '{') { i++; continue; }
+
+      // Rastreia o objeto completo
+      const start = i;
+      let depth = 0;
+      inStr   = false;
+      escaped = false;
 
       for (; i < n; i++) {
-        const c = text[i];
-        if (escaped)              { escaped = false; continue; }
-        if (c === '\\' && inStr)  { escaped = true;  continue; }
-        if (c === '"')            { inStr = !inStr;   continue; }
-        if (inStr)                                    continue;
-        if (c === '{')            { depth++;           continue; }
-        if (c === '}') {
+        const ch = jsonStr[i];
+        if (escaped)             { escaped = false; continue; }
+        if (ch === '\\' && inStr) { escaped = true;  continue; }
+        if (ch === '"')          { inStr = !inStr;   continue; }
+        if (inStr)               continue;
+        if (ch === '{')          { depth++; continue; }
+        if (ch === '}') {
           depth--;
-          if (depth === 0) {
-            i++; // avança para depois do '}'
-            try { objects.push(JSON.parse(text.slice(start, i))); }
-            catch(e) { /* malformado — ignora */ }
-            break;
-          }
+          if (depth === 0) { i++; break; }
         }
       }
 
-      if (depth > 0) {
-        // Objeto ainda aberto — retorna o trecho incompleto
-        return { objects, remainder: text.slice(start), arrayEnd: false };
-      }
+      try {
+        records.push(JSON.parse(jsonStr.slice(start, i)));
+      } catch(e) { /* malformado — ignora */ }
     }
-    return { objects, remainder: '', arrayEnd: false };
+    return records;
   }
 
-  // Importa um store inteiro do arquivo, chamando onRecord(batch) a cada lote
-  async function importStoreFromFile(file, storeName, onRecord, onDone) {
-    const marker   = `"${storeName}"`;
-    let   buf      = '';
-    let   inArray  = false;
-    const fileSize = file.size;
-
-    for (let pos = 0; pos < fileSize; pos += SLICE_SIZE) {
-      const chunk = await readSlice(file, pos, Math.min(pos + SLICE_SIZE, fileSize));
-      buf += chunk;
-
-      if (!inArray) {
-        const ki = buf.indexOf(marker);
-        if (ki === -1) {
-          // Mantém overlap para não perder chave na fronteira
-          buf = buf.slice(-(marker.length + 30));
-          continue;
-        }
-        const ai = buf.indexOf('[', ki + marker.length);
-        if (ai === -1) continue; // '[' ainda não chegou
-        buf    = buf.slice(ai + 1);
-        inArray = true;
-      }
-
-      // Extrai objetos do buffer atual
-      const { objects, remainder, arrayEnd } = extractObjects(buf);
-      buf = remainder;
-
-      if (objects.length > 0) {
-        await onRecord(objects);
-        // Pausa para não travar o thread do mobile
-        await new Promise(r => setTimeout(r, 15));
-      }
-
-      if (arrayEnd) break;
+  /* ── Grava array no IDB em lotes de 20 com pausa ──────────── */
+  async function writeToIDB(app, storeName, records, onProgress) {
+    if (!records || records.length === 0) return;
+    const BATCH = 20;
+    for (let i = 0; i < records.length; i += BATCH) {
+      await app.putRecordsBatch(storeName, records.slice(i, i + BATCH));
+      if (onProgress) onProgress(Math.min(i + BATCH, records.length), records.length);
+      // Pausa entre lotes — evita travar thread mobile
+      await new Promise(r => setTimeout(r, 10));
     }
-
-    onDone();
   }
 
-  // ── Estado da importação ──
+  /* ── Estado ─────────────────────────────────────────────────── */
   let pendingImportFile   = null;
   let pendingImportHeader = null;
 
-  function handleImportFile(file) {
-    if (!file) return;
-    if (!file.name.endsWith('.json') && file.type !== 'application/json') {
-      showToast('⚠️ Selecione um arquivo .json válido', 'warning'); return;
-    }
-
-    const sizeMB = file.size / (1024 * 1024);
-    const sizeLabel = sizeMB >= 1024
-      ? (sizeMB/1024).toFixed(2) + ' GB'
-      : sizeMB.toFixed(1) + ' MB';
-
-    // Mostra progresso de leitura do cabeçalho
-    document.getElementById('backupImportPreview').classList.add('d-none');
-    document.getElementById('backupImportProgress').classList.remove('d-none');
-    document.getElementById('backupProgressBar').style.width = '0%';
-    document.getElementById('backupProgressText').textContent = 'Lendo cabeçalho do arquivo...';
-
-    readHeader(file).then(header => {
-      document.getElementById('backupImportProgress').classList.add('d-none');
-
-      if (header.legacy) {
-        // Arquivo legado muito pequeno: tenta parse completo
-        if (file.size > 80 * 1024 * 1024) {
-          showToast('❌ Arquivo legado muito grande para importar.', 'danger'); return;
-        }
-        const reader = new FileReader();
-        reader.onerror = () => showToast('❌ Erro ao ler arquivo.', 'danger');
-        reader.onload = e => {
-          try {
-            const data = JSON.parse(e.target.result);
-            if (ALL_STORES.some(s => Array.isArray(data[s]))) {
-              pendingImportFile   = file;
-              pendingImportHeader = { legacy: true, legacyData: data };
-              renderImportPreviewFromHeader(sizeLabel, null, data);
-              document.getElementById('backupImportPreview').classList.remove('d-none');
-            } else {
-              showToast('❌ Arquivo inválido.', 'danger');
-            }
-          } catch(e) { showToast('❌ Arquivo corrompido: ' + e.message, 'danger'); }
-        };
-        reader.readAsText(file, 'UTF-8');
-        return;
-      }
-
-      if (!header.meta) {
-        showToast('❌ Arquivo inválido. Use um backup gerado por este app.', 'danger'); return;
-      }
-
-      pendingImportFile   = file;
-      pendingImportHeader = header;
-      renderImportPreviewFromHeader(sizeLabel, header.meta, null);
-      document.getElementById('backupImportPreview').classList.remove('d-none');
-
-    }).catch(err => {
-      document.getElementById('backupImportProgress').classList.add('d-none');
-      showToast('❌ Erro ao ler arquivo: ' + err.message, 'danger');
+  /* ── Lê cabeçalho do arquivo (primeiros 512 KB) ─────────────── */
+  function readHeader(file) {
+    return new Promise((ok, fail) => {
+      const fr = new FileReader();
+      fr.onerror = () => fail(new Error('Erro ao ler arquivo'));
+      fr.onload  = e  => {
+        const head = e.target.result;
+        const mm   = head.match(/"_meta"\s*:\s*(\{[^}]+\})/);
+        if (!mm) { ok({ legacy: true }); return; }
+        let meta = {};
+        try { meta = JSON.parse(mm[1]); } catch(err) {}
+        let ls = {};
+        const lm = head.match(/"localStorage"\s*:\s*(\{[\s\S]*?\})\s*,\s*"stores"/);
+        if (lm) try { ls = JSON.parse(lm[1]); } catch(err) {}
+        ok({ legacy: false, meta, localStorage: ls });
+      };
+      fr.readAsText(file.slice(0, Math.min(512 * 1024, file.size)), 'UTF-8');
     });
   }
 
-  function renderImportPreviewFromHeader(sizeLabel, meta, legacyData) {
-    const exportDate = meta
-      ? new Date(meta.exportedAt).toLocaleString('pt-BR')
-      : 'Formato legado';
-    const profileLabel = meta
-      ? (meta.profileFilter === 'all' ? 'Todos' : 'Perfil ' + meta.profileFilter)
-      : 'Todos';
-
-    let statsHtml = '';
-    if (legacyData) {
-      ALL_STORES.forEach(s => {
-        if (Array.isArray(legacyData[s]) && legacyData[s].length > 0)
-          statsHtml += `<div class="bi-row"><span class="bi-key"><i class="fas fa-table me-1" style="color:var(--accent);font-size:0.7rem;"></i>${STORE_LABELS[s]||s}</span><span class="bi-val">${legacyData[s].length} registro(s)</span></div>`;
-      });
-    } else {
-      statsHtml = `<div class="bi-row"><span class="bi-key"><i class="fas fa-info-circle me-1"></i>Registros</span><span class="bi-val">Contagem durante importação</span></div>`;
-    }
-
-    document.getElementById('backupImportInfo').innerHTML = `
-      <div class="bi-row"><span class="bi-key"><i class="fas fa-calendar me-1"></i>Data do backup</span><span class="bi-val">${exportDate}</span></div>
-      <div class="bi-row"><span class="bi-key"><i class="fas fa-filter me-1"></i>Perfil exportado</span><span class="bi-val">${profileLabel}</span></div>
-      <div class="bi-row"><span class="bi-key"><i class="fas fa-weight me-1"></i>Tamanho</span><span class="bi-val">${sizeLabel}</span></div>
-      ${statsHtml}`;
+  /* ── Lê o arquivo inteiro como texto ────────────────────────── */
+  function readFullFile(file) {
+    return new Promise((ok, fail) => {
+      const fr = new FileReader();
+      fr.onerror = () => fail(new Error('Erro ao ler arquivo completo'));
+      fr.onload  = e  => ok(e.target.result);
+      fr.readAsText(file, 'UTF-8');
+    });
   }
 
-  // ── CONFIRMAR IMPORTAÇÃO — streaming, sem carregar tudo na memória ──
+  /* ── handleImportFile ───────────────────────────────────────── */
+  function handleImportFile(file) {
+    if (!file) return;
+    if (!file.name.endsWith('.json') && !file.type.includes('json')) {
+      showToast('⚠️ Selecione um arquivo .json válido', 'warning'); return;
+    }
+
+    const sizeMB    = file.size / (1024 * 1024);
+    const sizeLabel = sizeMB >= 1024
+      ? (sizeMB / 1024).toFixed(2) + ' GB'
+      : sizeMB.toFixed(1) + ' MB';
+
+    document.getElementById('backupImportPreview').classList.add('d-none');
+    document.getElementById('backupImportProgress').classList.remove('d-none');
+    document.getElementById('backupProgressBar').style.width = '5%';
+    document.getElementById('backupProgressText').textContent = 'Lendo arquivo...';
+
+    readHeader(file).then(header => {
+      document.getElementById('backupImportProgress').classList.add('d-none');
+      if (!header.meta && !header.legacy) {
+        showToast('❌ Arquivo inválido.', 'danger'); return;
+      }
+      pendingImportFile   = file;
+      pendingImportHeader = header;
+
+      const exportDate   = header.meta ? new Date(header.meta.exportedAt).toLocaleString('pt-BR') : 'Formato legado';
+      const profileLabel = header.meta ? (header.meta.profileFilter === 'all' ? 'Todos' : 'Perfil ' + header.meta.profileFilter) : 'Todos';
+      document.getElementById('backupImportInfo').innerHTML = `
+        <div class="bi-row"><span class="bi-key"><i class="fas fa-calendar me-1"></i>Data do backup</span>
+          <span class="bi-val">${exportDate}</span></div>
+        <div class="bi-row"><span class="bi-key"><i class="fas fa-filter me-1"></i>Perfil</span>
+          <span class="bi-val">${profileLabel}</span></div>
+        <div class="bi-row"><span class="bi-key"><i class="fas fa-weight me-1"></i>Tamanho</span>
+          <span class="bi-val">${sizeLabel}</span></div>
+        <div class="bi-row"><span class="bi-key"><i class="fas fa-info-circle me-1"></i>Status</span>
+          <span class="bi-val">✅ Pronto para importar</span></div>`;
+      document.getElementById('backupImportPreview').classList.remove('d-none');
+    }).catch(err => {
+      document.getElementById('backupImportProgress').classList.add('d-none');
+      showToast('❌ Erro: ' + err.message, 'danger');
+    });
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     CONFIRMAR IMPORTAÇÃO
+  ══════════════════════════════════════════════════════════════ */
   async function confirmImport() {
     if (!pendingImportFile) return;
+
     const file   = pendingImportFile;
     const header = pendingImportHeader;
 
     const confirmBtn = document.getElementById('backupImportConfirm');
     const cancelBtn  = document.getElementById('backupImportCancel');
-    confirmBtn.disabled = true;
-    cancelBtn.disabled  = true;
+    confirmBtn.disabled = cancelBtn.disabled = true;
 
-    const progress     = document.getElementById('backupImportProgress');
-    const progressBar  = document.getElementById('backupProgressBar');
-    const progressText = document.getElementById('backupProgressText');
+    const progressEl  = document.getElementById('backupImportProgress');
+    const progressBar = document.getElementById('backupProgressBar');
+    const progressTxt = document.getElementById('backupProgressText');
     document.getElementById('backupImportPreview').classList.add('d-none');
-    progress.classList.remove('d-none');
+    progressEl.classList.remove('d-none');
 
     try {
-      progressText.textContent = 'Conectando ao banco de dados...';
+      progressTxt.textContent = 'Aguardando banco de dados...';
       progressBar.style.width = '3%';
       const app = await waitForApp(15000);
 
-      // ── Caso legado: dados já estão em memória (arquivo era pequeno) ──
-      if (header.legacy && header.legacyData) {
-        const data = header.legacyData;
-        let done = 0;
-        for (const storeName of ALL_STORES) {
-          if (!Array.isArray(data[storeName]) || data[storeName].length === 0) { done++; continue; }
-          progressText.textContent = `Importando ${STORE_LABELS[storeName]}...`;
-          progressBar.style.width = Math.round(3 + (done / ALL_STORES.length) * 90) + '%';
-          await app.clearStore(storeName);
-          const recs = data[storeName];
-          const CHUNK = 50;
-          for (let i = 0; i < recs.length; i += CHUNK) {
-            await app.putRecordsBatch(storeName, recs.slice(i, i + CHUNK));
-            await new Promise(r => setTimeout(r, 0));
-          }
-          done++;
-        }
-        // Migrar _config legado
-        if (data._config) {
-          const m = { academicoTheme:1, academicoCustomBg:1, scheduleStartHour:1, scheduleEndHour:1 };
-          Object.entries(data._config).forEach(([k,v]) => { if (m[k] && v) try { localStorage.setItem(k,v); } catch(e){} });
-        }
+      /* ── 1. Lê o arquivo INTEIRO como string ── */
+      progressTxt.textContent = 'Lendo arquivo... (pode demorar)';
+      progressBar.style.width = '10%';
+      const jsonStr = await readFullFile(file);
 
+      progressTxt.textContent = 'Arquivo lido. Iniciando importação...';
+      progressBar.style.width = '15%';
+      await new Promise(r => setTimeout(r, 50)); // atualiza UI
+
+      /* ── 2. Detecta formato ── */
+      let storesData  = {};
+      let lsData      = {};
+
+      if (header.legacy) {
+        // Formato antigo: tenta JSON.parse normal
+        let parsed;
+        try { parsed = JSON.parse(jsonStr); } catch(e) {
+          throw new Error('Arquivo corrompido: ' + e.message);
+        }
+        ALL_STORES.forEach(s => { if (Array.isArray(parsed[s])) storesData[s] = parsed[s]; });
+        if (parsed._config) {
+          ['academicoTheme','academicoCustomBg','scheduleStartHour','scheduleEndHour']
+            .forEach(k => { if (parsed._config[k]) lsData[k] = parsed._config[k]; });
+        }
       } else {
-        // ── Caso normal: streaming por store ──
-        const storesToImport = ALL_STORES;
-        const total          = storesToImport.length;
-
-        // Restaurar localStorage (já lido no header — campo pequeno)
-        if (header.localStorage) {
-          for (const [k, v] of Object.entries(header.localStorage)) {
-            if (v !== null && v !== undefined)
-              try { localStorage.setItem(k, v); } catch(e) {}
-          }
-        }
-
-        for (let si = 0; si < storesToImport.length; si++) {
-          const storeName    = storesToImport[si];
-          const baseProgress = Math.round(3 + (si / total) * 90);
-          progressBar.style.width  = baseProgress + '%';
-          progressText.textContent = `Limpando ${STORE_LABELS[storeName] || storeName}...`;
-
-          // 1) Limpa o store completamente e aguarda o commit
-          await app.clearStore(storeName);
-          await new Promise(r => setTimeout(r, 30));
-
-          // 2) Importa registros via callback — sem async generator
-          let recCount = 0;
-          progressText.textContent = `Importando ${STORE_LABELS[storeName] || storeName}...`;
-
-          await new Promise((storeResolve, storeReject) => {
-            importStoreFromFile(
-              file,
-              storeName,
-              // onRecord: chamado com cada lote de objetos extraídos
-              async (batch) => {
-                try {
-                  await app.putRecordsBatch(storeName, batch);
-                  recCount += batch.length;
-                  progressText.textContent =
-                    `${STORE_LABELS[storeName]}: ${recCount} registros...`;
-                } catch(e) {
-                  console.error('[backup] putRecordsBatch erro:', storeName, e);
-                }
-              },
-              // onDone: chamado quando o store terminou
-              () => storeResolve()
-            ).catch(storeReject);
-          });
-
-          console.log(`[backup] ${storeName}: ${recCount} registros importados`);
-        }
+        // Formato v2: extrai cada store com parser dedicado
+        lsData = header.localStorage || {};
+        // Para arquivos grandes, extrai store por store para não manter
+        // arrays gigantes em memória ao mesmo tempo
+        // (storesData fica preenchido abaixo, store a store)
       }
 
+      /* ── 3. Grava no IndexedDB store por store ── */
+      const total = ALL_STORES.length;
+
+      for (let si = 0; si < ALL_STORES.length; si++) {
+        const storeName = ALL_STORES[si];
+        const pct       = Math.round(15 + (si / total) * 80);
+        progressBar.style.width  = pct + '%';
+        progressTxt.textContent  = `Importando ${STORE_LABELS[storeName]}...`;
+        await new Promise(r => setTimeout(r, 0)); // atualiza UI
+
+        // Extrai registros do store
+        let records;
+        if (header.legacy) {
+          records = storesData[storeName] || [];
+        } else {
+          // Extrai do JSON string — libera memória após uso
+          records = parseStoreArray(jsonStr, storeName);
+        }
+
+        if (records.length === 0) continue;
+
+        // Limpa store e aguarda commit
+        await app.clearStore(storeName);
+        await new Promise(r => setTimeout(r, 20));
+
+        // Grava em lotes
+        await writeToIDB(app, storeName, records, (done, total) => {
+          progressTxt.textContent = `${STORE_LABELS[storeName]}: ${done}/${total}`;
+        });
+
+        console.log('[backup] ' + storeName + ': ' + records.length + ' registros');
+        records = null; // libera referência para GC
+      }
+
+      /* ── 4. Restaura localStorage ── */
+      Object.entries(lsData).forEach(([k, v]) => {
+        if (v !== null && v !== undefined)
+          try { localStorage.setItem(k, v); } catch(e) {}
+      });
+
       progressBar.style.width = '100%';
-      progressText.textContent = 'Concluído! Recarregando interface...';
-      await new Promise(r => setTimeout(r, 500));
+      progressTxt.textContent = 'Concluído!';
+      await new Promise(r => setTimeout(r, 400));
 
-      // Fecha modal
-      try { bootstrap.Modal.getInstance(document.getElementById('backupModal'))?.hide(); } catch(e){}
+      try { bootstrap.Modal.getInstance(document.getElementById('backupModal'))?.hide(); } catch(e) {}
+      try { await app.reloadAfterImport(); } catch(e) { console.warn(e); }
 
-      // Recarrega dados sem reload de página
-      try { await app.reloadAfterImport(); } catch(e) { console.warn('reloadAfterImport:', e); }
-
-      pendingImportFile   = null;
-      pendingImportHeader = null;
-      try { document.getElementById('backupFileInput').value = ''; } catch(e){}
-      progress.classList.add('d-none');
+      pendingImportFile = pendingImportHeader = null;
+      try { document.getElementById('backupFileInput').value = ''; } catch(e) {}
+      progressEl.classList.add('d-none');
       showToast('✅ Backup restaurado com sucesso!', 'success');
 
     } catch(err) {
-      console.error('Erro ao importar backup:', err);
-      progress.classList.add('d-none');
+      console.error('[backup] erro importação:', err);
+      progressEl.classList.add('d-none');
       document.getElementById('backupImportPreview').classList.remove('d-none');
-      showToast('❌ Erro ao importar: ' + (err.message || 'Erro desconhecido'), 'danger');
-      confirmBtn.disabled = false;
-      cancelBtn.disabled  = false;
+      showToast('❌ Erro: ' + (err.message || 'Desconhecido'), 'danger');
+      confirmBtn.disabled = cancelBtn.disabled = false;
     }
   }
 
-  // ── Popular modal de backup ──
+  /* ── Popular modal ─────────────────────────────────────────── */
   async function populateBackupModal() {
     try {
       const app = await waitForApp();
@@ -9043,92 +8975,59 @@ document.addEventListener('DOMContentLoaded', function() {
       const sel = document.getElementById('backupProfileSelect');
       sel.innerHTML = '<option value="all">✅ Todos os perfis (recomendado)</option>';
       profiles.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.textContent = p.name || ('Perfil ' + p.id);
-        sel.appendChild(opt);
+        const o = document.createElement('option');
+        o.value = p.id; o.textContent = p.name || 'Perfil ' + p.id;
+        sel.appendChild(o);
       });
 
       const statsRow = document.getElementById('backupStatsRow');
       statsRow.innerHTML = '<span class="text-muted small">Calculando...</span>';
-      let chips = '', totalRecords = 0;
-      for (const storeName of ALL_STORES) {
-        const records = await app.readAllFromStore(storeName);
-        if (records.length > 0) {
-          totalRecords += records.length;
-          chips += `<span class="backup-stat-chip"><i class="fas fa-layer-group"></i>${STORE_LABELS[storeName]}: <strong>${records.length}</strong></span>`;
-        }
+      let chips = '', total = 0;
+      for (const s of ALL_STORES) {
+        const recs = await app.readAllFromStore(s);
+        if (recs.length) { total += recs.length; chips += `<span class="backup-stat-chip"><i class="fas fa-layer-group"></i>${STORE_LABELS[s]}: <strong>${recs.length}</strong></span>`; }
       }
-      const juristaRaw = localStorage.getItem('juristaData_v3');
-      if (juristaRaw) {
-        try {
-          const jd = JSON.parse(juristaRaw);
-          const sessoes = (jd.sessions||[]).length;
-          if (sessoes > 0) chips += `<span class="backup-stat-chip"><i class="fas fa-balance-scale"></i>Sessões Jurista: <strong>${sessoes}</strong></span>`;
-        } catch(e){}
-      }
+      const jr = localStorage.getItem('juristaData_v3');
+      if (jr) { try { const jd = JSON.parse(jr); const ns = (jd.sessions||[]).length; if (ns) chips += `<span class="backup-stat-chip"><i class="fas fa-balance-scale"></i>Jurista: <strong>${ns}</strong></span>`; } catch(e){} }
       if (localStorage.getItem('academicoTheme') || localStorage.getItem('academicoCustomBg'))
-        chips += `<span class="backup-stat-chip"><i class="fas fa-palette"></i>Tema & fundo: <strong>salvo</strong></span>`;
-      statsRow.innerHTML = chips || '<span class="text-muted small">Nenhum dado encontrado.</span>';
-      if (totalRecords > 0)
-        statsRow.innerHTML += `<span class="backup-stat-chip" style="background:#e8f5e9;"><i class="fas fa-check-circle" style="color:var(--success);"></i>Total: <strong>${totalRecords} registros</strong></span>`;
-      document.getElementById('backupFileName').value = `academico_pro_backup_${new Date().toISOString().split('T')[0]}`;
-    } catch(err) {
-      console.error('Erro ao popular modal de backup:', err);
-    }
+        chips += `<span class="backup-stat-chip"><i class="fas fa-palette"></i>Tema: <strong>salvo</strong></span>`;
+      statsRow.innerHTML = chips || '<span class="text-muted small">Sem dados.</span>';
+      if (total) statsRow.innerHTML += `<span class="backup-stat-chip" style="background:#e8f5e9;"><i class="fas fa-check-circle" style="color:var(--success);"></i>Total: <strong>${total}</strong></span>`;
+      document.getElementById('backupFileName').value = 'academico_pro_backup_' + new Date().toISOString().split('T')[0];
+    } catch(e) { console.error(e); }
   }
 
-  // ── Setup de eventos ──
+  /* ── Setup de eventos ──────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('openBackupBtn').addEventListener('click', () => {
-      populateBackupModal();
-      bootstrap.Modal.getOrCreateInstance(document.getElementById('backupModal')).show();
-    });
-
-    const cfgBackupBtn = document.getElementById('backup-btn');
-    if (cfgBackupBtn) {
-      cfgBackupBtn.removeAttribute('data-bs-toggle');
-      cfgBackupBtn.removeAttribute('data-bs-target');
-      cfgBackupBtn.addEventListener('click', () => {
-        populateBackupModal();
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('backupModal')).show();
-      });
-    }
+    const openModal = () => { populateBackupModal(); bootstrap.Modal.getOrCreateInstance(document.getElementById('backupModal')).show(); };
+    document.getElementById('openBackupBtn').addEventListener('click', openModal);
+    const cfgBtn = document.getElementById('backup-btn');
+    if (cfgBtn) { cfgBtn.removeAttribute('data-bs-toggle'); cfgBtn.removeAttribute('data-bs-target'); cfgBtn.addEventListener('click', openModal); }
 
     document.getElementById('exportBackupBtn').addEventListener('click', exportBackup);
 
-    const dropzone = document.getElementById('backupDropzone');
-    dropzone.addEventListener('click', () => document.getElementById('backupFileInput').click());
-    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
-    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-    dropzone.addEventListener('drop', e => {
-      e.preventDefault(); dropzone.classList.remove('dragover');
-      if (e.dataTransfer.files[0]) handleImportFile(e.dataTransfer.files[0]);
-    });
-
-    document.getElementById('backupFileInput').addEventListener('change', function() {
-      if (this.files[0]) handleImportFile(this.files[0]);
-    });
+    const dz = document.getElementById('backupDropzone');
+    dz.addEventListener('click', () => document.getElementById('backupFileInput').click());
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); if (e.dataTransfer.files[0]) handleImportFile(e.dataTransfer.files[0]); });
+    document.getElementById('backupFileInput').addEventListener('change', function() { if (this.files[0]) handleImportFile(this.files[0]); });
 
     document.getElementById('backupImportConfirm').addEventListener('click', confirmImport);
-
     document.getElementById('backupImportCancel').addEventListener('click', () => {
-      pendingImportFile   = null;
-      pendingImportHeader = null;
+      pendingImportFile = pendingImportHeader = null;
       document.getElementById('backupImportPreview').classList.add('d-none');
       document.getElementById('backupFileInput').value = '';
     });
-
     document.getElementById('backupModal').addEventListener('hidden.bs.modal', () => {
-      pendingImportFile   = null;
-      pendingImportHeader = null;
+      pendingImportFile = pendingImportHeader = null;
       document.getElementById('backupImportPreview').classList.add('d-none');
       document.getElementById('backupImportProgress').classList.add('d-none');
       document.getElementById('backupFileInput').value = '';
-      const confirmBtn = document.getElementById('backupImportConfirm');
-      const cancelBtn  = document.getElementById('backupImportCancel');
-      if (confirmBtn) confirmBtn.disabled = false;
-      if (cancelBtn)  cancelBtn.disabled  = false;
+      const cb = document.getElementById('backupImportConfirm');
+      const cc = document.getElementById('backupImportCancel');
+      if (cb) cb.disabled = false;
+      if (cc) cc.disabled = false;
     });
   });
 
