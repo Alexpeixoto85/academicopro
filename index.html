@@ -1,7 +1,3 @@
-
-
-
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8486,21 +8482,35 @@ document.addEventListener('DOMContentLoaded', function() {
     'academicoCustomBg'
   ];
 
-  // ── Helper: obter instância do IndexedDB (com versão correta) ──
+  // ── Helper: obter instância do IndexedDB (seguro para mobile) ──
   function getDB() {
     return new Promise((resolve, reject) => {
-      // Primeiro descobre a versão atual, depois abre sem upgrade
-      const probeReq = indexedDB.open('academicoProDB');
-      probeReq.onsuccess = e => {
-        const version = e.target.result.version;
-        e.target.result.close();
-        const req = indexedDB.open('academicoProDB', version);
-        req.onsuccess = ev => resolve(ev.target.result);
-        req.onerror = ev => reject(ev.target.error);
-        // Em caso de upgrade inesperado, abortar transação
-        req.onupgradeneeded = ev => ev.target.transaction.abort();
+      // Abre diretamente com a versão correta do app (DB_VERSION = 3)
+      // Isso evita o double-open que causa crash no iOS/Android Safari
+      const DB_BACKUP_VERSION = 3;
+      const req = indexedDB.open('academicoProDB', DB_BACKUP_VERSION);
+      req.onsuccess = ev => resolve(ev.target.result);
+      req.onerror = ev => reject(ev.target.error || new Error('Falha ao abrir banco de dados'));
+      req.onblocked = () => {
+        // Outra aba/instância está bloqueando — fechar e tentar novamente
+        reject(new Error('Banco de dados bloqueado por outra aba. Feche outras abas do app e tente novamente.'));
       };
-      probeReq.onerror = e => reject(e.target.error);
+      req.onupgradeneeded = ev => {
+        // Garante que todos os stores existem (migração segura)
+        const dbUpg = ev.target.result;
+        const stores = ['profiles','disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links','certificados'];
+        stores.forEach(name => {
+          if (!dbUpg.objectStoreNames.contains(name)) {
+            const s = dbUpg.createObjectStore(name, { keyPath: 'id', autoIncrement: true });
+            s.createIndex('profileId', 'profileId', { unique: false });
+          }
+        });
+        if (dbUpg.objectStoreNames.contains('financeiro')) {
+          const fStore = ev.target.transaction.objectStore('financeiro');
+          if (!fStore.indexNames.contains('mesAno')) fStore.createIndex('mesAno', 'mesAno', { unique: false });
+          if (!fStore.indexNames.contains('recorrenteId')) fStore.createIndex('recorrenteId', 'recorrenteId', { unique: false });
+        }
+      };
     });
   }
 
@@ -8561,8 +8571,9 @@ document.addEventListener('DOMContentLoaded', function() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exportando tudo...';
 
+    let db = null;
     try {
-      const db = await getDB();
+      db = await getDB();
       const selectedProfile = document.getElementById('backupProfileSelect').value;
       const exportData = {
         _meta: {
@@ -8589,7 +8600,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
 
-      // ── Exportar TODOS os stores do IndexedDB (sem filtro de tamanho, sem omitir campos) ──
+      // ── Exportar TODOS os stores do IndexedDB ──
       for (const storeName of ALL_STORES) {
         let records = await readAllFromStore(db, storeName);
 
@@ -8602,11 +8613,12 @@ document.addEventListener('DOMContentLoaded', function() {
           records = records.filter(r => r.id === parseInt(selectedProfile));
         }
 
-        // Gravar registros INTEGRALMENTE (incluindo campos base64 como arquivos, fotos, etc.)
         exportData.stores[storeName] = records;
       }
 
+      // Fechar banco antes de serializar (libera memória em mobile)
       db.close();
+      db = null;
 
       // ── Calcular tamanho estimado para feedback ──
       const json = JSON.stringify(exportData);
@@ -8623,13 +8635,14 @@ document.addEventListener('DOMContentLoaded', function() {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
 
       showToast(`✅ Backup completo exportado com sucesso! (${sizeKB >= 1024 ? sizeMB + ' MB' : sizeKB + ' KB'})`, 'success');
     } catch(err) {
       console.error('Erro ao exportar backup:', err);
-      showToast('❌ Erro ao exportar: ' + err.message, 'danger');
+      showToast('❌ Erro ao exportar: ' + (err.message || 'Erro desconhecido'), 'danger');
     } finally {
+      if (db) { try { db.close(); } catch(e){} }
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-download me-2"></i>Exportar Backup Completo';
     }
@@ -8643,10 +8656,23 @@ document.addEventListener('DOMContentLoaded', function() {
       showToast('⚠️ Selecione um arquivo .json válido', 'warning');
       return;
     }
+    // Aviso preventivo para arquivos grandes em mobile
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > 50) {
+      if (!confirm(`O arquivo tem ${sizeMB.toFixed(1)} MB. Importar arquivos muito grandes pode ser lento em dispositivos móveis. Deseja continuar?`)) return;
+    }
     const reader = new FileReader();
+    reader.onerror = () => {
+      showToast('❌ Erro ao ler o arquivo. Tente novamente.', 'danger');
+    };
     reader.onload = e => {
+      let data;
       try {
-        const data = JSON.parse(e.target.result);
+        data = JSON.parse(e.target.result);
+      } catch(err) {
+        showToast('❌ Arquivo corrompido ou inválido: ' + err.message, 'danger');
+        return;
+      }
 
         // ── Formato novo (v2): tem _meta e stores ──
         if (data._meta && data.stores) {
@@ -8688,11 +8714,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         showToast('❌ Arquivo inválido. Use um backup gerado por este app.', 'danger');
-      } catch(err) {
-        showToast('❌ Erro ao ler o arquivo: ' + err.message, 'danger');
-      }
     };
-    reader.readAsText(file);
+    reader.readAsText(file, 'UTF-8');
   }
 
   function renderImportPreview(data) {
@@ -8754,8 +8777,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('backupImportPreview').classList.add('d-none');
     progress.classList.remove('d-none');
 
+    let db = null;
     try {
-      const db = await getDB();
+      db = await getDB();
       const storeNames = Object.keys(data.stores || {});
       const total = storeNames.length;
       let done = 0;
@@ -8769,63 +8793,84 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!Array.isArray(records) || records.length === 0) { done++; continue; }
 
         // Para cada store: remover registros com mesmo profileId e reinserir
-        // (evita limpar dados de outros perfis que não estão no backup)
         const profileIds = [...new Set(records.map(r => r.profileId).filter(v => v !== undefined && v !== null))];
 
         if (profileIds.length > 0) {
-          // Buscar registros existentes daqueles perfis e deletá-los
           const existingAll = await readAllFromStore(db, storeName);
           const toDelete = existingAll.filter(r => profileIds.includes(r.profileId));
-          for (const rec of toDelete) {
-            try {
-              await new Promise((res, rej) => {
+          // Delete em lote via transação única (mais eficiente em mobile)
+          if (toDelete.length > 0) {
+            await new Promise((res, rej) => {
+              try {
                 const tx = db.transaction([storeName], 'readwrite');
-                const req = tx.objectStore(storeName).delete(rec.id);
-                req.onsuccess = res;
-                req.onerror = () => res(); // ignora erro de delete
-              });
-            } catch(e) { /* ignora */ }
+                tx.oncomplete = res;
+                tx.onerror = () => res(); // ignora erros de delete
+                const objStore = tx.objectStore(storeName);
+                toDelete.forEach(rec => { try { objStore.delete(rec.id); } catch(e){} });
+              } catch(e) { res(); }
+            });
           }
         } else {
-          // Se não há profileId (ex: profiles), limpar e reimportar
           await clearStore(db, storeName);
         }
 
-        // Inserir registros do backup INTEGRALMENTE (com todos os campos base64)
-        for (const record of records) {
-          await putRecord(db, storeName, record);
+        // Inserir em lotes de 50 para não travar o thread principal em mobile
+        const CHUNK = 50;
+        for (let i = 0; i < records.length; i += CHUNK) {
+          const chunk = records.slice(i, i + CHUNK);
+          await new Promise((res, rej) => {
+            try {
+              const tx = db.transaction([storeName], 'readwrite');
+              tx.oncomplete = res;
+              tx.onerror = ev => rej(ev.target.error);
+              const objStore = tx.objectStore(storeName);
+              chunk.forEach(record => { try { objStore.put(record); } catch(e){} });
+            } catch(e) { rej(e); }
+          });
+          // Pequena pausa para não bloquear UI em mobile
+          await new Promise(r => setTimeout(r, 10));
         }
 
         done++;
       }
 
-      // ── Restaurar TODO o localStorage (tema, fundo, jurista, horários, etc.) ──
+      // ── Restaurar localStorage ──
       if (data.localStorage) {
         for (const [k, v] of Object.entries(data.localStorage)) {
           if (v !== null && v !== undefined) {
-            localStorage.setItem(k, v);
+            try { localStorage.setItem(k, v); } catch(e) { /* quota exceeded — ignorar */ }
           }
         }
       }
 
       progressBar.style.width = '100%';
       progressText.textContent = 'Importação completa! Tudo restaurado.';
+
+      // Fechar o banco ANTES de recarregar (crítico para iOS Safari)
       db.close();
+      db = null;
 
       setTimeout(() => {
         progress.classList.add('d-none');
         pendingImportData = null;
-        document.getElementById('backupFileInput').value = '';
-        bootstrap.Modal.getInstance(document.getElementById('backupModal')).hide();
+        try { document.getElementById('backupFileInput').value = ''; } catch(e){}
+        try {
+          const modal = bootstrap.Modal.getInstance(document.getElementById('backupModal'));
+          if (modal) modal.hide();
+        } catch(e){}
         showToast('✅ Backup restaurado com sucesso! Recarregando...', 'success');
-        setTimeout(() => window.location.reload(), 1800);
+        setTimeout(() => {
+          // Recarregar sem cache para garantir dados frescos
+          window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+        }, 1800);
       }, 800);
 
     } catch(err) {
       console.error('Erro ao importar backup:', err);
+      if (db) { try { db.close(); } catch(e){} }
       progress.classList.add('d-none');
       document.getElementById('backupImportPreview').classList.remove('d-none');
-      showToast('❌ Erro ao importar: ' + err.message, 'danger');
+      showToast('❌ Erro ao importar: ' + (err.message || 'Erro desconhecido'), 'danger');
       confirmBtn.disabled = false;
       cancelBtn.disabled = false;
     }
@@ -8833,8 +8878,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ── Preencher stats do export e select de perfis ──
   async function populateBackupModal() {
+    let db = null;
     try {
-      const db = await getDB();
+      db = await getDB();
 
       // Preencher select de perfis
       const profiles = await readAllFromStore(db, 'profiles');
@@ -8883,9 +8929,10 @@ document.addEventListener('DOMContentLoaded', function() {
       const date = new Date().toISOString().split('T')[0];
       document.getElementById('backupFileName').value = `academico_pro_backup_${date}`;
 
-      db.close();
     } catch(err) {
       console.error('Erro ao popular modal de backup:', err);
+    } finally {
+      if (db) { try { db.close(); } catch(e){} }
     }
   }
 
