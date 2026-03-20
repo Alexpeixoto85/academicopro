@@ -1,7 +1,3 @@
-
-
-
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8348,32 +8344,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Limpa um store usando a conexão existente
       clearStore: function(storeName) {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
           try {
             if (!db || !db.objectStoreNames.contains(storeName)) { resolve(); return; }
-            const tx  = db.transaction([storeName], 'readwrite');
+            const tx = db.transaction([storeName], 'readwrite');
             tx.oncomplete = () => resolve();
-            tx.onerror    = e  => reject(e.target.error);
-            tx.onabort    = ()  => reject(new Error('clear abortado: ' + storeName));
+            tx.onerror    = () => resolve(); // resolve mesmo com erro — não bloqueia importação
+            tx.onabort    = () => resolve();
             tx.objectStore(storeName).clear();
           } catch(e) { resolve(); }
         });
       },
 
-      // Insere/atualiza registros em lote usando a conexão existente
-      // records: array de objetos; retorna Promise
+      // Insere registros um por um — cada registro em transação própria.
+      // Isso garante que um registro problemático não derruba os outros.
       putRecordsBatch: function(storeName, records) {
-        return new Promise((res, rej) => {
-          try {
-            if (!db || !records || records.length === 0) { res(); return; }
-            const tx = db.transaction([storeName], 'readwrite');
-            tx.oncomplete = res;
-            tx.onerror = ev => rej(ev.target.error);
-            tx.onabort = ev => rej(ev.target.error || new Error('Transação abortada'));
-            const objStore = tx.objectStore(storeName);
-            records.forEach(record => { try { objStore.put(record); } catch(e){} });
-          } catch(e) { rej(e); }
+        if (!db || !records || records.length === 0) return Promise.resolve();
+        // Processa sequencialmente: cada put em transação isolada
+        var chain = Promise.resolve();
+        records.forEach(function(record) {
+          chain = chain.then(function() {
+            return new Promise(function(res) {
+              try {
+                var tx = db.transaction([storeName], 'readwrite');
+                tx.oncomplete = res;
+                tx.onerror    = res; // ignora erro — tenta o próximo
+                tx.onabort    = res;
+                tx.objectStore(storeName).put(record);
+              } catch(e) { res(); } // ignora exceção — tenta o próximo
+            });
+          });
         });
+        return chain;
       },
 
       // Deleta registros por id usando a conexão existente
@@ -8390,14 +8392,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       },
 
-      // Recarrega app após importação (aguarda DB estar pronto)
+      // Recarrega app após importação sem reload de página
       reloadAfterImport: async function() {
-        // Invalida cache de dados
-        if (typeof profileDataCache !== 'undefined') profileDataCache = null;
-        // Recarrega dados do perfil com a conexão já aberta
-        await loadProfileData(true);
-        renderCurrentPanel();
-        hideLoadingOverlay();
+        try {
+          // Força re-leitura do perfil atual a partir do IDB importado
+          const profiles = await getAllData('profiles');
+          if (profiles && profiles.length > 0) {
+            const active = profiles.find(p => p.currentProfileId === p.id) || profiles[0];
+            currentProfileId = active.id;
+          }
+          profileDataCache = null;
+          await loadProfileData(true);
+          renderCurrentPanel();
+          hideLoadingOverlay();
+        } catch(e) {
+          console.warn('[reloadAfterImport]', e);
+          // Fallback: recarrega a página se o reload interno falhar
+          setTimeout(function() { window.location.reload(); }, 500);
+        }
       }
     };
 
