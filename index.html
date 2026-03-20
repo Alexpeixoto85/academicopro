@@ -1,3 +1,7 @@
+
+
+
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8504,11 +8508,25 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <p class="text-center text-muted small mt-2" id="backupProgressText">Processando...</p>
           </div>
+
+          <!-- PAINEL DE DIAGNÓSTICO — mostra log em tempo real -->
+          <div id="backup-diag-panel" style="display:none;margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <small style="font-weight:600;color:#666;"><i class="fas fa-terminal me-1"></i>Log de importação</small>
+              <button onclick="document.getElementById('backup-diag-panel').style.display='none'" style="border:none;background:none;font-size:0.75rem;color:#999;cursor:pointer;">✕ fechar</button>
+            </div>
+            <div id="backup-diag-log" style="
+              background:#1e1e2e;color:#a6e3a1;font-family:monospace;
+              font-size:0.72rem;line-height:1.6;padding:10px;border-radius:8px;
+              max-height:220px;overflow-y:auto;word-break:break-all;
+            "></div>
+          </div>
         </div>
 
       </div>
       <div class="modal-footer">
         <small class="text-muted me-auto"><i class="fas fa-lock me-1"></i>Seus dados ficam apenas no seu dispositivo</small>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="var p=document.getElementById('backup-diag-panel');p.style.display=p.style.display==='none'?'block':'none';" title="Ver log de diagnóstico"><i class="fas fa-terminal"></i></button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
       </div>
     </div>
@@ -8609,7 +8627,21 @@ document.addEventListener('DOMContentLoaded', function() {
     notas:'Notas', links:'Links', certificados:'Certificados'
   };
 
-  /* ─── Aguarda _acadApp (conexão IDB compartilhada) ─────────── */
+  /* ─── LOG DE DIAGNÓSTICO visível na tela (mobile) ─────────── */
+  var _logEl = null;
+  function diagLog(msg) {
+    console.log('[BACKUP] ' + msg);
+    if (!_logEl) {
+      _logEl = document.getElementById('backup-diag-log');
+    }
+    if (_logEl) {
+      var t = new Date().toLocaleTimeString('pt-BR');
+      _logEl.innerHTML += '<div>[' + t + '] ' + msg + '</div>';
+      _logEl.scrollTop = _logEl.scrollHeight;
+    }
+  }
+
+  /* ─── Aguarda _acadApp ─────────────────────────────────────── */
   function waitForApp(ms) {
     ms = ms || 15000;
     return new Promise(function(ok, fail) {
@@ -8630,20 +8662,20 @@ document.addEventListener('DOMContentLoaded', function() {
     var ico = type === 'success' ? 'fa-check-circle' : type === 'danger' ? 'fa-times-circle' : 'fa-info-circle';
     wrap.innerHTML = '<div class="alert alert-' + type + ' alert-dismissible shadow d-flex align-items-center gap-2" role="alert" style="border-radius:12px;"><i class="fas ' + ico + '"></i><span>' + msg + '</span><button type="button" class="btn-close" onclick="this.closest(\'.alert\').parentElement.remove()"></button></div>';
     document.body.appendChild(wrap);
-    setTimeout(function() { try { wrap.remove(); } catch(e) {} }, 7000);
+    setTimeout(function() { try { wrap.remove(); } catch(e) {} }, 10000);
   }
 
   /* ─── Lê fatia do File como texto ─────────────────────────── */
   function readSlice(file, start, end) {
     return new Promise(function(ok, fail) {
       var fr = new FileReader();
-      fr.onerror = function() { fail(new Error('Erro ao ler fatia')); };
+      fr.onerror = function(e) { fail(new Error('Erro fatia ' + start + '-' + end + ': ' + (e.target.error||'?'))); };
       fr.onload  = function(e) { ok(e.target.result); };
       fr.readAsText(file.slice(start, end), 'UTF-8');
     });
   }
 
-  /* ─── Lê primeiros 512 KB para meta/localStorage ──────────── */
+  /* ─── Lê primeiros 512 KB ──────────────────────────────────── */
   function readHeader(file) {
     return new Promise(function(ok, fail) {
       var fr = new FileReader();
@@ -8663,41 +8695,24 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  /* ═══════════════════════════════════════════════════════════════
-     PARSER DE FATIAS — o núcleo da solução
-
-     Percorre o arquivo em fatias de FATIA_MB MB.
-     Para cada store, reinicia a varredura desde o início do arquivo
-     mantendo um buffer residual entre fatias.
-
-     Nunca tem mais de (FATIA_MB * 2) MB em memória simultaneamente
-     porque descarta cada fatia logo após processar.
-
-     Grava no IDB usando a conexão compartilhada do app principal
-     — sem abrir segunda conexão.
-  ═══════════════════════════════════════════════════════════════ */
-
-  var FATIA_BYTES = 8 * 1024 * 1024; // 8 MB por fatia (equilibrio velocidade/memória)
-
-  /* Extrai objetos JSON completos de um texto.
-     Retorna { objs:[], resto:string, fimArray:bool } */
+  /* ─── Extrai objetos JSON completos de um buffer ──────────── */
   function extrairObjetos(texto) {
     var objs = [];
     var i = 0, n = texto.length;
     while (i < n) {
-      // Avança até '{' ou ']'
       while (i < n && texto[i] !== '{' && texto[i] !== ']') i++;
       if (i >= n) break;
       if (texto[i] === ']') return { objs: objs, resto: '', fimArray: true };
-      var ini   = i, prof = 0, emStr = false, esc = false;
+      var ini = i, prof = 0, emStr = false, esc = false;
       while (i < n) {
         var c = texto[i];
-        if (esc)               { esc = false; i++; continue; }
+        if (esc)                { esc = false; i++; continue; }
         if (c === '\\' && emStr) { esc = true;  i++; continue; }
-        if (c === '"')         { emStr = !emStr; i++; continue; }
-        if (emStr)             { i++; continue; }
-        if (c === '{')         { prof++; i++; continue; }
-        if (c === '}')         { prof--; i++;
+        if (c === '"')           { emStr = !emStr; i++; continue; }
+        if (emStr)               { i++; continue; }
+        if (c === '{')           { prof++; i++; continue; }
+        if (c === '}') {
+          prof--; i++;
           if (prof === 0) {
             try { objs.push(JSON.parse(texto.slice(ini, i))); } catch(e) {}
             break;
@@ -8711,9 +8726,9 @@ document.addEventListener('DOMContentLoaded', function() {
     return { objs: objs, resto: '', fimArray: false };
   }
 
-  /* Importa um store inteiro do File, fatia por fatia.
-     Grava direto no IDB conforme os objetos são encontrados.
-     Retorna Promise<número de registros importados> */
+  /* ─── Importa um store por fatias ──────────────────────────── */
+  var FATIA = 6 * 1024 * 1024; // 6 MB
+
   function importarStore(file, storeName, app, onProgresso) {
     return new Promise(function(resolve, reject) {
       var marcador    = '"' + storeName + '"';
@@ -8722,62 +8737,74 @@ document.addEventListener('DOMContentLoaded', function() {
       var pos         = 0;
       var total       = file.size;
       var contagem    = 0;
+      var fatiaN      = 0;
 
       function proximaFatia() {
         if (pos >= total) {
-          // Fim do arquivo sem encontrar o store — normal para stores vazios
+          diagLog(storeName + ': fim arquivo sem fechar array (' + contagem + ' regs)');
           resolve(contagem);
           return;
         }
 
-        var fim = Math.min(pos + FATIA_BYTES, total);
+        var fim = Math.min(pos + FATIA, total);
+        fatiaN++;
         readSlice(file, pos, fim).then(function(chunk) {
           pos = fim;
           buf += chunk;
-          chunk = null; // libera ref
+          chunk = null;
 
           if (!dentroArray) {
             var ki = buf.indexOf(marcador);
             if (ki === -1) {
-              // Chave não encontrada — descarta tudo exceto overlap
               buf = buf.slice(-(marcador.length + 50));
               proximaFatia();
               return;
             }
-            var ai = buf.indexOf('[', ki + marcador.length);
-            if (ai === -1) {
-              // '[' ainda não veio — mantém buf e continua
+            // Verifica que é realmente a chave do store e não substring
+            // (ex: "notas" não deve casar com "notasExtra")
+            var charApos = buf[ki + marcador.length];
+            if (charApos && charApos !== '"' && charApos !== ' ' && charApos !== ':') {
+              // falso positivo — continua procurando depois desse ponto
+              buf = buf.slice(ki + marcador.length);
               proximaFatia();
               return;
             }
+            var ai = buf.indexOf('[', ki + marcador.length);
+            if (ai === -1) { proximaFatia(); return; }
             buf = buf.slice(ai + 1);
             dentroArray = true;
+            diagLog(storeName + ': array encontrado, fatia ' + fatiaN);
           }
 
-          // Extrai objetos do buffer atual
           var r = extrairObjetos(buf);
-          buf = r.resto; // descarta parte processada
+          buf = r.resto;
 
-          if (r.objs.length === 0) {
-            if (r.fimArray) { resolve(contagem); return; }
-            proximaFatia();
-            return;
+          if (r.objs.length > 0) {
+            app.putRecordsBatch(storeName, r.objs).then(function() {
+              contagem += r.objs.length;
+              if (onProgresso) onProgresso(contagem);
+              if (r.fimArray) {
+                diagLog(storeName + ': concluído, ' + contagem + ' registros');
+                resolve(contagem);
+                return;
+              }
+              setTimeout(proximaFatia, 5);
+            }).catch(function(err) {
+              diagLog('ERRO putRecordsBatch ' + storeName + ': ' + err.message);
+              // Continua mesmo com erro no lote
+              if (r.fimArray) { resolve(contagem); return; }
+              setTimeout(proximaFatia, 5);
+            });
+          } else {
+            if (r.fimArray) {
+              diagLog(storeName + ': array vazio');
+              resolve(contagem);
+              return;
+            }
+            setTimeout(proximaFatia, 5);
           }
-
-          // Grava lote no IDB
-          app.putRecordsBatch(storeName, r.objs).then(function() {
-            contagem += r.objs.length;
-            if (onProgresso) onProgresso(contagem, storeName);
-            if (r.fimArray) { resolve(contagem); return; }
-            // Pausa de 10ms entre fatias para ceder o thread ao browser
-            setTimeout(proximaFatia, 10);
-          }).catch(function(err) {
-            console.error('[backup] putRecordsBatch erro em ' + storeName, err);
-            // Continua mesmo com erro de lote individual
-            setTimeout(proximaFatia, 10);
-          });
-
         }).catch(function(err) {
+          diagLog('ERRO readSlice ' + storeName + ': ' + err.message);
           reject(err);
         });
       }
@@ -8786,46 +8813,36 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  /* ─── EXPORTAR ────────────────────────────────────────────── */
+  /* ─── EXPORTAR ─────────────────────────────────────────────── */
   function exportBackup() {
     var btn = document.getElementById('exportBackupBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exportando...';
-
     waitForApp().then(function(app) {
       var prof = document.getElementById('backupProfileSelect').value;
-      var out = {
-        _meta: { app:'academicoProDB', version:2, exportedAt: new Date().toISOString(),
-                 profileFilter: prof, exportedBy:'Acadêmico Pro' },
-        stores: {}, localStorage: {}
-      };
+      var out = { _meta: { app:'academicoProDB', version:2, exportedAt: new Date().toISOString(),
+                           profileFilter: prof, exportedBy:'Acadêmico Pro' },
+                  stores: {}, localStorage: {} };
       for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (k) out.localStorage[k] = localStorage.getItem(k);
+        var k = localStorage.key(i); if (k) out.localStorage[k] = localStorage.getItem(k);
       }
-
       var chain = Promise.resolve();
       ALL_STORES.forEach(function(s) {
         chain = chain.then(function() {
           return app.readAllFromStore(s).then(function(recs) {
-            if (prof !== 'all' && s !== 'profiles')
-              recs = recs.filter(function(r) { return r.profileId === parseInt(prof) || r.profileId === undefined; });
-            if (prof !== 'all' && s === 'profiles')
-              recs = recs.filter(function(r) { return r.id === parseInt(prof); });
+            if (prof !== 'all' && s !== 'profiles') recs = recs.filter(function(r) { return r.profileId === parseInt(prof) || r.profileId === undefined; });
+            if (prof !== 'all' && s === 'profiles') recs = recs.filter(function(r) { return r.id === parseInt(prof); });
             out.stores[s] = recs;
           });
         });
       });
-
       return chain.then(function() {
-        var json   = JSON.stringify(out);
+        var json = JSON.stringify(out);
         var sizeKB = Math.round(json.length / 1024);
-        var blob   = new Blob([json], { type:'application/json' });
-        var url    = URL.createObjectURL(blob);
-        var nome   = (document.getElementById('backupFileName').value.trim() || 'academico_pro_backup')
-                   + '_' + new Date().toISOString().split('T')[0] + '.json';
-        var a = document.createElement('a');
-        a.href = url; a.download = nome;
+        var blob = new Blob([json], { type:'application/json' });
+        var url = URL.createObjectURL(blob);
+        var nome = (document.getElementById('backupFileName').value.trim() || 'academico_pro_backup') + '_' + new Date().toISOString().split('T')[0] + '.json';
+        var a = document.createElement('a'); a.href = url; a.download = nome;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(function() { URL.revokeObjectURL(url); }, 3000);
         showToast('✅ Backup exportado! (' + (sizeKB >= 1024 ? (sizeKB/1024).toFixed(2)+' MB' : sizeKB+' KB') + ')', 'success');
@@ -8838,8 +8855,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  /* ─── Estado da importação ─────────────────────────────────── */
-  var arquivoImport  = null;
+  /* ─── Estado ────────────────────────────────────────────────── */
+  var arquivoImport   = null;
   var cabecalhoImport = null;
 
   /* ─── Selecionar arquivo ────────────────────────────────────── */
@@ -8848,7 +8865,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!file.name.endsWith('.json') && file.type.indexOf('json') === -1) {
       showToast('⚠️ Selecione um arquivo .json válido', 'warning'); return;
     }
-    var sizeMB    = file.size / (1024 * 1024);
+    var sizeMB = file.size / (1024 * 1024);
     var sizeLabel = sizeMB >= 1024 ? (sizeMB/1024).toFixed(2)+' GB' : sizeMB.toFixed(1)+' MB';
 
     document.getElementById('backupImportPreview').classList.add('d-none');
@@ -8856,25 +8873,28 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('backupProgressBar').style.width = '5%';
     document.getElementById('backupProgressText').textContent = 'Verificando arquivo...';
 
+    // Limpa log de diagnóstico
+    if (document.getElementById('backup-diag-log')) document.getElementById('backup-diag-log').innerHTML = '';
+    diagLog('Arquivo: ' + file.name + ' (' + sizeLabel + ')');
+
     readHeader(file).then(function(header) {
       document.getElementById('backupImportProgress').classList.add('d-none');
-      if (!header.meta && !header.legacy) {
-        showToast('❌ Arquivo inválido.', 'danger'); return;
-      }
+      if (!header.meta && !header.legacy) { showToast('❌ Arquivo inválido.', 'danger'); return; }
       arquivoImport   = file;
       cabecalhoImport = header;
-
+      diagLog('Cabeçalho OK. Legacy=' + header.legacy);
       var exportDate   = header.meta ? new Date(header.meta.exportedAt).toLocaleString('pt-BR') : 'Formato legado';
-      var profileLabel = header.meta ? (header.meta.profileFilter === 'all' ? 'Todos' : 'Perfil ' + header.meta.profileFilter) : 'Todos';
+      var profileLabel = header.meta ? (header.meta.profileFilter === 'all' ? 'Todos' : 'Perfil '+header.meta.profileFilter) : 'Todos';
       document.getElementById('backupImportInfo').innerHTML =
-        '<div class="bi-row"><span class="bi-key"><i class="fas fa-calendar me-1"></i>Data</span><span class="bi-val">' + exportDate + '</span></div>' +
-        '<div class="bi-row"><span class="bi-key"><i class="fas fa-filter me-1"></i>Perfil</span><span class="bi-val">' + profileLabel + '</span></div>' +
-        '<div class="bi-row"><span class="bi-key"><i class="fas fa-weight me-1"></i>Tamanho</span><span class="bi-val">' + sizeLabel + '</span></div>' +
+        '<div class="bi-row"><span class="bi-key"><i class="fas fa-calendar me-1"></i>Data</span><span class="bi-val">'+exportDate+'</span></div>'+
+        '<div class="bi-row"><span class="bi-key"><i class="fas fa-filter me-1"></i>Perfil</span><span class="bi-val">'+profileLabel+'</span></div>'+
+        '<div class="bi-row"><span class="bi-key"><i class="fas fa-weight me-1"></i>Tamanho</span><span class="bi-val">'+sizeLabel+'</span></div>'+
         '<div class="bi-row"><span class="bi-key"><i class="fas fa-check-circle me-1" style="color:var(--success)"></i>Status</span><span class="bi-val">Pronto para importar</span></div>';
       document.getElementById('backupImportPreview').classList.remove('d-none');
     }).catch(function(err) {
       document.getElementById('backupImportProgress').classList.add('d-none');
-      showToast('❌ Erro: ' + err.message, 'danger');
+      diagLog('ERRO cabeçalho: ' + err.message);
+      showToast('❌ Erro: '+err.message, 'danger');
     });
   }
 
@@ -8893,100 +8913,98 @@ document.addEventListener('DOMContentLoaded', function() {
     var progressTxt = document.getElementById('backupProgressText');
     document.getElementById('backupImportPreview').classList.add('d-none');
     progressEl.classList.remove('d-none');
+
+    // Mostra painel de diagnóstico
+    var diagPanel = document.getElementById('backup-diag-panel');
+    if (diagPanel) diagPanel.style.display = 'block';
+
     progressBar.style.width = '3%';
-    progressTxt.textContent = 'Aguardando banco de dados...';
+    progressTxt.textContent = 'Aguardando banco...';
+    diagLog('Iniciando importação...');
 
     waitForApp(15000).then(function(app) {
+      diagLog('App conectado. IDB OK.');
 
-      /* Caso legado (arquivo pequeno < 80 MB): lê tudo de uma vez */
       if (header.legacy) {
+        diagLog('Formato legado detectado');
         if (file.size > 80 * 1024 * 1024) {
-          throw new Error('Arquivo legado muito grande. Use um backup recente.');
+          throw new Error('Arquivo legado muito grande (>80MB).');
         }
-        progressTxt.textContent = 'Lendo arquivo legado...';
-        progressBar.style.width = '10%';
-
         var fr = new FileReader();
-        fr.onerror = function() { throw new Error('Erro ao ler arquivo'); };
+        fr.onerror = function() { erroImport(new Error('Erro ao ler arquivo'), progressEl, confirmBtn, cancelBtn); };
         fr.onload = function(e) {
           var parsed;
           try { parsed = JSON.parse(e.target.result); } catch(err) {
-            showToast('❌ Arquivo corrompido: ' + err.message, 'danger');
-            progressEl.classList.add('d-none');
-            confirmBtn.disabled = false; cancelBtn.disabled = false;
-            return;
+            erroImport(new Error('Arquivo corrompido: '+err.message), progressEl, confirmBtn, cancelBtn); return;
           }
-          var chain = Promise.resolve(); var si = 0;
+          var si = 0;
+          var chain = Promise.resolve();
           ALL_STORES.forEach(function(storeName) {
             chain = chain.then(function() {
               var recs = Array.isArray(parsed[storeName]) ? parsed[storeName] : [];
-              progressBar.style.width = Math.round(10 + (si++ / ALL_STORES.length) * 85) + '%';
-              progressTxt.textContent = 'Importando ' + (STORE_LABELS[storeName]||storeName) + '...';
+              progressBar.style.width = Math.round(10+(si++/ALL_STORES.length)*85)+'%';
+              progressTxt.textContent = 'Importando '+(STORE_LABELS[storeName]||storeName)+'...';
+              diagLog(storeName+': '+recs.length+' registros (legado)');
               if (!recs.length) return Promise.resolve();
-              return app.clearStore(storeName).then(function() {
-                return app.putRecordsBatch(storeName, recs);
-              });
+              return app.clearStore(storeName).then(function() { return app.putRecordsBatch(storeName, recs); });
             });
           });
           if (parsed._config) {
             ['academicoTheme','academicoCustomBg','scheduleStartHour','scheduleEndHour'].forEach(function(k) {
-              if (parsed._config[k]) try { localStorage.setItem(k, parsed._config[k]); } catch(err) {}
+              if (parsed._config[k]) try { localStorage.setItem(k, parsed._config[k]); } catch(e) {}
             });
           }
-          chain.then(function() { finalizarImport(app, {}, progressEl, progressBar, progressTxt, confirmBtn, cancelBtn); })
+          chain.then(function() { finalizarImport(app, progressEl, progressBar, progressTxt, confirmBtn, cancelBtn); })
                .catch(function(err) { erroImport(err, progressEl, confirmBtn, cancelBtn); });
         };
+        progressBar.style.width = '10%';
+        progressTxt.textContent = 'Lendo arquivo...';
         fr.readAsText(file, 'UTF-8');
-        return Promise.resolve(); // legacy tratado acima
+        return Promise.resolve();
       }
 
-      /* Formato v2: processa store por store com fatias */
-      progressBar.style.width = '5%';
-      progressTxt.textContent = 'Iniciando importação por fatias...';
-
-      // Restaura localStorage (já lido no cabeçalho, muito pequeno)
+      // Formato v2 — processa por fatias
       var lsData = header.localStorage || {};
       Object.keys(lsData).forEach(function(k) {
         var v = lsData[k];
         if (v !== null && v !== undefined) try { localStorage.setItem(k, v); } catch(e) {}
       });
+      diagLog('localStorage restaurado: ' + Object.keys(lsData).length + ' chaves');
 
-      // Processa cada store sequencialmente
-      var si    = 0;
-      var total = ALL_STORES.length;
-
+      var si = 0;
       function proximoStore() {
-        if (si >= total) {
-          finalizarImport(app, lsData, progressEl, progressBar, progressTxt, confirmBtn, cancelBtn);
+        if (si >= ALL_STORES.length) {
+          finalizarImport(app, progressEl, progressBar, progressTxt, confirmBtn, cancelBtn);
           return;
         }
-        var storeName = ALL_STORES[si];
-        si++;
-        var pct = Math.round(5 + ((si - 1) / total) * 90);
+        var storeName = ALL_STORES[si]; si++;
+        var pct = Math.round(5 + ((si-1) / ALL_STORES.length) * 90);
         progressBar.style.width = pct + '%';
         progressTxt.textContent = 'Limpando ' + (STORE_LABELS[storeName]||storeName) + '...';
+        diagLog('--- ' + storeName + ' ---');
 
         app.clearStore(storeName).then(function() {
+          diagLog(storeName + ': store limpo');
           progressTxt.textContent = 'Importando ' + (STORE_LABELS[storeName]||storeName) + '...';
           return importarStore(file, storeName, app, function(count) {
-            progressTxt.textContent = (STORE_LABELS[storeName]||storeName) + ': ' + count + ' registros...';
+            progressTxt.textContent = (STORE_LABELS[storeName]||storeName) + ': ' + count + '...';
           });
         }).then(function(count) {
-          console.log('[backup] ' + storeName + ': ' + count + ' registros');
+          diagLog(storeName + ': ' + count + ' registros gravados ✓');
           setTimeout(proximoStore, 0);
         }).catch(function(err) {
-          console.error('[backup] erro em ' + storeName, err);
-          setTimeout(proximoStore, 0); // continua mesmo com erro no store
+          diagLog('ERRO ' + storeName + ': ' + err.message);
+          setTimeout(proximoStore, 0);
         });
       }
-
       proximoStore();
       return Promise.resolve();
 
     }).catch(function(err) { erroImport(err, progressEl, confirmBtn, cancelBtn); });
   }
 
-  function finalizarImport(app, lsData, progressEl, progressBar, progressTxt, confirmBtn, cancelBtn) {
+  function finalizarImport(app, progressEl, progressBar, progressTxt, confirmBtn, cancelBtn) {
+    diagLog('=== IMPORTAÇÃO CONCLUÍDA ===');
     progressBar.style.width = '100%';
     progressTxt.textContent = 'Concluído!';
     setTimeout(function() {
@@ -9000,11 +9018,11 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function erroImport(err, progressEl, confirmBtn, cancelBtn) {
-    console.error('[backup] erro importação:', err);
+    diagLog('ERRO FATAL: ' + (err.message||err));
     progressEl.classList.add('d-none');
     document.getElementById('backupImportPreview').classList.remove('d-none');
     showToast('❌ Erro: ' + (err.message||'Desconhecido'), 'danger');
-    if (confirmBtn) { confirmBtn.disabled = false; cancelBtn.disabled = false; }
+    if (confirmBtn) { confirmBtn.disabled = false; if (cancelBtn) cancelBtn.disabled = false; }
   }
 
   /* ─── Popular modal ─────────────────────────────────────────── */
@@ -9014,12 +9032,9 @@ document.addEventListener('DOMContentLoaded', function() {
         var sel = document.getElementById('backupProfileSelect');
         sel.innerHTML = '<option value="all">✅ Todos os perfis (recomendado)</option>';
         profiles.forEach(function(p) {
-          var o = document.createElement('option');
-          o.value = p.id; o.textContent = p.name || 'Perfil ' + p.id;
-          sel.appendChild(o);
+          var o = document.createElement('option'); o.value = p.id; o.textContent = p.name||'Perfil '+p.id; sel.appendChild(o);
         });
       });
-
       var statsRow = document.getElementById('backupStatsRow');
       statsRow.innerHTML = '<span class="text-muted small">Calculando...</span>';
       var chips = '', totalRecs = 0;
@@ -9027,45 +9042,34 @@ document.addEventListener('DOMContentLoaded', function() {
       ALL_STORES.forEach(function(s) {
         chain = chain.then(function() {
           return app.readAllFromStore(s).then(function(recs) {
-            if (recs.length) {
-              totalRecs += recs.length;
-              chips += '<span class="backup-stat-chip"><i class="fas fa-layer-group"></i>' + STORE_LABELS[s] + ': <strong>' + recs.length + '</strong></span>';
-            }
+            if (recs.length) { totalRecs += recs.length; chips += '<span class="backup-stat-chip"><i class="fas fa-layer-group"></i>'+STORE_LABELS[s]+': <strong>'+recs.length+'</strong></span>'; }
           });
         });
       });
       chain.then(function() {
         var jr = localStorage.getItem('juristaData_v3');
-        if (jr) { try { var jd = JSON.parse(jr); var ns = (jd.sessions||[]).length; if (ns) chips += '<span class="backup-stat-chip"><i class="fas fa-balance-scale"></i>Jurista: <strong>' + ns + '</strong></span>'; } catch(e){} }
-        if (localStorage.getItem('academicoTheme') || localStorage.getItem('academicoCustomBg'))
-          chips += '<span class="backup-stat-chip"><i class="fas fa-palette"></i>Tema: <strong>salvo</strong></span>';
-        statsRow.innerHTML = chips || '<span class="text-muted small">Sem dados.</span>';
-        if (totalRecs) statsRow.innerHTML += '<span class="backup-stat-chip" style="background:#e8f5e9;"><i class="fas fa-check-circle" style="color:var(--success);"></i>Total: <strong>' + totalRecs + '</strong></span>';
+        if (jr) { try { var jd=JSON.parse(jr); var ns=(jd.sessions||[]).length; if(ns) chips+='<span class="backup-stat-chip"><i class="fas fa-balance-scale"></i>Jurista: <strong>'+ns+'</strong></span>'; }catch(e){} }
+        if (localStorage.getItem('academicoTheme')||localStorage.getItem('academicoCustomBg')) chips+='<span class="backup-stat-chip"><i class="fas fa-palette"></i>Tema: <strong>salvo</strong></span>';
+        statsRow.innerHTML = chips||'<span class="text-muted small">Sem dados.</span>';
+        if (totalRecs) statsRow.innerHTML += '<span class="backup-stat-chip" style="background:#e8f5e9;"><i class="fas fa-check-circle" style="color:var(--success);"></i>Total: <strong>'+totalRecs+'</strong></span>';
       });
-
-      document.getElementById('backupFileName').value = 'academico_pro_backup_' + new Date().toISOString().split('T')[0];
+      document.getElementById('backupFileName').value = 'academico_pro_backup_'+new Date().toISOString().split('T')[0];
     }).catch(function(e) { console.error(e); });
   }
 
   /* ─── Setup de eventos ──────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', function() {
-    function abrirModal() {
-      populateBackupModal();
-      bootstrap.Modal.getOrCreateInstance(document.getElementById('backupModal')).show();
-    }
+    function abrirModal() { populateBackupModal(); bootstrap.Modal.getOrCreateInstance(document.getElementById('backupModal')).show(); }
     document.getElementById('openBackupBtn').addEventListener('click', abrirModal);
     var cfgBtn = document.getElementById('backup-btn');
     if (cfgBtn) { cfgBtn.removeAttribute('data-bs-toggle'); cfgBtn.removeAttribute('data-bs-target'); cfgBtn.addEventListener('click', abrirModal); }
-
     document.getElementById('exportBackupBtn').addEventListener('click', exportBackup);
-
     var dz = document.getElementById('backupDropzone');
     dz.addEventListener('click', function() { document.getElementById('backupFileInput').click(); });
     dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('dragover'); });
     dz.addEventListener('dragleave', function() { dz.classList.remove('dragover'); });
     dz.addEventListener('drop', function(e) { e.preventDefault(); dz.classList.remove('dragover'); if (e.dataTransfer.files[0]) handleImportFile(e.dataTransfer.files[0]); });
     document.getElementById('backupFileInput').addEventListener('change', function() { if (this.files[0]) handleImportFile(this.files[0]); });
-
     document.getElementById('backupImportConfirm').addEventListener('click', confirmImport);
     document.getElementById('backupImportCancel').addEventListener('click', function() {
       arquivoImport = null; cabecalhoImport = null;
@@ -9077,8 +9081,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('backupImportPreview').classList.add('d-none');
       document.getElementById('backupImportProgress').classList.add('d-none');
       document.getElementById('backupFileInput').value = '';
-      var cb = document.getElementById('backupImportConfirm');
-      var cc = document.getElementById('backupImportCancel');
+      var cb = document.getElementById('backupImportConfirm'); var cc = document.getElementById('backupImportCancel');
       if (cb) cb.disabled = false; if (cc) cc.disabled = false;
     });
   });
