@@ -1,7 +1,3 @@
-
-
-
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8829,45 +8825,146 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  /* ─── EXPORTAR ─────────────────────────────────────────────── */
+  /* ─── EXPORTAR — streaming via Blob parts ──────────────────── */
+  // Monta o JSON peça por peça em vez de JSON.stringify(tudo).
+  // Cada store é serializado individualmente e descartado da memória
+  // antes do próximo ser lido. O Blob final é montado por concatenação
+  // de partes — o browser mantém cada parte no disco, não na RAM.
   function exportBackup() {
     var btn = document.getElementById('exportBackupBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exportando...';
+
+    var progressEl  = document.getElementById('backupImportProgress');
+    var progressBar = document.getElementById('backupProgressBar');
+    var progressTxt = document.getElementById('backupProgressText');
+
+    // Mostra barra de progresso do export
+    progressEl.classList.remove('d-none');
+    progressBar.style.width = '3%';
+    progressTxt.textContent = 'Preparando export...';
+
+    diagLog('Export iniciado');
+
     waitForApp().then(function(app) {
       var prof = document.getElementById('backupProfileSelect').value;
-      var out = { _meta: { app:'academicoProDB', version:2, exportedAt: new Date().toISOString(),
-                           profileFilter: prof, exportedBy:'Acadêmico Pro' },
-                  stores: {}, localStorage: {} };
+
+      // Coleta localStorage
+      var lsObj = {};
       for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i); if (k) out.localStorage[k] = localStorage.getItem(k);
+        var k = localStorage.key(i);
+        if (k) lsObj[k] = localStorage.getItem(k);
       }
-      var chain = Promise.resolve();
-      ALL_STORES.forEach(function(s) {
-        chain = chain.then(function() {
-          return app.readAllFromStore(s).then(function(recs) {
-            if (prof !== 'all' && s !== 'profiles') recs = recs.filter(function(r) { return r.profileId === parseInt(prof) || r.profileId === undefined; });
-            if (prof !== 'all' && s === 'profiles') recs = recs.filter(function(r) { return r.id === parseInt(prof); });
-            out.stores[s] = recs;
-          });
+
+      // Cabeçalho do JSON — escrito como string simples
+      var meta = {
+        app: 'academicoProDB', version: 2,
+        exportedAt: new Date().toISOString(),
+        profileFilter: prof, exportedBy: 'Acadêmico Pro'
+      };
+      var header = '{"_meta":' + JSON.stringify(meta) +
+                   ',"localStorage":' + JSON.stringify(lsObj) +
+                   ',"stores":{';
+
+      // Partes do Blob: começa com o cabeçalho
+      var blobParts = [header];
+      var totalSize = header.length;
+      var si        = 0;
+      var primeiroStore = true;
+
+      diagLog('Cabeçalho: ' + (header.length/1024).toFixed(1) + ' KB');
+
+      function proximoStore() {
+        if (si >= ALL_STORES.length) {
+          // Fecha o JSON
+          blobParts.push('}}');
+
+          // Monta o Blob final — o browser faz isso eficientemente
+          var blob = new Blob(blobParts, { type: 'application/json' });
+          var sizeKB = Math.round(blob.size / 1024);
+          blobParts = null; // libera referências
+
+          diagLog('Blob montado: ' + (sizeKB >= 1024 ? (sizeKB/1024).toFixed(2)+' MB' : sizeKB+' KB'));
+
+          var url  = URL.createObjectURL(blob);
+          var nome = (document.getElementById('backupFileName').value.trim() || 'academico_pro_backup')
+                   + '_' + new Date().toISOString().split('T')[0] + '.json';
+          var a = document.createElement('a');
+          a.href = url; a.download = nome;
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+
+          progressEl.classList.add('d-none');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-download me-2"></i>Exportar Backup Completo';
+          showToast('✅ Backup exportado! (' + (sizeKB >= 1024 ? (sizeKB/1024).toFixed(2)+' MB' : sizeKB+' KB') + ')', 'success');
+          diagLog('Export concluído');
+          return;
+        }
+
+        var storeName = ALL_STORES[si]; si++;
+        var pct = Math.round(3 + ((si-1) / ALL_STORES.length) * 94);
+        progressBar.style.width = pct + '%';
+        progressTxt.textContent = 'Exportando ' + (STORE_LABELS[storeName]||storeName) + '...';
+
+        app.readAllFromStore(storeName).then(function(recs) {
+          // Filtra por perfil se necessário
+          if (prof !== 'all' && storeName !== 'profiles')
+            recs = recs.filter(function(r) { return r.profileId === parseInt(prof) || r.profileId === undefined; });
+          if (prof !== 'all' && storeName === 'profiles')
+            recs = recs.filter(function(r) { return r.id === parseInt(prof); });
+
+          // Serializa o array deste store como string
+          // e adiciona como parte do Blob imediatamente
+          var sep    = primeiroStore ? '' : ',';
+          primeiroStore = false;
+          var storeStr = sep + '"' + storeName + '":';
+
+          if (recs.length === 0) {
+            storeStr += '[]';
+            blobParts.push(storeStr);
+            totalSize += storeStr.length;
+          } else {
+            // Serializa registro por registro para não ter array gigante em memória
+            storeStr += '[';
+            blobParts.push(storeStr);
+            totalSize += storeStr.length;
+
+            for (var ri = 0; ri < recs.length; ri++) {
+              var recStr = (ri > 0 ? ',' : '') + JSON.stringify(recs[ri]);
+              blobParts.push(recStr);
+              totalSize += recStr.length;
+              recs[ri] = null; // libera cada registro após serializar
+            }
+            blobParts.push(']');
+            totalSize += 1;
+          }
+
+          recs = null; // libera array
+
+          diagLog('  ' + storeName + ': ' + (recs === null ? 'OK' : '?') + ' — total acumulado: ' + (totalSize/1024/1024).toFixed(1) + ' MB');
+
+          // Pausa para não travar o thread do mobile
+          setTimeout(proximoStore, 10);
+
+        }).catch(function(err) {
+          diagLog('ERRO export ' + storeName + ': ' + err.message);
+          // Adiciona array vazio para manter JSON válido
+          var sep2 = primeiroStore ? '' : ',';
+          primeiroStore = false;
+          blobParts.push(sep2 + '"' + storeName + '":[]');
+          setTimeout(proximoStore, 10);
         });
-      });
-      return chain.then(function() {
-        var json = JSON.stringify(out);
-        var sizeKB = Math.round(json.length / 1024);
-        var blob = new Blob([json], { type:'application/json' });
-        var url = URL.createObjectURL(blob);
-        var nome = (document.getElementById('backupFileName').value.trim() || 'academico_pro_backup') + '_' + new Date().toISOString().split('T')[0] + '.json';
-        var a = document.createElement('a'); a.href = url; a.download = nome;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        setTimeout(function() { URL.revokeObjectURL(url); }, 3000);
-        showToast('✅ Backup exportado! (' + (sizeKB >= 1024 ? (sizeKB/1024).toFixed(2)+' MB' : sizeKB+' KB') + ')', 'success');
-      });
+      }
+
+      proximoStore();
+
     }).catch(function(e) {
-      showToast('❌ Erro ao exportar: ' + (e.message||e), 'danger');
-    }).then(function() {
+      progressEl.classList.add('d-none');
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-download me-2"></i>Exportar Backup Completo';
+      showToast('❌ Erro ao exportar: ' + (e.message||e), 'danger');
+      diagLog('ERRO export: ' + (e.message||e));
     });
   }
 
