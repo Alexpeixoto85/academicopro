@@ -1,7 +1,3 @@
-
-
-
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8710,145 +8706,123 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ── IMPORTAR — leitura do arquivo ──
   // ═══════════════════════════════════════════════════════════════
-  // PARSER JSON STREAMING — robusto para arquivos de qualquer tamanho
+  // IMPORTAÇÃO ROBUSTA — compatível com todos os browsers mobile
   //
-  // Estratégia: lê o arquivo inteiro como texto em fatias de 2 MB,
-  // acumulando num buffer. Extrai objetos completos do buffer por
-  // rastreamento de depth {}, yield cada objeto imediatamente,
-  // e descarta a parte já processada do buffer.
+  // Estratégia: lê o arquivo em fatias de texto de 4 MB usando
+  // FileReader. Mantém um buffer acumulado e extrai objetos JSON
+  // completos do buffer usando rastreamento de profundidade {}.
+  // Grava no IndexedDB em lotes de 5 registros com pausa entre
+  // cada lote para não travar o thread principal.
   //
-  // NÃO recalcula offsets de arquivo — trabalha só com o buffer
-  // de texto, que é a abordagem correta e sem bugs de offset.
+  // NÃO usa async generators (suporte falho em mobile antigo).
+  // NÃO usa JSON.parse no arquivo inteiro (estoura memória).
   // ═══════════════════════════════════════════════════════════════
 
-  const SLICE_SIZE = 2 * 1024 * 1024; // 2 MB por fatia
+  const SLICE_SIZE = 4 * 1024 * 1024; // 4 MB por fatia
 
-  // Lê uma fatia do File como texto UTF-8
   function readSlice(file, start, end) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onerror = () => reject(new Error('Erro ao ler fatia do arquivo'));
-      reader.onload  = e => resolve(e.target.result);
+      reader.onerror = () => reject(new Error('Erro lendo arquivo'));
+      reader.onload  = e  => resolve(e.target.result);
       reader.readAsText(file.slice(start, end), 'UTF-8');
     });
   }
 
-  // Lê os primeiros 512 KB para extrair _meta e localStorage
   async function readHeader(file) {
     const headText = await readSlice(file, 0, Math.min(512 * 1024, file.size));
-
     const metaMatch = headText.match(/"_meta"\s*:\s*(\{[^}]+\})/);
-    if (!metaMatch) return { legacy: true, raw: headText };
-
+    if (!metaMatch) return { legacy: true };
     let meta = {};
     try { meta = JSON.parse(metaMatch[1]); } catch(e) {}
-
     let lsData = {};
-    // localStorage fica antes de "stores" no JSON gerado pelo app
     const lsMatch = headText.match(/"localStorage"\s*:\s*(\{[\s\S]*?\})\s*,\s*"stores"/);
     if (lsMatch) { try { lsData = JSON.parse(lsMatch[1]); } catch(e) {} }
-
     return { legacy: false, meta, localStorage: lsData };
   }
 
-  // ── Parser de objetos JSON de um array, a partir de texto bruto ──
-  // Recebe texto que já começa DENTRO do array (após o '['), 
-  // extrai todos os objetos completos e retorna { objects, remainder }
-  // onde remainder é o texto não consumido (objeto incompleto no final).
+  // Extrai todos os objetos JSON completos de um texto.
+  // Retorna { objects: [...], remainder: string (incompleto no final) }
   function extractObjects(text) {
     const objects = [];
     let i = 0;
-    const len = text.length;
+    const n = text.length;
 
-    while (i < len) {
-      // Avança até o próximo '{'
-      while (i < len && text[i] !== '{' && text[i] !== ']') i++;
-      if (i >= len) break;
-      if (text[i] === ']') { return { objects, remainder: '', done: true }; }
+    while (i < n) {
+      // Avança até '{' ou ']' (fim do array)
+      while (i < n && text[i] !== '{' && text[i] !== ']') i++;
+      if (i >= n) break;
+      if (text[i] === ']') return { objects, remainder: '', arrayEnd: true };
 
-      // Encontrou '{' — rastreia até o '}' correspondente
-      const start = i;
-      let depth   = 0;
-      let inStr   = false;
-      let esc     = false;
+      const start  = i;
+      let depth    = 0;
+      let inStr    = false;
+      let escaped  = false;
 
-      while (i < len) {
+      for (; i < n; i++) {
         const c = text[i];
-        if (esc)              { esc = false; i++; continue; }
-        if (c === '\\' && inStr) { esc = true; i++; continue; }
-        if (c === '"')        { inStr = !inStr; i++; continue; }
-        if (inStr)            { i++; continue; }
-        if (c === '{')        { depth++; i++; continue; }
-        if (c === '}')        {
+        if (escaped)              { escaped = false; continue; }
+        if (c === '\\' && inStr)  { escaped = true;  continue; }
+        if (c === '"')            { inStr = !inStr;   continue; }
+        if (inStr)                                    continue;
+        if (c === '{')            { depth++;           continue; }
+        if (c === '}') {
           depth--;
-          i++;
           if (depth === 0) {
-            // Objeto completo
-            try {
-              const obj = JSON.parse(text.slice(start, i));
-              objects.push(obj);
-            } catch(e) { /* registro malformado — pula */ }
+            i++; // avança para depois do '}'
+            try { objects.push(JSON.parse(text.slice(start, i))); }
+            catch(e) { /* malformado — ignora */ }
             break;
           }
-          continue;
         }
-        i++;
       }
 
       if (depth > 0) {
-        // Objeto ainda não fechado — texto incompleto, para aqui
-        return { objects, remainder: text.slice(start), done: false };
+        // Objeto ainda aberto — retorna o trecho incompleto
+        return { objects, remainder: text.slice(start), arrayEnd: false };
       }
     }
-
-    return { objects, remainder: '', done: false };
+    return { objects, remainder: '', arrayEnd: false };
   }
 
-  // ── Gerador streaming: extrai registros de um store do arquivo ──
-  async function* streamStoreRecords(file, storeName) {
+  // Importa um store inteiro do arquivo, chamando onRecord(batch) a cada lote
+  async function importStoreFromFile(file, storeName, onRecord, onDone) {
+    const marker   = `"${storeName}"`;
+    let   buf      = '';
+    let   inArray  = false;
     const fileSize = file.size;
-    const marker   = `"${storeName}"`;   // chave no JSON
-    let   buf      = '';                  // buffer de texto acumulado
-    let   insideArray = false;            // já encontrou o '[' do array
 
     for (let pos = 0; pos < fileSize; pos += SLICE_SIZE) {
       const chunk = await readSlice(file, pos, Math.min(pos + SLICE_SIZE, fileSize));
       buf += chunk;
 
-      if (!insideArray) {
-        // Procura "storeName": [ no buffer acumulado
-        const keyIdx = buf.indexOf(marker);
-        if (keyIdx === -1) {
-          // Não encontrou ainda — descarta tudo exceto overlap suficiente
-          // para não perder uma chave que cruzou a fronteira de fatia
-          buf = buf.slice(-(marker.length + 20));
+      if (!inArray) {
+        const ki = buf.indexOf(marker);
+        if (ki === -1) {
+          // Mantém overlap para não perder chave na fronteira
+          buf = buf.slice(-(marker.length + 30));
           continue;
         }
-        // Encontrou a chave — avança até o '['
-        const arrIdx = buf.indexOf('[', keyIdx + marker.length);
-        if (arrIdx === -1) {
-          // '[' ainda não chegou (fronteira de fatia) — mantém buf
-          continue;
-        }
-        // Descarta tudo até depois do '['
-        buf = buf.slice(arrIdx + 1);
-        insideArray = true;
+        const ai = buf.indexOf('[', ki + marker.length);
+        if (ai === -1) continue; // '[' ainda não chegou
+        buf    = buf.slice(ai + 1);
+        inArray = true;
       }
 
-      // Extrai todos os objetos completos do buffer atual
-      const { objects, remainder, done } = extractObjects(buf);
-
-      for (const obj of objects) {
-        yield obj;
-        // Cede ao event loop após cada objeto para não travar mobile
-        await new Promise(r => setTimeout(r, 0));
-      }
-
-      if (done) return; // encontrou o ']' do array — fim do store
-
-      // Mantém apenas o trecho não processado (objeto incompleto)
+      // Extrai objetos do buffer atual
+      const { objects, remainder, arrayEnd } = extractObjects(buf);
       buf = remainder;
+
+      if (objects.length > 0) {
+        await onRecord(objects);
+        // Pausa para não travar o thread do mobile
+        await new Promise(r => setTimeout(r, 15));
+      }
+
+      if (arrayEnd) break;
     }
+
+    onDone();
   }
 
   // ── Estado da importação ──
@@ -8987,10 +8961,9 @@ document.addEventListener('DOMContentLoaded', function() {
       } else {
         // ── Caso normal: streaming por store ──
         const storesToImport = ALL_STORES;
-        const total = storesToImport.length;
-        let storesDone = 0;
+        const total          = storesToImport.length;
 
-        // Restaurar localStorage primeiro (já lido no header)
+        // Restaurar localStorage (já lido no header — campo pequeno)
         if (header.localStorage) {
           for (const [k, v] of Object.entries(header.localStorage)) {
             if (v !== null && v !== undefined)
@@ -8998,41 +8971,41 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }
 
-        for (const storeName of storesToImport) {
-          const baseProgress = Math.round(3 + (storesDone / total) * 90);
+        for (let si = 0; si < storesToImport.length; si++) {
+          const storeName    = storesToImport[si];
+          const baseProgress = Math.round(3 + (si / total) * 90);
+          progressBar.style.width  = baseProgress + '%';
           progressText.textContent = `Limpando ${STORE_LABELS[storeName] || storeName}...`;
-          progressBar.style.width = baseProgress + '%';
 
-          // Limpa store — aguarda completamente antes de gravar
+          // 1) Limpa o store completamente e aguarda o commit
           await app.clearStore(storeName);
-          // Yield extra para garantir que o clear foi persistido em mobile
           await new Promise(r => setTimeout(r, 30));
 
+          // 2) Importa registros via callback — sem async generator
+          let recCount = 0;
           progressText.textContent = `Importando ${STORE_LABELS[storeName] || storeName}...`;
 
-          // Stream registros do arquivo diretamente para o IndexedDB
-          const STREAM_BATCH = 5; // lotes pequenos = menos memória por vez
-          let batch    = [];
-          let recCount = 0;
-
-          for await (const record of streamStoreRecords(file, storeName)) {
-            batch.push(record);
-            recCount++;
-            if (batch.length >= STREAM_BATCH) {
-              await app.putRecordsBatch(storeName, batch);
-              batch = [];
-              progressText.textContent = `${STORE_LABELS[storeName]}: ${recCount} registros...`;
-              // Yield ao event loop — evita "tab killed" em mobile
-              await new Promise(r => setTimeout(r, 0));
-            }
-          }
-          // Flush do último lote parcial
-          if (batch.length > 0) {
-            await app.putRecordsBatch(storeName, batch);
-          }
+          await new Promise((storeResolve, storeReject) => {
+            importStoreFromFile(
+              file,
+              storeName,
+              // onRecord: chamado com cada lote de objetos extraídos
+              async (batch) => {
+                try {
+                  await app.putRecordsBatch(storeName, batch);
+                  recCount += batch.length;
+                  progressText.textContent =
+                    `${STORE_LABELS[storeName]}: ${recCount} registros...`;
+                } catch(e) {
+                  console.error('[backup] putRecordsBatch erro:', storeName, e);
+                }
+              },
+              // onDone: chamado quando o store terminou
+              () => storeResolve()
+            ).catch(storeReject);
+          });
 
           console.log(`[backup] ${storeName}: ${recCount} registros importados`);
-          storesDone++;
         }
       }
 
