@@ -1,3 +1,7 @@
+
+
+
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2615,7 +2619,7 @@
   </div>
 
   <div class="content-panel" id="caderno">
-    <div class="content-header"><h2>Caderno e Notas</h2><div class="btn-group"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#notaModal"><i class="fas fa-plus"></i> Nova Nota</button></div></div>
+    <div class="content-header"><h2>Caderno e Notas</h2><div class="btn-group"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#notaModal"><i class="fas fa-plus"></i> Nova Nota</button><button class="btn btn-outline-success ms-2" id="btnCorrigirTodasNotas" title="Corrigir ortografia e pontuação de todas as notas"><i class="fas fa-spell-check me-1"></i> Corrigir Todas</button></div></div>
     
     <div class="mb-4">
         <div class="nav nav-tabs" id="caderno-tab" role="tablist">
@@ -7997,9 +8001,365 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     // ===== FIM JURISTA =====
 
+    // ===== CORREÇÃO EM LOTE DE NOTAS =====
+    (function() {
+
+      // Motor de normalização: remove acentos para lookup no dicionário
+      function semAcento(str) {
+        return str.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+      }
+
+      function preservarCaixa(original, corrigido) {
+        if (!original || !corrigido) return corrigido;
+        if (original.length > 1 && original === original.toUpperCase()) return corrigido.toUpperCase();
+        if (original[0] !== original[0].toLowerCase()) {
+          return corrigido.charAt(0).toUpperCase() + corrigido.slice(1);
+        }
+        return corrigido;
+      }
+
+      const MAPA_CORRECAO = {
+        'voce':'você','voces':'vocês','vc':'você','vcs':'vocês',
+        'nao':'não','sao':'são','vao':'vão','dao':'dão',
+        'estao':'estão','farao':'farão','irao':'irão','serao':'serão',
+        'terao':'terão','darao':'darão','poderao':'poderão',
+        'tambem':'também','alem':'além','aquem':'aquém',
+        'entao':'então','porem':'porém','apos':'após',
+        'ate':'até','so':'só','la':'lá','ca':'cá','ha':'há',
+        'atraves':'através','ninguem':'ninguém','alguem':'alguém',
+        'tres':'três','pes':'pés','mes':'mês',
+        'atras':'atrás','detras':'detrás',
+        'rapido':'rápido','rapida':'rápida','rapidos':'rápidos','rapidas':'rápidas',
+        'proximo':'próximo','proxima':'próxima','proximos':'próximos','proximas':'próximas',
+        'proprio':'próprio','propria':'própria','proprios':'próprios','proprias':'próprias',
+        'otimo':'ótimo','otima':'ótima','otimos':'ótimos','otimas':'ótimas',
+        'ultimo':'último','ultima':'última','ultimos':'últimos','ultimas':'últimas',
+        'unico':'único','unica':'única','unicos':'únicos','unicas':'únicas',
+        'publico':'público','publica':'pública','publicos':'públicos','publicas':'públicas',
+        'academico':'acadêmico','academica':'acadêmica','academicos':'acadêmicos','academicas':'acadêmicas',
+        'classico':'clássico','classica':'clássica','classicos':'clássicos','classicas':'clássicas',
+        'critico':'crítico','critica':'crítica','criticos':'críticos','criticas':'críticas',
+        'pratico':'prático','pratica':'prática','praticos':'práticos','praticas':'práticas',
+        'tecnico':'técnico','tecnica':'técnica','tecnicos':'técnicos','tecnicas':'técnicas',
+        'especifico':'específico','especifica':'específica','especificos':'específicos','especificas':'específicas',
+        'logico':'lógico','logica':'lógica','logicos':'lógicos','logicas':'lógicas',
+        'fisico':'físico','fisica':'física','fisicos':'físicos','fisicas':'físicas',
+        'quimico':'químico','quimica':'química','quimicos':'químicos','quimicas':'químicas',
+        'organico':'orgânico','organica':'orgânica','organicos':'orgânicos','organicas':'orgânicas',
+        'biologico':'biológico','biologica':'biológica','biologicos':'biológicos','biologicas':'biológicas',
+        'sintetico':'sintético','sintetica':'sintética',
+        'analitico':'analítico','analitica':'analítica',
+        'autonomo':'autônomo','autonoma':'autônoma',
+        'economico':'econômico','economica':'econômica',
+        'politico':'político','politica':'política','politicos':'políticos','politicas':'políticas',
+        'juridico':'jurídico','juridica':'jurídica',
+        'historico':'histórico','historica':'histórica','historicos':'históricos','historicas':'históricas',
+        'geografico':'geográfico','geografica':'geográfica',
+        'filosofico':'filosófico','filosofica':'filosófica',
+        'matematico':'matemático','matematica':'matemática',
+        'periodico':'periódico','periodica':'periódica',
+        'generica':'genérica','generico':'genérico',
+        'hipotese':'hipótese','hipoteses':'hipóteses',
+        'sintese':'síntese','antitese':'antítese',
+        'analise':'análise','analises':'análises',
+        'fenomeno':'fenômeno','fenomenos':'fenômenos',
+        'sindrome':'síndrome','sindromes':'síndromes',
+        'musica':'música','musicas':'músicas',
+        'acoes':'ações','opcoes':'opções','secoes':'seções','licoes':'lições',
+        'ocorrencia':'ocorrência','ocorrencias':'ocorrências',
+        'referencia':'referência','referencias':'referências',
+        'diferenca':'diferença','diferencas':'diferenças',
+        'importancia':'importância','relevancia':'relevância',
+        'eficiencia':'eficiência','frequencia':'frequência',
+        'tendencia':'tendência','evidencia':'evidência',
+        'experiencia':'experiência','experiencias':'experiências',
+        'competencia':'competência','consciencia':'consciência',
+        'crianca':'criança','criancas':'crianças',
+        'mudanca':'mudança','mudancas':'mudanças',
+        'confianca':'confiança','desconfianca':'desconfiança','disconfianca':'desconfiança',
+        'sentenca':'sentença','sentencas':'sentenças',
+        'heranca':'herança','herancas':'heranças',
+        'frances':'francês','ingles':'inglês','portugues':'português',
+        'japones':'japonês','chines':'chinês',
+        'facil':'fácil','faceis':'fáceis',
+        'dificil':'difícil','dificeis':'difíceis',
+        'util':'útil','uteis':'úteis',
+        'fragil':'frágil','agil':'ágil','habil':'hábil','docil':'dócil',
+        'flexivel':'flexível','flexiveis':'flexíveis',
+        'possivel':'possível','possiveis':'possíveis',
+        'impossivel':'impossível','impossiveis':'impossíveis',
+        'responsavel':'responsável','responsaveis':'responsáveis',
+        'disponivel':'disponível','disponiveis':'disponíveis',
+        'agradavel':'agradável','razoavel':'razoável',
+        'notavel':'notável','confortavel':'confortável','favoravel':'favorável',
+        'consideravel':'considerável','variavel':'variável',
+        'sustentavel':'sustentável','incrivel':'incrível',
+        'terrivel':'terrível','horrivel':'horrível','sensivel':'sensível',
+        'nivel':'nível','niveis':'níveis','movel':'móvel','moveis':'móveis',
+        'parabens':'parabéns',
+        'nacao':'nação','acao':'ação','coracao':'coração',
+        'campeao':'campeão','irmao':'irmão','mao':'mão','maos':'mãos',
+        'cao':'cão','caes':'cães','pao':'pão','paes':'pães','grao':'grão',
+        'organizacao':'organização','educacao':'educação','formacao':'formação',
+        'graduacao':'graduação','apresentacao':'apresentação','aplicacao':'aplicação',
+        'avaliacao':'avaliação','comunicacao':'comunicação','informacao':'informação',
+        'atualizacao':'atualização','administracao':'administração',
+        'documentacao':'documentação','elaboracao':'elaboração',
+        'realizacao':'realização','utilizacao':'utilização','observacao':'observação',
+        'publicacao':'publicação','producao':'produção','condicao':'condição',
+        'situacao':'situação','solucao':'solução','conclusao':'conclusão',
+        'introducao':'introdução','evolucao':'evolução','contribuicao':'contribuição',
+        'reducao':'redução','criacao':'criação','posicao':'posição',
+        'funcao':'função','versao':'versão','comissao':'comissão',
+        'emissao':'emissão','permissao':'permissão','profissao':'profissão',
+        'sessao':'sessão','expressao':'expressão','impressao':'impressão',
+        'transmissao':'transmissão','discussao':'discussão','decisao':'decisão',
+        'divisao':'divisão','revisao':'revisão','visao':'visão','missao':'missão',
+        'ocasiao':'ocasião','relacao':'relação',
+        'contestacao':'contestação','reconvencao':'reconvenção',
+        'suspensao':'suspensão','excecao':'exceção','excecoes':'exceções',
+        'peticao':'petição','peticoes':'petições','apelacao':'apelação',
+        'impetrar':'impetrar','impetracao':'impetração',
+        'acusacao':'acusação','acordao':'acórdão',
+        'sabado':'sábado','sabados':'sábados','terca':'terça','marco':'março',
+        'pra':'para','tb':'também','tmb':'também','pq':'porque',
+        'mt':'muito','mto':'muito','td':'tudo',
+        'informatica':'informática','computacao':'computação','estatistica':'estatística',
+        'nutricao':'nutrição','farmacia':'farmácia','veterinaria':'veterinária',
+      };
+
+      function corrigirTextoLote(texto) {
+        if (!texto || typeof texto !== 'string' || texto.trim().length < 2) return texto;
+
+        // Protege URLs e e-mails
+        const prot = [];
+        let t = texto.replace(
+          /https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/gi,
+          function(m) { var i = prot.length; prot.push(m); return '\x00P' + i + '\x00'; }
+        );
+
+        // Substitui palavras usando semAcento para normalizar a chave
+        t = t.replace(/[A-Za-z\u00C0-\u024F]+/g, function(palavra) {
+          var chave = semAcento(palavra);
+          if (MAPA_CORRECAO[chave]) {
+            return preservarCaixa(palavra, MAPA_CORRECAO[chave]);
+          }
+          return palavra;
+        });
+
+        // Regras de pontuação e espaçamento
+        t = t
+          .replace(/\s+([.,;:!?])/g, '$1')
+          .replace(/([.,;:!?])([^\s\d"'\u00BB)\]\}\n\x00])/g, '$1 $2')
+          .replace(/  +/g, ' ')
+          .replace(/ ,/g, ',').replace(/ \./g, '.')
+          .replace(/\(\s+/g, '(').replace(/\s+\)/g, ')')
+          .replace(/^\s+/, '').replace(/\s+$/, '');
+
+        // Capitaliza após ponto/! / ?
+        t = t.replace(/([.!?]\s+)([a-z\u00E0-\u00FF])/g,
+          function(m, p1, p2) { return p1 + p2.toUpperCase(); });
+
+        // Capitaliza início
+        if (t.length > 0) t = t.charAt(0).toUpperCase() + t.slice(1);
+
+        // Restaura protegidos
+        t = t.replace(/\x00P(\d+)\x00/g, function(_, i) { return prot[parseInt(i)]; });
+
+        return t;
+      }
+
+      // ── Elementos do modal ──
+      var btnAbrir      = document.getElementById('btnCorrigirTodasNotas');
+      var modalEl       = document.getElementById('corrigirNotasModal');
+      var stateConfirm  = document.getElementById('corrigir-state-confirm');
+      var stateProgress = document.getElementById('corrigir-state-progress');
+      var stateDone     = document.getElementById('corrigir-state-done');
+      var btnStart      = document.getElementById('corrigirNotasStartBtn');
+      var btnCancel     = document.getElementById('corrigirNotasCancelBtn');
+      var btnFechar     = document.getElementById('corrigirNotasFecharBtn');
+      var btnClose      = document.getElementById('corrigirNotasCloseBtn');
+      var progBar       = document.getElementById('corrigir-prog-bar');
+      var progCount     = document.getElementById('corrigir-prog-count');
+      var progLabel     = document.getElementById('corrigir-prog-label');
+      var logEl         = document.getElementById('corrigir-log');
+      var logDoneEl     = document.getElementById('corrigir-log-done');
+      var totalInfoEl   = document.getElementById('corrigir-total-info');
+      var doneTitleEl   = document.getElementById('corrigir-done-title');
+      var doneMsgEl     = document.getElementById('corrigir-done-msg');
+
+      var bsModal   = null;
+      var cancelado = false;
+
+      function getModal() {
+        if (!bsModal) bsModal = new bootstrap.Modal(modalEl);
+        return bsModal;
+      }
+
+      function resetUI() {
+        cancelado = false;
+        stateConfirm.style.display  = '';
+        stateProgress.style.display = 'none';
+        stateDone.style.display     = 'none';
+        btnStart.classList.remove('d-none');
+        btnCancel.classList.remove('d-none');
+        btnCancel.setAttribute('data-bs-dismiss','');
+        btnFechar.classList.add('d-none');
+        if (btnClose) btnClose.disabled = false;
+        logEl.innerHTML = '';
+        logDoneEl.innerHTML = '';
+        progBar.style.width = '0%';
+        progCount.textContent = '';
+        progLabel.textContent = 'Preparando...';
+      }
+
+      function addLog(el, tipo, html) {
+        var d = document.createElement('div');
+        d.className = tipo === 'ok' ? 'text-success' : tipo === 'skip' ? 'text-muted' : 'text-danger';
+        d.innerHTML = html;
+        el.appendChild(d);
+        el.scrollTop = el.scrollHeight;
+      }
+
+      function escH(s) {
+        return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      }
+
+      // Abre modal e conta notas
+      if (btnAbrir) {
+        btnAbrir.addEventListener('click', async function() {
+          resetUI();
+          getModal().show();
+          try {
+            var pid   = await getCurrentProfileId();
+            var notas = await getAllData('notas','profileId', pid);
+            var texto = notas.filter(function(n){ return !n.imagem && n.tipo !== 'documento'; });
+            totalInfoEl.innerHTML = '<strong>' + texto.length + '</strong> nota(s) de texto encontrada(s).';
+          } catch(e) {
+            totalInfoEl.textContent = 'Pronto para iniciar.';
+          }
+        });
+      }
+
+      // Inicia correção
+      if (btnStart) {
+        btnStart.addEventListener('click', async function() {
+          cancelado = false;
+          stateConfirm.style.display  = 'none';
+          stateProgress.style.display = '';
+          btnStart.classList.add('d-none');
+          btnCancel.removeAttribute('data-bs-dismiss');
+          if (btnClose) btnClose.disabled = true;
+
+          var pid, notas;
+          try {
+            pid   = await getCurrentProfileId();
+            notas = await getAllData('notas', 'profileId', pid);
+            notas = notas.filter(function(n){ return !n.imagem && n.tipo !== 'documento'; });
+          } catch(e) {
+            addLog(logEl,'erro','<i class="fas fa-times-circle me-1"></i>Erro ao carregar notas: ' + escH(e.message));
+            return;
+          }
+
+          var total = notas.length;
+          if (total === 0) { mostrarConcluido(0, 0, []); return; }
+
+          var corrigidas = 0, semAlteracao = 0, resumo = [];
+
+          for (var i = 0; i < total; i++) {
+            if (cancelado) break;
+
+            var nota = notas[i];
+            var pct  = Math.round(((i + 1) / total) * 100);
+            progBar.style.width   = pct + '%';
+            progCount.textContent = (i + 1) + ' / ' + total;
+            progLabel.textContent = 'Verificando: "' + nota.titulo + '"';
+
+            var novoTitulo   = corrigirTextoLote(nota.titulo   || '');
+            var novoConteudo = corrigirTextoLote(nota.conteudo || '');
+            var mudou = novoTitulo   !== (nota.titulo   || '') ||
+                        novoConteudo !== (nota.conteudo || '');
+
+            if (mudou) {
+              var notaAtualizada = Object.assign({}, nota, {
+                titulo:     novoTitulo,
+                conteudo:   novoConteudo,
+                dataEdicao: new Date().toISOString().split('T')[0]
+              });
+              try {
+                await saveData('notas', notaAtualizada);
+                corrigidas++;
+                var tituloMudou = novoTitulo !== (nota.titulo || '');
+                addLog(logEl, 'ok',
+                  '<i class="fas fa-check-circle me-1"></i><strong>' + escH(nota.titulo) + '</strong>' +
+                  (tituloMudou ? ' → <em>' + escH(novoTitulo) + '</em>' : ' — conteúdo corrigido'));
+                resumo.push({ original: nota.titulo, novo: novoTitulo, tituloMudou: tituloMudou });
+              } catch(saveErr) {
+                addLog(logEl,'erro','<i class="fas fa-times-circle me-1"></i><strong>' + escH(nota.titulo) + '</strong> — erro ao salvar');
+              }
+            } else {
+              semAlteracao++;
+              addLog(logEl, 'skip',
+                '<i class="fas fa-minus me-1"></i>' + escH(nota.titulo) + ' — sem alterações');
+            }
+
+            await new Promise(function(r){ setTimeout(r, 20); });
+          }
+
+          // Recarrega dados e re-renderiza o painel
+          try {
+            profileDataCache = null;
+            await loadProfileData();
+            renderCurrentPanel();
+          } catch(e) { /* silencioso */ }
+
+          mostrarConcluido(corrigidas, semAlteracao, resumo);
+        });
+      }
+
+      function mostrarConcluido(corrigidas, semAlteracao, resumo) {
+        stateProgress.style.display = 'none';
+        stateDone.style.display     = '';
+        btnCancel.classList.add('d-none');
+        btnFechar.classList.remove('d-none');
+        if (btnClose) btnClose.disabled = false;
+
+        doneTitleEl.textContent = cancelado ? '⛔ Correção interrompida' : '✅ Correção concluída!';
+        doneMsgEl.textContent   = corrigidas + ' nota(s) corrigida(s)  ·  ' + semAlteracao + ' já estavam corretas.';
+
+        logDoneEl.innerHTML = '';
+        if (resumo.length > 0) {
+          resumo.forEach(function(r) {
+            addLog(logDoneEl, 'ok',
+              '<i class="fas fa-check-circle me-1"></i><strong>' + escH(r.original) + '</strong>' +
+              (r.tituloMudou ? ' → <em>' + escH(r.novo) + '</em>' : ''));
+          });
+        } else {
+          logDoneEl.innerHTML = '<span class="text-muted">Nenhuma nota precisou de correção.</span>';
+        }
+      }
+
+      if (btnCancel) {
+        btnCancel.addEventListener('click', function() {
+          cancelado = true;
+          getModal().hide();
+        });
+      }
+
+    })(); // fim IIFE de correção em lote
+
     // ===== INICIALIZAÇÃO DO APP =====
     init();
-    
+
+    // ===== EXPÕE FUNÇÕES PARA MÓDULOS EXTERNOS =====
+    window._acadApp = {
+      saveData: saveData,
+      getAllData: getAllData,
+      getCurrentProfileId: getCurrentProfileId,
+      reloadData: function() { return loadProfileData(true); },
+      renderPanel: renderCurrentPanel,
+    };
+
 });
 </script>
 
@@ -10316,5 +10676,45 @@ document.addEventListener('keydown', (e) => {
 })();
 </script>
 <!-- ===== FIM DO SISTEMA DE AUTOCORREÇÃO ===== -->
+
+<!-- ===== MODAL DE PROGRESSO — CORREÇÃO EM LOTE ===== -->
+<div class="modal fade" id="corrigirNotasModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px;border:none;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+      <div class="modal-header" style="background:linear-gradient(135deg,#2c3e50,#34495e);border-radius:16px 16px 0 0;">
+        <h5 class="modal-title text-white"><i class="fas fa-spell-check me-2"></i>Corrigir Todas as Notas</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" id="corrigirNotasCloseBtn"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div id="corrigir-state-confirm">
+          <p class="mb-2">Corrige <strong>ortografia</strong>, <strong>acentuação</strong>, <strong>pontuação</strong> e <strong>espaçamento</strong> de todas as notas de texto.</p>
+          <div class="alert alert-info py-2 px-3 small mb-3">
+            <i class="fas fa-info-circle me-1"></i>Motor local — sem internet. Notas com imagem são ignoradas.
+          </div>
+          <p id="corrigir-total-info" class="text-muted small mb-0"></p>
+        </div>
+        <div id="corrigir-state-progress" style="display:none;">
+          <p class="fw-semibold mb-2" id="corrigir-prog-label">Preparando...</p>
+          <div class="progress mb-1" style="height:10px;border-radius:5px;">
+            <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" id="corrigir-prog-bar" style="width:0%;transition:width 0.25s;"></div>
+          </div>
+          <p class="text-muted small text-end mb-3" id="corrigir-prog-count">0 / 0</p>
+          <div id="corrigir-log" style="max-height:200px;overflow-y:auto;font-size:0.78rem;background:#f8f9fa;border-radius:8px;padding:10px;border:1px solid #dee2e6;line-height:1.8;"></div>
+        </div>
+        <div id="corrigir-state-done" style="display:none;text-align:center;padding:8px 0;">
+          <div style="font-size:2.8rem;margin-bottom:10px;">✅</div>
+          <h5 class="fw-bold mb-1" id="corrigir-done-title">Correção concluída!</h5>
+          <p class="text-muted mb-3" id="corrigir-done-msg"></p>
+          <div id="corrigir-log-done" style="max-height:190px;overflow-y:auto;font-size:0.78rem;background:#f8f9fa;border-radius:8px;padding:10px;border:1px solid #dee2e6;text-align:left;line-height:1.8;"></div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-secondary" id="corrigirNotasCancelBtn">Cancelar</button>
+        <button type="button" class="btn btn-success"   id="corrigirNotasStartBtn"><i class="fas fa-play me-1"></i> Iniciar Correção</button>
+        <button type="button" class="btn btn-primary d-none" id="corrigirNotasFecharBtn" data-bs-dismiss="modal"><i class="fas fa-check me-1"></i> Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
