@@ -1,8 +1,3 @@
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -58,6 +53,15 @@
         font-weight: 600;
         padding: 3px 10px;
         margin-top: 6px;
+    }
+    /* ===== AUTOSAVE STATUS BADGE ===== */
+    #notaAutoSaveStatus {
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: #6c757d;
+      margin-right: auto !important;
+      padding: 0 4px;
     }
     /* ===== NOTAS — FILTRO POR MATÉRIA ===== */
     .notas-filter-bar {
@@ -3257,7 +3261,7 @@
 <!-- Modal Financeiro -->
 <div class="modal fade" id="financeiroModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Transação</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="financeiroForm"><input type="hidden" id="financeiroId"><input type="hidden" id="financeiroRecorrenteId" value=""><div class="mb-3"><label for="financeiroTipo" class="form-label">Tipo</label><select class="form-select" id="financeiroTipo"><option value="receita">Receita</option><option value="despesa">Despesa</option></select></div><div class="mb-3"><label for="financeiroDescricao" class="form-label">Descrição</label><input type="text" class="form-control" id="financeiroDescricao" required></div><div class="mb-3"><label for="financeiroValor" class="form-label">Valor</label><input type="number" step="0.01" class="form-control" id="financeiroValor" required></div><div class="mb-3"><label for="financeiroCategoria" class="form-label">Categoria</label><select class="form-select" id="financeiroCategoria"><option value="">Selecione</option><option value="Alimentação">Alimentação</option><option value="Transporte">Transporte</option><option value="Moradia">Moradia</option><option value="Educação">Educação</option><option value="Lazer">Lazer</option><option value="Saúde">Saúde</option><option value="Vestuário">Vestuário</option><option value="Outros">Outros</option></select></div><div class="mb-3"><label for="financeiroData" class="form-label">Data</label><input type="date" class="form-control" id="financeiroData" required></div><div class="mb-3" id="financeiroStatusWrapper" style="display: none;"><label for="financeiroStatus" class="form-label">Status</label><select class="form-select" id="financeiroStatus"><option value="pendente">Pendente</option><option value="pago">Pago</option></select></div><hr><div class="mb-3"><label for="financeiroRecurrence" class="form-label">Recorrência</label><select class="form-select" id="financeiroRecurrence"><option value="none" selected>Não repetir</option><option value="weekly">Semanalmente</option><option value="monthly">Mensalmente</option></select></div><div class="mb-3 d-none" id="financeiroRecurrenceEndDateWrapper"><label for="financeiroRecurrenceEndDate" class="form-label">Repetir até</label><input type="date" class="form-control" id="financeiroRecurrenceEndDate"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto d-none" id="deleteFinanceiro">Excluir</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveFinanceiro">Salvar</button></div></div></div></div>
 
-<div class="modal fade" id="notaModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="notaModalLabel">Nova Nota</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="notaForm"><input type="hidden" id="notaId"><div class="mb-3"><label for="notaTitulo" class="form-label">Título</label><input type="text" class="form-control" id="notaTitulo" required></div><div class="mb-3"><label for="notaDisciplina" class="form-label"><i class="fas fa-graduation-cap me-1 text-primary"></i>Matéria <span class="text-muted small">(opcional)</span></label><select class="form-select" id="notaDisciplina"><option value="">— Nenhuma matéria —</option></select></div><div class="mb-3"><label for="notaConteudo" class="form-label">Conteúdo</label><textarea class="form-control" id="notaConteudo" rows="6"></textarea></div><div class="mb-3"><label class="form-label"><i class="fas fa-code me-1 text-warning"></i>Anexar arquivo HTML <span class="text-muted small">(opcional)</span></label><div id="notaHtmlUploadArea" class="image-upload-area" style="padding:14px;"><i class="fas fa-file-code fa-2x mb-1" style="color:var(--warning);"></i><p class="mb-0 small">Clique ou arraste um arquivo .html aqui</p><input type="file" id="notaHtmlInput" accept=".html,text/html" class="d-none"></div><div id="notaHtmlPreview"></div></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto" id="deleteNota" style="display: none;">Excluir</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveNota">Salvar</button></div></div></div></div>
+<div class="modal fade" id="notaModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="notaModalLabel">Nova Nota</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="notaForm"><input type="hidden" id="notaId"><div class="mb-3"><label for="notaTitulo" class="form-label">Título</label><input type="text" class="form-control" id="notaTitulo" required></div><div class="mb-3"><label for="notaDisciplina" class="form-label"><i class="fas fa-graduation-cap me-1 text-primary"></i>Matéria <span class="text-muted small">(opcional)</span></label><select class="form-select" id="notaDisciplina"><option value="">— Nenhuma matéria —</option></select></div><div class="mb-3"><label for="notaConteudo" class="form-label">Conteúdo</label><textarea class="form-control" id="notaConteudo" rows="6"></textarea></div><div class="mb-3"><label class="form-label"><i class="fas fa-code me-1 text-warning"></i>Anexar arquivo HTML <span class="text-muted small">(opcional)</span></label><div id="notaHtmlUploadArea" class="image-upload-area" style="padding:14px;"><i class="fas fa-file-code fa-2x mb-1" style="color:var(--warning);"></i><p class="mb-0 small">Clique ou arraste um arquivo .html aqui</p><input type="file" id="notaHtmlInput" accept=".html,text/html" class="d-none"></div><div id="notaHtmlPreview"></div></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto" id="deleteNota" style="display: none;">Excluir</button><span id="notaAutoSaveStatus" style="display:none;font-size:0.78rem;color:#6c757d;display:flex;align-items:center;gap:5px;margin-right:auto;"><i class="fas fa-circle-notch fa-spin" id="notaAutoSaveSpinner" style="display:none;color:var(--accent);"></i><i class="fas fa-check-circle" id="notaAutoSaveCheck" style="display:none;color:var(--success);"></i><span id="notaAutoSaveText"></span></span><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveNota">Salvar</button></div></div></div></div>
 
 <div class="modal fade" id="linkModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Link</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="linkForm"><input type="hidden" id="linkId"><div class="mb-3"><label for="linkTitulo" class="form-label">Título</label><input type="text" class="form-control" id="linkTitulo" required></div><div class="mb-3"><label for="linkUrl" class="form-label">URL</label><input type="url" class="form-control" id="linkUrl" placeholder="https://..." required></div><div class="mb-3"><label for="linkCategoria" class="form-label">Categoria</label><input type="text" class="form-control" id="linkCategoria"></div><div class="mb-3"><label for="linkDescricao" class="form-label">Descrição</label><textarea class="form-control" id="linkDescricao" rows="2"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveLink">Salvar</button></div></div></div></div>
 
@@ -6514,6 +6518,106 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
         document.getElementById('saveFinanceiro').addEventListener('click', saveFinanceiro);
         document.getElementById('saveNota').addEventListener('click', saveNota);
         document.getElementById('deleteNota').addEventListener('click', deleteNota);
+
+        // ===== AUTOSAVE DE NOTAS (a cada 1 segundo) =====
+        (function() {
+            let _autoSaveTimer = null;
+            let _autoSaveLastContent = null;
+            let _autoSaveLastTitulo = null;
+            const DRAFT_PREFIX = 'nota_draft_';
+
+            function _showAutoSaveStatus(state) {
+                const wrap = document.getElementById('notaAutoSaveStatus');
+                const spinner = document.getElementById('notaAutoSaveSpinner');
+                const check = document.getElementById('notaAutoSaveCheck');
+                const txt = document.getElementById('notaAutoSaveText');
+                if (!wrap) return;
+                if (state === 'hidden') { wrap.style.display = 'none'; return; }
+                wrap.style.display = 'flex';
+                if (state === 'saving') {
+                    spinner.style.display = 'inline-block';
+                    check.style.display = 'none';
+                    txt.textContent = 'Salvando automaticamente...';
+                } else if (state === 'saved') {
+                    spinner.style.display = 'none';
+                    check.style.display = 'inline-block';
+                    const now = new Date();
+                    txt.textContent = 'Salvo às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+                }
+            }
+
+            async function _autoSaveDraft() {
+                const titulo = (document.getElementById('notaTitulo').value || '').trim();
+                const conteudo = (document.getElementById('notaConteudo').value || '').trim();
+                const disciplinaId = document.getElementById('notaDisciplina').value;
+                if (!titulo && !conteudo) { _showAutoSaveStatus('hidden'); return; }
+                if (titulo === _autoSaveLastTitulo && conteudo === _autoSaveLastContent) return;
+                _autoSaveLastTitulo = titulo;
+                _autoSaveLastContent = conteudo;
+                _showAutoSaveStatus('saving');
+                try {
+                    const draftId = document.getElementById('notaId').value || 'new';
+                    const draft = { titulo, conteudo, disciplinaId, savedAt: new Date().toISOString() };
+                    localStorage.setItem(DRAFT_PREFIX + draftId, JSON.stringify(draft));
+                    _showAutoSaveStatus('saved');
+                } catch(e) { _showAutoSaveStatus('hidden'); }
+            }
+
+            function _startAutoSave() {
+                _autoSaveLastContent = null;
+                _autoSaveLastTitulo = null;
+                if (_autoSaveTimer) clearInterval(_autoSaveTimer);
+                _autoSaveTimer = setInterval(_autoSaveDraft, 1000);
+                _showAutoSaveStatus('hidden');
+            }
+
+            function _stopAutoSave() {
+                if (_autoSaveTimer) { clearInterval(_autoSaveTimer); _autoSaveTimer = null; }
+                _showAutoSaveStatus('hidden');
+            }
+
+            function _clearDraft() {
+                const draftId = document.getElementById('notaId').value || 'new';
+                localStorage.removeItem(DRAFT_PREFIX + draftId);
+                localStorage.removeItem(DRAFT_PREFIX + 'new');
+            }
+
+            // Flag: true quando o usuário clicou em Salvar (não deve salvar automaticamente ao fechar)
+            let _savedManually = false;
+
+            async function _saveNotaFromDraft() {
+                const titulo = (document.getElementById('notaTitulo').value || '').trim();
+                const conteudo = (document.getElementById('notaConteudo').value || '').trim();
+                if (!titulo && !conteudo) return; // nada para salvar
+                // Reutiliza a função saveNota existente
+                await saveNota();
+            }
+
+            document.getElementById('notaModal').addEventListener('shown.bs.modal', () => {
+                _savedManually = false;
+                _startAutoSave();
+            });
+
+            // Marca que salvou manualmente (capture=true: roda antes do saveNota)
+            document.getElementById('saveNota').addEventListener('click', () => {
+                _savedManually = true;
+                _clearDraft();
+                _stopAutoSave();
+            }, true);
+
+            // Ao fechar sem salvar: salva automaticamente se houver conteúdo
+            document.getElementById('notaModal').addEventListener('hide.bs.modal', async () => {
+                _stopAutoSave();
+                if (_savedManually) return; // já foi salvo manualmente
+                const titulo = (document.getElementById('notaTitulo').value || '').trim();
+                const conteudo = (document.getElementById('notaConteudo').value || '').trim();
+                if (!titulo && !conteudo) return; // modal vazio, ignora
+                _clearDraft();
+                await saveNota();
+            });
+        })();
+        // ===== FIM AUTOSAVE =====
+
         // QuickSave modal (desenho/escrita)
         document.getElementById('quickSaveNotaConfirm').addEventListener('click', async () => {
             const titulo = document.getElementById('quickNotaTitulo').value.trim();
