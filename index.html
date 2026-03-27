@@ -657,6 +657,41 @@
         transform: translateY(-5px);
         box-shadow: 0 12px 30px rgba(0,0,0,0.2);
     }
+
+    /* ===== ALERTA: evento faltando 2 dias ou menos ===== */
+    @keyframes borderPulseUrgente {
+        0%   { box-shadow: 0 8px 25px rgba(0,0,0,0.15), 0 0 0 0px rgba(231,76,60,0.9); border-color: rgba(231,76,60,0); }
+        50%  { box-shadow: 0 8px 25px rgba(0,0,0,0.15), 0 0 0 8px rgba(231,76,60,0); border-color: rgba(231,76,60,1); }
+        100% { box-shadow: 0 8px 25px rgba(0,0,0,0.15), 0 0 0 0px rgba(231,76,60,0.9); border-color: rgba(231,76,60,0); }
+    }
+    .next-event-card.urgente {
+        border: 3px solid rgba(231,76,60,1);
+        animation: borderPulseUrgente 1.2s ease-in-out infinite;
+        background: linear-gradient(135deg, #c0392b, #e74c3c, var(--info));
+    }
+    .next-event-card.urgente:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(231,76,60,0.4);
+    }
+    .next-event-urgente-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255,255,255,0.25);
+        border: 1px solid rgba(255,255,255,0.6);
+        border-radius: 20px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 3px 12px;
+        margin-bottom: 8px;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        animation: badgePulse 1.2s ease-in-out infinite;
+    }
+    @keyframes badgePulse {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0.5; }
+    }
     .next-event-card .countdown-item {
         text-align: center;
     }
@@ -3804,10 +3839,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const disc = data.disciplinas.find(d => d.id === proximoEventoGlobal.disciplinaId);
             if (disc) discInfo = `<p class="mb-2"><i class="fas fa-book me-2"></i><strong>Disciplina:</strong> ${disc.nome}</p>`;
         }
+        // Detecta se faltam 2 dias ou menos
+        const msRestante = proximoEventoGlobal.eventDate.getTime() - new Date().getTime();
+        const diasRestantes = msRestante / (1000 * 60 * 60 * 24);
+        const isUrgente = diasRestantes >= 0 && diasRestantes <= 2;
+        const urgenteClass = isUrgente ? ' urgente' : '';
+        const urgenteBadge = isUrgente
+            ? `<div class="next-event-urgente-badge"><i class="fas fa-exclamation-triangle"></i> Entrega em menos de 2 dias!</div>`
+            : '';
+
         container.innerHTML = `
-            <div class="next-event-card" id="next-event-card">
+            <div class="next-event-card${urgenteClass}" id="next-event-card">
                 <div class="row align-items-center">
                     <div class="col-lg-5">
+                        ${urgenteBadge}
                         <h6 class="text-uppercase small" style="opacity:0.8;">Próximo Evento</h6>
                         <h3 class="mb-1">${proximoEventoGlobal.title}</h3>
                         ${discInfo}
