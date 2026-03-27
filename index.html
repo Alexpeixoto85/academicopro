@@ -3993,7 +3993,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <button class="btn btn-status-feito ${t.status==='Feito'?'btn-status-active':''} change-trabalho-status" data-id="${t.id}" data-status="Feito" title="Marcar como Feito">✅ Feito</button>
                             <button class="btn btn-status-entregue ${t.status==='Entregue'?'btn-status-active':''} change-trabalho-status" data-id="${t.id}" data-status="Entregue" title="Marcar como Entregue">📬 Entregue</button>
                         </div>
-                        <p class="card-text">${t.observacoes?t.observacoes.substring(0,80)+'...':''}</p>
+                        ${t.observacoes ? `<p class="card-text trabalho-obs-preview" data-id="${t.id}" title="Clique para ver observação completa" style="cursor:pointer;">${t.observacoes.substring(0,80)}${t.observacoes.length>80?'<span class="text-accent ms-1" style="color:var(--accent);font-size:0.78rem;font-weight:600;">…ver mais</span>':''}</p>` : ''}
                         ${attachmentHtml ? `<div class="attachment-area mb-2">${attachmentHtml}</div>` : ''}
                         <div class="card-action-bar">
                             <button class="btn btn-sm btn-edit-card edit-trabalho" data-id="${t.id}" title="Editar trabalho"><i class="fas fa-edit"></i> Editar</button>
@@ -5750,7 +5750,7 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
         if (event.nota !== undefined && event.nota !== null) bodyHtml += `<div class="event-detail-info"><i class="fas fa-star"></i> <strong>Nota:</strong> ${event.nota}</div>`;
         if (event.valor !== undefined) bodyHtml += `<div class="event-detail-info"><i class="fas fa-dollar-sign"></i> <strong>Valor:</strong> R$ ${event.valor.toFixed(2)}</div>`;
         if (event.prioridade) bodyHtml += `<div class="event-detail-info"><i class="fas fa-flag"></i> <strong>Prioridade:</strong> ${event.prioridade === 'high' ? 'Alta' : event.prioridade === 'medium' ? 'Média' : 'Baixa'}</div>`;
-        if (event.description) bodyHtml += `<div class="event-detail-info"><i class="fas fa-align-left"></i> <strong>Descrição:</strong> ${event.description}</div>`;
+        if (event.description) bodyHtml += `<div class="event-detail-info"><i class="fas fa-align-left"></i> <strong>Observações:</strong><div style="white-space:pre-wrap;margin-top:4px;padding:8px 10px;background:rgba(0,0,0,0.03);border-radius:8px;font-size:0.92rem;line-height:1.6;">${event.description}</div></div>`;
         bodyHtml += `</div>`;
 
         // Seção de anexos
@@ -6881,6 +6881,14 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
                     await loadProfileData();
                     renderCurrentPanel();
                 }
+                return;
+            }
+            // Clique nas observações do card de trabalho → abre modal de detalhes
+            let obsPreview = e.target.closest('.trabalho-obs-preview');
+            if (obsPreview) {
+                e.preventDefault();
+                e.stopPropagation();
+                await openEventDetail(obsPreview.dataset.id, 'trabalhos');
                 return;
             }
             // Botão ver detalhes do evento
