@@ -8772,7 +8772,9 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
           // Força re-leitura do perfil atual a partir do IDB importado
           const profiles = await getAllData('profiles');
           if (profiles && profiles.length > 0) {
-            const active = profiles.find(p => p.currentProfileId === p.id) || profiles[0];
+            // CORREÇÃO: profiles armazenam currentProfileId para marcar qual está ativo;
+            // busca o que tem currentProfileId preenchido, senão usa o primeiro
+            const active = profiles.find(p => p.currentProfileId != null) || profiles[0];
             currentProfileId = active.id;
           }
           profileDataCache = null;
@@ -8781,7 +8783,7 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
           hideLoadingOverlay();
         } catch(e) {
           console.warn('[reloadAfterImport]', e);
-          // Fallback: recarrega a página se o reload interno falhar
+          // Fallback: recarrega a página inteira se o reload interno falhar
           setTimeout(function() { window.location.reload(); }, 500);
         }
       }
@@ -9068,10 +9070,23 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
       fr.onerror = function() { fail(new Error('Erro ao ler cabeçalho')); };
       fr.onload  = function(e) {
         var head = e.target.result;
+        // Verifica se é um JSON com estrutura mínima do app
+        var hasStores  = head.indexOf('"stores"') !== -1;
+        var hasProfiles = head.indexOf('"profiles"') !== -1;
         var mm = head.match(/"_meta"\s*:\s*(\{[^}]+\})/);
-        if (!mm) { ok({ legacy: true }); return; }
+        if (!mm) {
+          // Formato legado: deve ter pelo menos "profiles" ou estrutura de stores
+          if (!hasProfiles && !hasStores) {
+            fail(new Error('Arquivo não é um backup válido do Acadêmico Pro')); return;
+          }
+          ok({ legacy: true }); return;
+        }
         var meta = {};
         try { meta = JSON.parse(mm[1]); } catch(err) {}
+        // Valida que é backup do app correto
+        if (meta.app && meta.app !== 'academicoProDB') {
+          fail(new Error('Arquivo de backup de outro app não compatível')); return;
+        }
         var ls = {};
         var lm = head.match(/"localStorage"\s*:\s*(\{[\s\S]*?\})\s*,\s*"stores"/);
         if (lm) { try { ls = JSON.parse(lm[1]); } catch(err) {} }
@@ -9171,7 +9186,7 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
         var offsetsEncontrados = localizarOffsetStores(cabecalho);
         diagLog('Offsets encontrados na leitura inicial: ' + Object.keys(offsetsEncontrados).length + ' stores');
 
-        // Passo 2: para cada store, importa a partir do offset correto
+        // Passo 2: para cada store, LIMPA primeiro (await) e depois importa
         var si = 0;
         function proximoStore() {
           if (si >= storesToImport.length) { resolve(); return; }
@@ -9181,31 +9196,25 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
 
           var offsetInicial = offsetsEncontrados[storeName];
 
-          if (offsetInicial !== undefined) {
-            // Offset conhecido — começa direto no array do store
-            diagLog(storeName + ': offset pré-localizado, importando...');
-            importarStoreDesdeOffset(file, storeName, offsetInicial, app, onStoreProgresso)
-              .then(function(count) {
-                if (onStoreFim) onStoreFim(storeName, count);
-                setTimeout(proximoStore, 0);
-              }).catch(function(err) {
-                diagLog('ERRO ' + storeName + ': ' + err.message);
-                if (onStoreFim) onStoreFim(storeName, 0);
-                setTimeout(proximoStore, 0);
-              });
-          } else {
-            // Offset não encontrado nos primeiros 2 MB — varre o arquivo
-            diagLog(storeName + ': buscando no arquivo completo...');
-            importarStoreVarrendoArquivo(file, storeName, app, onStoreProgresso)
-              .then(function(count) {
-                if (onStoreFim) onStoreFim(storeName, count);
-                setTimeout(proximoStore, 0);
-              }).catch(function(err) {
-                diagLog('ERRO ' + storeName + ': ' + err.message);
-                if (onStoreFim) onStoreFim(storeName, 0);
-                setTimeout(proximoStore, 0);
-              });
-          }
+          // CORREÇÃO CRÍTICA: sempre aguarda o clearStore antes de inserir registros
+          diagLog(storeName + ': limpando store...');
+          app.clearStore(storeName).then(function() {
+            diagLog(storeName + ': store limpo OK');
+            if (offsetInicial !== undefined) {
+              diagLog(storeName + ': offset pré-localizado, importando...');
+              return importarStoreDesdeOffset(file, storeName, offsetInicial, app, onStoreProgresso);
+            } else {
+              diagLog(storeName + ': buscando no arquivo completo...');
+              return importarStoreVarrendoArquivo(file, storeName, app, onStoreProgresso);
+            }
+          }).then(function(count) {
+            if (onStoreFim) onStoreFim(storeName, count || 0);
+            setTimeout(proximoStore, 0);
+          }).catch(function(err) {
+            diagLog('ERRO ' + storeName + ': ' + (err && err.message ? err.message : String(err)));
+            if (onStoreFim) onStoreFim(storeName, 0);
+            setTimeout(proximoStore, 0);
+          });
         }
         proximoStore();
       }).catch(reject);
@@ -9583,18 +9592,17 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
 
       importarTodosStores(
         file, app, ALL_STORES,
-        // onStoreInicio
+        // onStoreInicio — não é async, mas a limpeza real ocorre antes de importarStoreDesdeOffset
         function(storeName) {
           var pct = Math.round(5 + (ALL_STORES.indexOf(storeName) / ALL_STORES.length) * 90);
           progressBar.style.width = pct + '%';
-          progressTxt.textContent = 'Importando ' + (STORE_LABELS[storeName]||storeName) + '...';
-          diagLog('--- ' + storeName + ' ---');
-          // Limpa store antes de importar
-          app.clearStore(storeName);
+          progressTxt.textContent = 'Limpando ' + (STORE_LABELS[storeName]||storeName) + '...';
+          diagLog('--- ' + storeName + ' (limpeza agendada) ---');
         },
         // onStoreProgresso
         function(count, storeName) {
-          progressTxt.textContent = (STORE_LABELS[storeName]||storeName) + ': ' + count + '...';
+          progressBar.style.width = Math.round(5 + (ALL_STORES.indexOf(storeName) / ALL_STORES.length) * 90) + '%';
+          progressTxt.textContent = 'Importando ' + (STORE_LABELS[storeName]||storeName) + ': ' + count + ' regs...';
         },
         // onStoreFim
         function(storeName, count) {
@@ -9612,15 +9620,19 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
   function finalizarImport(app, progressEl, progressBar, progressTxt, confirmBtn, cancelBtn) {
     diagLog('=== IMPORTAÇÃO CONCLUÍDA ===');
     progressBar.style.width = '100%';
-    progressTxt.textContent = 'Concluído!';
+    progressTxt.textContent = 'Concluído! Recarregando...';
     setTimeout(function() {
       try { var m = bootstrap.Modal.getInstance(document.getElementById('backupModal')); if (m) m.hide(); } catch(e) {}
-      app.reloadAfterImport().catch(function(e) { console.warn(e); });
       arquivoImport = null; cabecalhoImport = null;
       try { document.getElementById('backupFileInput').value = ''; } catch(e) {}
       progressEl.classList.add('d-none');
       showToast('✅ Backup restaurado com sucesso!', 'success');
-    }, 400);
+      // Reload interno com fallback para page reload se falhar
+      app.reloadAfterImport().catch(function(e) {
+        console.warn('[finalizarImport] reloadAfterImport falhou, recarregando página:', e);
+        setTimeout(function() { window.location.reload(); }, 800);
+      });
+    }, 600);
   }
 
   function erroImport(err, progressEl, confirmBtn, cancelBtn) {
@@ -9687,8 +9699,14 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
       document.getElementById('backupImportPreview').classList.add('d-none');
       document.getElementById('backupImportProgress').classList.add('d-none');
       document.getElementById('backupFileInput').value = '';
+      // Garante que log de diagnóstico é fechado
+      var diagPanel = document.getElementById('backup-diag-panel');
+      if (diagPanel) diagPanel.style.display = 'none';
       var cb = document.getElementById('backupImportConfirm'); var cc = document.getElementById('backupImportCancel');
       if (cb) cb.disabled = false; if (cc) cc.disabled = false;
+      // Restaura botão de exportar caso modal seja fechado durante export
+      var expBtn = document.getElementById('exportBackupBtn');
+      if (expBtn) { expBtn.disabled = false; expBtn.innerHTML = '<i class="fas fa-download me-2"></i>Exportar Backup Completo'; }
     });
   });
 
