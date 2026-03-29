@@ -8730,26 +8730,60 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
         });
       },
 
-      // Insere registros um por um — cada registro em transação própria.
-      // Isso garante que um registro problemático não derruba os outros.
+      // Insere registros em lotes dentro de UMA única transação por chamada.
+      // Muito mais eficiente no mobile: evita centenas de transações separadas
+      // que travavam o thread e causavam o browser matar a aba.
+      // Se a transação inteira falhar, retenta registro por registro como fallback.
       putRecordsBatch: function(storeName, records) {
         if (!db || !records || records.length === 0) return Promise.resolve();
-        // Processa sequencialmente: cada put em transação isolada
-        var chain = Promise.resolve();
-        records.forEach(function(record) {
-          chain = chain.then(function() {
-            return new Promise(function(res) {
-              try {
-                var tx = db.transaction([storeName], 'readwrite');
-                tx.oncomplete = res;
-                tx.onerror    = res; // ignora erro — tenta o próximo
-                tx.onabort    = res;
-                tx.objectStore(storeName).put(record);
-              } catch(e) { res(); } // ignora exceção — tenta o próximo
+        var self = this;
+        return new Promise(function(resolve) {
+          try {
+            var tx = db.transaction([storeName], 'readwrite');
+            var store = tx.objectStore(storeName);
+            var failed = [];
+            tx.oncomplete = function() {
+              // Se houve falhas individuais, retenta só esses registros um a um
+              if (failed.length === 0) { resolve(); return; }
+              var chain = Promise.resolve();
+              failed.forEach(function(rec) {
+                chain = chain.then(function() {
+                  return new Promise(function(res) {
+                    try {
+                      var tx2 = db.transaction([storeName], 'readwrite');
+                      tx2.oncomplete = res; tx2.onerror = res; tx2.onabort = res;
+                      tx2.objectStore(storeName).put(rec);
+                    } catch(e) { res(); }
+                  });
+                });
+              });
+              chain.then(resolve);
+            };
+            tx.onerror = tx.onabort = function() {
+              // Transação em lote falhou — retenta todos um a um (fallback seguro)
+              var chain = Promise.resolve();
+              records.forEach(function(rec) {
+                chain = chain.then(function() {
+                  return new Promise(function(res) {
+                    try {
+                      var tx2 = db.transaction([storeName], 'readwrite');
+                      tx2.oncomplete = res; tx2.onerror = res; tx2.onabort = res;
+                      tx2.objectStore(storeName).put(rec);
+                    } catch(e) { res(); }
+                  });
+                });
+              });
+              chain.then(resolve);
+            };
+            records.forEach(function(rec) {
+              try { store.put(rec); }
+              catch(e) { failed.push(rec); }
             });
-          });
+          } catch(e) {
+            // db indisponível — resolve sem travar
+            resolve();
+          }
         });
-        return chain;
       },
 
       // Deleta registros por id usando a conexão existente
@@ -9170,12 +9204,16 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
   }
 
   /* ─── Importa todos os stores por fatias ────────────────────── */
-  var FATIA = 6 * 1024 * 1024; // 6 MB por fatia
+  // Fatia menor no mobile para não estourar memória RAM
+  // (celulares Android matam a aba se o processo ultrapassar ~150-200MB)
+  var FATIA = (function() {
+    var ua = navigator.userAgent || '';
+    var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+    return isMobile ? 1 * 1024 * 1024 : 4 * 1024 * 1024; // 1MB mobile, 4MB desktop
+  })();
 
-  /* Lê as primeiras HEADER_READ bytes para pré-localizar todos os offsets.
-     Para arquivos onde "stores" fica nos primeiros bytes (< 1 MB),
-     isso é suficiente. Para arquivos grandes, varre até encontrar todos. */
-  var HEADER_READ = 2 * 1024 * 1024; // 2 MB — suficiente para o cabeçalho
+  /* Lê as primeiras HEADER_READ bytes para pré-localizar todos os offsets. */
+  var HEADER_READ = 1 * 1024 * 1024; // 1 MB — suficiente para o cabeçalho
 
   function importarTodosStores(file, app, storesToImport, onStoreInicio, onStoreProgresso, onStoreFim) {
     return new Promise(function(resolve, reject) {
@@ -9225,15 +9263,16 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
   function importarStoreDesdeOffset(file, storeName, offsetInicial, app, onProgresso) {
     return new Promise(function(resolve, reject) {
       var buf = '';
-      var pos = offsetInicial;  // começa já dentro do array
       var total = file.size;
       var contagem = 0;
       var fatiaN = 0;
 
-      // Calcula offset de arquivo para bytes (offsetInicial é char offset nos primeiros 2 MB)
-      // Como lemos os primeiros 2 MB como texto UTF-8, e o JSON do app é ASCII puro
-      // (base64 só usa chars ASCII), o char offset == byte offset
+      // char offset == byte offset para JSON ASCII/base64
       var byteOffset = offsetInicial;
+
+      // Pausa entre fatias: mais longa no mobile para o browser não matar a aba
+      var ua = navigator.userAgent || '';
+      var pausaMs = /Android|iPhone|iPad|iPod|Mobile/i.test(ua) ? 60 : 10;
 
       function proximaFatia() {
         if (byteOffset >= total) { diagLog(storeName + ': fim arquivo, ' + contagem + ' regs'); resolve(contagem); return; }
@@ -9241,22 +9280,26 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
         fatiaN++;
         readSlice(file, byteOffset, fim).then(function(chunk) {
           byteOffset = fim;
-          buf += chunk; chunk = null;
+          buf += chunk; chunk = null; // libera chunk da memória
           var r = extrairObjetos(buf);
-          buf = r.resto;
+          buf = r.resto; // mantém só o restante não processado
+
           if (r.objs.length > 0) {
             app.putRecordsBatch(storeName, r.objs).then(function() {
               contagem += r.objs.length;
+              r.objs = null; // libera array
               if (onProgresso) onProgresso(contagem, storeName);
               if (r.fimArray) { diagLog(storeName + ': ' + contagem + ' regs (offset)'); resolve(contagem); return; }
-              setTimeout(proximaFatia, 5);
+              setTimeout(proximaFatia, pausaMs); // pausa para o browser respirar
             }).catch(function() {
+              r.objs = null;
               if (r.fimArray) { resolve(contagem); return; }
-              setTimeout(proximaFatia, 5);
+              setTimeout(proximaFatia, pausaMs);
             });
           } else {
+            r.objs = null;
             if (r.fimArray) { diagLog(storeName + ': 0 regs (vazio)'); resolve(contagem); return; }
-            setTimeout(proximaFatia, 5);
+            setTimeout(proximaFatia, pausaMs);
           }
         }).catch(reject);
       }
@@ -9267,8 +9310,6 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
   /* Varre o arquivo inteiro buscando o store (fallback para stores grandes) */
   function importarStoreVarrendoArquivo(file, storeName, app, onProgresso) {
     return new Promise(function(resolve, reject) {
-      // Usa a mesma lógica robusta: lê fatia a fatia buscando "stores"
-      // e só entra no array do store depois de passar por "stores":{
       var buf = '';
       var dentroStores = false;
       var dentroArray  = false;
@@ -9279,22 +9320,24 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
       var marcadorStores = '"stores"';
       var marcador = '"' + storeName + '"';
 
+      var ua = navigator.userAgent || '';
+      var pausaMs = /Android|iPhone|iPad|iPod|Mobile/i.test(ua) ? 60 : 10;
+
       function proximaFatia() {
         if (pos >= total) { diagLog(storeName + ': não encontrado no arquivo'); resolve(contagem); return; }
         var fim = Math.min(pos + FATIA, total);
         fatiaN++;
         readSlice(file, pos, fim).then(function(chunk) {
-          pos = fim; buf += chunk; chunk = null;
+          pos = fim; buf += chunk; chunk = null; // libera chunk
 
           if (!dentroArray) {
             if (!dentroStores) {
               var si2 = buf.indexOf(marcadorStores);
-              if (si2 === -1) { buf = buf.slice(-(marcadorStores.length + 200)); proximaFatia(); return; }
+              if (si2 === -1) { buf = buf.slice(-(marcadorStores.length + 200)); setTimeout(proximaFatia, pausaMs); return; }
               var oi2 = buf.indexOf('{', si2 + marcadorStores.length);
-              if (oi2 === -1) { proximaFatia(); return; }
+              if (oi2 === -1) { setTimeout(proximaFatia, pausaMs); return; }
               buf = buf.slice(oi2); dentroStores = true;
             }
-            // Agora usa localizarOffsetStores no buffer acumulado
             var offs = localizarOffsetStores('{"stores":' + buf);
             if (offs[storeName] !== undefined) {
               var rel = offs[storeName] - '{"stores":'.length;
@@ -9302,7 +9345,7 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
               diagLog(storeName + ': array localizado na varredura, fatia ' + fatiaN);
             } else {
               buf = buf.slice(-(marcador.length + 200));
-              proximaFatia(); return;
+              setTimeout(proximaFatia, pausaMs); return;
             }
           }
 
@@ -9311,16 +9354,19 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
           if (r.objs.length > 0) {
             app.putRecordsBatch(storeName, r.objs).then(function() {
               contagem += r.objs.length;
+              r.objs = null; // libera array
               if (onProgresso) onProgresso(contagem, storeName);
               if (r.fimArray) { diagLog(storeName + ': ' + contagem + ' regs (varredura)'); resolve(contagem); return; }
-              setTimeout(proximaFatia, 5);
+              setTimeout(proximaFatia, pausaMs);
             }).catch(function() {
+              r.objs = null;
               if (r.fimArray) { resolve(contagem); return; }
-              setTimeout(proximaFatia, 5);
+              setTimeout(proximaFatia, pausaMs);
             });
           } else {
+            r.objs = null;
             if (r.fimArray) { diagLog(storeName + ': 0 regs'); resolve(contagem); return; }
-            setTimeout(proximaFatia, 5);
+            setTimeout(proximaFatia, pausaMs);
           }
         }).catch(reject);
       }
@@ -9517,6 +9563,26 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
     });
   }
 
+  /* ─── WakeLock: impede o celular de matar a aba durante a importação ── */
+  var _wakeLock = null;
+  function acquireWakeLock() {
+    if ('wakeLock' in navigator) {
+      navigator.wakeLock.request('screen').then(function(wl) {
+        _wakeLock = wl;
+        diagLog('WakeLock ativo (tela não será desligada)');
+      }).catch(function(e) {
+        diagLog('WakeLock indisponível: ' + e.message);
+      });
+    }
+  }
+  function releaseWakeLock() {
+    if (_wakeLock) {
+      try { _wakeLock.release(); } catch(e) {}
+      _wakeLock = null;
+      diagLog('WakeLock liberado');
+    }
+  }
+
   /* ─── CONFIRMAR IMPORTAÇÃO ──────────────────────────────────── */
   function confirmImport() {
     if (!arquivoImport) return;
@@ -9536,6 +9602,9 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
     // Mostra painel de diagnóstico
     var diagPanel = document.getElementById('backup-diag-panel');
     if (diagPanel) diagPanel.style.display = 'block';
+
+    // Impede o celular de dormir e matar a aba durante a importação
+    acquireWakeLock();
 
     progressBar.style.width = '3%';
     progressTxt.textContent = 'Aguardando banco...';
@@ -9619,6 +9688,7 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
 
   function finalizarImport(app, progressEl, progressBar, progressTxt, confirmBtn, cancelBtn) {
     diagLog('=== IMPORTAÇÃO CONCLUÍDA ===');
+    releaseWakeLock(); // libera tela
     progressBar.style.width = '100%';
     progressTxt.textContent = 'Concluído! Recarregando...';
     setTimeout(function() {
@@ -9627,7 +9697,6 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
       try { document.getElementById('backupFileInput').value = ''; } catch(e) {}
       progressEl.classList.add('d-none');
       showToast('✅ Backup restaurado com sucesso!', 'success');
-      // Reload interno com fallback para page reload se falhar
       app.reloadAfterImport().catch(function(e) {
         console.warn('[finalizarImport] reloadAfterImport falhou, recarregando página:', e);
         setTimeout(function() { window.location.reload(); }, 800);
@@ -9637,6 +9706,7 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
 
   function erroImport(err, progressEl, confirmBtn, cancelBtn) {
     diagLog('ERRO FATAL: ' + (err.message||err));
+    releaseWakeLock(); // libera tela mesmo com erro
     progressEl.classList.add('d-none');
     document.getElementById('backupImportPreview').classList.remove('d-none');
     showToast('❌ Erro: ' + (err.message||'Desconhecido'), 'danger');
