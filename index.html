@@ -7557,7 +7557,7 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
             await openDatabase();
 
             // ── Verificar se esta é uma recarga pós-importação ──
-            // A importação grava uma flag no localStorage antes de recarregar
+            // A importação grava uma flag no sessionStorage antes de recarregar
             const importFlag = sessionStorage.getItem('_academico_import_done');
             if (importFlag) {
                 sessionStorage.removeItem('_academico_import_done');
@@ -7572,9 +7572,24 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
             setLoadingMsg('Carregando perfil...', 55);
             const pid = await getCurrentProfileId();
             const disciplinas = await getAllData('disciplinas', 'profileId', pid);
-            if (!disciplinas.length) {
-                setLoadingMsg('Criando dados iniciais...', 65);
-                await createInitialData();
+
+            // CORREÇÃO: só cria dados de exemplo se o banco estiver vazio E não for
+            // uma inicialização logo após uma importação de backup.
+            // Verifica se há QUALQUER dado em qualquer store antes de criar exemplos,
+            // pois após importação o perfil pode existir mas as disciplinas chegarem
+            // com um leve atraso no IndexedDB (especialmente em Safari/Android).
+            if (!disciplinas.length && !importFlag) {
+                // Verifica também os outros stores para ter certeza que o banco está mesmo vazio
+                const [trabalhos, provas, notas] = await Promise.all([
+                    getAllData('trabalhos', 'profileId', pid),
+                    getAllData('provas',    'profileId', pid),
+                    getAllData('notas',     'profileId', pid)
+                ]);
+                const bancoPareceVazio = !trabalhos.length && !provas.length && !notas.length;
+                if (bancoPareceVazio) {
+                    setLoadingMsg('Criando dados iniciais...', 65);
+                    await createInitialData();
+                }
             }
 
             setLoadingMsg('Preparando interface...', 75);
@@ -8812,6 +8827,8 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
             currentProfileId = active.id;
           }
           profileDataCache = null;
+          // Pequena espera para garantir que o IDB terminou de gravar todos os stores
+          await new Promise(r => setTimeout(r, 400));
           await loadProfileData(true);
           renderCurrentPanel();
           hideLoadingOverlay();
@@ -9724,6 +9741,8 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
     releaseWakeLock(); // libera tela
     progressBar.style.width = '100%';
     progressTxt.textContent = 'Concluído! Recarregando...';
+    // Grava flag para que o init() saiba que não deve criar dados de exemplo
+    try { sessionStorage.setItem('_academico_import_done', '1'); } catch(e) {}
     setTimeout(function() {
       try { var m = bootstrap.Modal.getInstance(document.getElementById('backupModal')); if (m) m.hide(); } catch(e) {}
       arquivoImport = null; cabecalhoImport = null;
