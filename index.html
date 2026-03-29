@@ -8836,34 +8836,27 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
       </div>
       <div class="modal-body p-4">
 
-        <!-- Info Banner -->
-        <div class="alert alert-info d-flex align-items-start gap-2 mb-4" style="border-radius:12px;">
-          <i class="fas fa-info-circle mt-1 flex-shrink-0"></i>
-          <div>
-            <strong>Backup completo:</strong> Exporta <em>absolutamente todos os seus dados</em> — disciplinas, provas, trabalhos, notas, financeiro, certificados (incluindo arquivos anexados), Jurista, tema visual, fundo personalizado e configurações — num único arquivo <code>.json</code>. Para restaurar em outro dispositivo, basta importar esse arquivo aqui.
-          </div>
-        </div>
-
         <!-- EXPORTAR -->
-        <div class="backup-section mb-4">
-          <div class="backup-section-header">
+        <div class="backup-section mb-3">
+          <div class="backup-section-header mb-3">
             <div class="backup-section-icon" style="background:linear-gradient(135deg,#1abc9c,#16a085);">
               <i class="fas fa-file-export"></i>
             </div>
             <div>
               <h5 class="mb-0">Exportar Backup</h5>
-              <p class="text-muted small mb-0">Baixe um arquivo com todos os seus dados</p>
+              <p class="text-muted small mb-0">Escolha o tipo de backup conforme o destino</p>
             </div>
           </div>
 
-          <div class="row g-3 mt-2">
-            <div class="col-md-6">
+          <!-- Seletor de perfil + nome -->
+          <div class="row g-2 mb-3">
+            <div class="col-sm-6">
               <label class="form-label fw-semibold small">Perfil a exportar</label>
               <select class="form-select form-select-sm" id="backupProfileSelect">
                 <option value="all">Todos os perfis</option>
               </select>
             </div>
-            <div class="col-md-6">
+            <div class="col-sm-6">
               <label class="form-label fw-semibold small">Nome do arquivo</label>
               <div class="input-group input-group-sm">
                 <input type="text" class="form-control" id="backupFileName" placeholder="academico_pro_backup">
@@ -8872,45 +8865,62 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
             </div>
           </div>
 
-          <div class="backup-stats-row mt-3" id="backupStatsRow">
-            <!-- preenchido dinamicamente -->
+          <!-- Estatísticas -->
+          <div class="backup-stats-row mb-3" id="backupStatsRow"></div>
+
+          <!-- Dois botões de exportação -->
+          <div class="row g-2">
+            <div class="col-12 col-sm-6">
+              <button class="btn btn-success w-100" id="exportBackupBtn">
+                <i class="fas fa-hdd me-2"></i>Backup Completo
+                <div class="backup-btn-sub">Inclui todos os arquivos anexados</div>
+              </button>
+            </div>
+            <div class="col-12 col-sm-6">
+              <button class="btn btn-primary w-100" id="exportBackupLightBtn">
+                <i class="fas fa-mobile-alt me-2"></i>Backup para Celular
+                <div class="backup-btn-sub">Sem anexos — ideal para importar no celular</div>
+              </button>
+            </div>
           </div>
 
-          <button class="btn btn-success mt-3 w-100" id="exportBackupBtn">
-            <i class="fas fa-download me-2"></i>Exportar Backup Completo
-          </button>
+          <!-- aviso backup leve -->
+          <div class="alert alert-info d-flex align-items-start gap-2 mt-3 mb-0" style="border-radius:10px;font-size:0.82rem;">
+            <i class="fas fa-info-circle mt-1 flex-shrink-0"></i>
+            <div>
+              <strong>Backup para Celular</strong> exporta tudo — disciplinas, provas, trabalhos, notas de texto, financeiro, horários, certificados, configurações — mas <strong>não inclui</strong> arquivos PDF/imagem anexados. O arquivo fica muito menor e importa normalmente em qualquer celular.
+            </div>
+          </div>
         </div>
 
         <hr>
 
         <!-- IMPORTAR -->
         <div class="backup-section">
-          <div class="backup-section-header">
+          <div class="backup-section-header mb-3">
             <div class="backup-section-icon" style="background:linear-gradient(135deg,#3498db,#2980b9);">
               <i class="fas fa-file-import"></i>
             </div>
             <div>
               <h5 class="mb-0">Importar Backup</h5>
-              <p class="text-muted small mb-0">Restaure seus dados a partir de um arquivo de backup</p>
+              <p class="text-muted small mb-0">Restaure seus dados — funciona com backup completo ou para celular</p>
             </div>
           </div>
 
-          <div class="backup-dropzone mt-3" id="backupDropzone">
+          <div class="backup-dropzone" id="backupDropzone">
             <i class="fas fa-cloud-upload-alt fa-2x mb-2" style="color:var(--info);"></i>
             <p class="mb-1 fw-semibold">Clique para selecionar ou arraste o arquivo</p>
-            <p class="text-muted small mb-0">Somente arquivos <code>.json</code> gerados por este app</p>
+            <p class="text-muted small mb-0">Arquivos <code>.json</code> gerados por este app</p>
             <input type="file" id="backupFileInput" class="d-none" accept=".json,application/json">
           </div>
 
           <div id="backupImportPreview" class="d-none mt-3">
             <div class="backup-import-info" id="backupImportInfo"></div>
-            <div class="alert alert-warning d-flex align-items-start gap-2 mt-3" style="border-radius:12px;">
-              <i class="fas fa-exclamation-triangle mt-1"></i>
-              <div>
-                <strong>Atenção:</strong> A importação <strong>substituirá</strong> os dados existentes do(s) perfil(s) importado(s). Esta ação não pode ser desfeita.
-              </div>
+            <div class="alert alert-warning d-flex align-items-start gap-2 mt-3 mb-0" style="border-radius:10px;">
+              <i class="fas fa-exclamation-triangle mt-1 flex-shrink-0"></i>
+              <div><strong>Atenção:</strong> A importação <strong>substituirá</strong> os dados existentes. Esta ação não pode ser desfeita.</div>
             </div>
-            <div class="row g-2 mt-1">
+            <div class="row g-2 mt-2">
               <div class="col-6">
                 <button class="btn btn-outline-secondary w-100 btn-sm" id="backupImportCancel">
                   <i class="fas fa-times me-1"></i>Cancelar
@@ -8931,17 +8941,13 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
             <p class="text-center text-muted small mt-2" id="backupProgressText">Processando...</p>
           </div>
 
-          <!-- PAINEL DE DIAGNÓSTICO — mostra log em tempo real -->
+          <!-- PAINEL DE DIAGNÓSTICO -->
           <div id="backup-diag-panel" style="display:none;margin-top:12px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
               <small style="font-weight:600;color:#666;"><i class="fas fa-terminal me-1"></i>Log de importação</small>
               <button onclick="document.getElementById('backup-diag-panel').style.display='none'" style="border:none;background:none;font-size:0.75rem;color:#999;cursor:pointer;">✕ fechar</button>
             </div>
-            <div id="backup-diag-log" style="
-              background:#1e1e2e;color:#a6e3a1;font-family:monospace;
-              font-size:0.72rem;line-height:1.6;padding:10px;border-radius:8px;
-              max-height:220px;overflow-y:auto;word-break:break-all;
-            "></div>
+            <div id="backup-diag-log" style="background:#1e1e2e;color:#a6e3a1;font-family:monospace;font-size:0.72rem;line-height:1.6;padding:10px;border-radius:8px;max-height:200px;overflow-y:auto;word-break:break-all;"></div>
           </div>
         </div>
 
@@ -8957,6 +8963,33 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
 
 <style>
 /* ===== BACKUP STYLES ===== */
+.backup-btn-sub {
+  font-size: 0.72rem;
+  opacity: 0.85;
+  font-weight: 400;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+#exportBackupBtn, #exportBackupLightBtn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  line-height: 1.4;
+  min-height: 64px;
+  justify-content: center;
+  font-weight: 600;
+}
+#exportBackupLightBtn {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  border-color: #2980b9;
+}
+#exportBackupLightBtn:hover {
+  background: linear-gradient(135deg, #2980b9, #1f618d);
+  border-color: #1f618d;
+}
 .backup-header-btn {
   border-radius: 20px;
   font-size: 0.82rem;
@@ -9713,7 +9746,177 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
     if (confirmBtn) { confirmBtn.disabled = false; if (cancelBtn) cancelBtn.disabled = false; }
   }
 
-  /* ─── Popular modal ─────────────────────────────────────────── */
+  /* ─── BACKUP LEVE (sem anexos binários) — ideal para celular ── */
+  // Remove todos os campos binários (base64/blob) dos registros antes de exportar.
+  // Isso reduz o tamanho do arquivo em 90–99% quando há PDFs/imagens anexadas.
+  function stripBinaryFields(storeName, record) {
+    // Clona raso para não modificar o original no IDB
+    var r = Object.assign({}, record);
+
+    // notas: campo "imagem" (base64 da foto/desenho) e anexos com dados binários
+    if (storeName === 'notas') {
+      if (r.imagem) { r.imagem = null; r._imagem_removida = true; }
+      if (r.htmlAnexo) { r.htmlAnexo = null; r.htmlAnexoNome = r.htmlAnexoNome || null; r._htmlAnexo_removido = true; }
+      if (Array.isArray(r.anexos) && r.anexos.length) {
+        r.anexos = r.anexos.map(function(a) {
+          var ac = Object.assign({}, a);
+          if (ac.dados) { ac.dados = null; ac._dados_removidos = true; }
+          return ac;
+        });
+      }
+    }
+
+    // trabalhos, provas, eventos, links, biblioteca: campo anexos[].dados
+    if (['trabalhos','provas','eventos','links','biblioteca'].indexOf(storeName) !== -1) {
+      // Campo legado único
+      if (r.anexo) { r.anexo = null; r._anexo_removido = true; }
+      if (Array.isArray(r.anexos) && r.anexos.length) {
+        r.anexos = r.anexos.map(function(a) {
+          var ac = Object.assign({}, a);
+          if (ac.dados) { ac.dados = null; ac._dados_removidos = true; }
+          return ac;
+        });
+      }
+    }
+
+    // certificados: campo arquivoDados
+    if (storeName === 'certificados') {
+      if (r.arquivoDados) { r.arquivoDados = null; r._arquivoDados_removido = true; }
+    }
+
+    // filmes: campo fileData (vídeo em base64)
+    if (storeName === 'filmes') {
+      if (r.fileData) { r.fileData = null; r._fileData_removido = true; }
+    }
+
+    return r;
+  }
+
+  function exportBackupLight() {
+    var btn = document.getElementById('exportBackupLightBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exportando...';
+
+    var progressEl  = document.getElementById('backupImportProgress');
+    var progressBar = document.getElementById('backupProgressBar');
+    var progressTxt = document.getElementById('backupProgressText');
+
+    progressEl.classList.remove('d-none');
+    progressBar.style.width = '3%';
+    progressTxt.textContent = 'Preparando backup para celular...';
+    diagLog('Export LEVE iniciado (sem anexos binários)');
+
+    waitForApp().then(function(app) {
+      var prof = document.getElementById('backupProfileSelect').value;
+
+      // Coleta localStorage (sem o fundo personalizado em base64, que pode ser grande)
+      var lsObj = {};
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        // Exclui o fundo de tela personalizado (base64 de imagem)
+        if (k && k !== 'academicoCustomBg') lsObj[k] = localStorage.getItem(k);
+      }
+
+      var meta = {
+        app: 'academicoProDB', version: 2,
+        exportedAt: new Date().toISOString(),
+        profileFilter: prof, exportedBy: 'Acadêmico Pro',
+        lightBackup: true  // marca que é backup leve — sem binários
+      };
+      var header = '{"_meta":' + JSON.stringify(meta) +
+                   ',"localStorage":' + JSON.stringify(lsObj) +
+                   ',"stores":{';
+
+      var blobParts = [header];
+      var totalSize = header.length;
+      var si = 0;
+      var primeiroStore = true;
+
+      function proximoStore() {
+        if (si >= ALL_STORES.length) {
+          blobParts.push('}}');
+          var blob = new Blob(blobParts, { type: 'application/json' });
+          var sizeKB = Math.round(blob.size / 1024);
+          blobParts = null;
+
+          diagLog('Blob LEVE montado: ' + (sizeKB >= 1024 ? (sizeKB/1024).toFixed(2)+' MB' : sizeKB+' KB'));
+
+          var url  = URL.createObjectURL(blob);
+          var nomeBase = (document.getElementById('backupFileName').value.trim() || 'academico_pro_backup');
+          var nome = nomeBase + '_celular_' + new Date().toISOString().split('T')[0] + '.json';
+          var a = document.createElement('a');
+          a.href = url; a.download = nome;
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+
+          progressEl.classList.add('d-none');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-mobile-alt me-2"></i>Backup para Celular<div class="backup-btn-sub">Sem anexos — ideal para importar no celular</div>';
+          showToast('✅ Backup para celular exportado! (' + (sizeKB >= 1024 ? (sizeKB/1024).toFixed(2)+' MB' : sizeKB+' KB') + ')', 'success');
+          diagLog('Export LEVE concluído');
+          return;
+        }
+
+        var storeName = ALL_STORES[si]; si++;
+        var pct = Math.round(3 + ((si-1) / ALL_STORES.length) * 94);
+        progressBar.style.width = pct + '%';
+        progressTxt.textContent = 'Exportando ' + (STORE_LABELS[storeName]||storeName) + '...';
+
+        app.readAllFromStore(storeName).then(function(recs) {
+          if (prof !== 'all' && storeName !== 'profiles')
+            recs = recs.filter(function(r) { return r.profileId === parseInt(prof) || r.profileId === undefined; });
+          if (prof !== 'all' && storeName === 'profiles')
+            recs = recs.filter(function(r) { return r.id === parseInt(prof); });
+
+          // Remove campos binários de cada registro
+          recs = recs.map(function(r) { return stripBinaryFields(storeName, r); });
+
+          diagLog('EXPORT LEVE ' + storeName + ': ' + recs.length + ' registros');
+
+          var sep = primeiroStore ? '' : ',';
+          primeiroStore = false;
+          var storeStr = sep + '"' + storeName + '":';
+
+          if (recs.length === 0) {
+            storeStr += '[]';
+            blobParts.push(storeStr);
+            totalSize += storeStr.length;
+          } else {
+            storeStr += '[';
+            blobParts.push(storeStr);
+            totalSize += storeStr.length;
+            for (var ri = 0; ri < recs.length; ri++) {
+              var recStr = (ri > 0 ? ',' : '') + JSON.stringify(recs[ri]);
+              blobParts.push(recStr);
+              totalSize += recStr.length;
+              recs[ri] = null;
+            }
+            blobParts.push(']');
+            totalSize += 1;
+          }
+
+          recs = null;
+          setTimeout(proximoStore, 10);
+
+        }).catch(function(err) {
+          diagLog('ERRO export leve ' + storeName + ': ' + (err.message||err));
+          var sep2 = primeiroStore ? '' : ',';
+          primeiroStore = false;
+          blobParts.push(sep2 + '"' + storeName + '":[]');
+          setTimeout(proximoStore, 10);
+        });
+      }
+
+      proximoStore();
+
+    }).catch(function(e) {
+      progressEl.classList.add('d-none');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-mobile-alt me-2"></i>Backup para Celular<div class="backup-btn-sub">Sem anexos — ideal para importar no celular</div>';
+      showToast('❌ Erro ao exportar: ' + (e.message||e), 'danger');
+      diagLog('ERRO export leve: ' + (e.message||e));
+    });
+  }
   function populateBackupModal() {
     waitForApp().then(function(app) {
       app.readAllFromStore('profiles').then(function(profiles) {
@@ -9725,12 +9928,21 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
       });
       var statsRow = document.getElementById('backupStatsRow');
       statsRow.innerHTML = '<span class="text-muted small">Calculando...</span>';
-      var chips = '', totalRecs = 0;
+      var chips = '', totalRecs = 0, totalBinaryBytes = 0;
       var chain = Promise.resolve();
       ALL_STORES.forEach(function(s) {
         chain = chain.then(function() {
           return app.readAllFromStore(s).then(function(recs) {
-            if (recs.length) { totalRecs += recs.length; chips += '<span class="backup-stat-chip"><i class="fas fa-layer-group"></i>'+STORE_LABELS[s]+': <strong>'+recs.length+'</strong></span>'; }
+            if (recs.length) {
+              totalRecs += recs.length;
+              chips += '<span class="backup-stat-chip"><i class="fas fa-layer-group"></i>'+STORE_LABELS[s]+': <strong>'+recs.length+'</strong></span>';
+              recs.forEach(function(r) {
+                try {
+                  var stripped = stripBinaryFields(s, r);
+                  totalBinaryBytes += Math.max(0, JSON.stringify(r).length - JSON.stringify(stripped).length);
+                } catch(e) {}
+              });
+            }
           });
         });
       });
@@ -9738,8 +9950,12 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
         var jr = localStorage.getItem('juristaData_v3');
         if (jr) { try { var jd=JSON.parse(jr); var ns=(jd.sessions||[]).length; if(ns) chips+='<span class="backup-stat-chip"><i class="fas fa-balance-scale"></i>Jurista: <strong>'+ns+'</strong></span>'; }catch(e){} }
         if (localStorage.getItem('academicoTheme')||localStorage.getItem('academicoCustomBg')) chips+='<span class="backup-stat-chip"><i class="fas fa-palette"></i>Tema: <strong>salvo</strong></span>';
+        if (totalRecs) chips+='<span class="backup-stat-chip" style="background:#e8f5e9;"><i class="fas fa-check-circle" style="color:var(--success);"></i>Total: <strong>'+totalRecs+' regs</strong></span>';
+        if (totalBinaryBytes > 1024) {
+          var lbl = totalBinaryBytes >= 1024*1024 ? (totalBinaryBytes/1024/1024).toFixed(1)+' MB' : Math.round(totalBinaryBytes/1024)+' KB';
+          chips += '<span class="backup-stat-chip" style="background:#fff3cd;"><i class="fas fa-paperclip" style="color:#e67e22;"></i>Anexos: <strong>~'+lbl+'</strong> (excluídos do backup celular)</span>';
+        }
         statsRow.innerHTML = chips||'<span class="text-muted small">Sem dados.</span>';
-        if (totalRecs) statsRow.innerHTML += '<span class="backup-stat-chip" style="background:#e8f5e9;"><i class="fas fa-check-circle" style="color:var(--success);"></i>Total: <strong>'+totalRecs+'</strong></span>';
       });
       document.getElementById('backupFileName').value = 'academico_pro_backup_'+new Date().toISOString().split('T')[0];
     }).catch(function(e) { console.error(e); });
@@ -9752,6 +9968,7 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
     var cfgBtn = document.getElementById('backup-btn');
     if (cfgBtn) { cfgBtn.removeAttribute('data-bs-toggle'); cfgBtn.removeAttribute('data-bs-target'); cfgBtn.addEventListener('click', abrirModal); }
     document.getElementById('exportBackupBtn').addEventListener('click', exportBackup);
+    document.getElementById('exportBackupLightBtn').addEventListener('click', exportBackupLight);
     var dz = document.getElementById('backupDropzone');
     dz.addEventListener('click', function() { document.getElementById('backupFileInput').click(); });
     dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('dragover'); });
