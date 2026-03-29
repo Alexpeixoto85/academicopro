@@ -8818,20 +8818,30 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
       // Recarrega app após importação sem reload de página
       reloadAfterImport: async function() {
         try {
+          // Espera extra para o IDB persistir — especialmente importante no iOS Safari
+          await new Promise(r => setTimeout(r, 800));
+
           // Força re-leitura do perfil atual a partir do IDB importado
           const profiles = await getAllData('profiles');
           if (profiles && profiles.length > 0) {
-            // CORREÇÃO: profiles armazenam currentProfileId para marcar qual está ativo;
-            // busca o que tem currentProfileId preenchido, senão usa o primeiro
             const active = profiles.find(p => p.currentProfileId != null) || profiles[0];
             currentProfileId = active.id;
           }
+
+          // Verifica se os dados foram realmente gravados antes de renderizar
+          const pid = currentProfileId;
+          const disciplinas = await getAllData('disciplinas', 'profileId', pid);
+          if (!disciplinas.length) {
+            // IDB ainda não terminou — espera mais e tenta de novo
+            diagLog && diagLog('[reloadAfterImport] IDB ainda vazio, aguardando mais 1s...');
+            await new Promise(r => setTimeout(r, 1000));
+          }
+
           profileDataCache = null;
-          // Pequena espera para garantir que o IDB terminou de gravar todos os stores
-          await new Promise(r => setTimeout(r, 400));
           await loadProfileData(true);
           renderCurrentPanel();
           hideLoadingOverlay();
+          diagLog && diagLog('[reloadAfterImport] Interface recarregada com sucesso');
         } catch(e) {
           console.warn('[reloadAfterImport]', e);
           // Fallback: recarrega a página inteira se o reload interno falhar
@@ -8927,16 +8937,14 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
           <div class="backup-dropzone" id="backupDropzone">
             <i class="fas fa-cloud-upload-alt fa-2x mb-2" style="color:var(--info);"></i>
             <p class="mb-1 fw-semibold">Clique para selecionar ou arraste o arquivo</p>
-            <p class="text-muted small mb-0">Arquivos <code>.json</code> gerados por este app</p>
+            <p class="text-muted small mb-1">Arquivos <code>.json</code> gerados por este app</p>
+            <p class="text-muted small mb-0" style="font-size:0.75rem;"><i class="fas fa-bolt me-1" style="color:var(--accent);"></i>A importação inicia automaticamente ao selecionar o arquivo</p>
             <input type="file" id="backupFileInput" class="d-none" accept=".json,application/json">
           </div>
 
+          <!-- Preview mantido oculto — não é mais exibido no fluxo automático -->
           <div id="backupImportPreview" class="d-none mt-3">
             <div class="backup-import-info" id="backupImportInfo"></div>
-            <div class="alert alert-warning d-flex align-items-start gap-2 mt-3 mb-0" style="border-radius:10px;">
-              <i class="fas fa-exclamation-triangle mt-1 flex-shrink-0"></i>
-              <div><strong>Atenção:</strong> A importação <strong>substituirá</strong> os dados existentes. Esta ação não pode ser desfeita.</div>
-            </div>
             <div class="row g-2 mt-2">
               <div class="col-6">
                 <button class="btn btn-outline-secondary w-100 btn-sm" id="backupImportCancel">
@@ -9574,7 +9582,7 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
   var arquivoImport   = null;
   var cabecalhoImport = null;
 
-  /* ─── Selecionar arquivo ────────────────────────────────────── */
+  /* ─── Selecionar arquivo — importação AUTOMÁTICA ───────────── */
   function handleImportFile(file) {
     if (!file) return;
     if (!file.name.endsWith('.json') && file.type.indexOf('json') === -1) {
@@ -9583,33 +9591,35 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
     var sizeMB = file.size / (1024 * 1024);
     var sizeLabel = sizeMB >= 1024 ? (sizeMB/1024).toFixed(2)+' GB' : sizeMB.toFixed(1)+' MB';
 
+    // Vai direto para barra de progresso — sem tela de confirmação
     document.getElementById('backupImportPreview').classList.add('d-none');
     document.getElementById('backupImportProgress').classList.remove('d-none');
     document.getElementById('backupProgressBar').style.width = '5%';
     document.getElementById('backupProgressText').textContent = 'Verificando arquivo...';
 
-    // Limpa log de diagnóstico
+    // Abre log de diagnóstico imediatamente (essencial no mobile)
+    var diagPanel = document.getElementById('backup-diag-panel');
+    if (diagPanel) diagPanel.style.display = 'block';
     if (document.getElementById('backup-diag-log')) document.getElementById('backup-diag-log').innerHTML = '';
     diagLog('Arquivo: ' + file.name + ' (' + sizeLabel + ')');
 
     readHeader(file).then(function(header) {
-      document.getElementById('backupImportProgress').classList.add('d-none');
-      if (!header.meta && !header.legacy) { showToast('❌ Arquivo inválido.', 'danger'); return; }
+      if (!header.meta && !header.legacy) {
+        document.getElementById('backupImportProgress').classList.add('d-none');
+        showToast('❌ Arquivo inválido — não é um backup do Acadêmico Pro.', 'danger');
+        return;
+      }
+      diagLog('Cabeçalho OK. Legacy=' + header.legacy + '. Importando automaticamente...');
+
+      // Dispara importação diretamente, sem aguardar confirmação do usuário
       arquivoImport   = file;
       cabecalhoImport = header;
-      diagLog('Cabeçalho OK. Legacy=' + header.legacy);
-      var exportDate   = header.meta ? new Date(header.meta.exportedAt).toLocaleString('pt-BR') : 'Formato legado';
-      var profileLabel = header.meta ? (header.meta.profileFilter === 'all' ? 'Todos' : 'Perfil '+header.meta.profileFilter) : 'Todos';
-      document.getElementById('backupImportInfo').innerHTML =
-        '<div class="bi-row"><span class="bi-key"><i class="fas fa-calendar me-1"></i>Data</span><span class="bi-val">'+exportDate+'</span></div>'+
-        '<div class="bi-row"><span class="bi-key"><i class="fas fa-filter me-1"></i>Perfil</span><span class="bi-val">'+profileLabel+'</span></div>'+
-        '<div class="bi-row"><span class="bi-key"><i class="fas fa-weight me-1"></i>Tamanho</span><span class="bi-val">'+sizeLabel+'</span></div>'+
-        '<div class="bi-row"><span class="bi-key"><i class="fas fa-check-circle me-1" style="color:var(--success)"></i>Status</span><span class="bi-val">Pronto para importar</span></div>';
-      document.getElementById('backupImportPreview').classList.remove('d-none');
+      confirmImport();
+
     }).catch(function(err) {
       document.getElementById('backupImportProgress').classList.add('d-none');
       diagLog('ERRO cabeçalho: ' + err.message);
-      showToast('❌ Erro: '+err.message, 'danger');
+      showToast('❌ Erro ao ler arquivo: ' + err.message, 'danger');
     });
   }
 
@@ -9639,9 +9649,11 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
     var file   = arquivoImport;
     var header = cabecalhoImport;
 
+    // Desabilita botões de confirmação caso ainda existam visíveis
     var confirmBtn = document.getElementById('backupImportConfirm');
     var cancelBtn  = document.getElementById('backupImportCancel');
-    confirmBtn.disabled = true; cancelBtn.disabled = true;
+    if (confirmBtn) confirmBtn.disabled = true;
+    if (cancelBtn)  cancelBtn.disabled  = true;
 
     var progressEl  = document.getElementById('backupImportProgress');
     var progressBar = document.getElementById('backupProgressBar');
@@ -9737,23 +9749,32 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
   }
 
   function finalizarImport(app, progressEl, progressBar, progressTxt, confirmBtn, cancelBtn) {
-    diagLog('=== IMPORTAÇÃO CONCLUÍDA ===');
-    releaseWakeLock(); // libera tela
+    diagLog('=== IMPORTAÇÃO CONCLUÍDA — aguardando IDB persistir... ===');
+    releaseWakeLock();
     progressBar.style.width = '100%';
-    progressTxt.textContent = 'Concluído! Recarregando...';
-    // Grava flag para que o init() saiba que não deve criar dados de exemplo
+    progressTxt.textContent = 'Gravando dados... aguarde.';
+
+    // Grava flag ANTES de qualquer espera para que o init() saiba que não deve criar dados de exemplo
     try { sessionStorage.setItem('_academico_import_done', '1'); } catch(e) {}
+
+    // Espera 1.5s para garantir que todos os stores do IDB terminaram de persistir
+    // (crítico em Safari iOS e Android Chrome que têm IDB assíncrono mais lento)
     setTimeout(function() {
+      progressTxt.textContent = 'Concluído! Recarregando...';
+      diagLog('Iniciando reload da interface...');
+
       try { var m = bootstrap.Modal.getInstance(document.getElementById('backupModal')); if (m) m.hide(); } catch(e) {}
       arquivoImport = null; cabecalhoImport = null;
       try { document.getElementById('backupFileInput').value = ''; } catch(e) {}
       progressEl.classList.add('d-none');
+
       showToast('✅ Backup restaurado com sucesso!', 'success');
+
       app.reloadAfterImport().catch(function(e) {
-        console.warn('[finalizarImport] reloadAfterImport falhou, recarregando página:', e);
+        diagLog('reloadAfterImport falhou (' + (e&&e.message||e) + ') — recarregando página...');
         setTimeout(function() { window.location.reload(); }, 800);
       });
-    }, 600);
+    }, 1500);
   }
 
   function erroImport(err, progressEl, confirmBtn, cancelBtn) {
@@ -9994,8 +10015,12 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
     dz.addEventListener('dragleave', function() { dz.classList.remove('dragover'); });
     dz.addEventListener('drop', function(e) { e.preventDefault(); dz.classList.remove('dragover'); if (e.dataTransfer.files[0]) handleImportFile(e.dataTransfer.files[0]); });
     document.getElementById('backupFileInput').addEventListener('change', function() { if (this.files[0]) handleImportFile(this.files[0]); });
-    document.getElementById('backupImportConfirm').addEventListener('click', confirmImport);
-    document.getElementById('backupImportCancel').addEventListener('click', function() {
+    // Botão confirmar mantido como fallback (oculto no fluxo normal automático)
+    var confirmBtn = document.getElementById('backupImportConfirm');
+    if (confirmBtn) confirmBtn.addEventListener('click', confirmImport);
+    // Botão cancelar: aborta se ainda não iniciou
+    var cancelBtn = document.getElementById('backupImportCancel');
+    if (cancelBtn) cancelBtn.addEventListener('click', function() {
       arquivoImport = null; cabecalhoImport = null;
       document.getElementById('backupImportPreview').classList.add('d-none');
       document.getElementById('backupFileInput').value = '';
@@ -10005,12 +10030,10 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
       document.getElementById('backupImportPreview').classList.add('d-none');
       document.getElementById('backupImportProgress').classList.add('d-none');
       document.getElementById('backupFileInput').value = '';
-      // Garante que log de diagnóstico é fechado
       var diagPanel = document.getElementById('backup-diag-panel');
       if (diagPanel) diagPanel.style.display = 'none';
       var cb = document.getElementById('backupImportConfirm'); var cc = document.getElementById('backupImportCancel');
       if (cb) cb.disabled = false; if (cc) cc.disabled = false;
-      // Restaura botão de exportar caso modal seja fechado durante export
       var expBtn = document.getElementById('exportBackupBtn');
       if (expBtn) { expBtn.disabled = false; expBtn.innerHTML = '<i class="fas fa-download me-2"></i>Exportar Backup Completo'; }
     });
