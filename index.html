@@ -2162,20 +2162,7 @@
     }
 
     .fullscreen-exit-btn {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 1061;
-        background-color: var(--accent);
-        color: white;
-        border: none;
-        border-radius: 50px;
-        padding: 10px 20px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
+        display: none; /* botão removido — controle agora no footer do modal */
     }
 
     /* ===== JURISTA DE ALTA PERFORMANCE ===== */
@@ -3498,10 +3485,24 @@
 
 <div class="modal fade handwriting-fullscreen-modal" id="handwritingFullscreenModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title text-white"><i class="fas fa-pen-fancy me-2"></i> Escrita Manual - Tela Cheia</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="handwriting-controls h-100"><div class="handwriting-area h-100 d-flex flex-column"><div class="canvas-tools"><button class="handwriting-tool-btn" id="fullscreenStartRecognitionBtn"><i class="fas fa-play"></i> Reconhecer</button><button class="handwriting-tool-btn" id="fullscreenClearHandwritingBtn"><i class="fas fa-trash"></i> Limpar</button><button class="handwriting-tool-btn" id="fullscreenSmoothHandwritingBtn"><i class="fas fa-magic"></i> Suavizar</button></div><canvas id="fullscreenHandwritingCanvas" width="1200" height="600" style="width: 100%; height: 60vh; background: white; border-radius: 12px;"></canvas><div class="recognized-text-display mt-3"><h6 class="mb-3"><i class="fas fa-font text-primary me-2"></i>Texto Reconhecido:</h6><div id="fullscreenRecognizedText" class="recognized-text-content">Aguardando reconhecimento...</div></div><div class="save-options mt-3"><button class="save-option-btn salvar-texto" id="fullscreenSaveAsTextBtn"><i class="fas fa-file-alt"></i> Salvar como Texto</button><button class="save-option-btn salvar-imagem" id="fullscreenSaveAsImageBtn"><i class="fas fa-image"></i> Salvar como Imagem</button></div></div></div></div></div></div></div>
 
-<div class="modal fade" id="fullscreenNoteModal" tabindex="-1"><div class="modal-dialog modal-fullscreen"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nota em Tela Cheia</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="fullscreenNoteContent"></div><div class="modal-footer"><button type="button" class="btn btn-primary" id="printNoteBtn"><i class="fas fa-print"></i> Baixar PDF</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button></div></div></div></div>
-
-<!-- Botão de sair da tela cheia dentro do modal de nota -->
-<button class="fullscreen-exit-btn" id="fullscreenNoteExitBtn" style="display: none;"><i class="fas fa-compress"></i> Sair da tela cheia</button>
+<div class="modal fade" id="fullscreenNoteModal" tabindex="-1">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content" style="display:flex;flex-direction:column;height:100%;">
+      <div class="modal-header" style="flex-shrink:0;">
+        <h5 class="modal-title" id="fullscreenNoteModalLabel">Nota</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="fullscreenNoteContent" style="flex:1;overflow-y:auto;padding:24px;"></div>
+      <div class="modal-footer" style="flex-shrink:0;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-success" id="viewNoteEditBtn"><i class="fas fa-edit me-1"></i>Editar</button>
+          <button type="button" class="btn btn-outline-primary" id="printNoteBtn"><i class="fas fa-expand me-1"></i>Tela Cheia</button>
+        </div>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-1"></i>Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -3608,16 +3609,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    const fullscreenNoteExitBtn = document.getElementById('fullscreenNoteExitBtn');
-    fullscreenNoteExitBtn.addEventListener('click', () => {
-        const modal = bootstrap.Modal.getInstance(document.getElementById('fullscreenNoteModal'));
-        if (modal) modal.hide();
-    });
     document.getElementById('fullscreenNoteModal').addEventListener('shown.bs.modal', function() {
-        fullscreenNoteExitBtn.style.display = 'flex';
     });
     document.getElementById('fullscreenNoteModal').addEventListener('hidden.bs.modal', function() {
-        fullscreenNoteExitBtn.style.display = 'none';
         if (document.fullscreenElement) { try { document.exitFullscreen(); } catch(e){} }
     });
 
@@ -4556,56 +4550,64 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
                 </div>
             </div>`;
 
-        // Atualiza título do modal
-        document.querySelector('#fullscreenNoteModal .modal-title').textContent = nota.titulo || 'Nota';
+        document.getElementById('fullscreenNoteModalLabel').textContent = nota.titulo || 'Nota';
 
-        // Configura botão de editar no footer do modal
-        let editBtnExist = document.getElementById('viewNoteEditBtn');
-        if (!editBtnExist) {
-            const footer = document.querySelector('#fullscreenNoteModal .modal-footer');
-            editBtnExist = document.createElement('button');
-            editBtnExist.type = 'button';
-            editBtnExist.id = 'viewNoteEditBtn';
-            editBtnExist.className = 'btn btn-success';
-            editBtnExist.innerHTML = '<i class="fas fa-edit me-1"></i>Editar';
-            footer.prepend(editBtnExist);
+        // Botão Editar (já está no footer, só atualiza o onclick)
+        const editBtn = document.getElementById('viewNoteEditBtn');
+        if (editBtn) {
+            editBtn.onclick = async () => {
+                bootstrap.Modal.getInstance(document.getElementById('fullscreenNoteModal')).hide();
+                setTimeout(async () => {
+                    document.getElementById('notaModalLabel').textContent = 'Editar Nota';
+                    document.getElementById('notaTitulo').value = nota.titulo;
+                    document.getElementById('notaConteudo').value = nota.conteudo || '';
+                    document.getElementById('notaId').value = nota.id;
+                    document.getElementById('notaTitulo').readOnly = false;
+                    document.getElementById('notaConteudo').readOnly = false;
+                    document.getElementById('saveNota').style.display = 'block';
+                    document.getElementById('deleteNota').style.display = 'block';
+                    await populateNotaDisciplinaSelects(nota.disciplinaId);
+                    if (nota.disciplinaId) document.getElementById('notaDisciplina').value = nota.disciplinaId;
+                    document.getElementById('notaDisciplina').disabled = false;
+                    const _nlFld = document.getElementById('notaLink');
+                    if (_nlFld) _nlFld.value = nota.link || '';
+                    _populateNotaAnexosPreview(nota);
+                    window._notaPendingFiles = [];
+                    new bootstrap.Modal(document.getElementById('notaModal')).show();
+                }, 400);
+            };
         }
-        editBtnExist.onclick = async () => {
-            bootstrap.Modal.getInstance(document.getElementById('fullscreenNoteModal')).hide();
-            setTimeout(async () => {
-                document.getElementById('notaModalLabel').textContent = 'Editar Nota';
-                document.getElementById('notaTitulo').value = nota.titulo;
-                document.getElementById('notaConteudo').value = nota.conteudo || '';
-                document.getElementById('notaId').value = nota.id;
-                document.getElementById('notaTitulo').readOnly = false;
-                document.getElementById('notaConteudo').readOnly = false;
-                document.getElementById('saveNota').style.display = 'block';
-                document.getElementById('deleteNota').style.display = 'block';
-                await populateNotaDisciplinaSelects(nota.disciplinaId);
-                if (nota.disciplinaId) document.getElementById('notaDisciplina').value = nota.disciplinaId;
-                document.getElementById('notaDisciplina').disabled = false;
-                const _nlFld = document.getElementById('notaLink');
-                if (_nlFld) _nlFld.value = nota.link || '';
-                _populateNotaAnexosPreview(nota);
-                window._notaPendingFiles = [];
-                new bootstrap.Modal(document.getElementById('notaModal')).show();
-            }, 400);
-        };
 
-        // Configura botão "Tela Cheia" no modal
+        // Botão Tela Cheia
         const printBtn = document.getElementById('printNoteBtn');
         if (printBtn) {
             printBtn.innerHTML = '<i class="fas fa-expand me-1"></i>Tela Cheia';
-            printBtn.onclick = () => {
-                const modalEl = document.getElementById('fullscreenNoteModal');
-                if (modalEl.requestFullscreen) modalEl.requestFullscreen();
-                else if (modalEl.webkitRequestFullscreen) modalEl.webkitRequestFullscreen();
-                else if (modalEl.mozRequestFullScreen) modalEl.mozRequestFullScreen();
-            };
+            printBtn.onclick = _toggleFullscreenModal;
         }
 
         new bootstrap.Modal(document.getElementById('fullscreenNoteModal')).show();
     }
+
+    // Helper: toggle fullscreen no modal de nota
+    function _toggleFullscreenModal() {
+        const modalEl = document.getElementById('fullscreenNoteModal');
+        const printBtn = document.getElementById('printNoteBtn');
+        if (!document.fullscreenElement) {
+            const req = modalEl.requestFullscreen || modalEl.webkitRequestFullscreen || modalEl.mozRequestFullScreen;
+            if (req) req.call(modalEl);
+            if (printBtn) printBtn.innerHTML = '<i class="fas fa-compress me-1"></i>Sair da Tela Cheia';
+        } else {
+            const ex = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen;
+            if (ex) ex.call(document);
+            if (printBtn) printBtn.innerHTML = '<i class="fas fa-expand me-1"></i>Tela Cheia';
+        }
+    }
+    document.addEventListener('fullscreenchange', () => {
+        const printBtn = document.getElementById('printNoteBtn');
+        if (printBtn && !document.fullscreenElement) {
+            printBtn.innerHTML = '<i class="fas fa-expand me-1"></i>Tela Cheia';
+        }
+    });
 
     // ===== TELA CHEIA (botão de expand no card de nota) =====
     async function openFullscreenNote(id) {
@@ -4629,66 +4631,41 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
                 </div>
             </div>`;
 
-        document.querySelector('#fullscreenNoteModal .modal-title').textContent = nota.titulo || 'Nota em Tela Cheia';
+        document.getElementById('fullscreenNoteModalLabel').textContent = nota.titulo || 'Nota';
 
-        // Configura botão "Tela Cheia" para usar a Fullscreen API
+        // Botão Tela Cheia
         const printBtn = document.getElementById('printNoteBtn');
         if (printBtn) {
             printBtn.innerHTML = '<i class="fas fa-expand me-1"></i>Tela Cheia';
-            printBtn.onclick = () => {
-                const modalEl = document.getElementById('fullscreenNoteModal');
-                if (!document.fullscreenElement) {
-                    if (modalEl.requestFullscreen) modalEl.requestFullscreen();
-                    else if (modalEl.webkitRequestFullscreen) modalEl.webkitRequestFullscreen();
-                    else if (modalEl.mozRequestFullScreen) modalEl.mozRequestFullScreen();
-                    printBtn.innerHTML = '<i class="fas fa-compress me-1"></i>Sair da Tela Cheia';
-                } else {
-                    if (document.exitFullscreen) document.exitFullscreen();
-                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-                    printBtn.innerHTML = '<i class="fas fa-expand me-1"></i>Tela Cheia';
-                }
-            };
-            // Atualiza botão quando sair do fullscreen por tecla ESC
-            document.addEventListener('fullscreenchange', () => {
-                if (!document.fullscreenElement) {
-                    printBtn.innerHTML = '<i class="fas fa-expand me-1"></i>Tela Cheia';
-                }
-            }, { once: true });
+            printBtn.onclick = _toggleFullscreenModal;
         }
 
-        // Botão de editar
-        let editBtnExist = document.getElementById('viewNoteEditBtn');
-        if (!editBtnExist) {
-            const footer = document.querySelector('#fullscreenNoteModal .modal-footer');
-            editBtnExist = document.createElement('button');
-            editBtnExist.type = 'button';
-            editBtnExist.id = 'viewNoteEditBtn';
-            editBtnExist.className = 'btn btn-success';
-            editBtnExist.innerHTML = '<i class="fas fa-edit me-1"></i>Editar';
-            footer.prepend(editBtnExist);
+        // Botão Editar
+        const editBtn = document.getElementById('viewNoteEditBtn');
+        if (editBtn) {
+            editBtn.onclick = async () => {
+                if (document.fullscreenElement) { try { document.exitFullscreen(); } catch(e){} }
+                bootstrap.Modal.getInstance(document.getElementById('fullscreenNoteModal')).hide();
+                setTimeout(async () => {
+                    document.getElementById('notaModalLabel').textContent = 'Editar Nota';
+                    document.getElementById('notaTitulo').value = nota.titulo;
+                    document.getElementById('notaConteudo').value = nota.conteudo || '';
+                    document.getElementById('notaId').value = nota.id;
+                    document.getElementById('notaTitulo').readOnly = false;
+                    document.getElementById('notaConteudo').readOnly = false;
+                    document.getElementById('saveNota').style.display = 'block';
+                    document.getElementById('deleteNota').style.display = 'block';
+                    await populateNotaDisciplinaSelects(nota.disciplinaId);
+                    if (nota.disciplinaId) document.getElementById('notaDisciplina').value = nota.disciplinaId;
+                    document.getElementById('notaDisciplina').disabled = false;
+                    const _nlFld = document.getElementById('notaLink');
+                    if (_nlFld) _nlFld.value = nota.link || '';
+                    _populateNotaAnexosPreview(nota);
+                    window._notaPendingFiles = [];
+                    new bootstrap.Modal(document.getElementById('notaModal')).show();
+                }, 400);
+            };
         }
-        editBtnExist.onclick = async () => {
-            if (document.fullscreenElement) { try { document.exitFullscreen(); } catch(e){} }
-            bootstrap.Modal.getInstance(document.getElementById('fullscreenNoteModal')).hide();
-            setTimeout(async () => {
-                document.getElementById('notaModalLabel').textContent = 'Editar Nota';
-                document.getElementById('notaTitulo').value = nota.titulo;
-                document.getElementById('notaConteudo').value = nota.conteudo || '';
-                document.getElementById('notaId').value = nota.id;
-                document.getElementById('notaTitulo').readOnly = false;
-                document.getElementById('notaConteudo').readOnly = false;
-                document.getElementById('saveNota').style.display = 'block';
-                document.getElementById('deleteNota').style.display = 'block';
-                await populateNotaDisciplinaSelects(nota.disciplinaId);
-                if (nota.disciplinaId) document.getElementById('notaDisciplina').value = nota.disciplinaId;
-                document.getElementById('notaDisciplina').disabled = false;
-                const _nlFld = document.getElementById('notaLink');
-                if (_nlFld) _nlFld.value = nota.link || '';
-                _populateNotaAnexosPreview(nota);
-                window._notaPendingFiles = [];
-                new bootstrap.Modal(document.getElementById('notaModal')).show();
-            }, 400);
-        };
 
         new bootstrap.Modal(document.getElementById('fullscreenNoteModal')).show();
     }
