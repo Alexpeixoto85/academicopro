@@ -2650,6 +2650,17 @@
 
   <div class="content-panel" id="trabalhos">
     <div class="content-header"><h2>Trabalhos</h2><div class="btn-group"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#trabalhoModal"><i class="fas fa-plus"></i> Novo Trabalho</button></div></div>
+    <!-- Filtro por Matéria -->
+    <div class="notas-filter-bar mb-4" id="trabalhosFilterBar">
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="fw-semibold text-muted small me-1"><i class="fas fa-filter me-1"></i>Filtrar por:</span>
+        <button class="btn btn-sm btn-filter-materia active" data-materia="todas">📚 Todas</button>
+        <button class="btn btn-sm btn-filter-materia" data-materia="status-pendente">⏳ Pendentes</button>
+        <button class="btn btn-sm btn-filter-materia" data-materia="status-feito">✅ Feitos</button>
+        <button class="btn btn-sm btn-filter-materia" data-materia="status-entregue">📬 Entregues</button>
+        <!-- Matérias dinâmicas injetadas por JS -->
+      </div>
+    </div>
     <div class="row g-4" id="trabalhos-cards"></div>
   </div>
 
@@ -3607,6 +3618,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     document.getElementById('fullscreenNoteModal').addEventListener('hidden.bs.modal', function() {
         fullscreenNoteExitBtn.style.display = 'none';
+        if (document.fullscreenElement) { try { document.exitFullscreen(); } catch(e){} }
     });
 
     function loadScheduleFilter() {
@@ -3996,7 +4008,68 @@ document.addEventListener('DOMContentLoaded', function() {
             container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Nenhum trabalho cadastrado. Clique em "Novo Trabalho".</p></div></div>';
             return;
         }
-        data.trabalhos.sort((a,b)=>new Date(a.entrega)-new Date(b.entrega)).forEach(t => {
+
+        // ─── Filtro de Matéria / Status para Trabalhos ───────────────────────
+        const trabFilterBar = document.getElementById('trabalhosFilterBar');
+        if (trabFilterBar) {
+            // Remove botões dinâmicos antigos
+            trabFilterBar.querySelectorAll('.btn-filter-materia[data-materia-dyn]').forEach(b => b.remove());
+            // Disciplinas presentes nos trabalhos
+            const trabDisciplinas = new Set(data.trabalhos.filter(t => t.disciplinaId).map(t => t.disciplinaId));
+            trabDisciplinas.forEach(did => {
+                const d = data.disciplinas.find(d => d.id == did);
+                if (d) {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-sm btn-filter-materia';
+                    btn.dataset.materia = 'disc-' + String(did);
+                    btn.dataset.materiaDyn = '1';
+                    btn.innerHTML = `<i class="fas fa-book me-1"></i>${d.nome}`;
+                    trabFilterBar.querySelector('.d-flex').appendChild(btn);
+                    btn.addEventListener('click', () => {
+                        trabFilterBar.querySelectorAll('.btn-filter-materia').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        renderTrabalhosFiltered(data);
+                    });
+                }
+            });
+            // Re-wire static buttons
+            trabFilterBar.querySelectorAll('.btn-filter-materia:not([data-materia-dyn])').forEach(btn => {
+                btn.onclick = () => {
+                    trabFilterBar.querySelectorAll('.btn-filter-materia').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderTrabalhosFiltered(data);
+                };
+            });
+        }
+        renderTrabalhosFiltered(data);
+    }
+
+    function renderTrabalhosFiltered(data) {
+        const container = document.getElementById('trabalhos-cards');
+        container.innerHTML = '';
+        const trabFilterBar = document.getElementById('trabalhosFilterBar');
+        const activeBtn = trabFilterBar ? trabFilterBar.querySelector('.btn-filter-materia.active') : null;
+        const activeFilter = activeBtn ? activeBtn.dataset.materia : 'todas';
+
+        let trabalhos = data.trabalhos.sort((a,b)=>new Date(a.entrega)-new Date(b.entrega));
+
+        if (activeFilter === 'status-pendente') {
+            trabalhos = trabalhos.filter(t => t.status === 'Pendente');
+        } else if (activeFilter === 'status-feito') {
+            trabalhos = trabalhos.filter(t => t.status === 'Feito');
+        } else if (activeFilter === 'status-entregue') {
+            trabalhos = trabalhos.filter(t => t.status === 'Entregue');
+        } else if (activeFilter && activeFilter.startsWith('disc-')) {
+            const discId = activeFilter.replace('disc-', '');
+            trabalhos = trabalhos.filter(t => String(t.disciplinaId) === discId);
+        }
+
+        if (!trabalhos.length) {
+            container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Nenhum trabalho encontrado para este filtro.</p></div></div>';
+            return;
+        }
+
+        trabalhos.forEach(t => {
             const disc = data.disciplinas.find(d=>d.id===t.disciplinaId);
             let tipoBadge = '';
             if (t.tipo === 'individual') {
@@ -4050,7 +4123,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             container.appendChild(card);
         });
-    }
+    } // end renderTrabalhosFiltered
 
     async function renderProvas(data) {
         const container = document.getElementById('provas-cards');
@@ -4463,6 +4536,161 @@ document.addEventListener('DOMContentLoaded', function() {
 container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-card card-dashboard" data-id="${n.id}"><div class="card-body">${materiaTag}<div class="d-flex justify-content-between align-items-start mb-3"><h5 class="card-title">${n.titulo}</h5><div class="nota-acoes"><button class="btn btn-sm btn-outline-success edit-nota" data-id="${n.id}" title="Editar nota"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline-primary fullscreen-nota" data-id="${n.id}" title="Tela cheia"><i class="fas fa-expand"></i></button><button class="btn btn-sm btn-outline-danger delete-nota" data-id="${n.id}" title="Excluir nota"><i class="fas fa-trash"></i></button></div></div><div class="nota-conteudo"><p class="card-text">${preview.replace(/\n/g,'<br>')}</p></div><div class="mt-3">${dataInfo}</div><div class="mt-1">${_linkBadge}${_anexoBadges}</div></div></div></div>`;
             }
         });
+    }
+
+    // ===== VISUALIZADOR DE NOTA (clique no card) =====
+    function openNotaViewModal(nota, data) {
+        const disc = nota.disciplinaId ? (data.disciplinas || []).find(d => d.id == nota.disciplinaId) : null;
+        const dataCri = nota.dataCriacao ? new Date(nota.dataCriacao+'T12:00:00').toLocaleDateString('pt-BR') : '';
+        const dataEd  = nota.dataEdicao  ? new Date(nota.dataEdicao+'T12:00:00').toLocaleDateString('pt-BR')  : '';
+
+        const contentEl = document.getElementById('fullscreenNoteContent');
+        contentEl.innerHTML = `
+            <div style="max-width:860px;margin:0 auto;padding:8px 0;">
+                ${disc ? `<span class="nota-materia-badge mb-3 d-inline-flex"><i class="fas fa-graduation-cap me-1"></i>${disc.nome}</span>` : ''}
+                <h3 style="font-family:'Playfair Display',serif;color:var(--primary);margin-bottom:16px;">${nota.titulo || ''}</h3>
+                <div style="white-space:pre-wrap;font-size:1rem;line-height:1.8;color:var(--text-dark);background:rgba(0,0,0,0.02);border-radius:12px;padding:20px 24px;border:1px solid #e9ecef;min-height:120px;">${(nota.conteudo||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+                <div class="mt-3 text-muted small">
+                    <i class="fas fa-calendar-alt me-1"></i>Criado em: ${dataCri}
+                    ${dataEd && dataEd !== dataCri ? `&nbsp;|&nbsp;<i class="fas fa-pen fa-xs me-1 text-warning"></i>Editado: ${dataEd}` : ''}
+                </div>
+            </div>`;
+
+        // Atualiza título do modal
+        document.querySelector('#fullscreenNoteModal .modal-title').textContent = nota.titulo || 'Nota';
+
+        // Configura botão de editar no footer do modal
+        let editBtnExist = document.getElementById('viewNoteEditBtn');
+        if (!editBtnExist) {
+            const footer = document.querySelector('#fullscreenNoteModal .modal-footer');
+            editBtnExist = document.createElement('button');
+            editBtnExist.type = 'button';
+            editBtnExist.id = 'viewNoteEditBtn';
+            editBtnExist.className = 'btn btn-success';
+            editBtnExist.innerHTML = '<i class="fas fa-edit me-1"></i>Editar';
+            footer.prepend(editBtnExist);
+        }
+        editBtnExist.onclick = async () => {
+            bootstrap.Modal.getInstance(document.getElementById('fullscreenNoteModal')).hide();
+            setTimeout(async () => {
+                document.getElementById('notaModalLabel').textContent = 'Editar Nota';
+                document.getElementById('notaTitulo').value = nota.titulo;
+                document.getElementById('notaConteudo').value = nota.conteudo || '';
+                document.getElementById('notaId').value = nota.id;
+                document.getElementById('notaTitulo').readOnly = false;
+                document.getElementById('notaConteudo').readOnly = false;
+                document.getElementById('saveNota').style.display = 'block';
+                document.getElementById('deleteNota').style.display = 'block';
+                await populateNotaDisciplinaSelects(nota.disciplinaId);
+                if (nota.disciplinaId) document.getElementById('notaDisciplina').value = nota.disciplinaId;
+                document.getElementById('notaDisciplina').disabled = false;
+                const _nlFld = document.getElementById('notaLink');
+                if (_nlFld) _nlFld.value = nota.link || '';
+                _populateNotaAnexosPreview(nota);
+                window._notaPendingFiles = [];
+                new bootstrap.Modal(document.getElementById('notaModal')).show();
+            }, 400);
+        };
+
+        // Configura botão "Tela Cheia" no modal
+        const printBtn = document.getElementById('printNoteBtn');
+        if (printBtn) {
+            printBtn.innerHTML = '<i class="fas fa-expand me-1"></i>Tela Cheia';
+            printBtn.onclick = () => {
+                const modalEl = document.getElementById('fullscreenNoteModal');
+                if (modalEl.requestFullscreen) modalEl.requestFullscreen();
+                else if (modalEl.webkitRequestFullscreen) modalEl.webkitRequestFullscreen();
+                else if (modalEl.mozRequestFullScreen) modalEl.mozRequestFullScreen();
+            };
+        }
+
+        new bootstrap.Modal(document.getElementById('fullscreenNoteModal')).show();
+    }
+
+    // ===== TELA CHEIA (botão de expand no card de nota) =====
+    async function openFullscreenNote(id) {
+        const data = await getProfileData();
+        const nota = data.notas.find(n => n.id == id);
+        if (!nota) return;
+
+        const disc = nota.disciplinaId ? (data.disciplinas || []).find(d => d.id == nota.disciplinaId) : null;
+        const dataCri = nota.dataCriacao ? new Date(nota.dataCriacao+'T12:00:00').toLocaleDateString('pt-BR') : '';
+        const dataEd  = nota.dataEdicao  ? new Date(nota.dataEdicao+'T12:00:00').toLocaleDateString('pt-BR')  : '';
+
+        const contentEl = document.getElementById('fullscreenNoteContent');
+        contentEl.innerHTML = `
+            <div style="max-width:900px;margin:0 auto;padding:8px 0;">
+                ${disc ? `<span class="nota-materia-badge mb-3 d-inline-flex"><i class="fas fa-graduation-cap me-1"></i>${disc.nome}</span>` : ''}
+                <h2 style="font-family:'Playfair Display',serif;color:var(--primary);margin-bottom:20px;">${nota.titulo || ''}</h2>
+                <div style="white-space:pre-wrap;font-size:1.05rem;line-height:1.9;color:var(--text-dark);background:rgba(0,0,0,0.02);border-radius:12px;padding:24px 28px;border:1px solid #e9ecef;min-height:200px;">${(nota.conteudo||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+                <div class="mt-3 text-muted small">
+                    <i class="fas fa-calendar-alt me-1"></i>Criado em: ${dataCri}
+                    ${dataEd && dataEd !== dataCri ? `&nbsp;|&nbsp;<i class="fas fa-pen fa-xs me-1 text-warning"></i>Editado: ${dataEd}` : ''}
+                </div>
+            </div>`;
+
+        document.querySelector('#fullscreenNoteModal .modal-title').textContent = nota.titulo || 'Nota em Tela Cheia';
+
+        // Configura botão "Tela Cheia" para usar a Fullscreen API
+        const printBtn = document.getElementById('printNoteBtn');
+        if (printBtn) {
+            printBtn.innerHTML = '<i class="fas fa-expand me-1"></i>Tela Cheia';
+            printBtn.onclick = () => {
+                const modalEl = document.getElementById('fullscreenNoteModal');
+                if (!document.fullscreenElement) {
+                    if (modalEl.requestFullscreen) modalEl.requestFullscreen();
+                    else if (modalEl.webkitRequestFullscreen) modalEl.webkitRequestFullscreen();
+                    else if (modalEl.mozRequestFullScreen) modalEl.mozRequestFullScreen();
+                    printBtn.innerHTML = '<i class="fas fa-compress me-1"></i>Sair da Tela Cheia';
+                } else {
+                    if (document.exitFullscreen) document.exitFullscreen();
+                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                    printBtn.innerHTML = '<i class="fas fa-expand me-1"></i>Tela Cheia';
+                }
+            };
+            // Atualiza botão quando sair do fullscreen por tecla ESC
+            document.addEventListener('fullscreenchange', () => {
+                if (!document.fullscreenElement) {
+                    printBtn.innerHTML = '<i class="fas fa-expand me-1"></i>Tela Cheia';
+                }
+            }, { once: true });
+        }
+
+        // Botão de editar
+        let editBtnExist = document.getElementById('viewNoteEditBtn');
+        if (!editBtnExist) {
+            const footer = document.querySelector('#fullscreenNoteModal .modal-footer');
+            editBtnExist = document.createElement('button');
+            editBtnExist.type = 'button';
+            editBtnExist.id = 'viewNoteEditBtn';
+            editBtnExist.className = 'btn btn-success';
+            editBtnExist.innerHTML = '<i class="fas fa-edit me-1"></i>Editar';
+            footer.prepend(editBtnExist);
+        }
+        editBtnExist.onclick = async () => {
+            if (document.fullscreenElement) { try { document.exitFullscreen(); } catch(e){} }
+            bootstrap.Modal.getInstance(document.getElementById('fullscreenNoteModal')).hide();
+            setTimeout(async () => {
+                document.getElementById('notaModalLabel').textContent = 'Editar Nota';
+                document.getElementById('notaTitulo').value = nota.titulo;
+                document.getElementById('notaConteudo').value = nota.conteudo || '';
+                document.getElementById('notaId').value = nota.id;
+                document.getElementById('notaTitulo').readOnly = false;
+                document.getElementById('notaConteudo').readOnly = false;
+                document.getElementById('saveNota').style.display = 'block';
+                document.getElementById('deleteNota').style.display = 'block';
+                await populateNotaDisciplinaSelects(nota.disciplinaId);
+                if (nota.disciplinaId) document.getElementById('notaDisciplina').value = nota.disciplinaId;
+                document.getElementById('notaDisciplina').disabled = false;
+                const _nlFld = document.getElementById('notaLink');
+                if (_nlFld) _nlFld.value = nota.link || '';
+                _populateNotaAnexosPreview(nota);
+                window._notaPendingFiles = [];
+                new bootstrap.Modal(document.getElementById('notaModal')).show();
+            }, 400);
+        };
+
+        new bootstrap.Modal(document.getElementById('fullscreenNoteModal')).show();
     }
 
     async function renderGaleria(data) {
@@ -7026,7 +7254,7 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
                 return;
             }
             let notaCard = e.target.closest('.nota-card');
-            if (notaCard && !e.target.closest('.nota-acoes') && !e.target.closest('.view-image-btn') && !e.target.closest('.fullscreen-nota') && !e.target.closest('.edit-nota')) {
+            if (notaCard && !e.target.closest('.nota-acoes') && !e.target.closest('.view-image-btn') && !e.target.closest('.fullscreen-nota') && !e.target.closest('.edit-nota') && !e.target.closest('.nota-abrir-anexo')) {
                 let id = notaCard.dataset.id;
                 let data = await getProfileData(), nota = data.notas.find(n=>n.id==id);
                 if (nota) {
@@ -7045,23 +7273,8 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
                         };
                         new bootstrap.Modal(document.getElementById('viewImageModal')).show();
                     } else {
-                        // Abre diretamente em modo de edição ao clicar no card
-                        document.getElementById('notaModalLabel').textContent = 'Editar Nota';
-                        document.getElementById('notaTitulo').value = nota.titulo;
-                        document.getElementById('notaConteudo').value = nota.conteudo || '';
-                        document.getElementById('notaId').value = nota.id;
-                        document.getElementById('notaTitulo').readOnly = false;
-                        document.getElementById('notaConteudo').readOnly = false;
-                        document.getElementById('saveNota').style.display = 'block';
-                        document.getElementById('deleteNota').style.display = 'block';
-                        await populateNotaDisciplinaSelects(nota.disciplinaId);
-                        if (nota.disciplinaId) document.getElementById('notaDisciplina').value = nota.disciplinaId;
-                        document.getElementById('notaDisciplina').disabled = false;
-                        const _nlFld = document.getElementById('notaLink');
-                        if (_nlFld) _nlFld.value = nota.link || '';
-                        _populateNotaAnexosPreview(nota);
-                        window._notaPendingFiles = [];
-                        new bootstrap.Modal(document.getElementById('notaModal')).show();
+                        // Abre modal de visualização completa do conteúdo da nota
+                        openNotaViewModal(nota, data);
                     }
                 }
             }
