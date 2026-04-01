@@ -54,6 +54,205 @@
         padding: 3px 10px;
         margin-top: 6px;
     }
+    /* ===== NOTA FULLSCREEN MODE ===== */
+    #notaModal.nota-fullscreen {
+      padding: 0 !important;
+    }
+    #notaModal.nota-fullscreen .modal-dialog {
+      max-width: 100vw !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      margin: 0 !important;
+      display: flex;
+      flex-direction: column;
+    }
+    #notaModal.nota-fullscreen .modal-content {
+      height: 100vh !important;
+      border-radius: 0 !important;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #notaModal.nota-fullscreen .modal-body {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+    }
+    #notaModal.nota-fullscreen #notaForm {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    /* Layout lado a lado em tela cheia */
+    #notaFullscreenLayout {
+      display: none;
+    }
+    #notaModal.nota-fullscreen #notaFullscreenLayout {
+      display: flex;
+      flex: 1;
+      height: 100%;
+      min-height: 0;
+    }
+    #notaModal.nota-fullscreen #notaFormFields {
+      display: none;
+    }
+    /* Painel esquerdo: editor */
+    .nota-fs-editor {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #dee2e6;
+      min-width: 0;
+      background: #fff;
+    }
+    .nota-fs-editor-header {
+      padding: 14px 20px 10px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #dee2e6;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .nota-fs-editor-header input[type="text"],
+    .nota-fs-editor-header select {
+      border-radius: 8px;
+      border: 1.5px solid #dee2e6;
+      padding: 8px 12px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.9rem;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .nota-fs-editor-header input[type="text"]:focus,
+    .nota-fs-editor-header select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(26,188,156,0.12);
+    }
+    .nota-fs-textarea {
+      flex: 1;
+      resize: none;
+      border: none !important;
+      border-radius: 0 !important;
+      outline: none !important;
+      box-shadow: none !important;
+      padding: 20px 24px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.97rem;
+      line-height: 1.8;
+      color: #2c3e50;
+      background: #fff;
+      min-height: 0;
+    }
+    .nota-fs-textarea:focus {
+      box-shadow: none !important;
+      border: none !important;
+    }
+    /* Painel direito: preview */
+    .nota-fs-preview {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background: #fdfdfd;
+    }
+    .nota-fs-preview-header {
+      padding: 10px 20px;
+      background: #2c3e50;
+      color: white;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nota-fs-preview-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 28px;
+    }
+    .nota-fs-preview-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 6px;
+      word-break: break-word;
+    }
+    .nota-fs-preview-title:empty::before {
+      content: 'Título da nota...';
+      color: #bdc3c7;
+      font-style: italic;
+    }
+    .nota-fs-preview-meta {
+      font-size: 0.78rem;
+      color: #7f8c8d;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nota-fs-preview-content {
+      font-size: 0.95rem;
+      line-height: 1.9;
+      color: #34495e;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .nota-fs-preview-content:empty::before {
+      content: 'Comece a digitar para visualizar...';
+      color: #bdc3c7;
+      font-style: italic;
+    }
+    /* Barra de linha/coluna */
+    .nota-fs-statusbar {
+      padding: 4px 20px;
+      background: #f0f0f0;
+      border-top: 1px solid #dee2e6;
+      font-size: 0.72rem;
+      color: #888;
+      display: flex;
+      gap: 16px;
+    }
+    /* Botão tela cheia no modal */
+    #btnNotaFullscreen {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.75);
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 2px 8px;
+      border-radius: 6px;
+      transition: all 0.2s;
+      margin-left: 4px;
+    }
+    #btnNotaFullscreen:hover {
+      background: rgba(255,255,255,0.15);
+      color: white;
+    }
+    #btnNotaFullscreen .fa-compress { display: none; }
+    #notaModal.nota-fullscreen #btnNotaFullscreen .fa-expand { display: none; }
+    #notaModal.nota-fullscreen #btnNotaFullscreen .fa-compress { display: inline; }
+    /* Divisor redimensionável */
+    .nota-fs-divider {
+      width: 5px;
+      background: #dee2e6;
+      cursor: col-resize;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .nota-fs-divider:hover, .nota-fs-divider.dragging {
+      background: var(--accent);
+    }
+    #btnNotaExpandConteudo:hover {
+      border-color: var(--accent) !important;
+      color: var(--accent) !important;
+      background: rgba(26,188,156,0.06) !important;
+    }
     /* ===== AUTOSAVE STATUS BADGE ===== */
     #notaAutoSaveStatus {
       align-items: center;
@@ -3294,7 +3493,91 @@
 <!-- Modal Financeiro -->
 <div class="modal fade" id="financeiroModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Transação</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="financeiroForm"><input type="hidden" id="financeiroId"><input type="hidden" id="financeiroRecorrenteId" value=""><div class="mb-3"><label for="financeiroTipo" class="form-label">Tipo</label><select class="form-select" id="financeiroTipo"><option value="receita">Receita</option><option value="despesa">Despesa</option></select></div><div class="mb-3"><label for="financeiroDescricao" class="form-label">Descrição</label><input type="text" class="form-control" id="financeiroDescricao" required></div><div class="mb-3"><label for="financeiroValor" class="form-label">Valor</label><input type="number" step="0.01" class="form-control" id="financeiroValor" required></div><div class="mb-3"><label for="financeiroCategoria" class="form-label">Categoria</label><select class="form-select" id="financeiroCategoria"><option value="">Selecione</option><option value="Alimentação">Alimentação</option><option value="Transporte">Transporte</option><option value="Moradia">Moradia</option><option value="Educação">Educação</option><option value="Lazer">Lazer</option><option value="Saúde">Saúde</option><option value="Vestuário">Vestuário</option><option value="Outros">Outros</option></select></div><div class="mb-3"><label for="financeiroData" class="form-label">Data</label><input type="date" class="form-control" id="financeiroData" required></div><div class="mb-3" id="financeiroStatusWrapper" style="display: none;"><label for="financeiroStatus" class="form-label">Status</label><select class="form-select" id="financeiroStatus"><option value="pendente">Pendente</option><option value="pago">Pago</option></select></div><hr><div class="mb-3"><label for="financeiroRecurrence" class="form-label">Recorrência</label><select class="form-select" id="financeiroRecurrence"><option value="none" selected>Não repetir</option><option value="weekly">Semanalmente</option><option value="monthly">Mensalmente</option></select></div><div class="mb-3 d-none" id="financeiroRecurrenceEndDateWrapper"><label for="financeiroRecurrenceEndDate" class="form-label">Repetir até</label><input type="date" class="form-control" id="financeiroRecurrenceEndDate"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto d-none" id="deleteFinanceiro">Excluir</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveFinanceiro">Salvar</button></div></div></div></div>
 
-<div class="modal fade" id="notaModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="notaModalLabel">Nova Nota</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="notaForm"><input type="hidden" id="notaId"><div class="mb-3"><label for="notaTitulo" class="form-label">Título</label><input type="text" class="form-control" id="notaTitulo" required></div><div class="mb-3"><label for="notaDisciplina" class="form-label"><i class="fas fa-graduation-cap me-1 text-primary"></i>Matéria <span class="text-muted small">(opcional)</span></label><select class="form-select" id="notaDisciplina"><option value="">— Nenhuma matéria —</option></select></div><div class="mb-3"><label for="notaConteudo" class="form-label">Conteúdo</label><textarea class="form-control" id="notaConteudo" rows="5"></textarea></div><div class="mb-3"><label for="notaLink" class="form-label"><i class="fas fa-link me-1" style="color:var(--info);"></i>Link <span class="text-muted small">(opcional)</span></label><div class="input-group"><input type="url" class="form-control" id="notaLink" placeholder="https://..."><button type="button" class="btn btn-outline-secondary" id="notaLinkTestBtn" title="Abrir link"><i class="fas fa-external-link-alt"></i></button></div></div><div class="mb-3"><label class="form-label"><i class="fas fa-paperclip me-1" style="color:var(--warning);"></i>Anexos <span class="text-muted small">(HTML, PDF, Word, Imagens)</span></label><div id="notaAnexosArea" class="image-upload-area" style="padding:12px;cursor:pointer;"><i class="fas fa-cloud-upload-alt" style="font-size:1.6rem;color:var(--accent);display:block;margin-bottom:4px;"></i><p class="mb-0 small">Clique ou arraste arquivos aqui</p><p class="mb-0 small text-muted">.html • .pdf • .docx • .jpg • .png</p><input type="file" id="notaAnexosInput" accept=".html,text/html,.pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*" class="d-none" multiple></div><div id="notaAnexosPreview" class="mt-2"></div><input type="hidden" id="notaAnexosRemovidos" value=""></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto" id="deleteNota" style="display:none;">Excluir</button><span id="notaAutoSaveStatus" style="display:none;font-size:0.78rem;color:#6c757d;display:flex;align-items:center;gap:5px;margin-right:auto;"><i class="fas fa-circle-notch fa-spin" id="notaAutoSaveSpinner" style="display:none;color:var(--accent);"></i><i class="fas fa-check-circle" id="notaAutoSaveCheck" style="display:none;color:var(--success);"></i><span id="notaAutoSaveText"></span></span><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveNota">Salvar</button></div></div></div></div>
+<div class="modal fade" id="notaModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="notaModalLabel">Nova Nota</h5>
+        <button type="button" id="btnNotaFullscreen" title="Abrir em tela cheia (editor + preview)">
+          <i class="fas fa-expand"></i>
+          <i class="fas fa-compress"></i>
+        </button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="notaForm">
+          <input type="hidden" id="notaId">
+
+          <!-- Campos normais (modo padrão) -->
+          <div id="notaFormFields">
+            <div class="mb-3"><label for="notaTitulo" class="form-label">Título</label><input type="text" class="form-control" id="notaTitulo" required></div>
+            <div class="mb-3"><label for="notaDisciplina" class="form-label"><i class="fas fa-graduation-cap me-1 text-primary"></i>Matéria <span class="text-muted small">(opcional)</span></label><select class="form-select" id="notaDisciplina"><option value="">— Nenhuma matéria —</option></select></div>
+            <div class="mb-3">
+              <label for="notaConteudo" class="form-label d-flex align-items-center justify-content-between">
+                <span>Conteúdo</span>
+                <button type="button" id="btnNotaExpandConteudo" title="Expandir para tela cheia (Ctrl+Shift+F)"
+                  style="background:none;border:1px solid #dee2e6;border-radius:7px;padding:3px 10px;font-size:0.75rem;color:#7f8c8d;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all 0.2s;">
+                  <i class="fas fa-expand-alt"></i> Expandir
+                </button>
+              </label>
+              <textarea class="form-control" id="notaConteudo" rows="5"
+                style="transition:height 0.2s;resize:vertical;"
+                placeholder="Digite o conteúdo da nota..."></textarea>
+            </div>
+            <div class="mb-3"><label for="notaLink" class="form-label"><i class="fas fa-link me-1" style="color:var(--info);"></i>Link <span class="text-muted small">(opcional)</span></label><div class="input-group"><input type="url" class="form-control" id="notaLink" placeholder="https://..."><button type="button" class="btn btn-outline-secondary" id="notaLinkTestBtn" title="Abrir link"><i class="fas fa-external-link-alt"></i></button></div></div>
+            <div class="mb-3"><label class="form-label"><i class="fas fa-paperclip me-1" style="color:var(--warning);"></i>Anexos <span class="text-muted small">(HTML, PDF, Word, Imagens)</span></label><div id="notaAnexosArea" class="image-upload-area" style="padding:12px;cursor:pointer;"><i class="fas fa-cloud-upload-alt" style="font-size:1.6rem;color:var(--accent);display:block;margin-bottom:4px;"></i><p class="mb-0 small">Clique ou arraste arquivos aqui</p><p class="mb-0 small text-muted">.html • .pdf • .docx • .jpg • .png</p><input type="file" id="notaAnexosInput" accept=".html,text/html,.pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*" class="d-none" multiple></div><div id="notaAnexosPreview" class="mt-2"></div><input type="hidden" id="notaAnexosRemovidos" value=""></div>
+          </div>
+
+          <!-- Layout Tela Cheia: Editor + Preview lado a lado -->
+          <div id="notaFullscreenLayout">
+            <!-- Painel Esquerdo: Editor -->
+            <div class="nota-fs-editor" id="notaFsEditorPanel">
+              <div class="nota-fs-editor-header">
+                <input type="text" id="notaFsTitulo" placeholder="Título da nota..." autocomplete="off">
+                <select id="notaFsDisciplina">
+                  <option value="">— Nenhuma matéria —</option>
+                </select>
+              </div>
+              <textarea class="nota-fs-textarea" id="notaFsConteudo" placeholder="Comece a escrever aqui...&#10;&#10;Suporte a texto livre, listas, tópicos..."></textarea>
+              <div class="nota-fs-statusbar">
+                <span id="notaFsLinhas">Linha 1, Col 1</span>
+                <span id="notaFsChars">0 caracteres</span>
+                <span id="notaFsWords">0 palavras</span>
+              </div>
+            </div>
+            <!-- Divisor redimensionável -->
+            <div class="nota-fs-divider" id="notaFsDivider"></div>
+            <!-- Painel Direito: Preview -->
+            <div class="nota-fs-preview" id="notaFsPreviewPanel">
+              <div class="nota-fs-preview-header">
+                <i class="fas fa-eye me-1"></i> VISUALIZAÇÃO EM TEMPO REAL
+              </div>
+              <div class="nota-fs-preview-body">
+                <div class="nota-fs-preview-title" id="notaFsPreviewTitle"></div>
+                <div class="nota-fs-preview-meta" id="notaFsPreviewMeta">
+                  <i class="fas fa-clock"></i> <span id="notaFsPreviewData"></span>
+                  <span id="notaFsPreviewMateria"></span>
+                </div>
+                <div class="nota-fs-preview-content" id="notaFsPreviewContent"></div>
+              </div>
+            </div>
+          </div>
+
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger me-auto" id="deleteNota" style="display:none;">Excluir</button>
+        <span id="notaAutoSaveStatus" style="display:none;font-size:0.78rem;color:#6c757d;display:flex;align-items:center;gap:5px;margin-right:auto;">
+          <i class="fas fa-circle-notch fa-spin" id="notaAutoSaveSpinner" style="display:none;color:var(--accent);"></i>
+          <i class="fas fa-check-circle" id="notaAutoSaveCheck" style="display:none;color:var(--success);"></i>
+          <span id="notaAutoSaveText"></span>
+        </span>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="saveNota">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="modal fade" id="linkModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Novo Link</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="linkForm"><input type="hidden" id="linkId"><div class="mb-3"><label for="linkTitulo" class="form-label">Título</label><input type="text" class="form-control" id="linkTitulo" required></div><div class="mb-3"><label for="linkUrl" class="form-label">URL</label><input type="url" class="form-control" id="linkUrl" placeholder="https://..." required></div><div class="mb-3"><label for="linkCategoria" class="form-label">Categoria</label><input type="text" class="form-control" id="linkCategoria"></div><div class="mb-3"><label for="linkDescricao" class="form-label">Descrição</label><textarea class="form-control" id="linkDescricao" rows="2"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveLink">Salvar</button></div></div></div></div>
 
@@ -11486,7 +11769,268 @@ document.addEventListener('keydown', (e) => {
   console.log('[AcadêmicoPro] Autocorreção LanguageTool pt-BR: ' + (enabled ? 'ATIVA' : 'INATIVA'));
 })();
 </script>
-<!-- ===== FIM DO SISTEMA DE AUTOCORREÇÃO ===== -->
+<!-- ===== MODAL NOTA — MODO TELA CHEIA ===== -->
+<script>
+(function() {
+  'use strict';
+
+  // ── Elementos ─────────────────────────────────────────────
+  const notaModal      = document.getElementById('notaModal');
+  const btnFS          = document.getElementById('btnNotaFullscreen');
+
+  // Campos normais
+  const notaTitulo     = document.getElementById('notaTitulo');
+  const notaDisciplina = document.getElementById('notaDisciplina');
+  const notaConteudo   = document.getElementById('notaConteudo');
+
+  // Campos fullscreen
+  const fsTitulo       = document.getElementById('notaFsTitulo');
+  const fsDisciplina   = document.getElementById('notaFsDisciplina');
+  const fsConteudo     = document.getElementById('notaFsConteudo');
+
+  // Preview
+  const previewTitle   = document.getElementById('notaFsPreviewTitle');
+  const previewContent = document.getElementById('notaFsPreviewContent');
+  const previewData    = document.getElementById('notaFsPreviewData');
+  const previewMateria = document.getElementById('notaFsPreviewMateria');
+
+  // Status bar
+  const fsLinhas       = document.getElementById('notaFsLinhas');
+  const fsChars        = document.getElementById('notaFsChars');
+  const fsWords        = document.getElementById('notaFsWords');
+
+  // Divisor
+  const divider        = document.getElementById('notaFsDivider');
+  const editorPanel    = document.getElementById('notaFsEditorPanel');
+  const previewPanel   = document.getElementById('notaFsPreviewPanel');
+
+  let isFullscreen = false;
+
+  // ── Sincroniza disciplinas no painel FS ───────────────────
+  function syncDisciplinas() {
+    if (!fsDisciplina || !notaDisciplina) return;
+    const current = fsDisciplina.value;
+    fsDisciplina.innerHTML = notaDisciplina.innerHTML;
+    fsDisciplina.value = current || notaDisciplina.value;
+  }
+
+  // ── Atualiza preview em tempo real ────────────────────────
+  function updatePreview() {
+    if (!isFullscreen) return;
+
+    const titulo   = (fsTitulo   ? fsTitulo.value   : notaTitulo.value)   || '';
+    const conteudo = (fsConteudo ? fsConteudo.value : notaConteudo.value) || '';
+    const materia  = fsDisciplina ? fsDisciplina.options[fsDisciplina.selectedIndex]?.text : '';
+
+    previewTitle.textContent   = titulo;
+    previewContent.textContent = conteudo;
+
+    const now = new Date();
+    previewData.textContent = now.toLocaleDateString('pt-BR', {
+      day: '2-digit', month: 'long', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+
+    if (materia && materia !== '— Nenhuma matéria —') {
+      previewMateria.innerHTML = `<span style="background:rgba(26,188,156,0.12);color:#1abc9c;border:1px solid #1abc9c;border-radius:12px;padding:2px 10px;font-size:0.72rem;font-weight:600;"><i class="fas fa-graduation-cap me-1"></i>${materia}</span>`;
+    } else {
+      previewMateria.textContent = '';
+    }
+  }
+
+  // ── Atualiza status bar ───────────────────────────────────
+  function updateStatusBar() {
+    if (!fsConteudo || !isFullscreen) return;
+    const val = fsConteudo.value;
+    const chars = val.length;
+    const words = val.trim() ? val.trim().split(/\s+/).length : 0;
+
+    // Linha e coluna
+    const selStart = fsConteudo.selectionStart || 0;
+    const linhas   = val.substring(0, selStart).split('\n');
+    const linha    = linhas.length;
+    const col      = linhas[linhas.length - 1].length + 1;
+
+    fsLinhas.textContent = `Linha ${linha}, Col ${col}`;
+    fsChars.textContent  = `${chars} caractere${chars !== 1 ? 's' : ''}`;
+    fsWords.textContent  = `${words} palavra${words !== 1 ? 's' : ''}`;
+  }
+
+  // ── Entra no modo tela cheia ──────────────────────────────
+  function enterFullscreen() {
+    isFullscreen = true;
+    notaModal.classList.add('nota-fullscreen');
+
+    // Copia valores dos campos normais para os FS
+    syncDisciplinas();
+    fsTitulo.value    = notaTitulo.value;
+    fsConteudo.value  = notaConteudo.value;
+    fsDisciplina.value = notaDisciplina.value;
+
+    updatePreview();
+    updateStatusBar();
+
+    // Foca na área de texto
+    setTimeout(() => fsConteudo.focus(), 80);
+  }
+
+  // ── Sai do modo tela cheia ────────────────────────────────
+  function exitFullscreen() {
+    isFullscreen = false;
+
+    // Copia de volta para os campos normais
+    notaTitulo.value     = fsTitulo.value;
+    notaConteudo.value   = fsConteudo.value;
+    notaDisciplina.value = fsDisciplina.value;
+
+    // Dispara eventos para compatibilidade com autosave
+    [notaTitulo, notaConteudo, notaDisciplina].forEach(el => {
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    notaModal.classList.remove('nota-fullscreen');
+  }
+
+  // ── Botão "Expandir" dentro do campo Conteúdo ────────────
+  const btnExpand = document.getElementById('btnNotaExpandConteudo');
+  if (btnExpand) {
+    btnExpand.addEventListener('click', () => {
+      if (!isFullscreen) enterFullscreen();
+      else exitFullscreen();
+    });
+  }
+
+  // ── Toggle: botão no header ───────────────────────────────
+  if (btnFS) {
+    btnFS.addEventListener('click', () => {
+      if (!isFullscreen) enterFullscreen();
+      else exitFullscreen();
+    });
+  }
+
+  // ── Esc também sai do fullscreen ──────────────────────────
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isFullscreen) {
+      exitFullscreen();
+    }
+  });
+
+  // ── Sync bidirecional: campos FS → campos normais (tempo real) ──
+  if (fsTitulo) {
+    fsTitulo.addEventListener('input', () => {
+      notaTitulo.value = fsTitulo.value;
+      notaTitulo.dispatchEvent(new Event('input', { bubbles: true }));
+      updatePreview();
+    });
+  }
+  if (fsConteudo) {
+    fsConteudo.addEventListener('input', () => {
+      notaConteudo.value = fsConteudo.value;
+      notaConteudo.dispatchEvent(new Event('input', { bubbles: true }));
+      updatePreview();
+      updateStatusBar();
+    });
+    fsConteudo.addEventListener('keyup', updateStatusBar);
+    fsConteudo.addEventListener('click', updateStatusBar);
+  }
+  if (fsDisciplina) {
+    fsDisciplina.addEventListener('change', () => {
+      notaDisciplina.value = fsDisciplina.value;
+      notaDisciplina.dispatchEvent(new Event('change', { bubbles: true }));
+      updatePreview();
+    });
+  }
+
+  // ── Quando o modal abre/fecha, garante estado limpo ──────
+  if (notaModal) {
+    notaModal.addEventListener('show.bs.modal', () => {
+      // Se estiver em fullscreen ao reabrir, sincroniza disciplinas
+      if (isFullscreen) syncDisciplinas();
+    });
+    notaModal.addEventListener('hidden.bs.modal', () => {
+      if (isFullscreen) {
+        isFullscreen = false;
+        notaModal.classList.remove('nota-fullscreen');
+      }
+    });
+    // Quando o modal termina de abrir, sincroniza lista de disciplinas do FS
+    notaModal.addEventListener('shown.bs.modal', () => {
+      syncDisciplinas();
+      if (isFullscreen) {
+        fsTitulo.value     = notaTitulo.value;
+        fsConteudo.value   = notaConteudo.value;
+        fsDisciplina.value = notaDisciplina.value;
+        updatePreview();
+      }
+    });
+  }
+
+  // ── Observer: replica mudanças em notaDisciplina para fsDisc ──
+  const discObserver = new MutationObserver(() => {
+    if (isFullscreen) syncDisciplinas();
+  });
+  if (notaDisciplina) {
+    discObserver.observe(notaDisciplina, { childList: true, subtree: true });
+  }
+
+  // ── Divisor redimensionável ───────────────────────────────
+  let dragging = false;
+  let startX   = 0;
+  let startEdW = 0;
+
+  if (divider) {
+    divider.addEventListener('mousedown', (e) => {
+      dragging = true;
+      startX   = e.clientX;
+      startEdW = editorPanel.getBoundingClientRect().width;
+      divider.classList.add('dragging');
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor     = 'col-resize';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      const container = document.getElementById('notaFullscreenLayout');
+      if (!container) return;
+      const totalW = container.getBoundingClientRect().width - 5; // 5 = divider width
+      const delta  = e.clientX - startX;
+      let newEdW   = startEdW + delta;
+      // Limites: mín 25%, máx 75%
+      newEdW = Math.max(totalW * 0.25, Math.min(totalW * 0.75, newEdW));
+      const newPrW = totalW - newEdW;
+      editorPanel.style.flex  = 'none';
+      editorPanel.style.width = newEdW + 'px';
+      previewPanel.style.flex  = 'none';
+      previewPanel.style.width = newPrW + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!dragging) return;
+      dragging = false;
+      divider.classList.remove('dragging');
+      document.body.style.userSelect = '';
+      document.body.style.cursor     = '';
+    });
+  }
+
+  // Atalho de teclado: Ctrl+Shift+F para alternar tela cheia
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key === 'F') {
+      const modal = document.getElementById('notaModal');
+      if (modal && modal.classList.contains('show')) {
+        e.preventDefault();
+        if (!isFullscreen) enterFullscreen();
+        else exitFullscreen();
+      }
+    }
+  });
+
+})();
+</script>
+<!-- ===== FIM DO MODAL NOTA — MODO TELA CHEIA ===== -->
+
+
 
 <!-- ===== MODAL DE PROGRESSO — CORREÇÃO EM LOTE ===== -->
 <div class="modal fade" id="corrigirNotasModal" tabindex="-1" aria-hidden="true">
