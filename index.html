@@ -399,6 +399,7 @@
       color: var(--dark);
       border: none;
       height: 100%;
+      aspect-ratio: 1 / 1;
       background-color: var(--card-color); /* fallback para navegadores sem color-mix */
     }
     @supports (background-color: color-mix(in srgb, red, transparent)) {
@@ -638,7 +639,7 @@
       overflow: visible !important;
     }
     .card-proximo-urgente::before {
-      content: '\1F525 PR\u00d3XIMO';
+      content: '🔥 PRÓXIMO';
       position: absolute;
       top: -13px;
       left: 50%;
@@ -927,15 +928,15 @@
     .next-event-card {
         background: linear-gradient(135deg, var(--accent), var(--info));
         color: white;
-        border-radius: 15px;
-        padding: 25px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border-radius: 12px;
+        padding: 14px 18px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.12);
         cursor: pointer;
         transition: var(--transition);
     }
     .next-event-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.18);
     }
 
     /* ===== ALERTA: evento faltando 2 dias ou menos ===== */
@@ -956,14 +957,14 @@
     .next-event-urgente-badge {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 5px;
         background: rgba(255,255,255,0.25);
         border: 1px solid rgba(255,255,255,0.6);
         border-radius: 20px;
-        font-size: 0.72rem;
+        font-size: 0.65rem;
         font-weight: 700;
-        padding: 3px 12px;
-        margin-bottom: 8px;
+        padding: 2px 9px;
+        margin-bottom: 5px;
         letter-spacing: 0.03em;
         text-transform: uppercase;
         animation: badgePulse 1.2s ease-in-out infinite;
@@ -976,12 +977,12 @@
         text-align: center;
     }
     .next-event-card .countdown-number {
-        font-size: 2rem;
+        font-size: 1.4rem;
         font-weight: 700;
         line-height: 1.2;
     }
     .next-event-card .countdown-label {
-        font-size: 0.8rem;
+        font-size: 0.68rem;
         text-transform: uppercase;
         opacity: 0.8;
     }
@@ -4281,20 +4282,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
         container.innerHTML = `
             <div class="next-event-card${urgenteClass}" id="next-event-card">
-                <div class="row align-items-center">
+                <div class="row align-items-center g-2">
                     <div class="col-lg-5">
                         ${urgenteBadge}
-                        <h6 class="text-uppercase small" style="opacity:0.8;">Próximo Evento</h6>
-                        <h3 class="mb-1">${proximoEventoGlobal.title}</h3>
+                        <h6 class="text-uppercase mb-0" style="opacity:0.8;font-size:0.62rem;letter-spacing:0.05em;">Próximo Evento</h6>
+                        <h4 class="mb-1" style="font-size:1.05rem;line-height:1.3;">${proximoEventoGlobal.title}</h4>
                         ${discInfo}
-                        <p class="mb-2"><i class="fas ${proximoEventoGlobal.type==='assignment'?'fa-tasks':proximoEventoGlobal.type==='exam'?'fa-file-alt':'fa-calendar-day'} me-2"></i><strong>${proximoEventoGlobal.type==='assignment'?'Trabalho':proximoEventoGlobal.type==='exam'?'Prova':'Evento'}:</strong> ${proximoEventoGlobal.eventDate.toLocaleString('pt-BR',{day:'2-digit',month:'long',hour:'2-digit',minute:'2-digit'})}</p>
+                        <p class="mb-0" style="font-size:0.78rem;"><i class="fas ${proximoEventoGlobal.type==='assignment'?'fa-tasks':proximoEventoGlobal.type==='exam'?'fa-file-alt':'fa-calendar-day'} me-2"></i><strong>${proximoEventoGlobal.type==='assignment'?'Trabalho':proximoEventoGlobal.type==='exam'?'Prova':'Evento'}:</strong> ${proximoEventoGlobal.eventDate.toLocaleString('pt-BR',{day:'2-digit',month:'long',hour:'2-digit',minute:'2-digit'})}</p>
                     </div>
                     <div class="col-lg-7">
                         <div class="d-flex justify-content-around">
                             <div class="countdown-item"><div id="countdown-dias" class="countdown-number">00</div><div class="countdown-label">Dias</div></div>
                             <div class="countdown-item"><div id="countdown-horas" class="countdown-number">00</div><div class="countdown-label">Horas</div></div>
-                            <div class="countdown-item"><div id="countdown-minutos" class="countdown-number">00</div><div class="countdown-label">Minutos</div></div>
-                            <div class="countdown-item"><div id="countdown-segundos" class="countdown-number">00</div><div class="countdown-label">Segundos</div></div>
+                            <div class="countdown-item"><div id="countdown-minutos" class="countdown-number">00</div><div class="countdown-label">Min</div></div>
+                            <div class="countdown-item"><div id="countdown-segundos" class="countdown-number">00</div><div class="countdown-label">Seg</div></div>
                         </div>
                     </div>
                 </div>
