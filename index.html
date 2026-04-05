@@ -620,6 +620,87 @@
       background-color: var(--success);
     }
 
+    /* ===== CARD PROXIMO — destaque animado ===== */
+    @keyframes proximo-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(231,76,60,0.55), 0 4px 18px rgba(231,76,60,0.25); border-color: #e74c3c; }
+      50%  { box-shadow: 0 0 0 8px rgba(231,76,60,0), 0 4px 24px rgba(231,76,60,0.15); border-color: #e74c3c; }
+      100% { box-shadow: 0 0 0 0 rgba(231,76,60,0), 0 4px 18px rgba(231,76,60,0.25); border-color: #e74c3c; }
+    }
+    @keyframes proximo-glow-bg {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .card-proximo-urgente {
+      border: 2px solid #e74c3c !important;
+      animation: proximo-pulse 2s ease-in-out infinite;
+      position: relative;
+      overflow: visible !important;
+    }
+    .card-proximo-urgente::before {
+      content: '\1F525 PR\u00d3XIMO';
+      position: absolute;
+      top: -13px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(90deg, #e74c3c, #c0392b, #e74c3c);
+      background-size: 200% 200%;
+      animation: proximo-glow-bg 2.5s ease infinite;
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 3px 12px;
+      border-radius: 20px;
+      white-space: nowrap;
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(231,76,60,0.45);
+    }
+
+    /* ===== BIBLIOTECA VIRTUAL ===== */
+    .bv-card {
+      border-radius: 14px;
+      border: 1px solid #e8ecf0;
+      transition: transform 0.18s, box-shadow 0.18s;
+      height: 100%;
+    }
+    .bv-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.10); }
+    .bv-cover {
+      width: 70px; min-width: 70px; height: 100px;
+      object-fit: cover; border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+      background: linear-gradient(135deg, #2c3e50, #3498db);
+    }
+    .bv-cover-placeholder {
+      width: 70px; min-width: 70px; height: 100px;
+      border-radius: 8px; display: flex; align-items: center;
+      justify-content: center; font-size: 2rem;
+      background: linear-gradient(135deg, #2c3e50, #3498db);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+    }
+    .bv-btn-read {
+      background: linear-gradient(135deg, #1abc9c, #16a085);
+      color: #fff; border: none; border-radius: 8px;
+      padding: 6px 14px; font-size: 0.78rem; font-weight: 600;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+      transition: opacity 0.15s;
+    }
+    .bv-btn-read:hover { opacity: 0.85; color: #fff; }
+    .bv-btn-ol {
+      background: transparent; border: 1.5px solid #3498db; color: #3498db;
+      border-radius: 8px; padding: 5px 12px; font-size: 0.75rem; font-weight: 600;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+      transition: all 0.15s;
+    }
+    .bv-btn-ol:hover { background: #3498db; color: #fff; }
+    .bv-badge-available {
+      background: rgba(26,188,156,0.12); color: #16a085;
+      border: 1px solid #1abc9c; border-radius: 20px;
+      font-size: 0.65rem; font-weight: 700; padding: 2px 9px;
+    }
+    .bv-cat-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    #bv-pagination .btn { border-radius: 8px; font-weight: 600; min-width: 38px; }
+
     .badge-tipo-trabalho {
       background-color: var(--purple);
       color: white;
@@ -2864,8 +2945,69 @@
   </div>
 
   <div class="content-panel" id="biblioteca">
-    <div class="content-header"><h2>Biblioteca</h2><div class="btn-group"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#bibliotecaModal"><i class="fas fa-plus"></i> Adicionar Livro</button></div></div>
-    <div class="row g-4" id="biblioteca-lista"></div>
+    <div class="content-header">
+      <h2>Biblioteca</h2>
+      <div class="btn-group">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#bibliotecaModal"><i class="fas fa-plus"></i> Adicionar Livro</button>
+      </div>
+    </div>
+    <ul class="nav nav-tabs mb-4" id="bibliotecaTabs" role="tablist">
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pane-meus-livros" type="button"><i class="fas fa-book-open me-1"></i> Meus Livros</button></li>
+      <li class="nav-item"><button class="nav-link" id="tab-acervo-virtual" data-bs-toggle="tab" data-bs-target="#pane-acervo-virtual" type="button"><i class="fas fa-globe me-1"></i> Acervo Virtual Jurídico <span class="badge bg-success ms-1" style="font-size:0.6rem;">GRÁTIS</span></button></li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="pane-meus-livros">
+        <div class="row g-4" id="biblioteca-lista"></div>
+      </div>
+      <div class="tab-pane fade" id="pane-acervo-virtual">
+        <div class="card card-dashboard mb-4" style="border-left:4px solid var(--accent);">
+          <div class="card-body pb-3">
+            <h6 class="fw-bold mb-3"><i class="fas fa-search me-2" style="color:var(--accent)"></i>Buscar na Open Library — Acervo Jurídico</h6>
+            <div class="d-flex gap-2 flex-wrap mb-3">
+              <input type="text" id="bv-search-input" class="form-control" style="max-width:420px;" placeholder="Ex: Direito Constitucional, Penal, Processo Civil...">
+              <button class="btn btn-primary" id="bv-search-btn"><i class="fas fa-search me-1"></i> Buscar</button>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="fw-semibold small text-muted me-1" style="line-height:2;">Busca rápida:</span>
+              <button class="btn btn-sm btn-outline-secondary bv-cat-btn" data-q="Direito Constitucional">⚖️ Constitucional</button>
+              <button class="btn btn-sm btn-outline-secondary bv-cat-btn" data-q="Direito Penal">🔒 Penal</button>
+              <button class="btn btn-sm btn-outline-secondary bv-cat-btn" data-q="Direito Civil">📜 Civil</button>
+              <button class="btn btn-sm btn-outline-secondary bv-cat-btn" data-q="Processo Civil">⚖️ Processual</button>
+              <button class="btn btn-sm btn-outline-secondary bv-cat-btn" data-q="Direito Administrativo">🏛️ Administrativo</button>
+              <button class="btn btn-sm btn-outline-secondary bv-cat-btn" data-q="Direito Tributario">💰 Tributário</button>
+              <button class="btn btn-sm btn-outline-secondary bv-cat-btn" data-q="Teoria Geral do Direito">📚 Teoria Geral</button>
+              <button class="btn btn-sm btn-outline-secondary bv-cat-btn" data-q="Filosofia do Direito">🧠 Filosofia Jurídica</button>
+              <button class="btn btn-sm btn-outline-secondary bv-cat-btn" data-q="Hermeneutica juridica">🔍 Hermenêutica</button>
+              <button class="btn btn-sm btn-outline-secondary bv-cat-btn" data-q="Criminologia">🔎 Criminologia</button>
+              <button class="btn btn-sm btn-outline-secondary bv-cat-btn" data-q="Direito do Trabalho">💼 Trabalhista</button>
+              <button class="btn btn-sm btn-outline-secondary bv-cat-btn" data-q="Direito Internacional">🌍 Internacional</button>
+              <button class="btn btn-sm btn-success bv-fonte-btn ms-2"><i class="fas fa-link me-1"></i>Fontes Abertas BR</button>
+            </div>
+          </div>
+        </div>
+        <div id="bv-status" class="text-center py-4" style="display:none;">
+          <div class="spinner-border text-primary mb-2" role="status"></div>
+          <p class="text-muted mb-0">Buscando na Open Library...</p>
+        </div>
+        <div id="bv-error" class="alert alert-warning" style="display:none;">
+          <i class="fas fa-exclamation-triangle me-2"></i><span id="bv-error-msg"></span>
+        </div>
+        <div id="bv-empty" class="text-center py-5 text-muted" style="display:none;">
+          <i class="fas fa-search fa-3x mb-3 opacity-25 d-block"></i>
+          <p>Nenhum resultado encontrado. Tente outro termo.</p>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-3" id="bv-info-bar" style="display:none;">
+          <span class="text-muted small" id="bv-result-count"></span>
+        </div>
+        <div class="row g-3" id="bv-results"></div>
+        <div class="d-flex justify-content-center mt-4 gap-2" id="bv-pagination" style="display:none;"></div>
+        <div class="text-center mt-5 text-muted small opacity-75">
+          <i class="fas fa-info-circle me-1"></i>
+          Resultados via <a href="https://books.google.com" target="_blank" rel="noopener" class="text-muted">Google Books API</a> — gratuito, sem login.
+          Obras em domínio público e com acesso total podem ser lidas diretamente no navegador.
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="content-panel" id="filmes">
@@ -4346,6 +4488,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Identifica o trabalho pendente/feito com entrega mais proxima
+        const _hojeT = new Date(); _hojeT.setHours(0,0,0,0);
+        const _trabPend = trabalhos.filter(t => t.status === 'Pendente' || t.status === 'Feito');
+        let _proximoTrabId = null;
+        if (_trabPend.length) {
+            const _fut = _trabPend.filter(t => new Date(t.entrega+'T00:00') >= _hojeT);
+            if (_fut.length) { _fut.sort((a,b)=>new Date(a.entrega+'T00:00')-new Date(b.entrega+'T00:00')); _proximoTrabId = _fut[0].id; }
+            else { _trabPend.sort((a,b)=>new Date(b.entrega+'T00:00')-new Date(a.entrega+'T00:00')); _proximoTrabId = _trabPend[0].id; }
+        }
+
         trabalhos.forEach(t => {
             const disc = data.disciplinas.find(d=>d.id===t.disciplinaId);
             let tipoBadge = '';
@@ -4366,10 +4518,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             const attachmentHtml = renderAnexoIcon(t);
+            const _isProxT = t.id === _proximoTrabId && (t.status === 'Pendente' || t.status === 'Feito');
             const card = document.createElement('div');
             card.className = 'col-md-6 col-lg-4';
             card.innerHTML = `
-                <div class="card card-dashboard item-card">
+                <div class="card card-dashboard item-card${_isProxT ? ' card-proximo-urgente' : ''}">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h5 class="card-title mb-0">${t.titulo}</h5>
@@ -4409,13 +4562,24 @@ document.addEventListener('DOMContentLoaded', function() {
             container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Nenhuma prova cadastrada. Clique em "Nova Prova".</p></div></div>';
             return;
         }
+        // Identifica a prova agendada com data mais proxima
+        const _hojeP = new Date(); _hojeP.setHours(0,0,0,0);
+        const _provAg = data.provas.filter(p => p.status === 'Agendada');
+        let _proximaProvaId = null;
+        if (_provAg.length) {
+            const _futP = _provAg.filter(p => new Date(p.data+'T00:00') >= _hojeP);
+            if (_futP.length) { _futP.sort((a,b)=>new Date(a.data+'T00:00')-new Date(b.data+'T00:00')); _proximaProvaId = _futP[0].id; }
+            else { _provAg.sort((a,b)=>new Date(b.data+'T00:00')-new Date(a.data+'T00:00')); _proximaProvaId = _provAg[0].id; }
+        }
+
         data.provas.sort((a,b)=>new Date(a.data)-new Date(b.data)).forEach(p => {
             const disc = data.disciplinas.find(d=>d.id===p.disciplinaId);
             const attachmentHtml = p.anexo ? renderAnexoIcon(p) : '';
+            const _isProxP = p.id === _proximaProvaId && p.status === 'Agendada';
             const card = document.createElement('div');
             card.className = 'col-md-6 col-lg-4';
             card.innerHTML = `
-                <div class="card card-dashboard item-card">
+                <div class="card card-dashboard item-card${_isProxP ? ' card-proximo-urgente' : ''}">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h5 class="card-title mb-0">${p.conteudo}</h5>
@@ -11709,5 +11873,381 @@ document.addEventListener('keydown', (e) => {
     </div>
   </div>
 </div>
+
+
+
+
+<!-- ===== ACERVO VIRTUAL JURIDICO v2 — Google Books + Fontes Abertas ===== -->
+<script>
+(function() {
+  'use strict';
+
+  /* ─── Fontes abertas curadas para Direito brasileiro ─────────────────────
+     Repositórios 100% gratuitos e sem login:
+     - Google Books API  → busca geral + preview/leitura quando disponível
+     - LexML Brasil      → legislação e jurisprudência oficial
+     - Planalto          → Constituição e leis federais
+     - STF / STJ / TST   → jurisprudência
+     - Domínio público   → clássicos do direito
+  ────────────────────────────────────────────────────────────────────────── */
+
+  const FONTES_ABERTAS = [
+    {
+      icon: '📜', label: 'Constituição Federal 1988',
+      url: 'https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm',
+      desc: 'Texto integral atualizado — Planalto.gov.br', tag: 'Constitucional'
+    },
+    {
+      icon: '⚖️', label: 'Código Penal Brasileiro',
+      url: 'https://www.planalto.gov.br/ccivil_03/decreto-lei/del2848compilado.htm',
+      desc: 'Decreto-Lei nº 2.848/1940 compilado', tag: 'Penal'
+    },
+    {
+      icon: '📋', label: 'Código de Processo Civil (CPC/2015)',
+      url: 'https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm',
+      desc: 'Lei nº 13.105/2015 — texto integral', tag: 'Processual'
+    },
+    {
+      icon: '👨‍👩‍👧', label: 'Estatuto da Criança e do Adolescente (ECA)',
+      url: 'https://www.planalto.gov.br/ccivil_03/leis/l8069.htm',
+      desc: 'Lei nº 8.069/1990 — texto integral', tag: 'ECA'
+    },
+    {
+      icon: '🏛️', label: 'Código de Processo Penal (CPP)',
+      url: 'https://www.planalto.gov.br/ccivil_03/decreto-lei/del3689.htm',
+      desc: 'Decreto-Lei nº 3.689/1941', tag: 'Penal'
+    },
+    {
+      icon: '💼', label: 'Código Civil Brasileiro',
+      url: 'https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm',
+      desc: 'Lei nº 10.406/2002 compilada', tag: 'Civil'
+    },
+    {
+      icon: '🔎', label: 'Jurisprudência STF',
+      url: 'https://jurisprudencia.stf.jus.br/',
+      desc: 'Pesquisa de acórdãos e decisões do STF', tag: 'Jurisprudência'
+    },
+    {
+      icon: '📗', label: 'Jurisprudência STJ',
+      url: 'https://www.stj.jus.br/sites/portalp/Pesquisa-de-jurisprudencia',
+      desc: 'Pesquisa de acórdãos do STJ', tag: 'Jurisprudência'
+    },
+    {
+      icon: '🌐', label: 'LexML Brasil — Legislação e Jurisprudência',
+      url: 'https://www.lexml.gov.br/',
+      desc: 'Portal de informação jurídica da República Federativa', tag: 'Legislação'
+    },
+    {
+      icon: '📚', label: 'Biblioteca Digital do Senado Federal',
+      url: 'https://www2.senado.leg.br/bdsf/',
+      desc: 'Obras, estudos e publicações legislativas gratuitas', tag: 'Legislação'
+    },
+    {
+      icon: '🏫', label: 'Periódicos CAPES — Direito',
+      url: 'https://www-periodicos-capes-gov-br.ezl.periodicos.capes.gov.br/index.php/acervo/areas-do-conhecimento.html',
+      desc: 'Artigos científicos jurídicos (acesso via rede federal)', tag: 'Acadêmico'
+    },
+    {
+      icon: '📖', label: 'Domínio Público — Obras Jurídicas',
+      url: 'http://www.dominiopublico.gov.br/pesquisa/PesquisaObraForm.do?select_action=&co_midia=2',
+      desc: 'Obras brasileiras de direito em domínio público', tag: 'Clássicos'
+    },
+  ];
+
+  const BV = {
+    currentQuery: '',
+    currentPage: 1,
+    pageSize: 12,
+    totalResults: 0,
+    cache: {},
+
+    init() {
+      const inp = document.getElementById('bv-search-input');
+      const btn = document.getElementById('bv-search-btn');
+      if (!btn) return;
+
+      btn.addEventListener('click', () => this.search(inp.value.trim(), 1));
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') this.search(inp.value.trim(), 1); });
+
+      document.querySelectorAll('.bv-cat-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          document.querySelectorAll('.bv-cat-btn').forEach(x => x.classList.remove('active'));
+          b.classList.add('active');
+          inp.value = b.dataset.q;
+          this.search(b.dataset.q, 1);
+        });
+      });
+
+      // Botões de fontes abertas
+      document.querySelectorAll('.bv-fonte-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          this.showFontesAbertas();
+        });
+      });
+
+      const tabBtn = document.getElementById('tab-acervo-virtual');
+      if (tabBtn) {
+        tabBtn.addEventListener('shown.bs.tab', () => {
+          if (!this.currentQuery) this.search('Direito Constitucional', 1);
+        });
+      }
+    },
+
+    async search(q, page) {
+      if (!q) q = 'Direito';
+      this.currentQuery = q;
+      this.currentPage  = page;
+      const cacheKey = q + '|' + page;
+      this.showLoading();
+
+      let items = [];
+      let total = 0;
+
+      if (this.cache[cacheKey]) {
+        ({ items, total } = this.cache[cacheKey]);
+      } else {
+        try {
+          // Google Books API — sem chave, CORS livre, preview gratuito
+          const startIndex = (page - 1) * this.pageSize;
+          const query = encodeURIComponent(q + ' direito jurídico');
+          const url = `https://www.googleapis.com/books/v1/volumes?q=${query}&startIndex=${startIndex}&maxResults=${this.pageSize}&langRestrict=pt&printType=books&orderBy=relevance`;
+          const resp = await fetch(url);
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          const data = await resp.json();
+          total = Math.min(data.totalItems || 0, 1000);
+          items = data.items || [];
+          this.cache[cacheKey] = { items, total };
+        } catch(err) {
+          this.showError('Não foi possível conectar ao Google Books. Verifique sua conexão.');
+          return;
+        }
+      }
+
+      this.totalResults = total;
+      if (!items.length) { this.showEmpty(); return; }
+      this.renderResults(items);
+      this.renderPagination();
+    },
+
+    showFontesAbertas() {
+      this.currentQuery = '__fontes__';
+      document.getElementById('bv-status').style.display = 'none';
+      document.getElementById('bv-error').style.display = 'none';
+      document.getElementById('bv-empty').style.display = 'none';
+      document.getElementById('bv-pagination').style.display = 'none';
+
+      const infoBar = document.getElementById('bv-info-bar');
+      infoBar.style.display = 'flex';
+      document.getElementById('bv-result-count').innerHTML =
+        `<i class="fas fa-link me-1"></i> <strong>Fontes abertas curadas</strong> — acesso direto sem login`;
+
+      const container = document.getElementById('bv-results');
+      container.innerHTML = '';
+
+      FONTES_ABERTAS.forEach(f => {
+        const col = document.createElement('div');
+        col.className = 'col-12 col-md-6 col-xl-4';
+        col.innerHTML = `
+          <div class="bv-card card h-100" style="border-left:3px solid var(--accent);">
+            <div class="card-body">
+              <div class="d-flex align-items-start gap-3">
+                <span style="font-size:2rem;line-height:1;">${f.icon}</span>
+                <div>
+                  <h6 class="fw-bold mb-1" style="font-size:0.88rem;">${this._esc(f.label)}</h6>
+                  <p class="text-muted mb-2" style="font-size:0.78rem;">${this._esc(f.desc)}</p>
+                  <span class="badge bg-light text-secondary me-2" style="font-size:0.65rem;">${this._esc(f.tag)}</span>
+                  <a href="${f.url}" target="_blank" rel="noopener" class="bv-btn-read" style="font-size:0.78rem;">
+                    <i class="fas fa-external-link-alt"></i> Acessar grátis
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>`;
+        container.appendChild(col);
+      });
+    },
+
+    showLoading() {
+      document.getElementById('bv-status').style.display = 'block';
+      document.getElementById('bv-error').style.display = 'none';
+      document.getElementById('bv-empty').style.display = 'none';
+      document.getElementById('bv-results').innerHTML = '';
+      document.getElementById('bv-info-bar').style.display = 'none';
+      document.getElementById('bv-pagination').style.display = 'none';
+    },
+
+    showError(msg) {
+      document.getElementById('bv-status').style.display = 'none';
+      document.getElementById('bv-error').style.display = 'block';
+      document.getElementById('bv-error-msg').textContent = msg;
+    },
+
+    showEmpty() {
+      document.getElementById('bv-status').style.display = 'none';
+      document.getElementById('bv-empty').style.display = 'block';
+    },
+
+    renderResults(items) {
+      document.getElementById('bv-status').style.display = 'none';
+      document.getElementById('bv-error').style.display = 'none';
+      document.getElementById('bv-empty').style.display = 'none';
+      const infoBar = document.getElementById('bv-info-bar');
+      infoBar.style.display = 'flex';
+      const start = (this.currentPage - 1) * this.pageSize + 1;
+      const end   = Math.min(this.currentPage * this.pageSize, this.totalResults);
+      document.getElementById('bv-result-count').innerHTML =
+        `<i class="fab fa-google me-1 opacity-50"></i> Exibindo ${start}–${end} de ${this.totalResults.toLocaleString('pt-BR')} resultados para "<strong>${this._esc(this.currentQuery)}</strong>"`;
+
+      const container = document.getElementById('bv-results');
+      container.innerHTML = '';
+
+      items.forEach(item => {
+        const info     = item.volumeInfo || {};
+        const access   = item.accessInfo || {};
+        const saleInfo = item.saleInfo   || {};
+
+        const title   = info.title   || 'Sem título';
+        const authors = (info.authors || []).slice(0,2).join(', ') || 'Autor desconhecido';
+        const year    = (info.publishedDate || '').substring(0,4);
+        const publisher = info.publisher || '';
+        const pages   = info.pageCount ? `${info.pageCount} págs.` : '';
+        const desc    = info.description ? info.description.substring(0,100) + '...' : '';
+        const categories = (info.categories || []).slice(0,2);
+        const rating  = info.averageRating;
+        const cover   = info.imageLinks
+          ? (info.imageLinks.thumbnail || info.imageLinks.smallThumbnail || '').replace('http://','https://')
+          : null;
+
+        // Tipo de acesso
+        const viewability = access.viewability || 'NO_PAGES';
+        const isPublicDomain = access.publicDomain === true;
+        const epubFree = access.epub && access.epub.isAvailable && !access.epub.acsTokenLink;
+        const pdfFree  = access.pdf  && access.pdf.isAvailable  && !access.pdf.acsTokenLink;
+
+        let accessBadge = '';
+        let readBtn     = '';
+        const previewUrl = info.previewLink ? info.previewLink.replace('http://','https://') : null;
+        const buyUrl     = saleInfo.buyLink || null;
+
+        if (isPublicDomain) {
+          accessBadge = `<span class="bv-badge-available"><i class="fas fa-unlock me-1"></i>Domínio público</span>`;
+          if (previewUrl) readBtn = `<a href="${previewUrl}" target="_blank" rel="noopener" class="bv-btn-read"><i class="fas fa-book-open"></i> Leitura completa</a>`;
+        } else if (viewability === 'ALL_PAGES') {
+          accessBadge = `<span class="bv-badge-available"><i class="fas fa-book-open me-1"></i>Acesso total</span>`;
+          if (previewUrl) readBtn = `<a href="${previewUrl}" target="_blank" rel="noopener" class="bv-btn-read"><i class="fas fa-book-open"></i> Ler online</a>`;
+        } else if (viewability === 'PARTIAL') {
+          accessBadge = `<span style="background:rgba(52,152,219,0.12);color:#2980b9;border:1px solid #3498db;border-radius:20px;font-size:0.65rem;font-weight:700;padding:2px 9px;"><i class="fas fa-eye me-1"></i>Preview disponível</span>`;
+          if (previewUrl) readBtn = `<a href="${previewUrl}" target="_blank" rel="noopener" class="bv-btn-read" style="background:linear-gradient(135deg,#3498db,#2980b9);"><i class="fas fa-eye"></i> Ver prévia</a>`;
+        } else {
+          accessBadge = `<span style="background:rgba(127,140,141,0.12);color:#7f8c8d;border:1px solid #bdc3c7;border-radius:20px;font-size:0.65rem;font-weight:700;padding:2px 9px;"><i class="fas fa-lock me-1"></i>Sem prévia</span>`;
+        }
+
+        const starsHtml = rating
+          ? `<span class="text-warning" style="font-size:0.75rem;">${'★'.repeat(Math.round(rating))}${'☆'.repeat(5-Math.round(rating))}</span> <span class="text-muted" style="font-size:0.72rem;">(${rating})</span>`
+          : '';
+
+        const coverHtml = cover
+          ? `<img src="${cover}" class="bv-cover" alt="Capa" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+             <div class="bv-cover-placeholder" style="display:none;"><i class="fas fa-gavel text-white"></i></div>`
+          : `<div class="bv-cover-placeholder"><i class="fas fa-gavel text-white"></i></div>`;
+
+        const catHtml = categories.length
+          ? categories.map(c => `<span class="badge bg-light text-secondary me-1" style="font-size:0.65rem;">${this._esc(c.substring(0,28))}</span>`).join('')
+          : '';
+
+        const olBtn = previewUrl
+          ? `<a href="${previewUrl}" target="_blank" rel="noopener" class="bv-btn-ol"><i class="fab fa-google me-1"></i>Google Books</a>`
+          : '';
+
+        const col = document.createElement('div');
+        col.className = 'col-12 col-md-6 col-xl-4';
+        col.innerHTML = `
+          <div class="bv-card card h-100">
+            <div class="card-body d-flex gap-3">
+              <div class="flex-shrink-0">${coverHtml}</div>
+              <div class="flex-grow-1" style="min-width:0;">
+                <h6 class="fw-bold mb-1" style="font-size:0.88rem;line-height:1.35;">${this._esc(title)}</h6>
+                <p class="text-muted mb-1" style="font-size:0.78rem;"><i class="fas fa-user me-1 opacity-50"></i>${this._esc(authors)}</p>
+                <p class="text-muted mb-1" style="font-size:0.75rem;">
+                  ${publisher ? `<i class="fas fa-building me-1 opacity-50"></i>${this._esc(publisher.substring(0,30))}` : ''}
+                  ${publisher && year ? ' · ' : ''}
+                  ${year}
+                  ${(publisher||year) && pages ? ' · ' : ''}
+                  ${pages}
+                </p>
+                ${starsHtml ? `<div class="mb-1">${starsHtml}</div>` : ''}
+                <div class="mb-1">${accessBadge}</div>
+                ${catHtml ? `<div class="mb-2">${catHtml}</div>` : ''}
+                <div class="d-flex gap-2 flex-wrap mt-1">
+                  ${readBtn}
+                  ${!readBtn && olBtn ? olBtn : ''}
+                  ${readBtn && olBtn ? olBtn : ''}
+                </div>
+              </div>
+            </div>
+          </div>`;
+        container.appendChild(col);
+      });
+    },
+
+    renderPagination() {
+      const totalPages = Math.min(Math.ceil(this.totalResults / this.pageSize), 84); // Google Books max 1000 results
+      const pag = document.getElementById('bv-pagination');
+      pag.innerHTML = '';
+      if (totalPages <= 1) { pag.style.display = 'none'; return; }
+      pag.style.display = 'flex';
+      const cur = this.currentPage;
+
+      const addBtn = (label, page, disabled, active) => {
+        const b = document.createElement('button');
+        b.className = `btn btn-sm ${active ? 'btn-primary' : 'btn-outline-secondary'}`;
+        b.innerHTML = label;
+        b.disabled = disabled;
+        if (!disabled) b.addEventListener('click', () => {
+          this.search(this.currentQuery, page);
+          const panel = document.getElementById('pane-acervo-virtual');
+          if (panel) window.scrollTo({ top: panel.offsetTop - 80, behavior: 'smooth' });
+        });
+        pag.appendChild(b);
+      };
+
+      addBtn('<i class="fas fa-chevron-left"></i>', cur - 1, cur === 1, false);
+      let pages = [];
+      if (totalPages <= 7) { for (let i = 1; i <= totalPages; i++) pages.push(i); }
+      else {
+        pages = [1];
+        if (cur > 3) pages.push('...');
+        for (let i = Math.max(2, cur - 1); i <= Math.min(totalPages - 1, cur + 1); i++) pages.push(i);
+        if (cur < totalPages - 2) pages.push('...');
+        pages.push(totalPages);
+      }
+      pages.forEach(p => {
+        if (p === '...') {
+          const s = document.createElement('span');
+          s.className = 'btn btn-sm btn-outline-secondary disabled';
+          s.textContent = '...';
+          pag.appendChild(s);
+        } else {
+          addBtn(p, p, false, p === cur);
+        }
+      });
+      addBtn('<i class="fas fa-chevron-right"></i>', cur + 1, cur === totalPages, false);
+    },
+
+    _esc(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', () => BV.init());
+  window._BV = BV;
+})();
+</script>
+<!-- ===== FIM ACERVO VIRTUAL ===== -->
+
 </body>
 </html>
