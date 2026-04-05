@@ -932,11 +932,12 @@
     .next-event-card {
         background: linear-gradient(135deg, var(--accent), var(--info));
         color: white;
-        border-radius: 12px;
-        padding: 14px 18px;
+        border-radius: 14px;
+        padding: 12px 14px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.12);
         cursor: pointer;
         transition: var(--transition);
+        overflow: hidden;
     }
     .next-event-card:hover {
         transform: translateY(-3px);
@@ -979,14 +980,15 @@
     }
     .next-event-card .countdown-item {
         text-align: center;
+        min-width: 0;
     }
     .next-event-card .countdown-number {
-        font-size: 1.4rem;
+        font-size: 1.15rem;
         font-weight: 700;
         line-height: 1.2;
     }
     .next-event-card .countdown-label {
-        font-size: 0.68rem;
+        font-size: 0.6rem;
         text-transform: uppercase;
         opacity: 0.8;
     }
@@ -4273,7 +4275,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let discInfo = '';
         if (proximoEventoGlobal.disciplinaId) {
             const disc = data.disciplinas.find(d => d.id === proximoEventoGlobal.disciplinaId);
-            if (disc) discInfo = `<p class="mb-2"><i class="fas fa-book me-2"></i><strong>Disciplina:</strong> ${disc.nome}</p>`;
+            if (disc) discInfo = `<div style="font-size:0.72rem;opacity:0.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><i class="fas fa-book me-1"></i><strong>Disciplina:</strong> ${disc.nome}</div>`;
         }
         // Detecta se faltam 2 dias ou menos
         const msRestante = proximoEventoGlobal.eventDate.getTime() - new Date().getTime();
@@ -4286,21 +4288,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         container.innerHTML = `
             <div class="next-event-card${urgenteClass}" id="next-event-card">
-                <div class="row align-items-center g-2">
-                    <div class="col-lg-5">
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                        <h6 class="text-uppercase mb-0" style="opacity:0.75;font-size:0.58rem;letter-spacing:0.07em;flex-shrink:0;">Próximo Evento</h6>
                         ${urgenteBadge}
-                        <h6 class="text-uppercase mb-0" style="opacity:0.8;font-size:0.62rem;letter-spacing:0.05em;">Próximo Evento</h6>
-                        <h4 class="mb-1" style="font-size:1.05rem;line-height:1.3;">${proximoEventoGlobal.title}</h4>
-                        ${discInfo}
-                        <p class="mb-0" style="font-size:0.78rem;"><i class="fas ${proximoEventoGlobal.type==='assignment'?'fa-tasks':proximoEventoGlobal.type==='exam'?'fa-file-alt':'fa-calendar-day'} me-2"></i><strong>${proximoEventoGlobal.type==='assignment'?'Trabalho':proximoEventoGlobal.type==='exam'?'Prova':'Evento'}:</strong> ${proximoEventoGlobal.eventDate.toLocaleString('pt-BR',{day:'2-digit',month:'long',hour:'2-digit',minute:'2-digit'})}</p>
                     </div>
-                    <div class="col-lg-7">
-                        <div class="d-flex justify-content-around">
-                            <div class="countdown-item"><div id="countdown-dias" class="countdown-number">00</div><div class="countdown-label">Dias</div></div>
-                            <div class="countdown-item"><div id="countdown-horas" class="countdown-number">00</div><div class="countdown-label">Horas</div></div>
-                            <div class="countdown-item"><div id="countdown-minutos" class="countdown-number">00</div><div class="countdown-label">Min</div></div>
-                            <div class="countdown-item"><div id="countdown-segundos" class="countdown-number">00</div><div class="countdown-label">Seg</div></div>
-                        </div>
+                    <div style="font-size:0.88rem;font-weight:700;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${proximoEventoGlobal.title}</div>
+                    ${discInfo}
+                    <div style="font-size:0.72rem;opacity:0.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><i class="fas ${proximoEventoGlobal.type==='assignment'?'fa-tasks':proximoEventoGlobal.type==='exam'?'fa-file-alt':'fa-calendar-day'} me-1"></i><strong>${proximoEventoGlobal.type==='assignment'?'Trabalho':proximoEventoGlobal.type==='exam'?'Prova':'Evento'}:</strong> ${proximoEventoGlobal.eventDate.toLocaleString('pt-BR',{day:'2-digit',month:'long',hour:'2-digit',minute:'2-digit'})}</div>
+                    <div style="display:flex;justify-content:space-around;margin-top:4px;background:rgba(0,0,0,0.12);border-radius:10px;padding:6px 4px;">
+                        <div class="countdown-item"><div id="countdown-dias" class="countdown-number">00</div><div class="countdown-label">Dias</div></div>
+                        <div class="countdown-item"><div id="countdown-horas" class="countdown-number">00</div><div class="countdown-label">Horas</div></div>
+                        <div class="countdown-item"><div id="countdown-minutos" class="countdown-number">00</div><div class="countdown-label">Min</div></div>
+                        <div class="countdown-item"><div id="countdown-segundos" class="countdown-number">00</div><div class="countdown-label">Seg</div></div>
                     </div>
                 </div>
             </div>`;
