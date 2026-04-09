@@ -391,8 +391,33 @@
       top: 0; left: 0; bottom: 0;
       z-index: 1000;
       overflow-y: auto;
-      transition: transform 0.3s ease;
+      overflow-x: hidden;
+      transition: width 0.25s ease, transform 0.25s ease;
     }
+
+    /* DESKTOP COLLAPSED */
+    .sidebar.collapsed {
+      width: 58px;
+      min-width: 58px;
+    }
+    .sidebar.collapsed .sidebar-logo-text,
+    .sidebar.collapsed .sidebar-section-label,
+    .sidebar.collapsed .sidebar-nav-item-label,
+    .sidebar.collapsed .sidebar-profile-info,
+    .sidebar.collapsed .sidebar-profile > i {
+      opacity: 0; width: 0; overflow: hidden; white-space: nowrap; pointer-events: none;
+    }
+    .sidebar.collapsed .sidebar-logo { justify-content: center; padding: 20px 0 16px; }
+    .sidebar.collapsed .sidebar-logo-icon { margin: 0; }
+    .sidebar.collapsed .sidebar-nav-item { justify-content: center; padding: 11px 0; gap: 0; }
+    .sidebar.collapsed .sidebar-nav-item i { width: auto; font-size: 1rem; margin: 0; }
+    .sidebar.collapsed .sidebar-nav-item.active::before { display: none; }
+    .sidebar.collapsed .sidebar-nav-item.active { background: rgba(26,188,156,0.25); border-radius: 8px; margin: 0 6px; width: calc(100% - 12px); }
+    .sidebar.collapsed .sidebar-profile { justify-content: center; }
+    .sidebar.collapsed .sidebar-section-label { height: 0; padding: 0; margin: 0; }
+
+    .main-area { transition: margin-left 0.25s ease; }
+    .main-area.collapsed { margin-left: 58px; }
 
     .sidebar-logo {
       display: flex;
@@ -729,32 +754,264 @@
     .sidebar::-webkit-scrollbar-track { background: transparent; }
     .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
 
+    /* ===== PAINÉIS PROFISSIONAIS — CSS GLOBAL ===== */
+
+    /* Page header inside panels */
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .panel-header-left h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1a2332;
+      margin: 0;
+    }
+    .panel-header-left p {
+      font-size: 0.78rem;
+      color: #95a5a6;
+      margin: 2px 0 0;
+    }
+    .panel-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.18s;
+      font-family: 'Poppins', sans-serif;
+    }
+    .panel-btn-primary { background: #1abc9c; color: white; }
+    .panel-btn-primary:hover { background: #16a085; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,188,156,0.35); }
+    .panel-btn-danger { background: #e74c3c; color: white; }
+    .panel-btn-danger:hover { background: #c0392b; }
+    .panel-btn-outline { background: white; border: 1.5px solid #dee2e6; color: #34495e; }
+    .panel-btn-outline:hover { border-color: #1abc9c; color: #1abc9c; background: rgba(26,188,156,0.05); }
+
+    /* Pro cards (replace card-dashboard) */
+    .pro-card {
+      background: white;
+      border-radius: 14px;
+      border: 1px solid #eef0f3;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      overflow: hidden;
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+    .pro-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.09); }
+    .pro-card-header {
+      padding: 14px 18px 12px;
+      border-bottom: 1px solid #f0f2f4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pro-card-body { padding: 14px 18px; }
+    .pro-card-footer {
+      padding: 10px 18px;
+      border-top: 1px solid #f0f2f4;
+      background: #fafbfc;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* Discipline card accent bar */
+    .disc-card { position: relative; overflow: hidden; }
+    .disc-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 4px; height: 100%;
+      background: var(--disc-color, #1abc9c);
+    }
+    .disc-card .pro-card-body { padding-left: 22px; }
+
+    /* Badge pills */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .pill-success { background: #d5f5e3; color: #1e8449; }
+    .pill-warning { background: #fef9e7; color: #b7950b; border: 1px solid #f9ca24; }
+    .pill-danger  { background: #fdecea; color: #c0392b; }
+    .pill-info    { background: #eaf4fc; color: #1a5276; }
+    .pill-neutral { background: #f0f2f4; color: #626c76; }
+    .pill-purple  { background: #f4ecff; color: #6c3483; }
+    .pill-teal    { background: #e0faf4; color: #0e6655; }
+
+    /* Status indicator dot */
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0;
+    }
+    .dot-green { background: #27ae60; }
+    .dot-yellow { background: #f1c40f; }
+    .dot-red { background: #e74c3c; }
+    .dot-blue { background: #3498db; }
+    .dot-gray { background: #bdc3c7; }
+
+    /* Grade badge */
+    .grade-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px; height: 42px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      font-family: 'Poppins', sans-serif;
+    }
+    .grade-a { background: #d5f5e3; color: #1e8449; }
+    .grade-b { background: #eaf4fc; color: #1a5276; }
+    .grade-c { background: #fef9e7; color: #b7950b; }
+    .grade-d { background: #fdecea; color: #c0392b; }
+
+    /* Filter chips bar */
+    .chip-bar {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1.5px solid #dee2e6;
+      background: white;
+      color: #626c76;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'Poppins', sans-serif;
+    }
+    .chip:hover { border-color: #1abc9c; color: #1abc9c; }
+    .chip.active { background: #1abc9c; border-color: #1abc9c; color: white; }
+
+    /* Empty state */
+    .pro-empty {
+      text-align: center;
+      padding: 50px 20px;
+      color: #95a5a6;
+    }
+    .pro-empty i { font-size: 2.5rem; margin-bottom: 12px; display: block; opacity: 0.35; }
+    .pro-empty p { font-size: 0.88rem; margin: 0; }
+
+    /* Action buttons in cards */
+    .card-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .btn-icon {
+      width: 30px; height: 30px;
+      border-radius: 7px;
+      border: 1px solid #dee2e6;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: #7f8c8d;
+    }
+    .btn-icon:hover { background: #f0f2f4; color: #2c3e50; border-color: #bdc3c7; }
+    .btn-icon.edit:hover { color: #2980b9; border-color: #2980b9; background: #eaf4fc; }
+    .btn-icon.delete:hover { color: #e74c3c; border-color: #e74c3c; background: #fdecea; }
+    .btn-icon.attach:hover { color: #27ae60; border-color: #27ae60; background: #d5f5e3; }
+
+    /* Section divider label */
+    .sec-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #95a5a6;
+      margin: 20px 0 10px;
+    }
+
+    /* Info row in cards */
+    .info-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: #7f8c8d;
+      margin-bottom: 5px;
+    }
+    .info-row i { width: 14px; text-align: center; color: #bdc3c7; font-size: 0.72rem; }
+    .info-row strong { color: #34495e; }
+
+    /* Progress bar slim */
+    .prog-bar {
+      height: 6px;
+      background: #f0f2f4;
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 6px 0 2px;
+    }
+    .prog-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    /* Table-like list rows */
+    .list-row {
+      display: flex;
+      align-items: center;
+      padding: 11px 18px;
+      border-bottom: 1px solid #f4f5f6;
+      gap: 12px;
+      transition: background 0.12s;
+    }
+    .list-row:last-child { border-bottom: none; }
+    .list-row:hover { background: #fafbfc; }
+    .list-row-icon {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .list-row-body { flex: 1; min-width: 0; }
+    .list-row-title { font-size: 0.85rem; font-weight: 600; color: #2c3e50; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .list-row-sub { font-size: 0.72rem; color: #95a5a6; }
+
+    /* Urgente highlight */
+    .card-urgent {
+      border: 2px solid #e74c3c !important;
+    }
+    .card-urgent .pro-card-header { background: linear-gradient(135deg, #fdeded, #fff); }
+
     /* Ajuste de responsividade do sistema antigo com novo layout */
     @media (max-width: 768px) {
-      .sidebar {
-        transform: translateX(-100%);
-      }
-      .sidebar.open {
-        transform: translateX(0);
-      }
-      .sidebar-overlay.open {
-        display: block;
-      }
-      .main-area {
-        margin-left: 0;
-      }
-      .app-container {
-        padding: 16px;
-      }
-      .top-header {
-        padding: 0 16px;
-      }
-      .stats-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-      .quick-access-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-overlay.open { display: block; }
+      .main-area { margin-left: 0; }
+      .app-container { padding: 16px; }
+      .top-header { padding: 0 16px; }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+      .quick-access-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
     .card-link {
@@ -3256,28 +3513,28 @@
   </div>
 
   <div class="sidebar-section-label">Principal</div>
-  <button class="sidebar-nav-item active" data-panel="home-links" id="snav-home-links"><i class="fas fa-home"></i> Início</button>
-  <button class="sidebar-nav-item" data-panel="dashboard" id="snav-dashboard"><i class="fas fa-chart-line"></i> Dashboard</button>
-  <button class="sidebar-nav-item" data-panel="disciplinas" id="snav-disciplinas"><i class="fas fa-book"></i> Disciplinas</button>
-  <button class="sidebar-nav-item" data-panel="agenda" id="snav-agenda"><i class="fas fa-calendar-alt"></i> Agenda</button>
-  <button class="sidebar-nav-item" data-panel="horarios" id="snav-horarios"><i class="fas fa-clock"></i> Horários</button>
+  <button class="sidebar-nav-item active" data-panel="home-links" id="snav-home-links"><i class="fas fa-home"></i> <span class="sidebar-nav-item-label">Início</span></button>
+  <button class="sidebar-nav-item" data-panel="dashboard" id="snav-dashboard"><i class="fas fa-chart-line"></i> <span class="sidebar-nav-item-label">Dashboard</span></button>
+  <button class="sidebar-nav-item" data-panel="disciplinas" id="snav-disciplinas"><i class="fas fa-book"></i> <span class="sidebar-nav-item-label">Disciplinas</span></button>
+  <button class="sidebar-nav-item" data-panel="agenda" id="snav-agenda"><i class="fas fa-calendar-alt"></i> <span class="sidebar-nav-item-label">Agenda</span></button>
+  <button class="sidebar-nav-item" data-panel="horarios" id="snav-horarios"><i class="fas fa-clock"></i> <span class="sidebar-nav-item-label">Horários</span></button>
 
   <div class="sidebar-section-label">Acadêmico</div>
-  <button class="sidebar-nav-item" data-panel="trabalhos" id="snav-trabalhos"><i class="fas fa-tasks"></i> Trabalhos</button>
-  <button class="sidebar-nav-item" data-panel="provas" id="snav-provas"><i class="fas fa-file-alt"></i> Provas</button>
-  <button class="sidebar-nav-item" data-panel="caderno" id="snav-caderno"><i class="fas fa-sticky-note"></i> Notas</button>
-  <button class="sidebar-nav-item" data-panel="biblioteca" id="snav-biblioteca"><i class="fas fa-book-open"></i> Biblioteca</button>
-  <button class="sidebar-nav-item" data-panel="filmes" id="snav-filmes"><i class="fas fa-video"></i> Vídeo-Aulas</button>
-  <button class="sidebar-nav-item" data-panel="certificados" id="snav-certificados"><i class="fas fa-certificate"></i> Certificados</button>
+  <button class="sidebar-nav-item" data-panel="trabalhos" id="snav-trabalhos"><i class="fas fa-tasks"></i> <span class="sidebar-nav-item-label">Trabalhos</span></button>
+  <button class="sidebar-nav-item" data-panel="provas" id="snav-provas"><i class="fas fa-file-alt"></i> <span class="sidebar-nav-item-label">Provas</span></button>
+  <button class="sidebar-nav-item" data-panel="caderno" id="snav-caderno"><i class="fas fa-sticky-note"></i> <span class="sidebar-nav-item-label">Notas</span></button>
+  <button class="sidebar-nav-item" data-panel="biblioteca" id="snav-biblioteca"><i class="fas fa-book-open"></i> <span class="sidebar-nav-item-label">Biblioteca</span></button>
+  <button class="sidebar-nav-item" data-panel="filmes" id="snav-filmes"><i class="fas fa-video"></i> <span class="sidebar-nav-item-label">Vídeo-Aulas</span></button>
+  <button class="sidebar-nav-item" data-panel="certificados" id="snav-certificados"><i class="fas fa-certificate"></i> <span class="sidebar-nav-item-label">Certificados</span></button>
 
   <div class="sidebar-section-label">Ferramentas</div>
-  <button class="sidebar-nav-item" data-panel="links" id="snav-links"><i class="fas fa-link"></i> Links</button>
-  <button class="sidebar-nav-item" data-panel="financeiro" id="snav-financeiro"><i class="fas fa-dollar-sign"></i> Financeiro</button>
-  <button class="sidebar-nav-item" data-panel="relatorios" id="snav-relatorios"><i class="fas fa-chart-bar"></i> Relatórios</button>
-  <button class="sidebar-nav-item" data-panel="jurista" id="snav-jurista"><i class="fas fa-balance-scale"></i> Jurista Pro</button>
+  <button class="sidebar-nav-item" data-panel="links" id="snav-links"><i class="fas fa-link"></i> <span class="sidebar-nav-item-label">Links</span></button>
+  <button class="sidebar-nav-item" data-panel="financeiro" id="snav-financeiro"><i class="fas fa-dollar-sign"></i> <span class="sidebar-nav-item-label">Financeiro</span></button>
+  <button class="sidebar-nav-item" data-panel="relatorios" id="snav-relatorios"><i class="fas fa-chart-bar"></i> <span class="sidebar-nav-item-label">Relatórios</span></button>
+  <button class="sidebar-nav-item" data-panel="jurista" id="snav-jurista"><i class="fas fa-balance-scale"></i> <span class="sidebar-nav-item-label">Jurista Pro</span></button>
 
   <div class="sidebar-section-label">Outros</div>
-  <button class="sidebar-nav-item" data-panel="configuracoes" id="snav-configuracoes"><i class="fas fa-cog"></i> Configurações</button>
+  <button class="sidebar-nav-item" data-panel="configuracoes" id="snav-configuracoes"><i class="fas fa-cog"></i> <span class="sidebar-nav-item-label">Configurações</span></button>
 
   <div class="sidebar-profile" id="sidebarProfileBtn" data-bs-toggle="modal" data-bs-target="#profileManagementModal">
     <div class="sidebar-avatar" id="sidebarAvatarInitials">U</div>
@@ -3360,27 +3617,68 @@
   </div>
 
   <div class="content-panel" id="dashboard">
-      <div class="content-header"><h2>Dashboard</h2></div>
-      <div class="row g-4 mb-4">
-          <div class="col-md-6 col-lg-3"><div class="card card-dashboard"><div class="card-body"><div class="stats-card"><i class="fas fa-book"></i><div class="stats-info"><h4 id="dashboard-disciplinas-count">0</h4><p>Disciplinas</p></div></div></div></div></div>
-          <div class="col-md-6 col-lg-3"><div class="card card-dashboard"><div class="card-body"><div class="stats-card"><i class="fas fa-tasks text-info"></i><div class="stats-info"><h4 id="dashboard-trabalhos-pendentes">0</h4><p>Trabalhos Pendentes</p></div></div></div></div></div>
-          <div class="col-md-6 col-lg-3"><div class="card card-dashboard"><div class="card-body"><div class="stats-card"><i class="fas fa-file-alt text-warning"></i><div class="stats-info"><h4 id="dashboard-provas-agendadas">0</h4><p>Provas Agendadas</p></div></div></div></div></div>
-          <div class="col-md-6 col-lg-3"><div class="card card-dashboard"><div class="card-body"><div class="stats-card"><i class="fas fa-chart-line text-success"></i><div class="stats-info"><h4 id="dashboard-media-geral">0.0</h4><p>Média Geral</p></div></div></div></div></div>
+    <div class="panel-header">
+      <div class="panel-header-left"><h3><i class="fas fa-chart-line me-2" style="color:#3498db;"></i>Dashboard</h3><p>Visão geral do seu desempenho acadêmico</p></div>
+    </div>
+    <div class="stats-grid mb-4" style="grid-template-columns:repeat(4,1fr);">
+      <div class="stat-card-new">
+        <span class="stat-icon" style="color:#3498db;"><i class="fas fa-book"></i></span>
+        <div class="stat-number" id="dashboard-disciplinas-count">0</div>
+        <div class="stat-label">Disciplinas</div>
       </div>
-      <div class="row g-4">
-          <div class="col-lg-8"><div class="card card-dashboard"><div class="card-body"><h4 class="card-title mb-4">Desempenho por Disciplina</h4><div id="dashboard-desempenho-disciplinas"></div></div></div></div>
-          <div class="col-lg-4"><div class="card card-dashboard"><div class="card-body"><h4 class="card-title mb-4">Próximos Eventos</h4><div id="dashboard-proximos-eventos"></div><a href="#" class="btn btn-outline-primary btn-sm mt-3" data-target="agenda">Ver Agenda Completa</a></div></div></div>
+      <div class="stat-card-new">
+        <span class="stat-icon" style="color:#1abc9c;"><i class="fas fa-tasks"></i></span>
+        <div class="stat-number" id="dashboard-trabalhos-pendentes">0</div>
+        <div class="stat-label">Tarefas Abertas</div>
       </div>
+      <div class="stat-card-new">
+        <span class="stat-icon" style="color:#f39c12;"><i class="fas fa-file-alt"></i></span>
+        <div class="stat-number" id="dashboard-provas-agendadas">0</div>
+        <div class="stat-label">Provas Agendadas</div>
+      </div>
+      <div class="stat-card-new">
+        <span class="stat-icon" style="color:#27ae60;"><i class="fas fa-star"></i></span>
+        <div class="stat-number" id="dashboard-media-geral">–</div>
+        <div class="stat-label">Média Geral</div>
+      </div>
+    </div>
+    <div class="row g-3">
+      <div class="col-lg-8">
+        <div class="pro-card">
+          <div class="pro-card-header">
+            <span style="font-weight:700;font-size:0.88rem;color:#1a2332;"><i class="fas fa-chart-bar me-2" style="color:#3498db;"></i>Desempenho por Disciplina</span>
+          </div>
+          <div class="pro-card-body" id="dashboard-desempenho-disciplinas"></div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="pro-card h-100">
+          <div class="pro-card-header">
+            <span style="font-weight:700;font-size:0.88rem;color:#1a2332;"><i class="fas fa-calendar-alt me-2" style="color:#e67e22;"></i>Próximos Eventos</span>
+          </div>
+          <div id="dashboard-proximos-eventos" style="padding:0 4px;"></div>
+          <div class="pro-card-footer">
+            <a href="#" class="panel-btn panel-btn-outline" data-target="agenda" style="font-size:0.75rem;padding:5px 12px;">Ver agenda completa</a>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="content-panel" id="disciplinas">
-    <div class="content-header"><h2>Disciplinas</h2><div class="btn-group"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#disciplinaModal"><i class="fas fa-plus"></i> Nova Disciplina</button></div></div>
+    <div class="panel-header">
+      <div class="panel-header-left"><h3><i class="fas fa-book me-2" style="color:#3498db;"></i>Disciplinas</h3><p>Gerencie suas matérias e acompanhe seu desempenho</p></div>
+      <button class="panel-btn panel-btn-primary" data-bs-toggle="modal" data-bs-target="#disciplinaModal"><i class="fas fa-plus"></i> Nova Disciplina</button>
+    </div>
     <div class="row g-4" id="disciplinas-lista"></div>
   </div>
 
   <div class="content-panel" id="horarios">
-      <div class="content-header"><h2>Quadro de Horários</h2><div class="btn-group"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#horarioModal"><i class="fas fa-plus"></i> Nova Aula</button></div></div>
-      <div class="schedule-filter">
+    <div class="panel-header">
+      <div class="panel-header-left"><h3><i class="fas fa-clock me-2" style="color:#9b59b6;"></i>Quadro de Horários</h3><p>Grade de aulas semanal</p></div>
+      <button class="panel-btn panel-btn-primary" data-bs-toggle="modal" data-bs-target="#horarioModal"><i class="fas fa-plus"></i> Nova Aula</button>
+    </div>
+      <div class="schedule-filter" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;background:white;padding:12px 16px;border-radius:12px;border:1px solid #eef0f3;">
           <label>Mostrar horários de:</label>
           <input type="number" id="filterStartHour" min="0" max="23" value="7" class="form-control">
           <label>até</label>
@@ -3392,28 +3690,33 @@
   </div>
 
   <div class="content-panel" id="trabalhos">
-    <div class="content-header"><h2>Trabalhos</h2><div class="btn-group"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#trabalhoModal"><i class="fas fa-plus"></i> Novo Trabalho</button></div></div>
-    <!-- Filtro por Matéria -->
-    <div class="notas-filter-bar mb-4" id="trabalhosFilterBar">
-      <div class="d-flex align-items-center gap-2 flex-wrap">
-        <span class="fw-semibold text-muted small me-1"><i class="fas fa-filter me-1"></i>Filtrar por:</span>
-        <button class="btn btn-sm btn-filter-materia active" data-materia="todas">📚 Todas</button>
-        <button class="btn btn-sm btn-filter-materia" data-materia="status-pendente">⏳ Pendentes</button>
-        <button class="btn btn-sm btn-filter-materia" data-materia="status-feito">✅ Feitos</button>
-        <button class="btn btn-sm btn-filter-materia" data-materia="status-entregue">📬 Entregues</button>
-        <!-- Matérias dinâmicas injetadas por JS -->
-      </div>
+    <div class="panel-header">
+      <div class="panel-header-left"><h3><i class="fas fa-tasks me-2" style="color:#1abc9c;"></i>Trabalhos</h3><p>Acompanhe prazos e status das suas atividades</p></div>
+      <button class="panel-btn panel-btn-primary" data-bs-toggle="modal" data-bs-target="#trabalhoModal"><i class="fas fa-plus"></i> Novo Trabalho</button>
+    </div>
+    <div class="chip-bar" id="trabalhosFilterBar">
+      <i class="fas fa-filter" style="color:#95a5a6;font-size:0.75rem;"></i>
+      <button class="chip btn-filter-materia active" data-materia="todas"><i class="fas fa-layer-group"></i> Todas</button>
+      <button class="chip btn-filter-materia" data-materia="status-pendente"><i class="fas fa-clock"></i> Pendentes</button>
+      <button class="chip btn-filter-materia" data-materia="status-feito"><i class="fas fa-check"></i> Feitos</button>
+      <button class="chip btn-filter-materia" data-materia="status-entregue"><i class="fas fa-check-double"></i> Entregues</button>
     </div>
     <div class="row g-4" id="trabalhos-cards"></div>
   </div>
 
   <div class="content-panel" id="provas">
-      <div class="content-header"><h2>Provas</h2><div class="btn-group"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#provaModal"><i class="fas fa-plus"></i> Nova Prova</button></div></div>
+    <div class="panel-header">
+      <div class="panel-header-left"><h3><i class="fas fa-file-alt me-2" style="color:#f39c12;"></i>Provas</h3><p>Controle suas avaliações e notas</p></div>
+      <button class="panel-btn panel-btn-primary" data-bs-toggle="modal" data-bs-target="#provaModal"><i class="fas fa-plus"></i> Nova Prova</button>
+    </div>
       <div class="row g-4" id="provas-cards"></div>
   </div>
 
   <div class="content-panel" id="agenda">
-      <div class="content-header"><h2>Agenda</h2><div class="btn-group"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#eventModal" id="novoEventoBtn"><i class="fas fa-plus"></i> Novo Evento</button></div></div>
+    <div class="panel-header">
+      <div class="panel-header-left"><h3><i class="fas fa-calendar-alt me-2" style="color:#e67e22;"></i>Agenda</h3><p>Eventos, prazos e compromissos acadêmicos</p></div>
+      <button class="panel-btn panel-btn-primary" data-bs-toggle="modal" data-bs-target="#eventModal" id="novoEventoBtn"><i class="fas fa-plus"></i> Novo Evento</button>
+    </div>
       <div class="row g-4">
           <div class="col-lg-8"><div class="card card-dashboard"><div class="card-body"><div class="event-calendar"><div class="d-flex justify-content-between align-items-center mb-4"><button class="btn btn-sm btn-outline-primary" id="prev-month"><i class="fas fa-chevron-left"></i></button><h5 class="mb-0" id="calendar-month-year"></h5><button class="btn btn-sm btn-outline-primary" id="next-month"><i class="fas fa-chevron-right"></i></button></div><div class="row mb-2" id="calendar-weekdays"></div><div id="calendar-days"></div></div></div></div></div>
           <div class="col-lg-4"><div class="card card-dashboard"><div class="card-body" id="agenda-eventos-dia"></div></div></div>
@@ -3487,12 +3790,21 @@
   </div>
 
   <div class="content-panel" id="filmes">
-    <div class="content-header"><h2>Filmes e Vídeo-Aulas</h2><div class="btn-group"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filmeModal"><i class="fas fa-plus"></i> Adicionar Filme/Vídeo</button></div></div>
+    <div class="panel-header">
+      <div class="panel-header-left"><h3><i class="fas fa-video me-2" style="color:#607d8b;"></i>Filmes e Vídeo-Aulas</h3><p>Acompanhe seu progresso em vídeos e aulas gravadas</p></div>
+      <button class="panel-btn panel-btn-primary" data-bs-toggle="modal" data-bs-target="#filmeModal"><i class="fas fa-plus"></i> Adicionar</button>
+    </div>
     <div class="row g-4" id="filmes-lista"></div>
   </div>
 
   <div class="content-panel" id="caderno">
-    <div class="content-header"><h2>Caderno e Notas</h2><div class="btn-group"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#notaModal"><i class="fas fa-plus"></i> Nova Nota</button><button class="btn btn-outline-success ms-2" id="btnCorrigirTodasNotas" title="Corrigir ortografia e pontuação de todas as notas"><i class="fas fa-spell-check me-1"></i> Corrigir Todas</button></div></div>
+    <div class="panel-header">
+      <div class="panel-header-left"><h3><i class="fas fa-sticky-note me-2" style="color:#8e44ad;"></i>Caderno e Notas</h3><p>Anotações, desenhos, documentos e imagens</p></div>
+      <div class="d-flex gap-2">
+        <button class="panel-btn panel-btn-outline" id="btnCorrigirTodasNotas"><i class="fas fa-spell-check"></i> Corrigir Todas</button>
+        <button class="panel-btn panel-btn-primary" data-bs-toggle="modal" data-bs-target="#notaModal"><i class="fas fa-plus"></i> Nova Nota</button>
+      </div>
+    </div>
     
     <div class="mb-4">
         <div class="nav nav-tabs" id="caderno-tab" role="tablist">
@@ -3507,14 +3819,10 @@
     
     <div class="tab-content" id="caderno-content">
         <div class="tab-pane fade show active" id="notas-content" role="tabpanel">
-            <!-- Filtro por Matéria -->
-            <div class="notas-filter-bar mb-4" id="notasFilterBar">
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span class="fw-semibold text-muted small me-1"><i class="fas fa-filter me-1"></i>Filtrar por:</span>
-                    <button class="btn btn-sm btn-filter-materia active" data-materia="todas">📚 Todas</button>
-                    <button class="btn btn-sm btn-filter-materia" data-materia="sem-materia">📌 Sem Matéria</button>
-                    <!-- Matérias dinâmicas injetadas por JS -->
-                </div>
+            <div class="chip-bar" id="notasFilterBar">
+              <i class="fas fa-filter" style="color:#95a5a6;font-size:0.75rem;"></i>
+              <button class="chip active" data-materia="todas"><i class="fas fa-layer-group"></i> Todas</button>
+              <button class="chip" data-materia="sem-materia"><i class="fas fa-bookmark"></i> Sem Matéria</button>
             </div>
             <div class="row g-4" id="notas-lista"></div>
         </div>
@@ -3603,28 +3911,51 @@
   </div>
 
   <div class="content-panel" id="links">
-    <div class="content-header"><h2>Links Importantes</h2><div class="btn-group"><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#linkModal"><i class="fas fa-plus"></i> Novo Link</button></div></div>
+    <div class="panel-header">
+      <div class="panel-header-left"><h3><i class="fas fa-link me-2" style="color:#16a085;"></i>Links Importantes</h3><p>Atalhos e portais acadêmicos organizados</p></div>
+      <button class="panel-btn panel-btn-primary" data-bs-toggle="modal" data-bs-target="#linkModal"><i class="fas fa-plus"></i> Novo Link</button>
+    </div>
     <div class="row g-4" id="links-lista"></div>
   </div>
 
   <!-- Painel Financeiro -->
   <div class="content-panel" id="financeiro">
-      <div class="content-header"><h2>Controle Financeiro</h2><div class="btn-group"><button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#financeiroModal" data-type="receita"><i class="fas fa-plus"></i> Nova Receita</button><button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#financeiroModal" data-type="despesa"><i class="fas fa-minus"></i> Nova Despesa</button></div></div>
-      <div class="financeiro-mes-selector">
-          <button class="btn btn-outline-primary" id="prev-month-financeiro"><i class="fas fa-chevron-left"></i> Mês Anterior</button>
-          <div class="mes-ativo" id="financeiro-mes-atual"></div>
-          <button class="btn btn-outline-primary" id="next-month-financeiro">Próximo Mês <i class="fas fa-chevron-right"></i></button>
+    <div class="panel-header">
+      <div class="panel-header-left"><h3><i class="fas fa-dollar-sign me-2" style="color:#27ae60;"></i>Controle Financeiro</h3><p>Receitas, despesas e saldo do mês</p></div>
+      <div class="d-flex gap-2">
+        <button class="panel-btn panel-btn-primary" data-bs-toggle="modal" data-bs-target="#financeiroModal" data-type="receita"><i class="fas fa-plus"></i> Receita</button>
+        <button class="panel-btn panel-btn-danger" data-bs-toggle="modal" data-bs-target="#financeiroModal" data-type="despesa"><i class="fas fa-minus"></i> Despesa</button>
+      </div>
+    </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <button class="btn-icon" id="prev-month-financeiro" title="Mês anterior"><i class="fas fa-chevron-left"></i></button>
+        <div style="font-weight:700;font-size:0.95rem;color:#1a2332;min-width:160px;text-align:center;" id="financeiro-mes-atual"></div>
+        <button class="btn-icon" id="next-month-financeiro" title="Próximo mês"><i class="fas fa-chevron-right"></i></button>
       </div>
       
-      <div class="row g-4 mb-4">
-          <div class="col-md-4"><div class="card card-dashboard"><div class="card-body text-center"><h6 class="text-muted">Receitas do Mês</h6><h3 class="text-success" id="financeiro-total-receitas-mes">R$ 0,00</h3></div></div></div>
-          <div class="col-md-4"><div class="card card-dashboard"><div class="card-body text-center"><h6 class="text-muted">Despesas do Mês</h6><h3 class="text-danger" id="financeiro-total-despesas-mes">R$ 0,00</h3></div></div></div>
-          <div class="col-md-4"><div class="card card-dashboard"><div class="card-body text-center"><h6 class="text-muted">Saldo do Mês</h6><h3 id="financeiro-saldo-mes">R$ 0,00</h3></div></div></div>
+      <div class="stats-grid mb-3" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card-new">
+          <span class="stat-icon" style="color:#27ae60;"><i class="fas fa-arrow-up"></i></span>
+          <div class="stat-number" id="financeiro-total-receitas-mes" style="font-size:1.1rem;">R$ 0,00</div>
+          <div class="stat-label">Receitas</div>
+        </div>
+        <div class="stat-card-new">
+          <span class="stat-icon" style="color:#e74c3c;"><i class="fas fa-arrow-down"></i></span>
+          <div class="stat-number" id="financeiro-total-despesas-mes" style="font-size:1.1rem;">R$ 0,00</div>
+          <div class="stat-label">Despesas</div>
+        </div>
+        <div class="stat-card-new">
+          <span class="stat-icon" style="color:#3498db;"><i class="fas fa-wallet"></i></span>
+          <div class="stat-number" id="financeiro-saldo-mes" style="font-size:1.1rem;">R$ 0,00</div>
+          <div class="stat-label">Saldo</div>
+        </div>
       </div>
 
-      <div class="card card-dashboard mb-4">
-          <div class="card-body">
-              <h4 class="card-title mb-3">Transações do Mês</h4>
+      <div class="pro-card mb-3">
+          <div class="pro-card-header">
+            <span style="font-weight:700;font-size:0.88rem;color:#1a2332;"><i class="fas fa-exchange-alt me-2" style="color:#27ae60;"></i>Transações do Mês</span>
+          </div>
+          <div class="pro-card-body">
               
               <div class="financeiro-filtros-bar">
                   <div class="filter-group">
@@ -3643,9 +3974,11 @@
           </div>
       </div>
 
-      <div class="card card-dashboard">
-          <div class="card-body">
-              <h4 class="card-title mb-3">Resumo Anual</h4>
+      <div class="pro-card">
+          <div class="pro-card-header">
+            <span style="font-weight:700;font-size:0.88rem;color:#1a2332;"><i class="fas fa-chart-line me-2" style="color:#3498db;"></i>Resumo Anual</span>
+          </div>
+          <div class="pro-card-body">
               <div id="financeiro-grafico-anual" class="grafico-anual"></div>
               <div class="row mt-4" id="financeiro-resumo-anual"></div>
           </div>
@@ -3653,18 +3986,22 @@
   </div>
 
   <div class="content-panel" id="relatorios">
-      <div class="content-header"><h2>Relatórios</h2></div>
+    <div class="panel-header">
+      <div class="panel-header-left"><h3><i class="fas fa-chart-bar me-2" style="color:#2980b9;"></i>Relatórios</h3><p>Análise de desempenho, frequência e financeiro</p></div>
+    </div>
       <div class="row g-4">
-          <div class="col-lg-6"><div class="report-section"><h4 class="report-header">Desempenho por Disciplina</h4><div class="report-body" id="relatorio-desempenho"></div></div></div>
-          <div class="col-lg-6"><div class="report-section"><h4 class="report-header">Frequência</h4><div class="report-body" id="relatorio-frequencia"></div></div></div>
-          <div class="col-lg-6"><div class="report-section"><h4 class="report-header">Trabalhos Entregues</h4><div class="report-body" id="relatorio-trabalhos"></div></div></div>
-          <div class="col-lg-6"><div class="report-section"><h4 class="report-header">Provas Realizadas</h4><div class="report-body" id="relatorio-provas"></div></div></div>
-          <div class="col-lg-6"><div class="report-section"><h4 class="report-header">Análise Financeira</h4><div class="report-body" id="relatorio-financeiro"></div></div></div>
+          <div class="col-lg-6"><div class="pro-card report-section mb-3"><h4 class="report-header">Desempenho por Disciplina</h4><div class="report-body" id="relatorio-desempenho"></div></div></div>
+          <div class="col-lg-6"><div class="pro-card report-section mb-3"><h4 class="report-header">Frequência</h4><div class="report-body" id="relatorio-frequencia"></div></div></div>
+          <div class="col-lg-6"><div class="pro-card report-section mb-3"><h4 class="report-header">Trabalhos Entregues</h4><div class="report-body" id="relatorio-trabalhos"></div></div></div>
+          <div class="col-lg-6"><div class="pro-card report-section mb-3"><h4 class="report-header">Provas Realizadas</h4><div class="report-body" id="relatorio-provas"></div></div></div>
+          <div class="col-lg-6"><div class="pro-card report-section mb-3"><h4 class="report-header">Análise Financeira</h4><div class="report-body" id="relatorio-financeiro"></div></div></div>
       </div>
   </div>
 
   <div class="content-panel" id="configuracoes">
-      <div class="content-header"><h2>Configurações</h2></div>
+    <div class="panel-header">
+      <div class="panel-header-left"><h3><i class="fas fa-cog me-2" style="color:#7f8c8d;"></i>Configurações</h3><p>Personalização de tema, perfis e backup</p></div>
+    </div>
       <div class="card card-dashboard mb-4">
           <div class="card-body">
               <h4 class="card-title">Personalizar Plano de Fundo</h4>
@@ -4756,9 +5093,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         document.getElementById('sidebar-toggle-btn').addEventListener('click', () => {
             const sb = document.getElementById('mainSidebar');
+            const ma = document.querySelector('.main-area');
             const ov = document.getElementById('sidebarOverlay');
-            sb.classList.toggle('open');
-            ov.classList.toggle('open');
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                sb.classList.toggle('open');
+                ov.classList.toggle('open');
+            } else {
+                sb.classList.toggle('collapsed');
+                ma.classList.toggle('collapsed');
+            }
         });
         document.getElementById('sidebarOverlay').addEventListener('click', () => {
             document.getElementById('mainSidebar').classList.remove('open');
@@ -4873,49 +5217,145 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function renderDashboard(data) {
-        document.getElementById('dashboard-disciplinas-count').textContent = data.disciplinas.length;
-        document.getElementById('dashboard-trabalhos-pendentes').textContent = data.trabalhos.filter(t=>t.status==='Pendente'||t.status==='Feito').length;
-        document.getElementById('dashboard-provas-agendadas').textContent = data.provas.filter(p=>p.status==='Agendada').length;
-        let notas = [];
-        data.trabalhos.forEach(t=>{if(t.nota!==null) notas.push(+t.nota);});
-        data.provas.forEach(p=>{if(p.nota!==null) notas.push(+p.nota);});
-        document.getElementById('dashboard-media-geral').textContent = notas.length ? (notas.reduce((a,b)=>a+b,0)/notas.length).toFixed(1) : '0.0';
+        // KPIs
+        const kpis = [
+            { id:'dashboard-disciplinas-count', val: data.disciplinas.length, label:'Disciplinas', icon:'fa-book', color:'#3498db' },
+            { id:'dashboard-trabalhos-pendentes', val: data.trabalhos.filter(t=>t.status==='Pendente'||t.status==='Feito').length, label:'Tarefas abertas', icon:'fa-tasks', color:'#1abc9c' },
+            { id:'dashboard-provas-agendadas', val: data.provas.filter(p=>p.status==='Agendada').length, label:'Provas agendadas', icon:'fa-file-alt', color:'#f39c12' },
+        ];
+        let notasArr = [...data.trabalhos.filter(t=>t.nota!=null).map(t=>+t.nota), ...data.provas.filter(p=>p.nota!=null).map(p=>+p.nota)];
+        const media = notasArr.length ? (notasArr.reduce((a,b)=>a+b,0)/notasArr.length) : null;
+        document.getElementById('dashboard-media-geral').textContent = media!==null ? media.toFixed(1) : '–';
+        kpis.forEach(k => { const el = document.getElementById(k.id); if(el) el.textContent = k.val; });
+
+        // Desempenho por disciplina — lista profissional
         const desempenho = document.getElementById('dashboard-desempenho-disciplinas');
         desempenho.innerHTML = '';
+        const palette = ['#3498db','#1abc9c','#9b59b6','#e67e22','#e74c3c','#27ae60','#2980b9','#f39c12'];
         if (data.disciplinas.length) {
-            data.disciplinas.forEach(d => {
-                let ns = [...data.trabalhos.filter(t=>t.disciplinaId===d.id && t.nota!==null).map(t=>+t.nota), ...data.provas.filter(p=>p.disciplinaId===d.id && p.nota!==null).map(p=>+p.nota)];
-                let media = ns.length ? (ns.reduce((a,b)=>a+b,0)/ns.length).toFixed(1) : 'N/A';
-                let w = media!=='N/A' ? media/10*100 : 0;
-                let cls = w>=70?'bg-success': w>=50?'bg-warning':'bg-danger';
-                desempenho.innerHTML += `<div class="d-flex justify-content-between align-items-center"><p class="small mb-1">${d.nome}</p><p class="small mb-1">Média: ${media}</p></div><div class="progress mb-3"><div class="progress-bar ${cls}" style="width: ${w}%"></div></div>`;
+            data.disciplinas.forEach((d, idx) => {
+                const cor = palette[idx % palette.length];
+                let ns = [...data.trabalhos.filter(t=>t.disciplinaId===d.id && t.nota!=null).map(t=>+t.nota), ...data.provas.filter(p=>p.disciplinaId===d.id && p.nota!=null).map(p=>+p.nota)];
+                let m = ns.length ? ns.reduce((a,b)=>a+b,0)/ns.length : null;
+                let mStr = m!==null ? m.toFixed(1) : '–';
+                let pct = m!==null ? Math.round(m/10*100) : 0;
+                let color = pct>=70?'#27ae60':pct>=50?'#f39c12':'#e74c3c';
+                desempenho.innerHTML += `
+                  <div style="margin-bottom:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+                      <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="width:8px;height:8px;border-radius:50%;background:${cor};flex-shrink:0;"></div>
+                        <span style="font-size:0.82rem;font-weight:600;color:#2c3e50;">${d.nome}</span>
+                      </div>
+                      <span style="font-size:0.82rem;font-weight:700;color:${color};">${mStr}</span>
+                    </div>
+                    <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${color};"></div></div>
+                    <div style="font-size:0.68rem;color:#95a5a6;margin-top:2px;">${d.frequencia||0}% frequência · ${data.trabalhos.filter(t=>t.disciplinaId===d.id).length} trabalhos · ${data.provas.filter(p=>p.disciplinaId===d.id).length} provas</div>
+                  </div>`;
             });
-        } else desempenho.innerHTML = `<div class="empty-state"><p>Nenhuma disciplina cadastrada.</p></div>`;
+        } else {
+            desempenho.innerHTML = `<div class="pro-empty"><i class="fas fa-chart-bar"></i><p>Nenhuma disciplina cadastrada.</p></div>`;
+        }
 
-        const eventos = document.getElementById('dashboard-proximos-eventos');
-        eventos.innerHTML = '';
+        // Próximos eventos
+        const eventosEl = document.getElementById('dashboard-proximos-eventos');
+        eventosEl.innerHTML = '';
         const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const iconMap = { assignment:'fa-tasks', exam:'fa-file-alt', financeiro:'fa-dollar-sign', outros:'fa-calendar' };
+        const colorMap = { assignment:'#1abc9c', exam:'#f39c12', financeiro:'#e74c3c', outros:'#3498db' };
         const todos = [
-            ...data.trabalhos.filter(t=>t.status==='Pendente'||t.status==='Feito').map(t=>({...t, type:'assignment', date:t.entrega, title:t.titulo})),
-            ...data.provas.filter(p=>p.status==='Agendada').map(p=>({...p, type:'exam', date:p.data, title:p.conteudo})),
-            ...data.financeiro.filter(f=>f.tipo==='despesa' && f.status==='pendente').map(f=>({...f, type:'financeiro', date:f.data, title:f.descricao})),
-            ...data.eventos.map(e=>({...e}))
+            ...data.trabalhos.filter(t=>t.status==='Pendente'||t.status==='Feito').map(t=>({title:t.titulo, date:t.entrega, type:'assignment'})),
+            ...data.provas.filter(p=>p.status==='Agendada').map(p=>({title:p.conteudo, date:p.data, type:'exam'})),
+            ...data.financeiro.filter(f=>f.tipo==='despesa'&&f.status==='pendente').map(f=>({title:f.descricao, date:f.data, type:'financeiro', valor:f.valor})),
+            ...data.eventos.map(e=>({title:e.title, date:e.date, type:'outros'}))
         ];
-        todos.filter(e=>new Date(e.date+'T00:00')>=hoje).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,4).forEach(e => {
-            eventos.innerHTML += `<div class="event-item ${e.type}"><div class="d-flex justify-content-between align-items-center"><h6 class="mb-0 small">${e.title}</h6>${e.prioridade?`<span class="badge ${e.prioridade==='high'?'priority-high':e.prioridade==='medium'?'priority-medium':'priority-low'}">${e.prioridade==='high'?'Alta':e.prioridade==='medium'?'Média':'Baixa'}</span>`:''}${e.valor?`<span class="badge bg-danger">R$ ${e.valor.toFixed(2)}</span>`:''}</div><p class="mb-0 small text-muted">Data: ${new Date(e.date+'T00:00').toLocaleDateString('pt-BR')}</p></div>`;
-        });
+        const proximos = todos.filter(e=>new Date(e.date+'T00:00')>=hoje).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,5);
+        if (proximos.length) {
+            proximos.forEach(e => {
+                const d = new Date(e.date+'T00:00');
+                const dias = Math.ceil((d - hoje)/(1000*60*60*24));
+                const cor = colorMap[e.type]||'#3498db';
+                eventosEl.innerHTML += `
+                  <div class="list-row" style="padding:10px 0;">
+                    <div class="list-row-icon" style="background:${cor}18;color:${cor};width:32px;height:32px;border-radius:8px;"><i class="fas ${iconMap[e.type]||'fa-calendar'}"></i></div>
+                    <div class="list-row-body">
+                      <div class="list-row-title" style="font-size:0.8rem;">${e.title}</div>
+                      <div class="list-row-sub">${d.toLocaleDateString('pt-BR')}${e.valor?` · R$ ${e.valor.toFixed(2)}`:''}</div>
+                    </div>
+                    <span class="pill ${dias===0?'pill-danger':dias<=3?'pill-warning':'pill-neutral'}" style="font-size:0.65rem;flex-shrink:0;">${dias===0?'Hoje':dias+'d'}</span>
+                  </div>`;
+            });
+        } else {
+            eventosEl.innerHTML = `<div class="pro-empty" style="padding:20px 0;"><i class="fas fa-check-circle" style="color:#27ae60;opacity:1;"></i><p>Tudo em dia!</p></div>`;
+        }
     }
 
     async function renderDisciplinas(data) {
         const container = document.getElementById('disciplinas-lista');
         container.innerHTML = '';
-        if (!data.disciplinas.length) { container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Nova Disciplina" para começar.</p></div></div>'; return; }
-        data.disciplinas.forEach(d => {
-            let ns = [...data.trabalhos.filter(t=>t.disciplinaId===d.id && t.nota!==null).map(t=>+t.nota), ...data.provas.filter(p=>p.disciplinaId===d.id && p.nota!==null).map(p=>+p.nota)];
-            let media = ns.length ? (ns.reduce((a,b)=>a+b,0)/ns.length).toFixed(1) : 'N/A';
-            let w = media!=='N/A' ? media/10*100 : 0;
-            let cls = w>=70?'bg-success': w>=50?'bg-warning':'bg-danger';
-            container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card card-dashboard"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-3"><div><h4 class="card-title mb-0">${d.nome}</h4><p class="text-muted small">${d.professor}</p>${d.professorEmail?`<p class="text-muted small"><i class="fas fa-envelope"></i> ${d.professorEmail}</p>`:''}</div><div class="dropdown"><button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button><ul class="dropdown-menu"><li><a class="dropdown-item edit-disciplina" href="#" data-id="${d.id}">Editar</a></li><li><a class="dropdown-item delete-disciplina" href="#" data-id="${d.id}">Excluir</a></li></ul></div></div><div class="d-flex justify-content-between small text-muted mb-2"><span>Média</span><span class="avg-grade-badge ${cls} text-white">${media}</span></div><div class="progress mb-3"><div class="progress-bar ${cls}" style="width: ${w}%"></div></div><div class="d-flex justify-content-between small text-muted mb-2"><span>Frequência</span><span>${d.frequencia}%</span></div><div class="progress mb-3"><div class="progress-bar bg-primary" style="width: ${d.frequencia}%"></div></div><div class="d-flex justify-content-between"><span class="badge bg-info">${data.trabalhos.filter(t=>t.disciplinaId===d.id).length} Trabalhos</span><span class="badge bg-warning">${data.provas.filter(p=>p.disciplinaId===d.id).length} Provas</span></div></div></div></div>`;
+        if (!data.disciplinas.length) {
+            container.innerHTML = `<div class="col-12"><div class="pro-empty"><i class="fas fa-book"></i><p>Nenhuma disciplina cadastrada. Clique em "Nova Disciplina" para começar.</p></div></div>`;
+            return;
+        }
+        const palette = ['#3498db','#1abc9c','#9b59b6','#e67e22','#e74c3c','#27ae60','#2980b9','#f39c12','#8e44ad','#16a085'];
+        data.disciplinas.forEach((d, idx) => {
+            const cor = palette[idx % palette.length];
+            let ns = [...data.trabalhos.filter(t=>t.disciplinaId===d.id && t.nota!=null).map(t=>+t.nota), ...data.provas.filter(p=>p.disciplinaId===d.id && p.nota!=null).map(p=>+p.nota)];
+            let media = ns.length ? (ns.reduce((a,b)=>a+b,0)/ns.length) : null;
+            let mediaStr = media!==null ? media.toFixed(1) : '–';
+            let gradeClass = media===null?'grade-d':media>=7?'grade-a':media>=5?'grade-b':media>=3?'grade-c':'grade-d';
+            let progPct = media!==null ? Math.round(media/10*100) : 0;
+            let progColor = progPct>=70?'#27ae60':progPct>=50?'#f39c12':'#e74c3c';
+            let freq = d.frequencia || 0;
+            let freqColor = freq>=75?'#27ae60':freq>=50?'#f39c12':'#e74c3c';
+            const nTrab = data.trabalhos.filter(t=>t.disciplinaId===d.id).length;
+            const nProv = data.provas.filter(p=>p.disciplinaId===d.id).length;
+            const initials = d.nome.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+            const card = document.createElement('div');
+            card.className = 'col-md-6 col-xl-4';
+            card.innerHTML = `
+              <div class="pro-card disc-card h-100" style="--disc-color:${cor}">
+                <div class="pro-card-header">
+                  <div class="d-flex align-items-center gap-3">
+                    <div style="width:40px;height:40px;border-radius:10px;background:${cor}22;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.8rem;color:${cor};flex-shrink:0;">${initials}</div>
+                    <div>
+                      <div style="font-weight:700;font-size:0.9rem;color:#1a2332;">${d.nome}</div>
+                      <div style="font-size:0.72rem;color:#95a5a6;">${d.professor||'Sem professor'}</div>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="grade-badge ${gradeClass}">${mediaStr}</div>
+                    <div class="dropdown">
+                      <button class="btn-icon" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button>
+                      <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item edit-disciplina" href="#" data-id="${d.id}"><i class="fas fa-edit me-2 text-primary"></i>Editar</a></li>
+                        <li><a class="dropdown-item delete-disciplina text-danger" href="#" data-id="${d.id}"><i class="fas fa-trash me-2"></i>Excluir</a></li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                <div class="pro-card-body">
+                  ${d.professorEmail?`<div class="info-row"><i class="fas fa-envelope"></i><span>${d.professorEmail}</span></div>`:''}
+                  <div class="d-flex gap-3 mt-2">
+                    <div style="flex:1">
+                      <div style="font-size:0.7rem;color:#95a5a6;font-weight:600;margin-bottom:4px;">MÉDIA</div>
+                      <div class="prog-bar"><div class="prog-fill" style="width:${progPct}%;background:${progColor};"></div></div>
+                      <div style="font-size:0.72rem;color:${progColor};font-weight:700;">${mediaStr}</div>
+                    </div>
+                    <div style="flex:1">
+                      <div style="font-size:0.7rem;color:#95a5a6;font-weight:600;margin-bottom:4px;">FREQUÊNCIA</div>
+                      <div class="prog-bar"><div class="prog-fill" style="width:${freq}%;background:${freqColor};"></div></div>
+                      <div style="font-size:0.72rem;color:${freqColor};font-weight:700;">${freq}%</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="pro-card-footer">
+                  <span class="pill pill-info"><i class="fas fa-tasks"></i> ${nTrab} trabalho${nTrab!==1?'s':''}</span>
+                  <span class="pill pill-warning"><i class="fas fa-file-alt"></i> ${nProv} prova${nProv!==1?'s':''}</span>
+                  ${freq<75?`<span class="pill pill-danger" title="Frequência abaixo de 75%"><i class="fas fa-exclamation-triangle"></i> Freq. baixa</span>`:''}
+                </div>
+              </div>`;
+            container.appendChild(card);
         });
     }
 
@@ -5009,22 +5449,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 const d = data.disciplinas.find(d => d.id == did);
                 if (d) {
                     const btn = document.createElement('button');
-                    btn.className = 'btn btn-sm btn-filter-materia';
+                    btn.className = 'chip btn-filter-materia';
                     btn.dataset.materia = 'disc-' + String(did);
                     btn.dataset.materiaDyn = '1';
-                    btn.innerHTML = `<i class="fas fa-book me-1"></i>${d.nome}`;
-                    trabFilterBar.querySelector('.d-flex').appendChild(btn);
+                    btn.innerHTML = `<i class="fas fa-book"></i> ${d.nome}`;
+                    trabFilterBar.appendChild(btn);
                     btn.addEventListener('click', () => {
-                        trabFilterBar.querySelectorAll('.btn-filter-materia').forEach(b => b.classList.remove('active'));
+                        trabFilterBar.querySelectorAll('.chip, .btn-filter-materia').forEach(b => b.classList.remove('active'));
                         btn.classList.add('active');
                         renderTrabalhosFiltered(data);
                     });
                 }
             });
             // Re-wire static buttons
-            trabFilterBar.querySelectorAll('.btn-filter-materia:not([data-materia-dyn])').forEach(btn => {
+            trabFilterBar.querySelectorAll('.chip:not([data-materia-dyn]), .btn-filter-materia:not([data-materia-dyn])').forEach(btn => {
                 btn.onclick = () => {
-                    trabFilterBar.querySelectorAll('.btn-filter-materia').forEach(b => b.classList.remove('active'));
+                    trabFilterBar.querySelectorAll('.chip, .btn-filter-materia').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     renderTrabalhosFiltered(data);
                 };
@@ -5041,133 +5481,143 @@ document.addEventListener('DOMContentLoaded', function() {
         const activeFilter = activeBtn ? activeBtn.dataset.materia : 'todas';
 
         let trabalhos = data.trabalhos.sort((a,b)=>new Date(a.entrega)-new Date(b.entrega));
-
-        if (activeFilter === 'status-pendente') {
-            trabalhos = trabalhos.filter(t => t.status === 'Pendente');
-        } else if (activeFilter === 'status-feito') {
-            trabalhos = trabalhos.filter(t => t.status === 'Feito');
-        } else if (activeFilter === 'status-entregue') {
-            trabalhos = trabalhos.filter(t => t.status === 'Entregue');
-        } else if (activeFilter && activeFilter.startsWith('disc-')) {
+        if (activeFilter === 'status-pendente') trabalhos = trabalhos.filter(t=>t.status==='Pendente');
+        else if (activeFilter === 'status-feito') trabalhos = trabalhos.filter(t=>t.status==='Feito');
+        else if (activeFilter === 'status-entregue') trabalhos = trabalhos.filter(t=>t.status==='Entregue');
+        else if (activeFilter && activeFilter.startsWith('disc-')) {
             const discId = activeFilter.replace('disc-', '');
-            trabalhos = trabalhos.filter(t => String(t.disciplinaId) === discId);
+            trabalhos = trabalhos.filter(t=>String(t.disciplinaId)===discId);
         }
 
         if (!trabalhos.length) {
-            container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Nenhum trabalho encontrado para este filtro.</p></div></div>';
+            container.innerHTML = '<div class="col-12"><div class="pro-empty"><i class="fas fa-tasks"></i><p>Nenhum trabalho encontrado para este filtro.</p></div></div>';
             return;
         }
 
-        // Identifica o trabalho pendente/feito com entrega mais proxima
         const _hojeT = new Date(); _hojeT.setHours(0,0,0,0);
-        const _trabPend = trabalhos.filter(t => t.status === 'Pendente' || t.status === 'Feito');
+        const _trabPend = trabalhos.filter(t=>t.status==='Pendente'||t.status==='Feito');
         let _proximoTrabId = null;
         if (_trabPend.length) {
-            const _fut = _trabPend.filter(t => new Date(t.entrega+'T00:00') >= _hojeT);
+            const _fut = _trabPend.filter(t=>new Date(t.entrega+'T00:00')>=_hojeT);
             if (_fut.length) { _fut.sort((a,b)=>new Date(a.entrega+'T00:00')-new Date(b.entrega+'T00:00')); _proximoTrabId = _fut[0].id; }
             else { _trabPend.sort((a,b)=>new Date(b.entrega+'T00:00')-new Date(a.entrega+'T00:00')); _proximoTrabId = _trabPend[0].id; }
         }
 
         trabalhos.forEach(t => {
             const disc = data.disciplinas.find(d=>d.id===t.disciplinaId);
-            let tipoBadge = '';
-            if (t.tipo === 'individual') {
-                tipoBadge = `<span class="badge badge-tipo-trabalho individual"><i class="fas fa-user me-1"></i>Individual</span>`;
-            } else if (t.tipo === 'grupo') {
-                tipoBadge = `<span class="badge badge-tipo-trabalho grupo"><i class="fas fa-users me-1"></i>Em grupo</span>`;
-            }
-            let participantesHtml = '';
-            if (t.tipo === 'grupo' && t.participantes) {
-                const lista = t.participantes.split('\n').filter(p => p.trim() !== '');
-                if (lista.length > 0) {
-                    participantesHtml = '<ul class="participantes-list">';
-                    lista.forEach(p => {
-                        participantesHtml += `<li><i class="fas fa-user"></i> ${p.trim()}</li>`;
-                    });
-                    participantesHtml += '</ul>';
-                }
+            const isUrgent = t.id === _proximoTrabId && (t.status==='Pendente'||t.status==='Feito');
+            const statusMap = { Pendente: { pill:'pill-warning', icon:'fa-clock', label:'Pendente' }, Feito: { pill:'pill-info', icon:'fa-check', label:'Feito' }, Entregue: { pill:'pill-success', icon:'fa-check-double', label:'Entregue' } };
+            const st = statusMap[t.status] || statusMap['Pendente'];
+            const prioMap = { high:'pill-danger', medium:'pill-warning', low:'pill-neutral' };
+            const prioLabel = { high:'Alta', medium:'Média', low:'Baixa' };
+            const entrDate = new Date(t.entrega+'T00:00');
+            const diasRestantes = Math.ceil((entrDate - _hojeT)/(1000*60*60*24));
+            let diasHtml = '';
+            if (t.status!=='Entregue') {
+                if (diasRestantes < 0) diasHtml = `<span class="pill pill-danger"><i class="fas fa-exclamation-circle"></i> Atrasado ${Math.abs(diasRestantes)}d</span>`;
+                else if (diasRestantes === 0) diasHtml = `<span class="pill pill-danger"><i class="fas fa-fire"></i> Hoje!</span>`;
+                else if (diasRestantes <= 3) diasHtml = `<span class="pill pill-warning"><i class="fas fa-clock"></i> ${diasRestantes}d</span>`;
+                else diasHtml = `<span class="pill pill-neutral">${diasRestantes}d</span>`;
             }
             const attachmentHtml = renderAnexoIcon(t);
-            const _isProxT = t.id === _proximoTrabId && (t.status === 'Pendente' || t.status === 'Feito');
             const card = document.createElement('div');
-            card.className = 'col-md-6 col-lg-4';
+            card.className = 'col-md-6 col-xl-4';
             card.innerHTML = `
-                <div class="card card-dashboard item-card${_isProxT ? ' card-proximo-urgente' : ''}">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title mb-0">${t.titulo}</h5>
-                            <div>
-                                <span class="badge ${t.prioridade==='high'?'priority-high':t.prioridade==='medium'?'priority-medium':'priority-low'}">${t.prioridade==='high'?'Alta':t.prioridade==='medium'?'Média':'Baixa'}</span>
-                            </div>
-                        </div>
-                        <p class="text-muted small mb-1"><i class="fas fa-book"></i> <strong>Disciplina:</strong> ${disc?disc.nome:'N/A'}</p>
-                        <p class="text-muted small mb-1"><i class="fas fa-chalkboard-teacher"></i> <strong>Professor:</strong> ${disc?disc.professor:'N/A'}</p>
-                        <div class="mb-2">${tipoBadge}</div>
-                        ${participantesHtml}
-                        <p class="text-muted small mb-1"><i class="fas fa-calendar"></i> <strong>Entrega:</strong> ${new Date(t.entrega+'T00:00').toLocaleDateString('pt-BR')}</p>
-                        <p class="text-muted small mb-1"><span class="badge ${t.status==='Pendente'?'badge-status-pendente':t.status==='Feito'?'badge-status-feito':'badge-status-entregue'}">${t.status==='Pendente'?'⏳ Pendente':t.status==='Feito'?'✅ Feito':'📬 Entregue'}</span></p>
-                        <div class="status-btn-group mb-2">
-                            <button class="btn btn-status-pendente ${t.status==='Pendente'?'btn-status-active':''} change-trabalho-status" data-id="${t.id}" data-status="Pendente" title="Marcar como Pendente">⏳ Pendente</button>
-                            <button class="btn btn-status-feito ${t.status==='Feito'?'btn-status-active':''} change-trabalho-status" data-id="${t.id}" data-status="Feito" title="Marcar como Feito">✅ Feito</button>
-                            <button class="btn btn-status-entregue ${t.status==='Entregue'?'btn-status-active':''} change-trabalho-status" data-id="${t.id}" data-status="Entregue" title="Marcar como Entregue">📬 Entregue</button>
-                        </div>
-                        ${t.observacoes ? `<p class="card-text trabalho-obs-preview" data-id="${t.id}" title="Clique para ver observação completa" style="cursor:pointer;">${t.observacoes.substring(0,80)}${t.observacoes.length>80?'<span class="text-accent ms-1" style="color:var(--accent);font-size:0.78rem;font-weight:600;">…ver mais</span>':''}</p>` : ''}
-                        ${attachmentHtml ? `<div class="attachment-area mb-2">${attachmentHtml}</div>` : ''}
-                        <div class="card-action-bar">
-                            <button class="btn btn-sm btn-edit-card edit-trabalho" data-id="${t.id}" title="Editar trabalho"><i class="fas fa-edit"></i> Editar</button>
-                            <button class="btn btn-sm btn-attach-file quick-attach-btn" data-id="${t.id}" data-type="trabalhos" title="Adicionar arquivo"><i class="fas fa-paperclip"></i> Anexar</button>
-                            <button class="btn btn-sm btn-delete-card delete-trabalho" data-id="${t.id}" title="Excluir trabalho"><i class="fas fa-trash"></i> Excluir</button>
-                        </div>
-                    </div>
+              <div class="pro-card h-100 ${isUrgent?'card-urgent':''}">
+                <div class="pro-card-header">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-weight:700;font-size:0.88rem;color:#1a2332;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.titulo}</div>
+                    <div style="font-size:0.72rem;color:#95a5a6;">${disc?disc.nome:'Sem disciplina'}</div>
+                  </div>
+                  <div class="d-flex align-items-center gap-1 ms-2 flex-shrink-0">
+                    ${diasHtml}
+                    <span class="pill ${prioMap[t.prioridade]||'pill-neutral'}">${prioLabel[t.prioridade]||'-'}</span>
+                  </div>
                 </div>
-            `;
+                <div class="pro-card-body">
+                  <div class="info-row"><i class="fas fa-calendar-day"></i><span>Entrega: <strong>${entrDate.toLocaleDateString('pt-BR')}</strong></span></div>
+                  ${disc?`<div class="info-row"><i class="fas fa-chalkboard-teacher"></i><span>${disc.professor||'–'}</span></div>`:''}
+                  ${t.tipo?`<div class="info-row"><i class="fas fa-${t.tipo==='grupo'?'users':'user'}"></i><span>${t.tipo==='grupo'?'Em grupo':'Individual'}</span></div>`:''}
+                  ${t.observacoes?`<div style="font-size:0.78rem;color:#7f8c8d;margin-top:8px;padding:8px;background:#f8f9fa;border-radius:8px;line-height:1.5;">${t.observacoes.substring(0,120)}${t.observacoes.length>120?'…':''}</div>`:''}
+                  ${attachmentHtml?`<div class="mt-2 d-flex gap-2 flex-wrap">${attachmentHtml}</div>`:''}
+                  <div class="d-flex gap-2 mt-10 flex-wrap" style="margin-top:10px;">
+                    <button class="btn btn-sm py-1 change-trabalho-status ${t.status==='Pendente'?'btn-warning':'btn-outline-warning'}" data-id="${t.id}" data-status="Pendente" style="font-size:0.72rem;border-radius:6px;">⏳ Pendente</button>
+                    <button class="btn btn-sm py-1 change-trabalho-status ${t.status==='Feito'?'btn-info text-white':'btn-outline-info'}" data-id="${t.id}" data-status="Feito" style="font-size:0.72rem;border-radius:6px;">✅ Feito</button>
+                    <button class="btn btn-sm py-1 change-trabalho-status ${t.status==='Entregue'?'btn-success':'btn-outline-success'}" data-id="${t.id}" data-status="Entregue" style="font-size:0.72rem;border-radius:6px;">📬 Entregue</button>
+                  </div>
+                </div>
+                <div class="pro-card-footer">
+                  <span class="pill ${st.pill}"><i class="fas ${st.icon}"></i> ${st.label}</span>
+                  <div class="ms-auto card-actions">
+                    <button class="btn-icon edit edit-trabalho" data-id="${t.id}" title="Editar"><i class="fas fa-edit"></i></button>
+                    <button class="btn-icon attach quick-attach-btn" data-id="${t.id}" data-type="trabalhos" title="Anexar arquivo"><i class="fas fa-paperclip"></i></button>
+                    <button class="btn-icon delete delete-trabalho" data-id="${t.id}" title="Excluir"><i class="fas fa-trash"></i></button>
+                  </div>
+                </div>
+              </div>`;
             container.appendChild(card);
         });
-    } // end renderTrabalhosFiltered
+    }
 
     async function renderProvas(data) {
         const container = document.getElementById('provas-cards');
         container.innerHTML = '';
         if (!data.provas.length) {
-            container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Nenhuma prova cadastrada. Clique em "Nova Prova".</p></div></div>';
+            container.innerHTML = `<div class="col-12"><div class="pro-empty"><i class="fas fa-file-alt"></i><p>Nenhuma prova cadastrada. Clique em "Nova Prova".</p></div></div>`;
             return;
         }
-        // Identifica a prova agendada com data mais proxima
         const _hojeP = new Date(); _hojeP.setHours(0,0,0,0);
-        const _provAg = data.provas.filter(p => p.status === 'Agendada');
+        const _provAg = data.provas.filter(p=>p.status==='Agendada');
         let _proximaProvaId = null;
         if (_provAg.length) {
-            const _futP = _provAg.filter(p => new Date(p.data+'T00:00') >= _hojeP);
+            const _futP = _provAg.filter(p=>new Date(p.data+'T00:00')>=_hojeP);
             if (_futP.length) { _futP.sort((a,b)=>new Date(a.data+'T00:00')-new Date(b.data+'T00:00')); _proximaProvaId = _futP[0].id; }
             else { _provAg.sort((a,b)=>new Date(b.data+'T00:00')-new Date(a.data+'T00:00')); _proximaProvaId = _provAg[0].id; }
         }
-
         data.provas.sort((a,b)=>new Date(a.data)-new Date(b.data)).forEach(p => {
             const disc = data.disciplinas.find(d=>d.id===p.disciplinaId);
+            const isUrgent = p.id===_proximaProvaId && p.status==='Agendada';
             const attachmentHtml = p.anexo ? renderAnexoIcon(p) : '';
-            const _isProxP = p.id === _proximaProvaId && p.status === 'Agendada';
+            const dataProva = new Date(p.data+'T00:00');
+            const diasRestantes = Math.ceil((dataProva - _hojeP)/(1000*60*60*24));
+            let diasHtml = '';
+            if (p.status==='Agendada') {
+                if (diasRestantes<0) diasHtml=`<span class="pill pill-neutral"><i class="fas fa-calendar-check"></i> Passou</span>`;
+                else if (diasRestantes===0) diasHtml=`<span class="pill pill-danger"><i class="fas fa-fire"></i> Hoje!</span>`;
+                else if (diasRestantes<=3) diasHtml=`<span class="pill pill-warning"><i class="fas fa-clock"></i> ${diasRestantes}d</span>`;
+                else diasHtml=`<span class="pill pill-neutral">${diasRestantes}d</span>`;
+            }
+            const nota = p.nota!==null&&p.nota!==undefined ? parseFloat(p.nota) : null;
+            const notaHtml = nota!==null ? `<div class="grade-badge ${nota>=7?'grade-a':nota>=5?'grade-b':nota>=3?'grade-c':'grade-d'}" style="width:48px;height:48px;font-size:1rem;">${nota.toFixed(1)}</div>` : `<div class="grade-badge grade-d" style="width:48px;height:48px;font-size:0.75rem;">–</div>`;
             const card = document.createElement('div');
-            card.className = 'col-md-6 col-lg-4';
+            card.className = 'col-md-6 col-xl-4';
             card.innerHTML = `
-                <div class="card card-dashboard item-card${_isProxP ? ' card-proximo-urgente' : ''}">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title mb-0">${p.conteudo}</h5>
-                            <span class="badge ${p.status==='Agendada'?'bg-warning text-dark':'bg-success'}">${p.status}</span>
-                        </div>
-                        <p class="text-muted small mb-1"><i class="fas fa-book"></i> <strong>Disciplina:</strong> ${disc?disc.nome:'N/A'}</p>
-                        <p class="text-muted small mb-1"><i class="fas fa-chalkboard-teacher"></i> <strong>Professor:</strong> ${disc?disc.professor:'N/A'}</p>
-                        <p class="text-muted small mb-1"><i class="fas fa-calendar"></i> <strong>Data:</strong> ${new Date(p.data+'T00:00').toLocaleDateString('pt-BR')} ${p.hora?p.hora:''}</p>
-                        <p class="text-muted small mb-2"><strong>Nota:</strong> ${p.nota!==null?p.nota.toFixed(1):'-'}</p>
-                        ${attachmentHtml ? `<div class="attachment-area mb-2">${attachmentHtml}</div>` : ''}
-                        <div class="card-action-bar">
-                            <button class="btn btn-sm btn-edit-card edit-prova" data-id="${p.id}" title="Editar prova"><i class="fas fa-edit"></i> Editar</button>
-                            <button class="btn btn-sm btn-attach-file quick-attach-btn" data-id="${p.id}" data-type="provas" title="Adicionar arquivo"><i class="fas fa-paperclip"></i> Anexar</button>
-                            <button class="btn btn-sm btn-delete-card delete-prova" data-id="${p.id}" title="Excluir prova"><i class="fas fa-trash"></i> Excluir</button>
-                        </div>
-                    </div>
+              <div class="pro-card h-100 ${isUrgent?'card-urgent':''}">
+                <div class="pro-card-header">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-weight:700;font-size:0.88rem;color:#1a2332;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.conteudo}</div>
+                    <div style="font-size:0.72rem;color:#95a5a6;">${disc?disc.nome:'Sem disciplina'}</div>
+                  </div>
+                  <div class="ms-2 flex-shrink-0">${notaHtml}</div>
                 </div>
-            `;
+                <div class="pro-card-body">
+                  <div class="info-row"><i class="fas fa-calendar"></i><span><strong>${dataProva.toLocaleDateString('pt-BR')}</strong>${p.hora?` às ${p.hora}`:''}</span></div>
+                  ${disc?`<div class="info-row"><i class="fas fa-chalkboard-teacher"></i><span>${disc.professor||'–'}</span></div>`:''}
+                  ${p.local?`<div class="info-row"><i class="fas fa-map-marker-alt"></i><span>${p.local}</span></div>`:''}
+                  <div class="d-flex gap-2 mt-2 align-items-center flex-wrap">
+                    ${diasHtml}
+                    <span class="pill ${p.status==='Agendada'?'pill-warning':'pill-success'}">${p.status==='Agendada'?'⏰ Agendada':'✅ Realizada'}</span>
+                  </div>
+                  ${attachmentHtml?`<div class="mt-2 d-flex gap-2">${attachmentHtml}</div>`:''}
+                </div>
+                <div class="pro-card-footer">
+                  <div class="ms-auto card-actions">
+                    <button class="btn-icon edit edit-prova" data-id="${p.id}" title="Editar"><i class="fas fa-edit"></i></button>
+                    <button class="btn-icon attach quick-attach-btn" data-id="${p.id}" data-type="provas" title="Anexar arquivo"><i class="fas fa-paperclip"></i></button>
+                    <button class="btn-icon delete delete-prova" data-id="${p.id}" title="Excluir"><i class="fas fa-trash"></i></button>
+                  </div>
+                </div>
+              </div>`;
             container.appendChild(card);
         });
     }
@@ -5417,7 +5867,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 linkHtml = `<a href="${linkEscaped}" target="_blank" rel="noopener" class="livro-link-chip d-block mt-2"><i class="fas fa-external-link-alt"></i><span class="text-truncate">${l.link}</span></a>`;
             }
 
-            container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card livro-card card-dashboard"><div class="card-body">
+            container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="pro-card livro-card"><div class="pro-card-body" style="padding:14px 18px;">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <h5 class="card-title">${l.titulo}</h5>
                     <div class="dropdown"><button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button>
@@ -5469,34 +5919,29 @@ document.addEventListener('DOMContentLoaded', function() {
     async function renderNotas(data) {
         const container = document.getElementById('notas-lista');
         container.innerHTML = '';
-        // Rebuild filter buttons based on disciplinas
         const filterBar = document.getElementById('notasFilterBar');
         if (filterBar) {
-            // Keep first two static buttons, remove old dynamic ones
-            const existing = filterBar.querySelectorAll('.btn-filter-materia[data-materia-dyn]');
-            existing.forEach(b => b.remove());
-            // Get disciplinas present in notes
+            filterBar.querySelectorAll('.chip[data-materia-dyn]').forEach(b => b.remove());
             const notasDisciplinas = new Set(data.notas.filter(n => n.tipo !== 'documento' && n.disciplinaId).map(n => n.disciplinaId));
             notasDisciplinas.forEach(did => {
                 const d = data.disciplinas.find(d => d.id == did);
                 if (d) {
                     const btn = document.createElement('button');
-                    btn.className = 'btn btn-sm btn-filter-materia';
+                    btn.className = 'chip btn-filter-materia';
                     btn.dataset.materia = String(did);
                     btn.dataset.materiaDyn = '1';
-                    btn.innerHTML = `<i class="fas fa-book me-1"></i>${d.nome}`;
-                    filterBar.querySelector('.d-flex').appendChild(btn);
+                    btn.innerHTML = `<i class="fas fa-book"></i> ${d.nome}`;
+                    filterBar.appendChild(btn);
                     btn.addEventListener('click', () => {
-                        filterBar.querySelectorAll('.btn-filter-materia').forEach(b => b.classList.remove('active'));
+                        filterBar.querySelectorAll('.chip, .btn-filter-materia').forEach(b => b.classList.remove('active'));
                         btn.classList.add('active');
                         renderNotasFiltered(data);
                     });
                 }
             });
-            // Re-wire static buttons
-            filterBar.querySelectorAll('.btn-filter-materia:not([data-materia-dyn])').forEach(btn => {
+            filterBar.querySelectorAll('.chip:not([data-materia-dyn]), .btn-filter-materia:not([data-materia-dyn])').forEach(btn => {
                 btn.onclick = () => {
-                    filterBar.querySelectorAll('.btn-filter-materia').forEach(b => b.classList.remove('active'));
+                    filterBar.querySelectorAll('.chip, .btn-filter-materia').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     renderNotasFiltered(data);
                 };
@@ -5509,43 +5954,84 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('notas-lista');
         container.innerHTML = '';
         const filterBar = document.getElementById('notasFilterBar');
-        const activeBtn = filterBar ? filterBar.querySelector('.btn-filter-materia.active') : null;
+        const activeBtn = filterBar ? filterBar.querySelector('.btn-filter-materia.active, .chip.active') : null;
         const activeFilter = activeBtn ? activeBtn.dataset.materia : 'todas';
 
         let notas = data.notas.filter(n => n.tipo !== 'documento').sort((a,b)=>new Date(b.dataCriacao+'T12:00:00') - new Date(a.dataCriacao+'T12:00:00'));
 
-        if (activeFilter === 'sem-materia') {
-            notas = notas.filter(n => !n.disciplinaId);
-        } else if (activeFilter !== 'todas') {
-            notas = notas.filter(n => String(n.disciplinaId) === activeFilter);
-        }
+        if (activeFilter === 'sem-materia') notas = notas.filter(n => !n.disciplinaId);
+        else if (activeFilter !== 'todas') notas = notas.filter(n => String(n.disciplinaId) === activeFilter);
 
-        if (!notas.length) { container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Nenhuma nota encontrada para este filtro.</p></div></div>'; return; }
-        notas.forEach(n => {
-            let dataCri = new Date(n.dataCriacao+'T12:00:00').toLocaleDateString('pt-BR');
+        if (!notas.length) {
+            container.innerHTML = '<div class="col-12"><div class="pro-empty"><i class="fas fa-sticky-note"></i><p>Nenhuma nota encontrada para este filtro.</p></div></div>';
+            return;
+        }
+        const palette = ['#3498db','#1abc9c','#9b59b6','#e67e22','#e74c3c','#27ae60','#f39c12','#8e44ad'];
+        notas.forEach((n, idx) => {
             const disc = n.disciplinaId ? data.disciplinas.find(d => d.id == n.disciplinaId) : null;
-            const materiaTag = disc ? `<span class="nota-materia-badge"><i class="fas fa-graduation-cap"></i>${disc.nome}</span><br>` : '';
+            const cor = disc ? palette[data.disciplinas.findIndex(d=>d.id==disc.id) % palette.length] : '#95a5a6';
+            const dataCri = new Date(n.dataCriacao+'T12:00:00').toLocaleDateString('pt-BR');
+            const edited = n.dataEdicao && n.dataEdicao !== n.dataCriacao;
+            let _allAnexos = (n.anexos && n.anexos.length) ? n.anexos : (n.htmlAnexo ? [{nome:n.htmlAnexoNome||'arquivo.html',tipo:'text/html'}] : []);
+            let _anexoBadges = _allAnexos.map((a,i)=>{
+                let ic='fa-file',cc='#95a5a6';
+                if(a.tipo==='text/html'||(a.nome&&a.nome.endsWith('.html'))){ic='fa-file-code';cc='#f39c12';}
+                else if(a.tipo==='application/pdf'||(a.nome&&a.nome.endsWith('.pdf'))){ic='fa-file-pdf';cc='#e74c3c';}
+                else if((a.tipo&&a.tipo.includes('word'))||(a.nome&&a.nome.endsWith('.docx'))){ic='fa-file-word';cc='#3498db';}
+                else if(a.tipo&&a.tipo.startsWith('image/')){ic='fa-image';cc='#27ae60';}
+                const nm=(a.nome||'arquivo').replace(/"/g,'&quot;').substring(0,20);
+                return `<button class="chip nota-abrir-anexo" data-notaid="${n.id}" data-idx="${i}" style="font-size:0.65rem;padding:3px 8px;"><i class="fas ${ic}" style="color:${cc};"></i> ${nm}</button>`;
+            }).join('');
+            const _linkBadge = n.link ? `<a href="${n.link.replace(/"/g,'&quot;')}" target="_blank" rel="noopener" class="chip" style="font-size:0.65rem;padding:3px 8px;text-decoration:none;" onclick="event.stopPropagation()"><i class="fas fa-external-link-alt" style="color:#3498db;"></i> Link</a>` : '';
+            const card = document.createElement('div');
+            card.className = 'col-md-6 col-xl-4';
             if (n.imagem) {
-                container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-card card-dashboard" data-id="${n.id}"><div class="card-body"><div class="image-note-badge"><i class="fas fa-image"></i></div>${materiaTag}<div class="d-flex justify-content-between align-items-start mb-3"><h5 class="card-title">${n.titulo}</h5><div class="nota-acoes"><button class="btn btn-sm btn-outline-primary fullscreen-nota" data-id="${n.id}"><i class="fas fa-expand"></i></button><button class="btn btn-sm btn-outline-danger delete-nota" data-id="${n.id}"><i class="fas fa-trash"></i></button></div></div><div class="text-center"><img src="${n.imagem}" class="nota-imagem-preview" alt="${n.titulo}"></div>${n.conteudo?`<p class="card-text mt-2 small">${n.conteudo}</p>`:''}<div class="mt-3"><small class="nota-data">Criado em: ${dataCri}</small></div><button class="btn btn-sm btn-primary mt-2 view-image-btn" data-imagem="${n.imagem}" data-titulo="${n.titulo}"><i class="fas fa-eye"></i> Visualizar</button></div></div></div>`;
+                card.innerHTML = `
+                  <div class="pro-card nota-card h-100" data-id="${n.id}" style="cursor:pointer;">
+                    <div class="pro-card-header" style="border-left:3px solid ${cor};padding-left:14px;">
+                      <div style="flex:1;min-width:0;">
+                        ${disc?`<div style="font-size:0.65rem;font-weight:700;color:${cor};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">${disc.nome}</div>`:''}
+                        <div style="font-weight:700;font-size:0.85rem;color:#1a2332;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n.titulo}</div>
+                      </div>
+                      <span class="pill pill-info" style="font-size:0.63rem;flex-shrink:0;"><i class="fas fa-image"></i> Imagem</span>
+                    </div>
+                    <div class="pro-card-body" style="padding:10px 18px;">
+                      <div class="text-center mb-2"><img src="${n.imagem}" style="max-width:100%;max-height:140px;border-radius:8px;object-fit:cover;" alt="${n.titulo}"></div>
+                      ${n.conteudo?`<div style="font-size:0.78rem;color:#7f8c8d;">${n.conteudo.substring(0,80)}</div>`:''}
+                    </div>
+                    <div class="pro-card-footer">
+                      <span style="font-size:0.7rem;color:#95a5a6;">${dataCri}</span>
+                      <div class="ms-auto card-actions">
+                        <button class="btn-icon view-image-btn" data-imagem="${n.imagem}" data-titulo="${n.titulo}" title="Visualizar"><i class="fas fa-eye"></i></button>
+                        <button class="btn-icon delete delete-nota" data-id="${n.id}" title="Excluir"><i class="fas fa-trash"></i></button>
+                      </div>
+                    </div>
+                  </div>`;
             } else {
-                let preview = n.conteudo.length > 150 ? n.conteudo.substring(0,150)+'...' : n.conteudo;
-                const dataInfo = n.dataEdicao && n.dataEdicao !== n.dataCriacao
-                    ? `<small class="nota-data">Criado: ${dataCri} &nbsp;|&nbsp; <span class="text-warning"><i class="fas fa-pen fa-xs"></i> Editado: ${new Date(n.dataEdicao+'T12:00:00').toLocaleDateString('pt-BR')}</span></small>`
-                    : `<small class="nota-data">Criado em: ${dataCri}</small>`;
-                                // build attachment badges (use nota-id + index, never embed base64 in HTML)
-                let _allAnexos = (n.anexos && n.anexos.length) ? n.anexos : (n.htmlAnexo ? [{nome:n.htmlAnexoNome||'arquivo.html',tipo:'text/html'}] : []);
-                let _anexoBadges = _allAnexos.map(function(a,idx){
-                    let ic='fa-file te-secondary';
-                    if(a.tipo==='text/html'||(a.nome&&a.nome.endsWith('.html')))ic='fa-file-code text-warning';
-                    else if(a.tipo==='application/pdf'||(a.nome&&a.nome.endsWith('.pdf')))ic='fa-file-pdf text-danger';
-                    else if((a.tipo&&a.tipo.includes('word'))||(a.nome&&a.nome.endsWith('.docx')))ic='fa-file-word text-primary';
-                    else if(a.tipo&&a.tipo.startsWith('image/'))ic='fa-image text-success';
-                    const nm=(a.nome||'arquivo').replace(/"/g,'&quot;');
-                    return '<button class="btn btn-sm btn-outline-secondary me-1 mt-1 nota-abrir-anexo" data-notaid="'+n.id+'" data-idx="'+idx+'" title="'+nm+'"><i class="fas '+ic+' me-1"></i>'+nm+'</button>';
-                }).join('');
-                const _linkBadge = n.link ? '<a href="'+n.link.replace(/"/g,'&quot;')+'" target="_blank" rel="noopener" class="btn btn-sm btn-outline-info me-1 mt-1" onclick="event.stopPropagation()"><i class="fas fa-link me-1"></i>Link</a>' : '';
-container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-card card-dashboard" data-id="${n.id}"><div class="card-body">${materiaTag}<div class="d-flex justify-content-between align-items-start mb-3"><h5 class="card-title">${n.titulo}</h5><div class="nota-acoes"><button class="btn btn-sm btn-outline-success edit-nota" data-id="${n.id}" title="Editar nota"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline-primary fullscreen-nota" data-id="${n.id}" title="Tela cheia"><i class="fas fa-expand"></i></button><button class="btn btn-sm btn-outline-danger delete-nota" data-id="${n.id}" title="Excluir nota"><i class="fas fa-trash"></i></button></div></div><div class="nota-conteudo"><p class="card-text">${preview.replace(/\n/g,'<br>')}</p></div><div class="mt-3">${dataInfo}</div><div class="mt-1">${_linkBadge}${_anexoBadges}</div></div></div></div>`;
+                const preview = (n.conteudo||'').length > 140 ? (n.conteudo||'').substring(0,140)+'…' : (n.conteudo||'');
+                card.innerHTML = `
+                  <div class="pro-card nota-card h-100" data-id="${n.id}" style="cursor:pointer;">
+                    <div class="pro-card-header" style="border-left:3px solid ${cor};padding-left:14px;">
+                      <div style="flex:1;min-width:0;">
+                        ${disc?`<div style="font-size:0.65rem;font-weight:700;color:${cor};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">${disc.nome}</div>`:''}
+                        <div style="font-weight:700;font-size:0.85rem;color:#1a2332;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n.titulo}</div>
+                      </div>
+                      <div class="card-actions ms-2 flex-shrink-0">
+                        <button class="btn-icon edit edit-nota" data-id="${n.id}" title="Editar"><i class="fas fa-edit"></i></button>
+                        <button class="btn-icon fullscreen-nota" data-id="${n.id}" title="Expandir"><i class="fas fa-expand-alt"></i></button>
+                        <button class="btn-icon delete delete-nota" data-id="${n.id}" title="Excluir"><i class="fas fa-trash"></i></button>
+                      </div>
+                    </div>
+                    <div class="pro-card-body" style="padding:10px 18px;flex:1;">
+                      <div style="font-size:0.8rem;color:#566574;line-height:1.6;white-space:pre-wrap;">${preview.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+                    </div>
+                    <div class="pro-card-footer">
+                      <span style="font-size:0.68rem;color:#95a5a6;"><i class="fas fa-calendar fa-xs me-1"></i>${dataCri}${edited?` <i class="fas fa-pen fa-xs" style="color:#f39c12;" title="Editado"></i>`:''}</span>
+                      <div class="ms-auto d-flex gap-1 flex-wrap">${_linkBadge}${_anexoBadges}</div>
+                    </div>
+                  </div>`;
             }
+            container.appendChild(card);
         });
     }
 
@@ -5717,9 +6203,48 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
     async function renderLinks(data) {
         const container = document.getElementById('links-lista');
         container.innerHTML = '';
-        if (!data.links.length) { container.innerHTML = '<div class="col-12"><div class="empty-state card-dashboard p-4"><p>Clique em "Novo Link".</p></div></div>'; return; }
+        if (!data.links.length) {
+            container.innerHTML = `<div class="col-12"><div class="pro-empty"><i class="fas fa-link"></i><p>Nenhum link salvo. Clique em "Novo Link" para adicionar.</p></div></div>`;
+            return;
+        }
+        const catColors = { 'Estudo':'#3498db','Pesquisa':'#9b59b6','Institucional':'#1abc9c','Notícias':'#e67e22','Outros':'#7f8c8d' };
+        // Group by category
+        const grouped = {};
         data.links.forEach(l => {
-            container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card link-card card-dashboard"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-3"><h5 class="card-title">${l.titulo}</h5><div class="dropdown"><button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button><ul class="dropdown-menu"><li><a class="dropdown-item edit-link" href="#" data-id="${l.id}">Editar</a></li><li><a class="dropdown-item delete-link" href="#" data-id="${l.id}">Excluir</a></li></ul></div></div><p class="link-url">${l.url}</p>${l.categoria?`<span class="badge bg-secondary">${l.categoria}</span>`:''}${l.descricao?`<p class="card-text mt-2 small">${l.descricao}</p>`:''}<div class="mt-3"><a href="${l.url}" target="_blank" class="btn btn-sm btn-primary"><i class="fas fa-external-link-alt"></i> Acessar</a></div></div></div></div>`;
+            const cat = l.categoria || 'Outros';
+            if (!grouped[cat]) grouped[cat] = [];
+            grouped[cat].push(l);
+        });
+        Object.entries(grouped).forEach(([cat, links]) => {
+            const col = document.createElement('div');
+            col.className = 'col-12';
+            const cor = catColors[cat] || '#7f8c8d';
+            let rowsHtml = links.map(l => `
+              <div class="list-row">
+                <div class="list-row-icon" style="background:${cor}18;color:${cor};"><i class="fas fa-link"></i></div>
+                <div class="list-row-body">
+                  <div class="list-row-title">${l.titulo}</div>
+                  <div class="list-row-sub" style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.url}</div>
+                  ${l.descricao?`<div style="font-size:0.72rem;color:#aab;">${l.descricao.substring(0,80)}</div>`:''}
+                </div>
+                <div class="d-flex gap-2 align-items-center ms-auto flex-shrink-0">
+                  <a href="${l.url}" target="_blank" class="btn-icon" title="Abrir link" style="text-decoration:none;color:${cor};border-color:${cor}18;background:${cor}10;"><i class="fas fa-external-link-alt"></i></a>
+                  <button class="btn-icon edit edit-link" data-id="${l.id}" title="Editar"><i class="fas fa-edit"></i></button>
+                  <button class="btn-icon delete delete-link" data-id="${l.id}" title="Excluir"><i class="fas fa-trash"></i></button>
+                </div>
+              </div>`).join('');
+            col.innerHTML = `
+              <div class="pro-card mb-3">
+                <div class="pro-card-header">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:10px;height:10px;border-radius:50%;background:${cor};flex-shrink:0;"></div>
+                    <span style="font-weight:700;font-size:0.85rem;color:#1a2332;">${cat}</span>
+                    <span class="pill pill-neutral" style="font-size:0.65rem;">${links.length}</span>
+                  </div>
+                </div>
+                ${rowsHtml}
+              </div>`;
+            container.appendChild(col);
         });
     }
 
