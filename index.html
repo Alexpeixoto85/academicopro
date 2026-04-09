@@ -2,7 +2,10 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#1a2332">
   <title>Acadêmico Pro - Controle Universitário</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -1002,16 +1005,198 @@
     }
     .card-urgent .pro-card-header { background: linear-gradient(135deg, #fdeded, #fff); }
 
-    /* Ajuste de responsividade do sistema antigo com novo layout */
+    /* ===== BOTTOM NAV MOBILE ===== */
+    .mobile-bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: white;
+      border-top: 1px solid #eef0f3;
+      padding: 6px 0 env(safe-area-inset-bottom, 6px);
+      z-index: 900;
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+    }
+    .mobile-bottom-nav-inner {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+    .mob-nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+      color: #95a5a6;
+      min-width: 52px;
+      font-family: 'Poppins', sans-serif;
+      transition: color 0.15s;
+    }
+    .mob-nav-btn i { font-size: 1.05rem; }
+    .mob-nav-btn span { font-size: 0.58rem; font-weight: 600; letter-spacing: 0.02em; }
+    .mob-nav-btn.active { color: #1abc9c; }
+    .mob-nav-btn.active i { transform: translateY(-1px); }
+    .mob-nav-fab {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1abc9c, #16a085);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 1.3rem;
+      border: none; cursor: pointer;
+      box-shadow: 0 4px 14px rgba(26,188,156,0.45);
+      margin-top: -18px;
+    }
     @media (max-width: 768px) {
-      .sidebar { transform: translateX(-100%); }
-      .sidebar.open { transform: translateX(0); }
+      .mobile-bottom-nav { display: block; }
+    }
+
+    /* ===== CARD EVENTO — estreito no desktop ===== */
+    #next-event-container {
+      max-width: 520px;
+    }
+
+    /* ===== MOBILE TOTAL ===== */
+    @media (max-width: 768px) {
+      /* Sidebar: fora da tela, desliza ao abrir */
+      .sidebar { transform: translateX(-100%); width: 240px !important; min-width: 240px !important; }
+      .sidebar.open { transform: translateX(0); box-shadow: 4px 0 20px rgba(0,0,0,0.25); }
       .sidebar-overlay.open { display: block; }
-      .main-area { margin-left: 0; }
-      .app-container { padding: 16px; }
-      .top-header { padding: 0 16px; }
+      .sidebar.collapsed { transform: translateX(-100%); }
+
+      /* Main area: sem margem, ocupa tudo */
+      .main-area { margin-left: 0 !important; }
+
+      /* Top header mobile */
+      .top-header {
+        padding: 0 12px;
+        height: 52px;
+        position: sticky;
+        top: 0;
+        z-index: 500;
+      }
+      #main-header-title { font-size: 1rem; }
+
+      /* Container com padding menor */
+      .app-container { padding: 14px 12px 80px; }
+
+      /* Stats grid: 3 colunas compactas */
+      .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .stat-card-new {
+        padding: 12px 8px;
+        border-radius: 12px;
+      }
+      .stat-card-new .stat-icon { font-size: 1.1rem; margin-bottom: 5px; }
+      .stat-card-new .stat-number { font-size: 1.15rem; }
+      .stat-card-new .stat-label { font-size: 0.6rem; letter-spacing: 0.03em; }
+
+      /* Event card: largura total no mobile */
+      #next-event-container { max-width: 100%; }
+
+      /* Quick access: 2 colunas no mobile */
+      .quick-access-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+      .qa-card { padding: 12px; gap: 10px; border-radius: 12px; }
+      .qa-card-icon { width: 34px; height: 34px; font-size: 0.9rem; border-radius: 9px; }
+      .qa-card-title { font-size: 0.82rem; }
+      .qa-card-sub { font-size: 0.68rem; }
+      .qa-card-arrow { display: none; }
+
+      /* Section titles */
+      .home-section-title { font-size: 0.92rem; margin-bottom: 10px; }
+
+      /* Panel headers */
+      .panel-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .panel-header-left h3 { font-size: 0.95rem; }
+      .panel-header-left p { font-size: 0.72rem; }
+      .panel-btn { font-size: 0.75rem; padding: 7px 12px; }
+
+      /* Pro cards: sem hover no mobile */
+      .pro-card:hover { transform: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+      .pro-card-header { padding: 12px 14px 10px; }
+      .pro-card-body { padding: 10px 14px; }
+      .pro-card-footer { padding: 8px 14px; }
+
+      /* Columns: forçar 1 coluna */
+      .col-md-6, .col-md-4, .col-lg-4, .col-lg-8,
+      .col-xl-4, .col-xl-3, .col-md-6.col-xl-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        width: 100%;
+      }
+
+      /* Dashboard stats 2 colunas */
+      .stats-grid[style*="grid-template-columns:repeat(4"] {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+
+      /* Chips wrap */
+      .chip-bar { gap: 5px; }
+      .chip { font-size: 0.7rem; padding: 4px 10px; }
+
+      /* Countdown compacto */
+      .next-event-card .countdown-number { font-size: 1rem; }
+      .next-event-card .countdown-label { font-size: 0.55rem; }
+
+      /* Botões de ação em cards */
+      .card-actions { gap: 4px; }
+      .btn-icon { width: 28px; height: 28px; font-size: 0.7rem; }
+
+      /* Pills */
+      .pill { font-size: 0.65rem; padding: 2px 8px; }
+
+      /* Grade de horários: scroll horizontal */
+      .schedule-grid-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+      /* Modais: fullscreen no mobile */
+      .modal-dialog:not(.modal-fullscreen) {
+        margin: 0;
+        max-width: 100vw;
+        min-height: 100dvh;
+        display: flex;
+        align-items: flex-end;
+      }
+      .modal-content {
+        border-radius: 20px 20px 0 0 !important;
+        border: none;
+      }
+
+      /* Back button posição */
+      .back-to-home-btn { top: 14px; right: 14px; width: 42px; height: 42px; font-size: 0.9rem; }
+
+      /* Relatórios */
+      .report-section .row { flex-direction: column; }
+
+      /* Financeiro mês selector */
+      #financeiro-mes-atual { font-size: 0.85rem; min-width: 120px; }
+    }
+
+    /* Extra pequeno — telas < 380px */
+    @media (max-width: 380px) {
+      .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+      .stat-card-new { padding: 10px 6px; }
+      .stat-card-new .stat-number { font-size: 1rem; }
+      .quick-access-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+      .qa-card { padding: 10px; }
+      .app-container { padding: 10px 10px 80px; }
+    }
+
+    /* Tablet (769–1024px) */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .sidebar { width: 200px; min-width: 200px; }
+      .main-area { margin-left: 200px; }
+      .main-area.collapsed { margin-left: 58px; }
       .stats-grid { grid-template-columns: repeat(3, 1fr); }
-      .quick-access-grid { grid-template-columns: repeat(2, 1fr); }
+      .quick-access-grid { grid-template-columns: repeat(3, 1fr); }
     }
 
     .card-link {
@@ -4348,6 +4533,27 @@
 </div><!-- /main-area -->
 </div><!-- /app-wrapper -->
 
+<!-- BOTTOM NAV MOBILE -->
+<nav class="mobile-bottom-nav" id="mobileBottomNav">
+  <div class="mobile-bottom-nav-inner">
+    <button class="mob-nav-btn active" id="mob-btn-home" data-panel="home-links">
+      <i class="fas fa-home"></i><span>Início</span>
+    </button>
+    <button class="mob-nav-btn" id="mob-btn-agenda" data-panel="agenda">
+      <i class="fas fa-calendar-alt"></i><span>Agenda</span>
+    </button>
+    <button class="mob-nav-fab" id="mob-btn-fab" title="Menu">
+      <i class="fas fa-bars"></i>
+    </button>
+    <button class="mob-nav-btn" id="mob-btn-caderno" data-panel="caderno">
+      <i class="fas fa-sticky-note"></i><span>Notas</span>
+    </button>
+    <button class="mob-nav-btn" id="mob-btn-financeiro" data-panel="financeiro">
+      <i class="fas fa-dollar-sign"></i><span>Finanças</span>
+    </button>
+  </div>
+</nav>
+
 <div class="footer-nav" style="display:none;">
     <button class="footer-nav-btn" id="footer-perfis"><i class="fas fa-users"></i><span>Perfis</span></button>
     <button class="footer-nav-btn active" id="footer-inicio"><i class="fas fa-home"></i><span>Início</span></button>
@@ -5070,9 +5276,12 @@ document.addEventListener('DOMContentLoaded', function() {
         updateMainHeaderTitle();
         renderCurrentPanel();
         updateSidebarActive();
+        updateMobileBottomNav();
         updateFixedBackButton();
         window.scrollTo(0, 0);
-        // Inicializa canvases se necessário
+        // Fecha sidebar mobile ao navegar
+        document.getElementById('mainSidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('open');
         if (id === 'caderno') {
             setTimeout(() => {
                 if (!drawingCanvasInitialized) setupDrawingCanvas();
@@ -5107,6 +5316,30 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('sidebarOverlay').addEventListener('click', () => {
             document.getElementById('mainSidebar').classList.remove('open');
             document.getElementById('sidebarOverlay').classList.remove('open');
+        });
+
+        // Bottom nav mobile
+        document.querySelectorAll('.mob-nav-btn[data-panel]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                navigateTo(btn.dataset.panel);
+                updateMobileBottomNav();
+            });
+        });
+        // FAB abre a sidebar
+        const fab = document.getElementById('mob-btn-fab');
+        if (fab) {
+            fab.addEventListener('click', () => {
+                const sb = document.getElementById('mainSidebar');
+                const ov = document.getElementById('sidebarOverlay');
+                sb.classList.toggle('open');
+                ov.classList.toggle('open');
+            });
+        }
+    }
+
+    function updateMobileBottomNav() {
+        document.querySelectorAll('.mob-nav-btn[data-panel]').forEach(b => {
+            b.classList.toggle('active', b.dataset.panel === activePanel);
         });
     }
 
@@ -5197,20 +5430,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
         container.innerHTML = `
             <div class="next-event-card${urgenteClass}" id="next-event-card">
-                <div style="display:flex;flex-direction:column;gap:6px;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-                        <h6 class="text-uppercase mb-0" style="opacity:0.75;font-size:0.58rem;letter-spacing:0.07em;flex-shrink:0;">Próximo Evento</h6>
-                        ${urgenteBadge}
+                <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;opacity:0.7;margin-bottom:3px;">Próximo Evento</div>
+                    ${urgenteBadge}
+                    <div style="font-size:0.95rem;font-weight:700;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${proximoEventoGlobal.title}</div>
+                    <div style="display:flex;gap:12px;margin-top:4px;flex-wrap:wrap;">
+                      ${discInfo ? `<span style="font-size:0.72rem;opacity:0.85;">${discInfo.replace(/<[^>]+>/g,'').trim()}</span>` : ''}
+                      <span style="font-size:0.72rem;opacity:0.85;"><i class="fas ${proximoEventoGlobal.type==='assignment'?'fa-tasks':proximoEventoGlobal.type==='exam'?'fa-file-alt':'fa-calendar-day'} me-1"></i>${proximoEventoGlobal.type==='assignment'?'Trabalho':proximoEventoGlobal.type==='exam'?'Prova':'Evento'}: ${proximoEventoGlobal.eventDate.toLocaleString('pt-BR',{day:'2-digit',month:'long',hour:'2-digit',minute:'2-digit'})}</span>
                     </div>
-                    <div style="font-size:0.88rem;font-weight:700;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${proximoEventoGlobal.title}</div>
-                    ${discInfo}
-                    <div style="font-size:0.72rem;opacity:0.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><i class="fas ${proximoEventoGlobal.type==='assignment'?'fa-tasks':proximoEventoGlobal.type==='exam'?'fa-file-alt':'fa-calendar-day'} me-1"></i><strong>${proximoEventoGlobal.type==='assignment'?'Trabalho':proximoEventoGlobal.type==='exam'?'Prova':'Evento'}:</strong> ${proximoEventoGlobal.eventDate.toLocaleString('pt-BR',{day:'2-digit',month:'long',hour:'2-digit',minute:'2-digit'})}</div>
-                    <div style="display:flex;justify-content:space-around;margin-top:4px;background:rgba(0,0,0,0.12);border-radius:10px;padding:6px 4px;">
-                        <div class="countdown-item"><div id="countdown-dias" class="countdown-number">00</div><div class="countdown-label">Dias</div></div>
-                        <div class="countdown-item"><div id="countdown-horas" class="countdown-number">00</div><div class="countdown-label">Horas</div></div>
-                        <div class="countdown-item"><div id="countdown-minutos" class="countdown-number">00</div><div class="countdown-label">Min</div></div>
-                        <div class="countdown-item"><div id="countdown-segundos" class="countdown-number">00</div><div class="countdown-label">Seg</div></div>
-                    </div>
+                  </div>
+                  <div style="display:flex;gap:8px;background:rgba(0,0,0,0.15);border-radius:10px;padding:8px 12px;flex-shrink:0;">
+                    <div class="countdown-item"><div id="countdown-dias" class="countdown-number">00</div><div class="countdown-label">Dias</div></div>
+                    <div style="opacity:0.4;align-self:center;font-size:1rem;font-weight:300;">:</div>
+                    <div class="countdown-item"><div id="countdown-horas" class="countdown-number">00</div><div class="countdown-label">Hrs</div></div>
+                    <div style="opacity:0.4;align-self:center;font-size:1rem;font-weight:300;">:</div>
+                    <div class="countdown-item"><div id="countdown-minutos" class="countdown-number">00</div><div class="countdown-label">Min</div></div>
+                    <div style="opacity:0.4;align-self:center;font-size:1rem;font-weight:300;">:</div>
+                    <div class="countdown-item"><div id="countdown-segundos" class="countdown-number">00</div><div class="countdown-label">Seg</div></div>
+                  </div>
                 </div>
             </div>`;
         updateCountdown(); nextEventInterval = setInterval(updateCountdown, 1000);
@@ -9320,6 +9558,7 @@ document.addEventListener('DOMContentLoaded', function() {
             renderCurrentPanel();
             updateMainHeaderTitle();
             updateSidebarActive();
+            updateMobileBottomNav();
             updateHomeStats();
             setupEventListeners();
             setupFooterNavigation();
