@@ -360,35 +360,401 @@
       color: var(--primary);
     }
 
-    .app-container {
+    /* ===== NOVO LAYOUT SIDEBAR ESTILO IMOBIPRO ===== */
+    body {
+      padding-bottom: 0 !important;
+      background-color: #f0f2f5 !important;
+      background-image: none !important;
+    }
+    body.bg-dark { background-color: #1e2533 !important; }
+    body.bg-dark .top-header { background: #252d3d; border-color: #333e52; }
+    body.bg-dark .top-header #main-header-title { color: #ecf0f1; }
+    body.bg-dark .app-container { background: transparent; }
+    body.bg-dark .card-dashboard, body.bg-dark .stat-card-new { background: #252d3d; border-color: #333e52; }
+    body.bg-dark .stat-card-new .stat-number { color: #ecf0f1; }
+    body.bg-dark .stat-card-new .stat-label { color: #7f8c8d; }
+    body.bg-dark .home-section-title { color: #ecf0f1; }
+
+    .app-wrapper {
+      display: flex;
       min-height: 100vh;
-      padding: 20px;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 220px;
+      min-width: 220px;
+      background: #1a2332;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 1000;
+      overflow-y: auto;
+      transition: transform 0.3s ease;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 20px 18px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .sidebar-logo-icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, #1abc9c, #16a085);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 1rem;
+    }
+
+    .sidebar-logo-text {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: white;
+      line-height: 1.1;
+    }
+
+    .sidebar-logo-text span {
+      display: block;
+      font-size: 0.6rem;
+      font-weight: 400;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .sidebar-section-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 18px 18px 6px;
+    }
+
+    .sidebar-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 18px;
+      color: rgba(255,255,255,0.6);
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      border-radius: 0;
+      transition: all 0.18s;
+      font-family: 'Poppins', sans-serif;
+      position: relative;
+    }
+
+    .sidebar-nav-item:hover {
+      background: rgba(255,255,255,0.07);
+      color: white;
+    }
+
+    .sidebar-nav-item.active {
+      background: rgba(26,188,156,0.18);
+      color: #1abc9c;
+    }
+
+    .sidebar-nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: #1abc9c;
+      border-radius: 0 3px 3px 0;
+    }
+
+    .sidebar-nav-item i {
+      width: 18px;
+      text-align: center;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .sidebar-profile {
+      margin-top: auto;
+      padding: 14px 18px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .sidebar-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 0.8rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .sidebar-profile-info {
+      flex: 1; min-width: 0;
+    }
+
+    .sidebar-profile-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: white;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar-profile-role {
+      font-size: 0.68rem;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* MAIN AREA */
+    .main-area {
+      margin-left: 220px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    /* TOP HEADER BAR */
+    .top-header {
+      background: white;
+      border-bottom: 1px solid #e8ecef;
+      padding: 0 24px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 500;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .top-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #sidebar-toggle-btn {
+      background: none;
+      border: none;
+      color: #7f8c8d;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+    }
+
+    #sidebar-toggle-btn:hover { background: #f0f3f4; color: #2c3e50; }
+
+    #main-header-title {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #2c3e50;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .top-header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 0.8rem; font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* CONTENT AREA */
+    .app-container {
+      padding: 24px;
+      flex: 1;
+      min-height: calc(100vh - 58px);
     }
 
     .main-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 30px;
-      padding-bottom: 15px;
-      border-bottom: 1px solid #dce4e6;
-    }
-    
-    #main-header-title {
-        margin: 0;
-        font-size: 1.8rem;
-        font-weight: 700;
+      display: none;
     }
 
     .content-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 30px;
+      margin-bottom: 24px;
     }
 
     .content-panel > .content-header > h2 {
       display: none;
+    }
+
+    /* SIDEBAR OVERLAY MOBILE */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+
+    /* HOME PANEL — VISAO GERAL */
+    .home-section-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 16px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card-new {
+      background: white;
+      border-radius: 14px;
+      padding: 16px 14px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border: 1px solid #f0f2f4;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card-new:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    }
+
+    .stat-card-new .stat-icon {
+      font-size: 1.4rem;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .stat-card-new .stat-number {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #2c3e50;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-card-new .stat-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #95a5a6;
+    }
+
+    /* QUICK ACCESS CARDS */
+    .quick-access-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .qa-card {
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: filter 0.2s, transform 0.2s;
+      color: white;
+      border: none;
+      background: none;
+      text-align: left;
+      width: 100%;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .qa-card:hover { filter: brightness(1.08); transform: translateY(-2px); }
+
+    .qa-card-icon {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.22);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .qa-card-text { flex: 1; min-width: 0; }
+
+    .qa-card-title {
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: white;
+      line-height: 1.2;
+    }
+
+    .qa-card-sub {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.7);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .qa-card-arrow {
+      color: rgba(255,255,255,0.5);
+      font-size: 0.75rem;
+    }
+
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+
+    /* Ajuste de responsividade do sistema antigo com novo layout */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .sidebar-overlay.open {
+        display: block;
+      }
+      .main-area {
+        margin-left: 0;
+      }
+      .app-container {
+        padding: 16px;
+      }
+      .top-header {
+        padding: 0 16px;
+      }
+      .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .quick-access-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     .card-link {
@@ -2876,13 +3242,71 @@
   </div>
 </div>
 
-<div class="app-container">
-  <header class="main-header">
-      <h2 id="main-header-title">Acadêmico Pro</h2>
-      <button class="btn btn-outline-secondary btn-sm backup-header-btn" id="openBackupBtn" title="Backup & Restauração">
-          <i class="fas fa-database me-1"></i> <span class="d-none d-sm-inline">Backup</span>
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- LAYOUT WRAPPER -->
+<div class="app-wrapper">
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="mainSidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-icon"><i class="fas fa-graduation-cap"></i></div>
+    <div class="sidebar-logo-text">Acadêmico Pro<span>Sistema Universitário</span></div>
+  </div>
+
+  <div class="sidebar-section-label">Principal</div>
+  <button class="sidebar-nav-item active" data-panel="home-links" id="snav-home-links"><i class="fas fa-home"></i> Início</button>
+  <button class="sidebar-nav-item" data-panel="dashboard" id="snav-dashboard"><i class="fas fa-chart-line"></i> Dashboard</button>
+  <button class="sidebar-nav-item" data-panel="disciplinas" id="snav-disciplinas"><i class="fas fa-book"></i> Disciplinas</button>
+  <button class="sidebar-nav-item" data-panel="agenda" id="snav-agenda"><i class="fas fa-calendar-alt"></i> Agenda</button>
+  <button class="sidebar-nav-item" data-panel="horarios" id="snav-horarios"><i class="fas fa-clock"></i> Horários</button>
+
+  <div class="sidebar-section-label">Acadêmico</div>
+  <button class="sidebar-nav-item" data-panel="trabalhos" id="snav-trabalhos"><i class="fas fa-tasks"></i> Trabalhos</button>
+  <button class="sidebar-nav-item" data-panel="provas" id="snav-provas"><i class="fas fa-file-alt"></i> Provas</button>
+  <button class="sidebar-nav-item" data-panel="caderno" id="snav-caderno"><i class="fas fa-sticky-note"></i> Notas</button>
+  <button class="sidebar-nav-item" data-panel="biblioteca" id="snav-biblioteca"><i class="fas fa-book-open"></i> Biblioteca</button>
+  <button class="sidebar-nav-item" data-panel="filmes" id="snav-filmes"><i class="fas fa-video"></i> Vídeo-Aulas</button>
+  <button class="sidebar-nav-item" data-panel="certificados" id="snav-certificados"><i class="fas fa-certificate"></i> Certificados</button>
+
+  <div class="sidebar-section-label">Ferramentas</div>
+  <button class="sidebar-nav-item" data-panel="links" id="snav-links"><i class="fas fa-link"></i> Links</button>
+  <button class="sidebar-nav-item" data-panel="financeiro" id="snav-financeiro"><i class="fas fa-dollar-sign"></i> Financeiro</button>
+  <button class="sidebar-nav-item" data-panel="relatorios" id="snav-relatorios"><i class="fas fa-chart-bar"></i> Relatórios</button>
+  <button class="sidebar-nav-item" data-panel="jurista" id="snav-jurista"><i class="fas fa-balance-scale"></i> Jurista Pro</button>
+
+  <div class="sidebar-section-label">Outros</div>
+  <button class="sidebar-nav-item" data-panel="configuracoes" id="snav-configuracoes"><i class="fas fa-cog"></i> Configurações</button>
+
+  <div class="sidebar-profile" id="sidebarProfileBtn" data-bs-toggle="modal" data-bs-target="#profileManagementModal">
+    <div class="sidebar-avatar" id="sidebarAvatarInitials">U</div>
+    <div class="sidebar-profile-info">
+      <div class="sidebar-profile-name" id="sidebarProfileName">Usuário</div>
+      <div class="sidebar-profile-role">Ver perfis</div>
+    </div>
+    <i class="fas fa-chevron-right" style="color:rgba(255,255,255,0.3);font-size:0.7rem;"></i>
+  </div>
+</nav>
+
+<!-- MAIN AREA -->
+<div class="main-area">
+
+  <!-- TOP HEADER -->
+  <div class="top-header">
+    <div class="top-header-left">
+      <button id="sidebar-toggle-btn"><i class="fas fa-bars"></i></button>
+      <h2 id="main-header-title">Início</h2>
+    </div>
+    <div class="top-header-right">
+      <button class="btn btn-outline-secondary btn-sm" id="openBackupBtn" title="Backup & Restauração">
+        <i class="fas fa-database me-1"></i> <span class="d-none d-sm-inline">Backup</span>
       </button>
-  </header>
+      <div class="header-avatar" id="headerAvatarBtn" data-bs-toggle="modal" data-bs-target="#profileManagementModal" title="Gerenciar Perfis">A</div>
+    </div>
+  </div>
+
+<div class="app-container">
 
   <button class="back-to-home-btn" id="fixed-back-home" style="display: none;">
       <i class="fas fa-home"></i>
@@ -2890,10 +3314,49 @@
 
   <div class="content-panel active" id="home-links">
     <div class="content-header">
-      <h2>Início Rápido</h2>
+      <h2>Início</h2>
     </div>
+
+    <!-- VISÃO GERAL -->
+    <div class="home-section-title">Visão Geral</div>
+    <div class="stats-grid" id="stats-overview-grid">
+      <div class="stat-card-new">
+        <span class="stat-icon" style="color:#3498db;"><i class="fas fa-book"></i></span>
+        <div class="stat-number" id="stat-disciplinas">0</div>
+        <div class="stat-label">Disciplinas</div>
+      </div>
+      <div class="stat-card-new">
+        <span class="stat-icon" style="color:#e67e22;"><i class="fas fa-tasks"></i></span>
+        <div class="stat-number" id="stat-trabalhos">0</div>
+        <div class="stat-label">Trabalhos</div>
+      </div>
+      <div class="stat-card-new">
+        <span class="stat-icon" style="color:#9b59b6;"><i class="fas fa-calendar-check"></i></span>
+        <div class="stat-number" id="stat-provas">0</div>
+        <div class="stat-label">Provas</div>
+      </div>
+      <div class="stat-card-new">
+        <span class="stat-icon" style="color:#1abc9c;"><i class="fas fa-chart-line"></i></span>
+        <div class="stat-number" id="stat-media">0.0</div>
+        <div class="stat-label">Média</div>
+      </div>
+      <div class="stat-card-new">
+        <span class="stat-icon" style="color:#e74c3c;"><i class="fas fa-dollar-sign"></i></span>
+        <div class="stat-number" id="stat-financeiro-saldo">R$0</div>
+        <div class="stat-label">Saldo</div>
+      </div>
+      <div class="stat-card-new">
+        <span class="stat-icon" style="color:#f39c12;"><i class="fas fa-sticky-note"></i></span>
+        <div class="stat-number" id="stat-notas">0</div>
+        <div class="stat-label">Notas</div>
+      </div>
+    </div>
+
     <div id="next-event-container" class="mb-4"></div>
-    <div class="row g-4" id="quick-links-container"></div>
+
+    <!-- ACESSO RÁPIDO -->
+    <div class="home-section-title">Acesso Rápido</div>
+    <div class="quick-access-grid" id="quick-links-container"></div>
   </div>
 
   <div class="content-panel" id="dashboard">
@@ -3300,7 +3763,7 @@
   <!-- ===== FIM PAINEL CERTIFICADOS ===== -->
 
   <!-- ===== PAINEL JURISTA DE ALTA PERFORMANCE ===== -->
-  <div class="content-panel" id="jurista" style="background: #0f1520; min-height: 100vh; margin: -20px; padding: 28px; border-radius: 0;">
+  <div class="content-panel" id="jurista" style="background: #0f1520; min-height: 100vh; margin: -24px; padding: 28px; border-radius: 0;">
 
     <!-- Hero -->
     <div class="jurista-hero">
@@ -3544,7 +4007,11 @@
     <i class="fas fa-compress"></i> Sair da Tela Cheia
 </button>
 
-<div class="footer-nav">
+</div><!-- /app-container -->
+</div><!-- /main-area -->
+</div><!-- /app-wrapper -->
+
+<div class="footer-nav" style="display:none;">
     <button class="footer-nav-btn" id="footer-perfis"><i class="fas fa-users"></i><span>Perfis</span></button>
     <button class="footer-nav-btn active" id="footer-inicio"><i class="fas fa-home"></i><span>Início</span></button>
     <button class="footer-nav-btn" id="footer-financeiro"><i class="fas fa-dollar-sign"></i><span>Financeiro</span></button>
@@ -4202,7 +4669,7 @@ document.addEventListener('DOMContentLoaded', function() {
         switch (activePanel) {
             case 'home-links':
                 renderProximoEventoCard(data);
-                // quick-links já está gerado no init
+                updateHomeStats();
                 break;
             case 'dashboard': renderDashboard(data); break;
             case 'disciplinas': renderDisciplinas(data); break;
@@ -4228,29 +4695,121 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('quick-links-container');
         container.innerHTML = '';
         const panels = [
-            { id:'dashboard', title:'Dashboard', icon:'fas fa-chart-line' },
-            { id:'disciplinas', title:'Disciplinas', icon:'fas fa-book' },
-            { id:'horarios', title:'Horários', icon:'fas fa-table-cells' },
-            { id:'trabalhos', title:'Trabalhos', icon:'fas fa-tasks' },
-            { id:'provas', title:'Provas', icon:'fas fa-file-alt' },
-            { id:'agenda', title:'Agenda', icon:'fas fa-calendar-alt' },
-            { id:'biblioteca', title:'Biblioteca', icon:'fas fa-book-open' },
-            { id:'filmes', title:'Filmes e Vídeo-Aulas', icon:'fas fa-film' },
-            { id:'caderno', title:'Caderno e Notas', icon:'fas fa-sticky-note' },
-            { id:'links', title:'Links Importantes', icon:'fas fa-link' },
-            { id:'financeiro', title:'Financeiro', icon:'fas fa-dollar-sign' },
-            { id:'relatorios', title:'Relatórios', icon:'fas fa-chart-pie' },
-            { id:'certificados', title:'Certificados', icon:'fas fa-certificate' },
-            { id:'jurista', title:'Jurista de Alta Performance', icon:'fas fa-balance-scale' },
+            { id:'disciplinas', title:'Disciplinas', icon:'fas fa-book', sub:'Suas matérias', color:'#3498db' },
+            { id:'horarios', title:'Horários', icon:'fas fa-clock', sub:'Grade de aulas', color:'#9b59b6' },
+            { id:'trabalhos', title:'Trabalhos', icon:'fas fa-tasks', sub:'Tarefas e TCC', color:'#1abc9c' },
+            { id:'provas', title:'Provas', icon:'fas fa-file-alt', sub:'Avaliações', color:'#f39c12' },
+            { id:'agenda', title:'Agenda', icon:'fas fa-calendar-alt', sub:'Eventos e datas', color:'#e67e22' },
+            { id:'caderno', title:'Notas', icon:'fas fa-sticky-note', sub:'Anotações rápidas', color:'#8e44ad' },
+            { id:'biblioteca', title:'Biblioteca', icon:'fas fa-book-open', sub:'Livros e leituras', color:'#c0392b' },
+            { id:'financeiro', title:'Financeiro', icon:'fas fa-dollar-sign', sub:'Receitas e despesas', color:'#27ae60' },
+            { id:'relatorios', title:'Relatórios', icon:'fas fa-chart-bar', sub:'Desempenho acadêmico', color:'#2980b9' },
+            { id:'jurista', title:'Jurista Pro', icon:'fas fa-balance-scale', sub:'Alta performance', color:'#8B6914' },
+            { id:'links', title:'Links', icon:'fas fa-link', sub:'Atalhos e portais', color:'#16a085' },
+            { id:'certificados', title:'Certificados', icon:'fas fa-certificate', sub:'Seus certificados', color:'#1565C0' },
         ];
-        const colors = {
-            dashboard:'var(--info)', disciplinas:'var(--primary)', horarios:'var(--purple)', trabalhos:'var(--accent)',
-            provas:'var(--warning)', agenda:'var(--orange)', biblioteca:'var(--danger)', filmes:'#607D8B', caderno:'#8E44AD',
-            links:'#16A085', financeiro:'var(--success)', relatorios:'var(--secondary)', configuracoes:'#2c3e50', jurista:'#8B6914', certificados:'#1565C0'
-        };
         panels.forEach(p => {
-            container.innerHTML += `<div class="col-4 col-md-3 col-lg-2 mb-3"><div class="card card-link" data-target="${p.id}" style="--card-color: ${colors[p.id]};"><div class="card-body"><div class="icon-wrapper"><i class="${p.icon}"></i></div><h5>${p.title}</h5></div></div></div>`;
+            const div = document.createElement('button');
+            div.className = 'qa-card';
+            div.style.background = p.color;
+            div.dataset.target = p.id;
+            div.innerHTML = `
+              <div class="qa-card-icon"><i class="${p.icon}"></i></div>
+              <div class="qa-card-text">
+                <div class="qa-card-title">${p.title}</div>
+                <div class="qa-card-sub">${p.sub}</div>
+              </div>
+              <i class="fas fa-chevron-right qa-card-arrow"></i>`;
+            div.addEventListener('click', () => navigateTo(p.id));
+            container.appendChild(div);
         });
+    }
+
+    function navigateTo(id) {
+        activePanel = id;
+        document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('active'));
+        const panel = document.getElementById(id);
+        if (panel) panel.classList.add('active');
+        updateMainHeaderTitle();
+        renderCurrentPanel();
+        updateSidebarActive();
+        updateFixedBackButton();
+        window.scrollTo(0, 0);
+        // Inicializa canvases se necessário
+        if (id === 'caderno') {
+            setTimeout(() => {
+                if (!drawingCanvasInitialized) setupDrawingCanvas();
+                if (!handwritingCanvasInitialized) setupHandwritingCanvas();
+            }, 100);
+        }
+    }
+
+    function updateSidebarActive() {
+        document.querySelectorAll('.sidebar-nav-item').forEach(b => b.classList.remove('active'));
+        const btn = document.querySelector(`.sidebar-nav-item[data-panel="${activePanel}"]`);
+        if (btn) btn.classList.add('active');
+    }
+
+    function setupSidebarNavigation() {
+        document.querySelectorAll('.sidebar-nav-item[data-panel]').forEach(btn => {
+            btn.addEventListener('click', () => navigateTo(btn.dataset.panel));
+        });
+        document.getElementById('sidebar-toggle-btn').addEventListener('click', () => {
+            const sb = document.getElementById('mainSidebar');
+            const ov = document.getElementById('sidebarOverlay');
+            sb.classList.toggle('open');
+            ov.classList.toggle('open');
+        });
+        document.getElementById('sidebarOverlay').addEventListener('click', () => {
+            document.getElementById('mainSidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('open');
+        });
+    }
+
+    async function updateHomeStats() {
+        try {
+            const data = await getProfileData();
+            const disc = (data.disciplinas||[]).length;
+            const trab = (data.trabalhos||[]).filter(t=>t.status==='Pendente').length;
+            const prov = (data.provas||[]).filter(p=>p.status==='Agendada').length;
+            const notas = (data.notas||[]).length;
+            // Média geral
+            let mediaArr = [];
+            (data.disciplinas||[]).forEach(d => {
+                if (d.notas && d.notas.length) {
+                    let soma = d.notas.reduce((a,n)=>a+parseFloat(n.valor||0),0);
+                    mediaArr.push(soma/d.notas.length);
+                }
+            });
+            const media = mediaArr.length ? (mediaArr.reduce((a,b)=>a+b,0)/mediaArr.length).toFixed(1) : '–';
+            // Saldo financeiro do mês
+            const agora = new Date();
+            const mesAno = `${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
+            const fin = (data.financeiro||[]).filter(f=>f.mesAno===mesAno||f.data?.startsWith(mesAno.replace('-','').slice(0,6))||(f.data&&f.data.substring(0,7)===mesAno));
+            const receitas = fin.filter(f=>f.tipo==='receita').reduce((a,f)=>a+parseFloat(f.valor||0),0);
+            const despesas = fin.filter(f=>f.tipo==='despesa').reduce((a,f)=>a+parseFloat(f.valor||0),0);
+            const saldo = receitas - despesas;
+            const saldoStr = saldo >= 0 ? `R$${Math.round(saldo)}` : `-R$${Math.abs(Math.round(saldo))}`;
+            document.getElementById('stat-disciplinas').textContent = disc;
+            document.getElementById('stat-trabalhos').textContent = trab;
+            document.getElementById('stat-provas').textContent = prov;
+            document.getElementById('stat-media').textContent = media;
+            document.getElementById('stat-financeiro-saldo').textContent = saldoStr;
+            document.getElementById('stat-notas').textContent = notas;
+            // Atualiza avatar sidebar
+            const profiles = await getAllData('profiles');
+            const curId = await getCurrentProfileId();
+            const cur = profiles.find(p=>p.id===curId);
+            if (cur) {
+                const initials = cur.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+                const el = document.getElementById('sidebarAvatarInitials');
+                const he = document.getElementById('headerAvatarBtn');
+                const pn = document.getElementById('sidebarProfileName');
+                if (el) el.textContent = initials;
+                if (he) he.textContent = initials;
+                if (pn) pn.textContent = cur.name;
+            }
+        } catch(e) {}
     }
 
     async function renderProximoEventoCard(data) {
@@ -5319,12 +5878,7 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
     function getDisciplinaColor(id) { if (!disciplinaColors[id]) disciplinaColors[id] = colorPalette[Object.keys(disciplinaColors).length % colorPalette.length]; return disciplinaColors[id]; }
 
     function goToHome() { 
-        activePanel = 'home-links';
-        document.querySelectorAll('.content-panel').forEach(p=>p.classList.remove('active')); 
-        document.getElementById('home-links').classList.add('active'); 
-        updateMainHeaderTitle(); 
-        renderCurrentPanel(); 
-        updateFooterNavigation(); 
+        navigateTo('home-links');
     }
     function updateFixedBackButton() { document.getElementById('fixed-back-home').style.display = activePanel === 'home-links' ? 'none' : 'block'; }
     function setupFooterNavigation() {
@@ -7186,6 +7740,12 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
 
     function setupEventListeners() {
         document.getElementById('fixed-back-home').addEventListener('click', goToHome);
+
+        // data-target navigation links (e.g. "Ver Agenda Completa")
+        document.addEventListener('click', e => {
+            const link = e.target.closest('a[data-target]');
+            if (link) { e.preventDefault(); navigateTo(link.dataset.target); }
+        });
         document.getElementById('prev-month-financeiro').addEventListener('click', ()=>{ if (--currentFinanceMonth<0) { currentFinanceMonth=11; currentFinanceYear--; } renderCurrentPanel(); });
         document.getElementById('next-month-financeiro').addEventListener('click', ()=>{ if (++currentFinanceMonth>11) { currentFinanceMonth=0; currentFinanceYear++; } renderCurrentPanel(); });
         
@@ -7523,19 +8083,7 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
             if (cardLink) {
                 e.preventDefault();
                 let id = cardLink.dataset.target;
-                activePanel = id;
-                document.querySelectorAll('.content-panel').forEach(p=>p.classList.remove('active'));
-                document.getElementById(id).classList.add('active');
-                updateMainHeaderTitle(); 
-                renderCurrentPanel();
-                updateFooterNavigation();
-                // Inicializa canvases se necessário
-                if (id === 'caderno') {
-                    setTimeout(() => { 
-                        if (!drawingCanvasInitialized) setupDrawingCanvas(); 
-                        if (!handwritingCanvasInitialized) setupHandwritingCanvas(); 
-                    }, 100);
-                }
+                navigateTo(id);
             }
             let calDay = e.target.closest('.calendar-day:not(.empty)');
             if (calDay && calDay.dataset.date) {
@@ -7653,12 +8201,7 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
             if (nextCard && proximoEventoGlobal) {
                 let map = { trabalhos:'trabalhos', provas:'provas', financeiro:'financeiro', eventos:'agenda' };
                 let target = map[proximoEventoGlobal.eventType] || 'agenda';
-                activePanel = target;
-                document.querySelectorAll('.content-panel').forEach(p=>p.classList.remove('active'));
-                document.getElementById(target).classList.add('active');
-                updateMainHeaderTitle(); 
-                renderCurrentPanel();
-                updateFooterNavigation();
+                navigateTo(target);
             }
             // Abrir HTML anexado à nota
             let abrirHtml = e.target.closest('.abrir-html-nota');
@@ -8244,12 +8787,15 @@ container.innerHTML += `<div class="col-md-6 col-lg-4"><div class="card nota-car
 
             setLoadingMsg('Preparando interface...', 75);
             generateQuickLinks();
+            setupSidebarNavigation();
             profileDataCache = null;
             await loadProfileData();
 
             setLoadingMsg('Renderizando...', 90);
             renderCurrentPanel();
             updateMainHeaderTitle();
+            updateSidebarActive();
+            updateHomeStats();
             setupEventListeners();
             setupFooterNavigation();
             setupImageImport();
