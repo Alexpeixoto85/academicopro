@@ -644,17 +644,77 @@
       background-attachment: fixed;
     }
 
-    body.bg-custom {
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-    }
-
     body.bg-light { --bg-color: #ecf0f1; background-image: none !important; }
     body.bg-dark { --bg-color: #2c3e50; color: #ecf0f1; background-image: none !important; }
     body.bg-blue { --bg-color: #d4e6f1; background-image: none !important; }
     body.bg-green { --bg-color: #d4efdf; background-image: none !important; }
+
+    /* bg-custom: usa pseudo-elemento para imagem com opacidade elegante */
+    body.bg-custom {
+      background-color: #1a1a2e !important;
+      background-image: none !important;
+      position: relative;
+    }
+
+    /* A imagem fica no pseudo-elemento com opacidade controlada — efeito elegante */
+    body.bg-custom::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: var(--custom-bg-url);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      opacity: var(--bg-opacity, 0.22);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Overlay escuro sutil para garantir legibilidade do conteúdo */
+    body.bg-custom::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(15,20,40,0.45) 0%, rgba(10,15,35,0.35) 100%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Todos os elementos acima do pseudo-elemento */
+    body.bg-custom .app-wrapper,
+    body.bg-custom .sidebar,
+    body.bg-custom .main-area,
+    body.bg-custom .top-header,
+    body.bg-custom .app-container,
+    body.bg-custom .modal {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Cards ficam com leve glassmorphism quando há imagem de fundo */
+    body.bg-custom .pro-card,
+    body.bg-custom .card-dashboard,
+    body.bg-custom .stat-card-new,
+    body.bg-custom .next-event-card,
+    body.bg-custom .info-card-home {
+      background: rgba(255,255,255,0.88) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      border: 1px solid rgba(255,255,255,0.45) !important;
+    }
+
+    body.bg-custom .top-header {
+      background: rgba(255,255,255,0.82) !important;
+      backdrop-filter: blur(16px) !important;
+      -webkit-backdrop-filter: blur(16px) !important;
+    }
+
+    body.bg-custom .sidebar {
+      background: rgba(22,30,48,0.92) !important;
+      backdrop-filter: blur(16px) !important;
+      -webkit-backdrop-filter: blur(16px) !important;
+    }
 
     h1, h2, h3, h4, h5, h6 {
       font-family: 'Playfair Display', serif;
@@ -662,11 +722,12 @@
     }
 
     /* ===== NOVO LAYOUT SIDEBAR ESTILO IMOBIPRO ===== */
-    body {
+    body:not(.bg-custom) {
       padding-bottom: 0 !important;
       background-color: #f0f2f5 !important;
       background-image: none !important;
     }
+    body.bg-custom { padding-bottom: 0 !important; }
     body.bg-dark { background-color: #1e2533 !important; }
     body.bg-dark .top-header { background: #252d3d; border-color: #333e52; }
     body.bg-dark .top-header #main-header-title { color: #ecf0f1; }
@@ -4540,23 +4601,61 @@
     </div>
       <div class="card card-dashboard mb-4">
           <div class="card-body">
-              <h4 class="card-title">Personalizar Plano de Fundo</h4>
-              <p class="text-muted">Escolha uma cor ou importe uma imagem para o fundo.</p>
-              <div class="d-flex gap-2 flex-wrap mb-3">
-                  <button class="btn btn-outline-secondary theme-option" data-theme="light">Claro (Padrão)</button>
-                  <button class="btn btn-outline-secondary theme-option" data-theme="dark">Escuro</button>
-                  <button class="btn btn-outline-secondary theme-option" data-theme="blue">Azul Suave</button>
-                  <button class="btn btn-outline-secondary theme-option" data-theme="green">Verde Suave</button>
-              </div>
+              <h4 class="card-title"><i class="fas fa-image me-2 text-primary"></i>Personalizar Plano de Fundo</h4>
+              <p class="text-muted mb-3">Escolha uma cor predefinida ou importe uma imagem personalizada.</p>
+
+              <!-- Temas de cor -->
               <div class="mb-3">
-                  <label for="customBackgroundImage" class="form-label">Imagem personalizada</label>
-                  <input type="file" class="form-control" id="customBackgroundImage" accept="image/*">
-                  <div class="mt-2">
-                      <button class="btn btn-sm btn-primary" id="applyCustomBackground">Aplicar imagem</button>
-                      <button class="btn btn-sm btn-outline-secondary" id="removeCustomBackground">Remover imagem</button>
-                  </div>
+                <label class="form-label fw-semibold" style="font-size:0.82rem;">Temas de cor</label>
+                <div class="d-flex gap-2 flex-wrap">
+                  <button class="btn btn-outline-secondary btn-sm theme-option" data-theme="light"><i class="fas fa-sun me-1"></i>Claro</button>
+                  <button class="btn btn-outline-secondary btn-sm theme-option" data-theme="dark"><i class="fas fa-moon me-1"></i>Escuro</button>
+                  <button class="btn btn-outline-secondary btn-sm theme-option" data-theme="blue"><i class="fas fa-water me-1"></i>Azul</button>
+                  <button class="btn btn-outline-secondary btn-sm theme-option" data-theme="green"><i class="fas fa-leaf me-1"></i>Verde</button>
+                </div>
               </div>
-              <button class="btn btn-sm btn-outline-primary" id="resetTheme">Resetar</button>
+
+              <!-- Upload de imagem -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold" style="font-size:0.82rem;">Imagem personalizada</label>
+                <div id="bgDropZone" style="border:2px dashed #dee2e6;border-radius:12px;padding:24px;text-align:center;cursor:pointer;background:#f8f9fa;transition:all 0.2s;" onclick="document.getElementById('customBackgroundImage').click()">
+                  <i class="fas fa-cloud-upload-alt fa-2x mb-2" style="color:#adb5bd;"></i>
+                  <p class="mb-1 text-muted" style="font-size:0.85rem;">Clique ou arraste uma imagem aqui</p>
+                  <p class="mb-0 text-muted" style="font-size:0.72rem;">JPG, PNG, WebP — recomendado até 5MB</p>
+                  <input type="file" class="d-none" id="customBackgroundImage" accept="image/*">
+                </div>
+                <!-- Preview -->
+                <div id="bgPreviewWrap" style="display:none;margin-top:12px;">
+                  <div style="position:relative;border-radius:10px;overflow:hidden;max-height:140px;">
+                    <img id="bgPreviewImg" src="" alt="Preview" style="width:100%;height:140px;object-fit:cover;display:block;">
+                    <div style="position:absolute;inset:0;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;gap:10px;">
+                      <button class="btn btn-sm btn-light" id="applyCustomBackground"><i class="fas fa-check me-1"></i>Aplicar</button>
+                      <button class="btn btn-sm btn-outline-light" id="bgCancelPreview"><i class="fas fa-times me-1"></i>Cancelar</button>
+                    </div>
+                  </div>
+                  <div id="bgPreviewName" style="font-size:0.75rem;color:#6c757d;margin-top:6px;"></div>
+                </div>
+                <!-- Status atual -->
+                <div id="bgCurrentStatus" style="margin-top:10px;font-size:0.78rem;color:#6c757d;display:flex;align-items:center;gap:8px;">
+                  <i class="fas fa-info-circle"></i> <span id="bgCurrentStatusText">Nenhuma imagem aplicada.</span>
+                  <button class="btn btn-sm btn-outline-danger py-0 px-2 ms-1" id="removeCustomBackground" style="font-size:0.72rem;display:none;"><i class="fas fa-trash me-1"></i>Remover</button>
+                </div>
+
+                <!-- Controle de opacidade (visível apenas com imagem ativa) -->
+                <div id="bgOpacityControl" style="display:none;margin-top:14px;padding:14px 16px;background:#f8f9fa;border-radius:10px;border:1px solid #e9ecef;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <label style="font-size:0.82rem;font-weight:600;color:#34495e;margin:0;"><i class="fas fa-adjust me-1 text-primary"></i>Intensidade da imagem</label>
+                    <span id="bgOpacityValue" style="font-size:0.82rem;font-weight:700;color:#3498db;">22%</span>
+                  </div>
+                  <input type="range" id="bgOpacitySlider" min="5" max="70" value="22" step="1"
+                    style="width:100%;accent-color:#3498db;cursor:pointer;">
+                  <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:#adb5bd;margin-top:4px;">
+                    <span>Sutil</span><span>Equilibrado</span><span>Intenso</span>
+                  </div>
+                </div>
+              </div>
+
+              <button class="btn btn-sm btn-outline-secondary" id="resetTheme"><i class="fas fa-undo me-1"></i>Restaurar padrão</button>
           </div>
       </div>
       <div class="card card-dashboard">
@@ -5335,57 +5434,205 @@ document.addEventListener('DOMContentLoaded', function() {
     let profileDataCache = null;
     let activePanel = 'home-links'; // painel atualmente ativo
 
-    // Tema
+    // ===== PLANO DE FUNDO =====
     function loadTheme() {
         const savedTheme = localStorage.getItem('academicoTheme') || 'light';
-        const customBg = localStorage.getItem('academicoCustomBg');
+        const customBg   = localStorage.getItem('academicoCustomBg');
         if (customBg) {
-            document.body.style.backgroundImage = `url('${customBg}')`;
-            document.body.classList.add('bg-custom');
+            const savedOpacity = parseFloat(localStorage.getItem('academicoCustomBgOpacity') || '0.22');
+            _applyCustomBg(customBg, savedOpacity);
+            _updateBgStatus(true, savedOpacity);
         } else {
             applyTheme(savedTheme);
+            _updateBgStatus(false);
         }
     }
+
+    function _applyCustomBg(dataUrl, opacity) {
+        const op = opacity !== undefined ? opacity : 0.22;
+        document.body.className = 'bg-custom';
+        document.body.style.setProperty('--custom-bg-url', `url('${dataUrl}')`);
+        document.body.style.setProperty('--bg-opacity', String(op));
+    }
+
     function applyTheme(theme) {
         document.body.className = '';
         document.body.classList.add(`bg-${theme}`);
+        document.body.style.removeProperty('--custom-bg-url');
+        document.body.style.removeProperty('--bg-opacity');
         localStorage.setItem('academicoTheme', theme);
         localStorage.removeItem('academicoCustomBg');
-        document.body.style.backgroundImage = '';
+        localStorage.removeItem('academicoCustomBgOpacity');
+        _updateBgStatus(false);
     }
+
+    function _updateBgStatus(hasCustom, opacity) {
+        const statusText     = document.getElementById('bgCurrentStatusText');
+        const removeBtn      = document.getElementById('removeCustomBackground');
+        const opacityControl = document.getElementById('bgOpacityControl');
+        const slider         = document.getElementById('bgOpacitySlider');
+        const sliderVal      = document.getElementById('bgOpacityValue');
+        if (!statusText) return;
+        if (hasCustom) {
+            statusText.innerHTML = '<strong style="color:#1abc9c;"><i class="fas fa-check-circle me-1"></i>Imagem personalizada ativa.</strong>';
+            if (removeBtn)      removeBtn.style.display      = '';
+            if (opacityControl) opacityControl.style.display = '';
+            if (slider && opacity !== undefined) {
+                const pct = Math.round(opacity * 100);
+                slider.value = pct;
+                if (sliderVal) sliderVal.textContent = pct + '%';
+            }
+        } else {
+            statusText.textContent = 'Nenhuma imagem personalizada aplicada.';
+            if (removeBtn)      removeBtn.style.display      = 'none';
+            if (opacityControl) opacityControl.style.display = 'none';
+        }
+    }
+
+    // Redimensiona imagem para <= 1200px e converte para JPEG (menor tamanho)
+    function _resizeImage(file, maxPx, quality) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                let { width, height } = img;
+                if (width > maxPx || height > maxPx) {
+                    if (width >= height) { height = Math.round(height * maxPx / width); width = maxPx; }
+                    else                 { width  = Math.round(width  * maxPx / height); height = maxPx; }
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width  = width;
+                canvas.height = height;
+                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality || 0.82));
+            };
+            img.onerror = reject;
+            img.src = url;
+        });
+    }
+
+    // Processa arquivo selecionado e mostra preview
+    async function _handleBgFile(file) {
+        if (!file || !file.type.startsWith('image/')) {
+            alert('Arquivo inválido. Selecione uma imagem (JPG, PNG, WebP, GIF).');
+            return;
+        }
+        try {
+            // Redimensiona para max 1400px se necessário
+            const dataUrl = await _resizeImage(file, 1400, 0.85);
+            const wrap    = document.getElementById('bgPreviewWrap');
+            const img     = document.getElementById('bgPreviewImg');
+            const nameEl  = document.getElementById('bgPreviewName');
+            const zone    = document.getElementById('bgDropZone');
+            img.src = dataUrl;
+            if (nameEl) nameEl.textContent = `${file.name} · pronto para aplicar`;
+            if (wrap) wrap.style.display = '';
+            if (zone) zone.style.display = 'none';
+            // Guarda temporariamente no atributo data
+            img.dataset.bgData = dataUrl;
+        } catch(e) {
+            alert('Erro ao processar a imagem. Tente outro arquivo.');
+        }
+    }
+
+    // Slider de opacidade — atualiza em tempo real
+    document.getElementById('bgOpacitySlider')?.addEventListener('input', function() {
+        const pct = parseInt(this.value);
+        const op  = pct / 100;
+        document.body.style.setProperty('--bg-opacity', String(op));
+        const valEl = document.getElementById('bgOpacityValue');
+        if (valEl) valEl.textContent = pct + '%';
+        // Salva a preferência
+        try { localStorage.setItem('academicoCustomBgOpacity', String(op)); } catch(e){}
+    });
+
+    // Input de arquivo
+    const _bgInput = document.getElementById('customBackgroundImage');
+    if (_bgInput) {
+        _bgInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) _handleBgFile(this.files[0]);
+        });
+    }
+
+    // Drag-and-drop na zona
+    const _bgZone = document.getElementById('bgDropZone');
+    if (_bgZone) {
+        _bgZone.addEventListener('dragover', e => { e.preventDefault(); _bgZone.style.borderColor='#1abc9c'; _bgZone.style.background='#f0faf8'; });
+        _bgZone.addEventListener('dragleave', () => { _bgZone.style.borderColor='#dee2e6'; _bgZone.style.background='#f8f9fa'; });
+        _bgZone.addEventListener('drop', e => {
+            e.preventDefault();
+            _bgZone.style.borderColor='#dee2e6'; _bgZone.style.background='#f8f9fa';
+            const f = e.dataTransfer.files[0];
+            if (f) _handleBgFile(f);
+        });
+    }
+
+    // Botão cancelar preview
+    document.getElementById('bgCancelPreview')?.addEventListener('click', function() {
+        const wrap = document.getElementById('bgPreviewWrap');
+        const zone = document.getElementById('bgDropZone');
+        const inp  = document.getElementById('customBackgroundImage');
+        if (wrap) wrap.style.display = 'none';
+        if (zone) zone.style.display = '';
+        if (inp)  inp.value = '';
+    });
+
+    // Botão aplicar
+    document.getElementById('applyCustomBackground').addEventListener('click', function() {
+        const img    = document.getElementById('bgPreviewImg');
+        const bgData = img?.dataset.bgData;
+        if (!bgData) {
+            alert('Selecione uma imagem primeiro na área acima.');
+            return;
+        }
+        const slider  = document.getElementById('bgOpacitySlider');
+        const opacity = slider ? parseInt(slider.value) / 100 : 0.22;
+        _applyCustomBg(bgData, opacity);
+        try {
+            localStorage.setItem('academicoCustomBg', bgData);
+            localStorage.setItem('academicoCustomBgOpacity', String(opacity));
+            localStorage.removeItem('academicoTheme');
+        } catch(storageErr) {
+            console.warn('localStorage cheio, plano de fundo não persiste entre sessões.');
+            alert('Plano de fundo aplicado! ⚠️ Não foi possível salvar permanentemente (imagem muito grande). Tente uma imagem menor.');
+        }
+        _updateBgStatus(true, opacity);
+        // Fecha preview
+        const wrap = document.getElementById('bgPreviewWrap');
+        const zone = document.getElementById('bgDropZone');
+        if (wrap) wrap.style.display = 'none';
+        if (zone) zone.style.display = '';
+        const inp = document.getElementById('customBackgroundImage');
+        if (inp) inp.value = '';
+        if (img) delete img.dataset.bgData;
+        // Toast de confirmação
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;';
+        toast.innerHTML = `<div class="alert alert-success alert-dismissible shadow" role="alert"><i class="fas fa-check-circle me-2"></i><strong>Plano de fundo aplicado!</strong><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    });
+
+    // Botão remover
+    document.getElementById('removeCustomBackground')?.addEventListener('click', function() {
+        localStorage.removeItem('academicoCustomBg');
+        applyTheme('light');
+        _updateBgStatus(false);
+    });
+
+    // Temas de cor
     document.querySelectorAll('.theme-option').forEach(btn => {
         btn.addEventListener('click', function() {
-            const theme = this.dataset.theme;
-            applyTheme(theme);
+            applyTheme(this.dataset.theme);
         });
     });
+
+    // Resetar
     document.getElementById('resetTheme')?.addEventListener('click', () => {
         localStorage.removeItem('academicoTheme');
         localStorage.removeItem('academicoCustomBg');
-        document.body.style.backgroundImage = '';
-        applyTheme('light');
-    });
-
-    // Imagem personalizada de fundo
-    document.getElementById('applyCustomBackground').addEventListener('click', function() {
-        const fileInput = document.getElementById('customBackgroundImage');
-        if (!fileInput.files || !fileInput.files[0]) {
-            alert('Selecione uma imagem.');
-            return;
-        }
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const bgData = e.target.result;
-            document.body.style.backgroundImage = `url('${bgData}')`;
-            document.body.classList.add('bg-custom');
-            localStorage.setItem('academicoCustomBg', bgData);
-            localStorage.removeItem('academicoTheme');
-        };
-        reader.readAsDataURL(file);
-    });
-    document.getElementById('removeCustomBackground').addEventListener('click', function() {
-        localStorage.removeItem('academicoCustomBg');
+        document.body.style.removeProperty('--custom-bg-url');
         applyTheme('light');
     });
 
@@ -13762,296 +14009,387 @@ document.addEventListener('keydown', (e) => {
 
 
 
-<!-- ===== HTML VIEWER + QUIZ ENGINE ===== -->
+<!-- ===== HTML VIEWER + QUIZ ENGINE v3 ===== -->
 <script>
-  // ===== HTML VIEWER =====
-  function viewProvaAnexo(dados, tipo, nome) {
-      const isHtml = tipo === 'text/html' || nome.endsWith('.html') || nome.endsWith('.htm');
-      const isPdf = tipo === 'application/pdf' || nome.endsWith('.pdf');
-      const isImage = tipo.startsWith('image/');
-      if (isHtml) {
-          const overlay = document.getElementById('htmlViewerOverlay');
-          const iframe = document.getElementById('htmlViewerIframe');
-          const title = document.getElementById('htmlViewerTitle');
-          const dlLink = document.getElementById('htmlViewerDownload');
-          title.textContent = nome;
-          dlLink.href = dados;
-          dlLink.download = nome;
-          try {
-              const arr = dados.split(',');
-              const mime = arr[0].match(/:(.*?);/)[1];
-              const bstr = atob(arr[1]);
-              let n = bstr.length;
-              const u8arr = new Uint8Array(n);
-              while(n--) u8arr[n] = bstr.charCodeAt(n);
-              const blob = new Blob([u8arr], {type: mime});
-              iframe.src = URL.createObjectURL(blob);
-          } catch(e) {
-              iframe.srcdoc = dados;
-          }
-          overlay.classList.add('active');
-      } else if (isPdf) {
-          const modal = document.getElementById('viewPdfModal');
-          if (modal) {
-              document.getElementById('pdfViewer').src = dados;
-              const dlBtn = document.getElementById('downloadPdfBtn');
-              if (dlBtn) { dlBtn.onclick = () => { const a=document.createElement('a');a.href=dados;a.download=nome;a.click(); }; }
-              new bootstrap.Modal(modal).show();
-          }
-      } else if (isImage) {
-          const modal = document.getElementById('viewImageModal');
-          if (modal) {
-              document.getElementById('modalImage').src = dados;
-              document.getElementById('modalImageDescription').textContent = nome;
-              new bootstrap.Modal(modal).show();
-          }
-      } else {
-          const a = document.createElement('a');
-          a.href = dados; a.download = nome; a.click();
-      }
-  }
-  window.closeHtmlViewer = function() {
-      document.getElementById('htmlViewerOverlay').classList.remove('active');
-      document.getElementById('htmlViewerIframe').src = 'about:blank';
-  };
-  document.addEventListener('keydown', function(e) {
-      if (e.key==='Escape') {
-          const ov=document.getElementById('htmlViewerOverlay');
-          if(ov && ov.classList.contains('active')) closeHtmlViewer();
-      }
-  });
+// ===== HTML VIEWER =====
+function viewProvaAnexo(dados, tipo, nome) {
+    const isHtml = tipo==='text/html'||nome.endsWith('.html')||nome.endsWith('.htm');
+    const isPdf  = tipo==='application/pdf'||nome.endsWith('.pdf');
+    const isImg  = tipo.startsWith('image/');
+    if (isHtml) {
+        const ov=document.getElementById('htmlViewerOverlay');
+        document.getElementById('htmlViewerTitle').textContent=nome;
+        const dl=document.getElementById('htmlViewerDownload'); dl.href=dados; dl.download=nome;
+        try {
+            const arr=dados.split(','), mime=arr[0].match(/:(.*?);/)[1], bstr=atob(arr[1]);
+            let n=bstr.length; const u8=new Uint8Array(n);
+            while(n--) u8[n]=bstr.charCodeAt(n);
+            document.getElementById('htmlViewerIframe').src=URL.createObjectURL(new Blob([u8],{type:mime}));
+        } catch(e){ document.getElementById('htmlViewerIframe').srcdoc=dados; }
+        ov.classList.add('active');
+    } else if (isPdf) {
+        const m=document.getElementById('viewPdfModal');
+        if(m){ document.getElementById('pdfViewer').src=dados;
+            const dl=document.getElementById('downloadPdfBtn');
+            if(dl) dl.onclick=()=>{const a=document.createElement('a');a.href=dados;a.download=nome;a.click();};
+            new bootstrap.Modal(m).show(); }
+    } else if (isImg) {
+        const m=document.getElementById('viewImageModal');
+        if(m){ document.getElementById('modalImage').src=dados;
+            document.getElementById('modalImageDescription').textContent=nome;
+            new bootstrap.Modal(m).show(); }
+    } else { const a=document.createElement('a'); a.href=dados; a.download=nome; a.click(); }
+}
+window.closeHtmlViewer=function(){
+    document.getElementById('htmlViewerOverlay').classList.remove('active');
+    document.getElementById('htmlViewerIframe').src='about:blank';
+};
+document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){const ov=document.getElementById('htmlViewerOverlay');if(ov&&ov.classList.contains('active'))closeHtmlViewer();}
+});
 
-  // ===== QUIZ ENGINE — por matéria, via API Claude =====
+// ===== QUIZ ENGINE v3 =====
+// Estratégia:
+//  1. Detecta a matéria pelo nome da disciplina + conteúdo da prova (parse inteligente)
+//  2. Tenta gerar questões via Claude API (sempre questões novas, seed de timestamp)
+//  3. Fallback: banco local rico, embaralhado com seed de timestamp (nunca repete mesma ordem)
 
-  // Banco local por área (fallback offline)
-  const BANCO_QUESTOES = {
-    constitucional: [
-      { q:'Qual é o remédio constitucional para proteger a liberdade de locomoção?', ops:['Mandado de Segurança','Habeas Corpus','Habeas Data','Mandado de Injunção'], c:1, e:'HC — art. 5°, LXVIII CF/88.' },
-      { q:'São cláusulas pétreas da CF/88, EXCETO:', ops:['Forma Federativa de Estado','Voto direto e secreto','Sistema parlamentarista de governo','Separação dos Poderes'], c:2, e:'Art. 60, §4° CF: as cláusulas pétreas são: forma federativa, voto direto/secreto, separação dos poderes e direitos e garantias individuais.' },
-      { q:'O controle difuso de constitucionalidade pode ser exercido por:', ops:['Apenas o STF','Qualquer juiz ou tribunal','Somente os Tribunais Superiores','Apenas o Procurador-Geral da República'], c:1, e:'No controle difuso (concreto), qualquer juiz ou tribunal pode declarar a inconstitucionalidade de forma incidental.' },
-      { q:'A Constituição de 1988 quanto à forma de alteração é classificada como:', ops:['Flexível','Rígida','Imutável','Semirrígida'], c:1, e:'Rígida — exige quórum qualificado (3/5 em dois turnos) para emendas constitucionais, art. 60.' },
-      { q:'O mandado de injunção é cabível quando:', ops:['Há abuso de poder da autoridade','Falta norma regulamentadora que torne inviável direito constitucional','A autoridade coatora é do Poder Judiciário','Há lesão a direito líquido e certo'], c:1, e:'Art. 5°, LXXI CF: cabe MI quando ausência de norma regulamentadora torne inviável o exercício de direito.' },
-      { q:'O princípio da dignidade da pessoa humana está previsto na CF como:', ops:['Direito fundamental','Garantia constitucional','Fundamento da República','Objetivo fundamental'], c:2, e:'Art. 1°, III CF: a dignidade da pessoa humana é um dos fundamentos da República Federativa do Brasil.' },
-      { q:'A ação direta de inconstitucionalidade (ADI) é julgada pelo:', ops:['STJ','TST','STF','TRF'], c:2, e:'Art. 102, I, "a" CF: compete ao STF processar e julgar originariamente a ADI.' },
-      { q:'O habeas data é instrumento para:', ops:['Trancamento de ação penal','Acesso a informações pessoais em registros públicos','Proteção da liberdade de locomoção','Impugnação de ato legislativo'], c:1, e:'Art. 5°, LXXII CF: habeas data assegura conhecimento/retificação de informações em bancos de dados de entidades governamentais.' },
-    ],
-    civil: [
-      { q:'A maioridade civil no Código Civil de 2002 ocorre aos:', ops:['16 anos','18 anos','21 anos','20 anos'], c:1, e:'Art. 5° CC/2002: a menoridade cessa aos 18 anos completos.' },
-      { q:'A Teoria da Imprevisão (art. 478 CC) permite:', ops:['Resolução do contrato se tornarem excessivamente onerosas as prestações','Nulidade do contrato por vício de consentimento','Rescisão por inadimplemento culposo','Extinção do contrato por caso fortuito'], c:0, e:'Art. 478 CC: nos contratos de execução continuada, se sobrevieram eventos imprevisíveis tornando a prestação excessivamente onerosa, o devedor pode pedir a resolução.' },
-      { q:'O prazo prescricional geral para ações pessoais no CC é de:', ops:['3 anos','5 anos','10 anos','15 anos'], c:2, e:'Art. 205 CC: a prescrição ocorre em 10 anos quando a lei não fixar prazo menor.' },
-      { q:'A desconsideração da personalidade jurídica está prevista no CC no art.:', ops:['50','100','150','200'], c:0, e:'Art. 50 CC: em caso de abuso, desvio de finalidade ou confusão patrimonial, o juiz pode desconsiderar a pessoa jurídica.' },
-      { q:'São elementos essenciais do negócio jurídico, EXCETO:', ops:['Agente capaz','Objeto lícito','Forma prescrita em lei','Registro em cartório'], c:3, e:'Art. 104 CC: validade do negócio jurídico requer agente capaz, objeto lícito/possível/determinável e forma prescrita ou não defesa em lei.' },
-      { q:'O prazo de prescrição para reparação civil extracontratual é de:', ops:['1 ano','2 anos','3 anos','5 anos'], c:2, e:'Art. 206, §3°, V CC: prescreve em 3 anos a pretensão de reparação civil.' },
-      { q:'Nos contratos, o princípio da boa-fé objetiva encontra-se no art.:', ops:['113','400','500','600'], c:0, e:'Art. 113 CC: os negócios jurídicos devem ser interpretados conforme a boa-fé e os usos do lugar de sua celebração.' },
-      { q:'A usucapião extraordinária (art. 1238 CC) exige posse mansa e pacífica por:', ops:['5 anos','10 anos','15 anos','20 anos'], c:2, e:'Art. 1238 CC: aquele que possuir imóvel como seu por 15 anos, sem interrupção nem oposição, adquire-o por usucapião.' },
-    ],
-    penal: [
-      { q:'O princípio "nullum crimen, nulla poena sine lege" é o princípio da:', ops:['Culpabilidade','Proporcionalidade','Legalidade','Intervenção mínima'], c:2, e:'Art. 1° CP e art. 5°, XXXIX CF — não há crime sem lei anterior que o defina, nem pena sem prévia cominação legal.' },
-      { q:'O dolo eventual caracteriza-se quando o agente:', ops:['Quer o resultado','Assume o risco de produzi-lo','Não prevê o resultado','Age por negligência'], c:1, e:'Art. 18, I CP (parte final): age dolosamente quem assume o risco de produzir o resultado.' },
-      { q:'A tentativa punível exige que o agente:', ops:['Consuma o crime','Inicie a execução sem consumar por circunstâncias alheias à sua vontade','Pratique atos preparatórios','Desista voluntariamente'], c:1, e:'Art. 14, II CP: o crime é tentado quando, iniciada a execução, não se consuma por circunstâncias alheias à vontade do agente.' },
-      { q:'A legítima defesa (art. 25 CP) exige, EXCETO:', ops:['Agressão injusta','Uso moderado dos meios','Proporcionalidade ao bem em perigo','Conhecimento da situação de fato'], c:2, e:'Art. 25 CP: a legítima defesa requer agressão injusta (atual ou iminente), uso moderado dos meios disponíveis e conhecimento da situação justificante.' },
-      { q:'O prazo prescricional é interrompido, EXCETO por:', ops:['Recebimento da denúncia','Sentença condenatória recorrível','Instauração do inquérito policial','Pronúncia do réu'], c:2, e:'Art. 117 CP: a prescrição NÃO é interrompida pela instauração do inquérito, mas sim pelo recebimento da denúncia, pronúncia, decisão confirmatória, sentença condenatória e reincidência.' },
-      { q:'O crime culposo (art. 18, II CP) pode ser praticado por:', ops:['Imprudência, negligência ou imperícia','Dolo eventual ou culpa consciente','Dolo direto ou alternativo','Somente por imprudência'], c:0, e:'Art. 18, II CP: o crime culposo ocorre quando o agente deu causa ao resultado por imprudência, negligência ou imperícia.' },
-      { q:'A reincidência ocorre quando o agente:', ops:['Pratica novo crime após ter sido processado','Comete crime após condenação transitada em julgado por crime anterior','Comete dois crimes na mesma ocasião','É condenado mais de uma vez no mesmo processo'], c:1, e:'Art. 63 CP: verifica-se a reincidência quando o agente comete novo crime depois de transitar em julgado sentença que o condenou por crime anterior.' },
-      { q:'No concurso formal de crimes (art. 70 CP), aplica-se:', ops:['A pena do crime mais grave multiplicada pelo número de crimes','A pena mais grave, aumentada de 1/6 a 1/2','A soma das penas de todos os crimes','A pena do crime menos grave'], c:1, e:'Art. 70 CP: concurso formal — aplica-se a pena mais grave, aumentada de 1/6 até metade (concurso formal próprio).' },
-    ],
-    tributario: [
-      { q:'O fato gerador da obrigação tributária principal é:', ops:['A lei que institui o tributo','A situação prevista em lei que origina a obrigação de pagar tributo','O lançamento pelo Fisco','O sujeito passivo da relação tributária'], c:1, e:'Art. 114 CTN: fato gerador é a situação definida em lei como necessária e suficiente à sua ocorrência.' },
-      { q:'O princípio da anterioridade tributária (art. 150, III, "b" CF) veda:', ops:['Cobrar tributo no mesmo exercício financeiro da lei que o instituiu','Cobrar tributo retroativamente','Usar analogia para exigir tributo','Cobrar tributo sem lei prévia'], c:0, e:'Art. 150, III, "b" CF: proibido cobrar tributos no mesmo exercício financeiro em que tenha sido publicada a lei que os instituiu ou aumentou.' },
-      { q:'A imunidade recíproca prevista na CF proíbe a União, Estados e Municípios de cobrarem impostos sobre:', ops:['Serviços entre eles','Patrimônio, renda ou serviços uns dos outros','Contribuições sociais','Taxas de serviços'], c:1, e:'Art. 150, VI, "a" CF: vedado instituir impostos sobre patrimônio, renda ou serviços dos entes federados entre si.' },
-      { q:'A obrigação tributária acessória tem por objeto:', ops:['Pagar tributo ou penalidade','Prestações positivas ou negativas previstas na legislação tributária','Somente obrigações de não-fazer','O lançamento tributário'], c:1, e:'Art. 113, §2° CTN: a obrigação acessória tem por objeto as prestações positivas ou negativas de interesse da arrecadação ou fiscalização.' },
-      { q:'O lançamento tributário é um ato:', ops:['Privativo do contribuinte','Privativo da autoridade administrativa','Discricionário do Judiciário','Facultativo do Fisco'], c:1, e:'Art. 142 CTN: compete privativamente à autoridade administrativa constituir o crédito tributário pelo lançamento.' },
-      { q:'A prescrição tributária para cobrança do crédito é de:', ops:['2 anos','3 anos','5 anos','10 anos'], c:2, e:'Art. 174 CTN: a ação para cobrança do crédito tributário prescreve em 5 anos contados da data da constituição definitiva do crédito.' },
-      { q:'O ICMS é de competência:', ops:['Federal','Estadual e do Distrito Federal','Municipal','Federal e Estadual'], c:1, e:'Art. 155, II CF: o ICMS compete aos Estados e ao Distrito Federal.' },
-    ],
-    administrativo: [
-      { q:'O princípio da legalidade na Administração Pública significa:', ops:['O administrador pode fazer tudo que a lei não proíbe','O administrador só pode agir quando a lei autoriza','A lei deve ser interpretada extensivamente','O administrador é livre para agir conforme conveniência'], c:1, e:'Art. 37, caput CF: a Administração Pública obedece ao princípio da legalidade — o gestor público só pode fazer o que a lei expressamente permite.' },
-      { q:'O ato administrativo vinculado é aquele em que:', ops:['A Administração tem liberdade de escolha','A lei não deixa margem de escolha ao administrador','O administrador decide por conveniência','Apenas os meios são previstos em lei'], c:1, e:'No ato vinculado, todos os elementos estão rigidamente definidos em lei, sem margem de apreciação discricionária.' },
-      { q:'A autotutela administrativa permite à Administração:', ops:['Rever seus próprios atos quando ilegais ou inconvenientes','Punir particulares sem processo administrativo','Agir sem observar o princípio da publicidade','Dispensar licitação em todos os casos'], c:0, e:'Súmula 473 STF: a Administração pode anular seus próprios atos quando eivados de vícios que os tornem ilegais (controle de legalidade) ou revogá-los por motivo de conveniência.' },
-      { q:'A licitação na modalidade Pregão é utilizada para:', ops:['Obras de grande vulto','Aquisição de bens e serviços comuns','Concessões e permissões','Contratos internacionais'], c:1, e:'Lei 10.520/2002 e Lei 14.133/2021: o pregão destina-se à aquisição de bens e serviços comuns, com a proposta de menor preço.' },
-      { q:'O prazo para impetrar mandado de segurança contra ato de autoridade é de:', ops:['30 dias','60 dias','120 dias','1 ano'], c:2, e:'Art. 23 da Lei 12.016/2009: o direito de impetrar mandado de segurança extingue-se decorridos 120 dias contados da ciência do ato coator.' },
-      { q:'São atributos do ato administrativo, EXCETO:', ops:['Imperatividade','Autoexecutoriedade','Irrevogabilidade','Presunção de legitimidade'], c:2, e:'Os atributos são: presunção de legitimidade/veracidade, imperatividade, autoexecutoriedade e tipicidade. A irrevogabilidade não é atributo geral.' },
-    ],
-    processual: [
-      { q:'No CPC/2015, a citação é o ato pelo qual:', ops:['O juiz decide a causa','O réu é convocado a integrar a relação processual','O processo é suspenso','O autor faz o pedido inicial'], c:1, e:'Art. 238 CPC: citação é o ato pelo qual são convocados o réu, o executado ou o interessado para integrar a relação processual.' },
-      { q:'A tutela de urgência antecipada pode ser concedida quando:', ops:['O autor comprovar a certeza do direito','Houver probabilidade do direito e perigo de dano ou risco ao resultado útil','O réu concordar com o pedido','Apenas em ação de conhecimento'], c:1, e:'Art. 300 CPC: a tutela de urgência será concedida quando houver elementos que evidenciem a probabilidade do direito e o perigo de dano ou o risco ao resultado útil do processo.' },
-      { q:'O prazo para apresentação de contestação no rito ordinário do CPC é de:', ops:['5 dias','10 dias','15 dias','30 dias'], c:2, e:'Art. 335 CPC: o réu poderá oferecer contestação, por petição, no prazo de 15 dias.' },
-      { q:'A coisa julgada material forma-se:', ops:['Com o trânsito em julgado da sentença de mérito','Com o protocolo da petição inicial','Com a citação do réu','Com a audiência de instrução'], c:0, e:'Art. 502 CPC: denomina-se coisa julgada material a autoridade que torna imutável e indiscutível a decisão de mérito não mais sujeita a recurso.' },
-      { q:'O princípio do contraditório significa:', ops:['As partes podem produzir qualquer prova','As partes têm direito de conhecer e se manifestar sobre os atos processuais','O juiz deve ser imparcial','O processo é público'], c:1, e:'Art. 9° CPC: não se proferirá decisão contra uma das partes sem que ela seja previamente ouvida — corolário do contraditório.' },
-    ],
-    trabalhista: [
-      { q:'O prazo prescricional para ajuizar ação trabalhista após extinção do contrato é de:', ops:['1 ano','2 anos','3 anos','5 anos'], c:1, e:'Art. 7°, XXIX CF: prazo de 2 anos para propositura da ação, com período de 5 anos para reclamar créditos durante a relação de emprego.' },
-      { q:'O contrato de trabalho padrão previsto na CLT é:', ops:['Por prazo determinado','Por experiência','Temporário','Por prazo indeterminado'], c:3, e:'A regra geral da CLT é o contrato de trabalho por prazo indeterminado; os contratos a termo são exceção.' },
-      { q:'O aviso prévio trabalhado corresponde a, no mínimo:', ops:['15 dias','30 dias','45 dias','60 dias'], c:1, e:'Art. 487 CLT e Lei 12.506/2011: o aviso prévio é de 30 dias, acrescido de 3 dias por ano de serviço, até 90 dias.' },
-      { q:'A jornada máxima de trabalho prevista na CF é de:', ops:['6 horas diárias e 36 semanais','8 horas diárias e 40 semanais','8 horas diárias e 44 semanais','10 horas diárias e 50 semanais'], c:2, e:'Art. 7°, XIII CF: jornada de trabalho normal não superior a 8 horas diárias e 44 horas semanais.' },
-      { q:'O FGTS foi criado para:', ops:['Financiar a previdência social','Constituir pecúlio do trabalhador e garantia contra despedida arbitrária','Custear seguro-desemprego','Financiar o SUS'], c:1, e:'Art. 7°, III CF e Lei 8.036/90: o FGTS é um fundo de natureza financeira, garantia contra despedida arbitrária e pecúlio do trabalhador.' },
-      { q:'A equiparação salarial no Direito do Trabalho exige, EXCETO:', ops:['Mesma função','Mesmo empregador','Mesmo tempo de empresa (menos de 4 anos de diferença)','Mesma cor ou gênero'], c:3, e:'Art. 461 CLT: equiparação salarial exige: mesma função, mesmo empregador, mesmo estabelecimento, trabalho de igual valor e diferença máxima de 4 anos de tempo na função.' },
-    ],
-    empresarial: [
-      { q:'A empresa individual de responsabilidade limitada (EIRELI) foi substituída por:', ops:['Microempresa','Sociedade Unipessoal Limitada','Empresa em Nome Coletivo','MEI'], c:1, e:'Com a reforma da Lei 14.195/2021, a EIRELI foi extinta e substituída pela Sociedade Limitada Unipessoal (art. 1052, §1° CC).' },
-      { q:'O título de crédito que não admite causa (abstrato) é:', ops:['Duplicata','Cheque','Nota promissória','Cédula de crédito'], c:2, e:'A nota promissória é título abstrato — desvincula-se da causa que lhe deu origem após circulação.' },
-      { q:'A falência requerida pelo próprio devedor é denominada:', ops:['Falência involuntária','Autofalência','Insolvência civil','Recuperação judicial'], c:1, e:'Art. 105 Lei 11.101/2005: o próprio devedor pode requerer sua falência (autofalência) quando verificar que não pode cumprir suas obrigações.' },
-      { q:'A recuperação judicial tem como objetivo:', ops:['Liquidar o patrimônio do devedor','Viabilizar a superação da crise econômico-financeira do devedor','Transferir a empresa a terceiros','Anular contratos vigentes'], c:1, e:'Art. 47 Lei 11.101/2005: a recuperação judicial visa viabilizar a superação da situação de crise econômico-financeira do devedor.' },
-    ],
-    default: [
-      { q:'Qual dos seguintes é princípio expresso da Administração Pública na CF/88?', ops:['Razoabilidade','Proporcionalidade','Moralidade','Supremacia do interesse público'], c:2, e:'Art. 37 CF elenca expressamente: legalidade, impessoalidade, moralidade, publicidade e eficiência (LIMPE).' },
-      { q:'A norma de Direito Internacional incorpora-se ao ordenamento brasileiro mediante:', ops:['Decreto legislativo seguido de decreto presidencial','Apenas decreto presidencial','Aprovação pelo STF','Lei ordinária do Congresso'], c:0, e:'Tratados são aprovados pelo Congresso (decreto legislativo) e promulgados pelo Presidente (decreto presidencial).' },
-      { q:'O princípio da proporcionalidade é desdobrado em:', ops:['Legalidade, moralidade e eficiência','Adequação, necessidade e proporcionalidade em sentido estrito','Ampla defesa, contraditório e devido processo','Publicidade, impessoalidade e moralidade'], c:1, e:'O princípio da proporcionalidade desdobra-se em: adequação (meio apto ao fim), necessidade (meio menos gravoso) e proporcionalidade em sentido estrito (custo-benefício).' },
-      { q:'A hermenêutica jurídica utiliza como método de interpretação:', ops:['Apenas a interpretação literal','Apenas a interpretação sistemática','Métodos gramatical, histórico, sistemático e teleológico','Somente a interpretação extensiva'], c:2, e:'A interpretação jurídica pode ser: gramatical (literal), histórica, sistemática, teleológica (finalística) e sociológica.' },
-    ]
-  };
+// --- Banco local expandido por matéria ---
+const QB = {
+  constitucional:[
+    {q:'Qual remédio constitucional protege a liberdade de locomoção?',ops:['Mandado de Segurança','Habeas Corpus','Habeas Data','Mandado de Injunção'],c:1,e:'Art. 5°, LXVIII CF/88: conceder-se-á habeas corpus sempre que alguém sofrer ou se achar ameaçado de sofrer violência ou coação em sua liberdade de locomoção, por ilegalidade ou abuso de poder.'},
+    {q:'São cláusulas pétreas da CF/88, EXCETO:',ops:['Forma Federativa de Estado','Voto direto e secreto','Sistema parlamentarista de governo','Separação dos Poderes'],c:2,e:'Art. 60, §4° CF: são cláusulas pétreas a forma federativa de Estado, o voto direto/secreto/universal/periódico, a separação dos Poderes e os direitos e garantias individuais. O sistema de governo não é cláusula pétrea.'},
+    {q:'O controle difuso de constitucionalidade pode ser exercido por:',ops:['Apenas o STF','Qualquer juiz ou tribunal','Somente os Tribunais Superiores','Apenas o PGR'],c:1,e:'No controle difuso (concreto/incidental), qualquer juiz ou tribunal pode declarar a inconstitucionalidade de lei de forma incidental, no julgamento de um caso concreto.'},
+    {q:'O mandado de injunção é cabível quando:',ops:['Há abuso de poder de autoridade','Falta norma regulamentadora que torne inviável exercício de direito constitucional','A autoridade coatora é do Judiciário','Há lesão a direito líquido e certo'],c:1,e:'Art. 5°, LXXI CF: cabe mandado de injunção sempre que a falta de norma regulamentadora torne inviável o exercício dos direitos e liberdades constitucionais e das prerrogativas inerentes à nacionalidade, à soberania e à cidadania.'},
+    {q:'O habeas data assegura:',ops:['Liberdade de locomoção','Acesso a informações pessoais em registros de entidades governamentais','Proteção contra ato de autoridade com abuso de poder','Suprimento de norma regulamentadora ausente'],c:1,e:'Art. 5°, LXXII CF: o habeas data assegura o conhecimento de informações relativas à pessoa do impetrante constantes de registros ou bancos de dados de entidades governamentais ou de caráter público.'},
+    {q:'A ação direta de inconstitucionalidade (ADI) é julgada pelo:',ops:['STJ','TST','STF','TRF'],c:2,e:'Art. 102, I, "a" CF: compete ao STF, precipuamente, a guarda da Constituição, cabendo-lhe processar e julgar, originariamente, a ação direta de inconstitucionalidade.'},
+    {q:'O princípio da dignidade da pessoa humana está previsto na CF como:',ops:['Direito fundamental isolado','Garantia constitucional específica','Fundamento da República Federativa do Brasil','Objetivo fundamental da República'],c:2,e:'Art. 1°, III CF: a República Federativa do Brasil tem como fundamento a dignidade da pessoa humana.'},
+    {q:'O controle concentrado de constitucionalidade no Brasil é exercido mediante:',ops:['Recurso extraordinário','Habeas corpus','ADI, ADC, ADPF e ADO','Mandado de segurança coletivo'],c:2,e:'O controle concentrado é exercido pelo STF por meio da ADI (ação direta de inconstitucionalidade), ADC (ação declaratória de constitucionalidade), ADPF (arguição de descumprimento de preceito fundamental) e ADO (ação direta de inconstitucionalidade por omissão).'},
+    {q:'Segundo a CF/88, os tratados internacionais sobre direitos humanos aprovados com quórum especial têm status de:',ops:['Lei ordinária','Lei complementar','Emenda constitucional','Decreto presidencial'],c:2,e:'Art. 5°, §3° CF: os tratados e convenções internacionais sobre direitos humanos que forem aprovados em cada Casa do Congresso Nacional, em dois turnos, por três quintos dos votos dos respectivos membros, serão equivalentes às emendas constitucionais.'},
+    {q:'O princípio da isonomia na CF/88 prevê que:',ops:['Todos são rigorosamente iguais em todos os aspectos','Homens e mulheres são iguais em direitos e obrigações nos termos da CF','A lei não pode fazer distinções de qualquer natureza','O Estado deve tratar todos de forma absolutamente idêntica'],c:1,e:'Art. 5°, I CF: homens e mulheres são iguais em direitos e obrigações, nos termos desta Constituição. A isonomia material admite tratamento diferenciado para situações diferentes.'},
+  ],
+  civil:[
+    {q:'A maioridade civil no Código Civil de 2002 ocorre aos:',ops:['16 anos','18 anos','21 anos','20 anos'],c:1,e:'Art. 5° CC/2002: a menoridade cessa aos dezoito anos completos, quando a pessoa fica habilitada à prática de todos os atos da vida civil.'},
+    {q:'O prazo prescricional geral para ações pessoais no CC é de:',ops:['3 anos','5 anos','10 anos','15 anos'],c:2,e:'Art. 205 CC: a prescrição ocorre em dez anos, quando a lei não lhe haja fixado prazo menor.'},
+    {q:'A desconsideração da personalidade jurídica (art. 50 CC) é cabível quando:',ops:['A empresa tem prejuízo financeiro','Há abuso de personalidade jurídica com desvio de finalidade ou confusão patrimonial','O sócio tem dívidas pessoais','A empresa encerra suas atividades'],c:1,e:'Art. 50 CC: em caso de abuso da personalidade jurídica, caracterizado pelo desvio de finalidade ou pela confusão patrimonial, pode o juiz, a requerimento da parte, desconsiderar a personalidade jurídica.'},
+    {q:'O prazo de prescrição para reparação civil extracontratual é de:',ops:['1 ano','2 anos','3 anos','5 anos'],c:2,e:'Art. 206, §3°, V CC: prescreve em três anos a pretensão de reparação civil.'},
+    {q:'São elementos essenciais do negócio jurídico, EXCETO:',ops:['Agente capaz','Objeto lícito e possível','Forma prescrita ou não defesa em lei','Registro em cartório'],c:3,e:'Art. 104 CC: a validade do negócio jurídico requer: agente capaz; objeto lícito, possível, determinado ou determinável; forma prescrita ou não defesa em lei. O registro não é requisito de validade geral.'},
+    {q:'A Teoria da Imprevisão (rebus sic stantibus) no CC permite:',ops:['Anulação do contrato por vício de consentimento','Resolução ou revisão do contrato quando eventos imprevisíveis tornam a prestação excessivamente onerosa','Rescisão por inadimplemento culposo','Extinção por caso fortuito qualquer'],c:1,e:'Art. 478 CC: nos contratos de execução continuada ou diferida, se a prestação de uma das partes se tornar excessivamente onerosa, com extrema vantagem para a outra, em virtude de acontecimentos extraordinários e imprevisíveis, poderá o devedor pedir a resolução do contrato.'},
+    {q:'A usucapião extraordinária (art. 1238 CC) exige posse mansa e pacífica por:',ops:['5 anos','10 anos','15 anos','20 anos'],c:2,e:'Art. 1238 CC: aquele que possuir como sua um imóvel por quinze anos, sem interrupção, nem oposição, qualquer que seja a origem da posse, adquiri-lo-á por usucapião. O prazo é reduzido a dez anos se o possuidor houver estabelecido no imóvel a sua moradia habitual ou nele realizado obras ou serviços de caráter produtivo.'},
+    {q:'O princípio da boa-fé objetiva nos contratos está previsto no CC no art.:',ops:['113','422','478','927'],c:1,e:'Art. 422 CC: os contratantes são obrigados a guardar, assim na conclusão do contrato, como em sua execução, os princípios de probidade e boa-fé.'},
+    {q:'A responsabilidade civil objetiva independe de:',ops:['Dano','Nexo de causalidade','Culpa ou dolo','Conduta do agente'],c:2,e:'A responsabilidade civil objetiva, prevista no art. 927, parágrafo único CC, dispensa a comprovação de culpa ou dolo, bastando o dano e o nexo de causalidade com a atividade de risco.'},
+    {q:'Os incapazes relativamente (art. 4° CC) incluem:',ops:['Menores de 16 anos','Maiores de 16 e menores de 18 anos','Pessoas com deficiência mental grave','Ébrios habituais e viciados em tóxicos'],c:3,e:'Art. 4° CC: são incapazes, relativamente a certos atos ou à maneira de os exercer: os maiores de dezesseis e menores de dezoito anos; os ébrios habituais e os viciados em tóxico; aqueles que, por causa transitória ou permanente, não puderem exprimir sua vontade; os pródigos.'},
+  ],
+  penal:[
+    {q:'O princípio "nullum crimen, nulla poena sine lege" é o princípio da:',ops:['Culpabilidade','Proporcionalidade','Legalidade','Intervenção mínima'],c:2,e:'Art. 1° CP e art. 5°, XXXIX CF: não há crime sem lei anterior que o defina, nem pena sem prévia cominação legal (nullum crimen, nulla poena sine lege).'},
+    {q:'O dolo eventual (art. 18, I, parte final CP) ocorre quando o agente:',ops:['Quer diretamente o resultado','Assume o risco de produzir o resultado','Não prevê o resultado como possível','Age por imprudência'],c:1,e:'Art. 18, I CP (parte final): age dolosamente quem, tendo representado o resultado como possível, assumiu o risco de produzi-lo (dolo eventual).'},
+    {q:'A tentativa (art. 14, II CP) exige:',ops:['Consumação do crime','Início de execução sem consumação por circunstâncias alheias à vontade do agente','Apenas atos preparatórios','Desistência voluntária do agente'],c:1,e:'Art. 14, II CP: o crime é tentado quando, iniciada a execução, não se consuma por circunstâncias alheias à vontade do agente.'},
+    {q:'A legítima defesa (art. 25 CP) requer, EXCETO:',ops:['Agressão injusta atual ou iminente','Uso moderado dos meios disponíveis','Proporcionalidade matemática ao bem em perigo','Conhecimento da situação justificante'],c:2,e:'Art. 25 CP: entende-se em legítima defesa quem, usando moderadamente dos meios necessários, repele injusta agressão, atual ou iminente, a direito seu ou de outrem. Não exige proporcionalidade matemática, mas moderação.'},
+    {q:'No concurso formal de crimes (art. 70 CP), aplica-se:',ops:['Soma de todas as penas','Pena mais grave multiplicada pelo número de crimes','Pena mais grave aumentada de 1/6 a 1/2 (concurso formal próprio)','Apenas a pena do crime menos grave'],c:2,e:'Art. 70 CP: quando o agente, mediante uma só ação ou omissão, pratica dois ou mais crimes, idênticos ou não, aplica-se-lhe a mais grave das penas cabíveis ou, se iguais, somente uma delas, mas aumentada, em qualquer caso, de um sexto até metade.'},
+    {q:'A reincidência (art. 63 CP) ocorre quando:',ops:['O agente pratica novo crime após ser investigado','O agente comete crime após condenação transitada em julgado por crime anterior','O agente comete dois crimes na mesma ocasião','O agente é multirreincidente'],c:1,e:'Art. 63 CP: verifica-se a reincidência quando o agente comete novo crime, depois de transitar em julgado a sentença que, no País ou no estrangeiro, o tenha condenado por crime anterior.'},
+    {q:'A prescrição penal é interrompida, entre outros, pelo:',ops:['Oferecimento da denúncia','Recebimento da denúncia ou queixa','Instauração do inquérito policial','Pedido de arquivamento'],c:1,e:'Art. 117, I CP: o curso da prescrição interrompe-se pelo recebimento da denúncia ou da queixa (não pelo mero oferecimento). A instauração do inquérito não interrompe a prescrição.'},
+    {q:'O crime culposo (art. 18, II CP) é caracterizado por:',ops:['Intenção de produzir o resultado','Assunção do risco do resultado','Imprudência, negligência ou imperícia','Dolo de dano'],c:2,e:'Art. 18, II CP: o crime é culposo quando o agente deu causa ao resultado por imprudência, negligência ou imperícia.'},
+    {q:'O erro de tipo essencial inevitável (art. 20 CP):',ops:['Agrava a pena','Exclui o dolo e a culpa','Exclui apenas o dolo, mantendo a punição por culpa','Não tem efeito na responsabilidade'],c:1,e:'Art. 20 CP: o erro sobre elemento constitutivo do tipo legal de crime exclui o dolo, mas permite a punição por crime culposo, se previsto em lei. Se inevitável, exclui também a culpa.'},
+    {q:'No crime doloso consumado, a pena base é fixada:',ops:['No mínimo legal sempre','No máximo legal','Com base nas circunstâncias judiciais do art. 59 CP','Por livre arbítrio do juiz'],c:2,e:'Art. 59 CP: o juiz, atendendo à culpabilidade, aos antecedentes, à conduta social, à personalidade do agente, aos motivos, às circunstâncias e consequências do crime, bem como ao comportamento da vítima, estabelecerá a pena base.'},
+  ],
+  tributario:[
+    {q:'O fato gerador da obrigação tributária principal é:',ops:['A lei que institui o tributo','A situação prevista em lei que origina a obrigação de pagar tributo','O lançamento pelo Fisco','O sujeito passivo da relação tributária'],c:1,e:'Art. 114 CTN: fato gerador da obrigação principal é a situação definida em lei como necessária e suficiente à sua ocorrência.'},
+    {q:'O princípio da anterioridade tributária (art. 150, III, "b" CF) veda:',ops:['Cobrar tributo no mesmo exercício financeiro da lei que o instituiu','Cobrar tributo retroativamente','Usar analogia para exigir tributo','Cobrar tributo sem lei prévia'],c:0,e:'Art. 150, III, "b" CF: sem prejuízo de outras garantias asseguradas ao contribuinte, é vedado à União, aos Estados, ao Distrito Federal e aos Municípios cobrar tributos no mesmo exercício financeiro em que haja sido publicada a lei que os instituiu ou aumentou.'},
+    {q:'A imunidade tributária recíproca veda cobrar impostos sobre:',ops:['Taxas entre entes federados','Patrimônio, renda ou serviços dos entes federados entre si','Contribuições sociais de servidores','Todas as cobranças entre entes'],c:1,e:'Art. 150, VI, "a" CF: é vedado à União, aos Estados, ao DF e aos Municípios instituir impostos sobre patrimônio, renda ou serviços, uns dos outros.'},
+    {q:'O lançamento tributário é ato:',ops:['Privativo do contribuinte','Privativo da autoridade administrativa','Discricionário do Judiciário','Facultativo do Fisco'],c:1,e:'Art. 142 CTN: compete privativamente à autoridade administrativa constituir o crédito tributário pelo lançamento, assim entendido o procedimento administrativo tendente a verificar a ocorrência do fato gerador da obrigação correspondente.'},
+    {q:'A prescrição tributária para cobrança do crédito é de:',ops:['2 anos','3 anos','5 anos','10 anos'],c:2,e:'Art. 174 CTN: a ação para a cobrança do crédito tributário prescreve em cinco anos, contados da data da sua constituição definitiva.'},
+    {q:'O ICMS é tributo de competência:',ops:['Federal','Estadual e do Distrito Federal','Municipal','Compartilhada entre União e Estados'],c:1,e:'Art. 155, II CF: compete aos Estados e ao Distrito Federal instituir impostos sobre operações relativas à circulação de mercadorias e sobre prestações de serviços de transporte interestadual e intermunicipal e de comunicação (ICMS).'},
+    {q:'A obrigação tributária acessória tem por objeto:',ops:['Apenas o pagamento de tributo','Prestações positivas ou negativas de interesse da arrecadação ou fiscalização','Somente obrigações de não-fazer','O lançamento tributário pelo contribuinte'],c:1,e:'Art. 113, §2° CTN: a obrigação acessória decorre da legislação tributária e tem por objeto as prestações, positivas ou negativas, nela previstas no interesse da arrecadação ou da fiscalização dos tributos.'},
+    {q:'Segundo o CTN, são espécies de tributo:',ops:['Apenas impostos e taxas','Impostos, taxas e contribuições de melhoria','Impostos, taxas, contribuições de melhoria, empréstimos compulsórios e contribuições especiais','Somente impostos'],c:2,e:'O STF adota a teoria pentapartida: impostos, taxas, contribuições de melhoria, empréstimos compulsórios e contribuições especiais (parafiscais, sociais, de intervenção no domínio econômico e de interesse das categorias profissionais).'},
+    {q:'O ISS é tributo de competência:',ops:['Federal','Estadual','Municipal e do Distrito Federal','Compartilhada'],c:2,e:'Art. 156, III CF: compete aos Municípios instituir imposto sobre serviços de qualquer natureza (ISS), não compreendidos no art. 155, II, definidos em lei complementar.'},
+    {q:'O princípio da capacidade contributiva determina que:',ops:['Todos paguem o mesmo valor de tributo','Os tributos pessoais sejam graduados segundo a capacidade econômica do contribuinte','Só os ricos devem pagar tributos','Os tributos sejam sempre proporcionais ao salário'],c:1,e:'Art. 145, §1° CF: sempre que possível, os impostos terão caráter pessoal e serão graduados segundo a capacidade econômica do contribuinte.'},
+  ],
+  administrativo:[
+    {q:'O princípio da legalidade na Administração Pública (art. 37 CF) significa:',ops:['O administrador pode fazer tudo que a lei não proíbe','O administrador só pode agir quando a lei autoriza','A lei deve ser interpretada extensivamente','O administrador é livre para agir conforme conveniência'],c:1,e:'Na Administração Pública vigora a legalidade estrita: o administrador só pode praticar os atos que a lei expressamente autoriza ou permite, diferentemente do particular, que pode fazer tudo o que a lei não proíbe.'},
+    {q:'O ato administrativo vinculado difere do discricionário porque:',ops:['O vinculado tem presunção de legitimidade e o discricionário não','No vinculado a lei não deixa margem de escolha ao administrador','No discricionário o administrador age sem lei','O vinculado é sempre mais gravoso ao particular'],c:1,e:'No ato vinculado, todos os elementos (competência, forma, objeto, motivo e finalidade) estão rigidamente definidos em lei, sem margem de apreciação subjetiva. No discricionário, há um espaço de conveniência e oportunidade.'},
+    {q:'A Súmula 473 STF permite à Administração:',ops:['Ignorar a lei quando inconveniente','Anular seus próprios atos ilegais e revogar atos inconvenientes (autotutela)','Punir servidores sem processo administrativo','Contratar sem licitação em qualquer caso'],c:1,e:'Súmula 473 STF: a Administração pode anular seus próprios atos, quando eivados de vícios que os tornam ilegais, porque deles não se originam direitos; ou revogá-los, por motivo de conveniência ou oportunidade, respeitados os direitos adquiridos.'},
+    {q:'O pregão (Lei 14.133/2021) é a modalidade de licitação para:',ops:['Obras de grande porte','Aquisição de bens e serviços comuns','Concessões de serviço público','Contratos internacionais'],c:1,e:'O pregão destina-se à aquisição de bens e serviços comuns, assim considerados aqueles cujos padrões de desempenho e qualidade possam ser objetivamente definidos pelo edital, com julgamento pelo menor preço.'},
+    {q:'O prazo para impetrar mandado de segurança contra ato de autoridade é de:',ops:['30 dias','60 dias','120 dias','1 ano'],c:2,e:'Art. 23 da Lei 12.016/2009: o direito de requerer mandado de segurança extinguir-se-á decorridos 120 (cento e vinte) dias, contados da ciência, pelo interessado, do ato impugnado.'},
+    {q:'São atributos do ato administrativo, EXCETO:',ops:['Imperatividade','Autoexecutoriedade','Irrevogabilidade absoluta','Presunção de legitimidade'],c:2,e:'Os atributos clássicos dos atos administrativos são: presunção de legitimidade/veracidade, imperatividade (coercitividade), autoexecutoriedade e tipicidade. A irrevogabilidade não é atributo geral — os atos podem ser revogados por conveniência ou anulados por ilegalidade.'},
+    {q:'O princípio da impessoalidade na Administração Pública significa:',ops:['O administrador pode agir por preferências pessoais','A Administração deve tratar os administrados sem discriminações favoráveis ou desfavoráveis','O administrador é pessoalmente responsável por todos os atos','Os contratos administrativos devem ser celebrados com conhecidos'],c:1,e:'O princípio da impessoalidade veda que o administrador utilize a Administração para fins pessoais, promoção pessoal ou discriminações indevidas. Os atos são da Administração, não da pessoa do agente.'},
+    {q:'A responsabilidade civil do Estado por atos de seus agentes é:',ops:['Subjetiva, dependendo de culpa do Estado','Objetiva, fundada na teoria do risco administrativo','Apenas quando há dolo do agente público','Subsidiária em relação ao agente público'],c:1,e:'Art. 37, §6° CF: as pessoas jurídicas de direito público e as de direito privado prestadoras de serviços públicos responderão pelos danos que seus agentes, nessa qualidade, causarem a terceiros, assegurado o direito de regresso contra o responsável nos casos de dolo ou culpa.'},
+  ],
+  processual:[
+    {q:'No CPC/2015, a citação é o ato pelo qual:',ops:['O juiz decide a causa','O réu é convocado a integrar a relação processual','O processo é suspenso por falta de pressupostos','O autor emenda a petição inicial'],c:1,e:'Art. 238 CPC: citação é o ato pelo qual são convocados o réu, o executado ou o interessado para integrar a relação processual.'},
+    {q:'A tutela de urgência (art. 300 CPC) exige:',ops:['Certeza do direito','Probabilidade do direito e perigo de dano ou risco ao resultado útil do processo','Concordância do réu','Exclusivamente em ação de conhecimento'],c:1,e:'Art. 300 CPC: a tutela de urgência será concedida quando houver elementos que evidenciem a probabilidade do direito e o perigo de dano ou o risco ao resultado útil do processo.'},
+    {q:'O prazo para contestação no procedimento comum do CPC é de:',ops:['5 dias úteis','10 dias','15 dias úteis','30 dias'],c:2,e:'Art. 335 CPC: o réu poderá oferecer contestação, por petição, no prazo de 15 (quinze) dias, cujo termo inicial será a data da audiência de conciliação ou de mediação, ou da última sessão de conciliação, quando qualquer parte não comparecer ou se recusar a participar.'},
+    {q:'A coisa julgada material (art. 502 CPC) torna a decisão:',ops:['Provisória até nova ação','Imutável e indiscutível após o trânsito em julgado','Passível de revisão pelo mesmo juiz','Vinculante apenas para as partes sem eficácia temporal'],c:1,e:'Art. 502 CPC: denomina-se coisa julgada material a autoridade que torna imutável e indiscutível a decisão de mérito não mais sujeita a recurso.'},
+    {q:'O princípio do contraditório (art. 9° CPC) implica que:',ops:['As partes podem produzir qualquer prova em qualquer momento','Não se proferirá decisão contra uma das partes sem que ela seja previamente ouvida','O juiz deve ser parcial a quem demonstrar mais razão','O processo é sempre público sem restrições'],c:1,e:'Art. 9° CPC: não se proferirá decisão contra uma das partes sem que ela seja previamente ouvida. O contraditório garante o direito de conhecer os atos processuais e sobre eles se manifestar.'},
+    {q:'A legitimidade extraordinária (substituição processual) permite que:',ops:['Qualquer pessoa proponha ação em nome de outrem','Alguém litigue em nome próprio na defesa de direito alheio, quando autorizado pela lei','O juiz inicie o processo de ofício','O réu proponha ação contra si mesmo'],c:1,e:'Art. 18 CPC: ninguém poderá pleitear direito alheio em nome próprio, salvo quando autorizado pelo ordenamento jurídico. A substituição processual (legitimidade extraordinária) exige autorização legal expressa.'},
+    {q:'O recurso de apelação no CPC/2015 deve ser interposto no prazo de:',ops:['10 dias','15 dias','20 dias','30 dias'],c:1,e:'Art. 1.003, §5° CPC: excetuados os embargos de declaração, o prazo para interpor os recursos e para responder-lhes é de 15 (quinze) dias úteis, salvo disposição especial deste Código.'},
+  ],
+  trabalhista:[
+    {q:'O prazo prescricional para propor ação trabalhista após extinção do contrato é de:',ops:['1 ano','2 anos','3 anos','5 anos'],c:1,e:'Art. 7°, XXIX CF: ação, quanto a créditos resultantes das relações de trabalho, com prazo prescricional de cinco anos para os trabalhadores urbanos e rurais, até o limite de dois anos após a extinção do contrato de trabalho.'},
+    {q:'O contrato de trabalho padrão na CLT é:',ops:['Por prazo determinado','Por experiência','Temporário','Por prazo indeterminado'],c:3,e:'A regra geral na CLT é o contrato de trabalho por prazo indeterminado. Os contratos a termo (determinado, de experiência, temporário) são exceções que devem ser expressamente pactuados nas hipóteses legais.'},
+    {q:'O aviso prévio proporcional (Lei 12.506/2011) corresponde a:',ops:['15 dias fixos','30 dias mínimos, acrescido de 3 dias por ano de serviço, até 90 dias','60 dias fixos para todos','20 dias independente do tempo'],c:1,e:'Lei 12.506/2011: o aviso prévio será de no mínimo trinta dias ao empregado que contar até 1 (um) ano de serviço na mesma empresa. Ao aviso prévio de trinta dias serão acrescidos três dias por ano de serviço prestado na mesma empresa, até o máximo de sessenta dias, perfazendo um total de até noventa dias.'},
+    {q:'A jornada de trabalho máxima prevista na CF é de:',ops:['6 horas diárias e 36 semanais','8 horas diárias e 40 semanais','8 horas diárias e 44 semanais','10 horas diárias'],c:2,e:'Art. 7°, XIII CF: duração do trabalho normal não superior a oito horas diárias e quarenta e quatro semanais, facultada a compensação de horários e a redução da jornada, mediante acordo ou convenção coletiva de trabalho.'},
+    {q:'O FGTS (art. 7°, III CF) é:',ops:['Benefício previdenciário obrigatório','Fundo constituído por depósitos mensais do empregador como garantia ao trabalhador','Imposto sobre a folha de pagamento','Contribuição para o SUS'],c:1,e:'Art. 7°, III CF: fundo de garantia do tempo de serviço. O FGTS é constituído por depósitos mensais do empregador (8% da remuneração), constituindo pecúlio do trabalhador e proteção contra dispensa arbitrária.'},
+    {q:'A equiparação salarial (art. 461 CLT) exige:',ops:['Apenas mesma função e mesmo empregador','Mesma função, mesmo empregador, mesmo estabelecimento, trabalho de igual valor e diferença máxima de 4 anos na função','Mesma raça, sexo e religião','Mesma graduação acadêmica'],c:1,e:'Art. 461 CLT: sendo idêntica a função, a todo trabalho de igual valor, prestado ao mesmo empregador, no mesmo estabelecimento empresarial, corresponderá igual salário. Deve haver diferença máxima de 4 anos na função.'},
+    {q:'A Consolidação das Leis do Trabalho (CLT) foi criada pelo:',ops:['Decreto-Lei 5.452/1943','Lei 5.452/1988','Decreto 5.452/1943','Constituição de 1946'],c:0,e:'A CLT foi aprovada pelo Decreto-Lei n° 5.452, de 1° de maio de 1943, assinado pelo Presidente Getúlio Vargas, consolidando as leis trabalhistas então existentes.'},
+  ],
+  empresarial:[
+    {q:'A EIRELI foi substituída, com a Lei 14.195/2021, por:',ops:['Microempresa individual','Sociedade Limitada Unipessoal','Empresa em Nome Coletivo','Sociedade Anônima Fechada'],c:1,e:'A Lei 14.195/2021 extinguiu a EIRELI e permitiu a constituição de sociedade limitada por uma única pessoa (Sociedade Limitada Unipessoal — SLU), via alteração do art. 1052, §1° CC.'},
+    {q:'A nota promissória é título de crédito:',ops:['Causal — depende da causa que lhe deu origem após circulação','Abstrato — desvincula-se da causa originária após circulação','Misto — depende da causa em alguns casos','Condicional — sujeito a condição suspensiva'],c:1,e:'A nota promissória é título de crédito abstrato: após a circulação pelo endosso, desvincula-se da relação jurídica que lhe deu origem, não podendo o devedor opor ao terceiro de boa-fé exceções pessoais relativas ao credor originário.'},
+    {q:'A falência requerida pelo próprio devedor é denominada:',ops:['Falência involuntária','Autofalência (art. 105 Lei 11.101/2005)','Insolvência civil','Recuperação judicial'],c:1,e:'Art. 105 Lei 11.101/2005: o devedor em crise econômico-financeira que julgue não atender aos requisitos para pleitear sua recuperação judicial deverá requerer ao juízo sua falência, expondo as razões da impossibilidade de prosseguimento da atividade empresarial (autofalência).'},
+    {q:'A recuperação judicial (art. 47 Lei 11.101/2005) tem como objetivo:',ops:['Liquidar o patrimônio do devedor para pagar credores','Viabilizar a superação da crise econômico-financeira do devedor preservando a empresa','Transferir a empresa a terceiros automaticamente','Suspender todas as dívidas indefinidamente'],c:1,e:'Art. 47 Lei 11.101/2005: a recuperação judicial tem por objetivo viabilizar a superação da situação de crise econômico-financeira do devedor, a fim de permitir a manutenção da fonte produtora, do emprego dos trabalhadores e dos interesses dos credores.'},
+    {q:'O aval é instituto do direito cambiário que consiste em:',ops:['Garantia pessoal do pagamento do título de crédito por terceiro','Transferência do título por endosso','Cancelamento do título de crédito','Protesto extrajudicial do título'],c:0,e:'O aval é a garantia cambiária prestada por terceiro (avalista) ao devedor do título de crédito (avalizado), responsabilizando-se solidariamente pelo pagamento do título. Difere da fiança pois é independente e autônomo.'},
+  ],
+  ambiental:[
+    {q:'O princípio do poluidor-pagador no Direito Ambiental determina que:',ops:['O poluidor deve pagar multa ao Estado','Quem polui deve arcar com os custos de prevenção e reparação dos danos ambientais','O Estado é responsável por toda poluição','Apenas as empresas podem ser poluidores'],c:1,e:'O princípio do poluidor-pagador (art. 4°, VII da PNMA e art. 225, §3° CF) determina que o responsável pela poluição ou degradação ambiental deve suportar os custos decorrentes, sejam preventivos ou reparatórios.'},
+    {q:'A responsabilidade civil por danos ambientais é:',ops:['Subjetiva, exigindo culpa do poluidor','Objetiva, dispensando culpa (teoria do risco integral)','Apenas penal, sem responsabilidade civil','Exclusivamente administrativa'],c:1,e:'Art. 14, §1° da Lei 6.938/81 (PNMA): o poluidor é obrigado, independentemente da existência de culpa, a indenizar ou reparar os danos causados ao meio ambiente e a terceiros, afetados por sua atividade. O STJ adota a teoria do risco integral.'},
+    {q:'A Área de Preservação Permanente (APP) está definida no:',ops:['Decreto 6.514/2008','Código Florestal (Lei 12.651/2012)','CONAMA 303/2002 exclusivamente','Lei 9.605/1998'],c:1,e:'Art. 3°, II e arts. 4° e 5° do Código Florestal (Lei 12.651/2012): área protegida, coberta ou não por vegetação nativa, com a função ambiental de preservar os recursos hídricos, a paisagem, a estabilidade geológica e a biodiversidade.'},
+  ],
+  consumidor:[
+    {q:'O Código de Defesa do Consumidor (CDC) foi instituído pela:',ops:['Lei 8.078/1990','Lei 9.099/1995','Lei 10.406/2002','Decreto-Lei 2.848/1940'],c:0,e:'O CDC — Código de Defesa do Consumidor — foi instituído pela Lei 8.078, de 11 de setembro de 1990, em atendimento ao mandamento constitucional do art. 5°, XXXII e art. 170, V da CF/88.'},
+    {q:'A responsabilidade pelo fato do produto (art. 12 CDC) é:',ops:['Subjetiva do fabricante','Objetiva do fabricante, produtor, construtor e importador','Apenas do comerciante','Solidária de todos da cadeia de consumo sempre'],c:1,e:'Art. 12 CDC: o fabricante, o produtor, o construtor, nacional ou estrangeiro, e o importador respondem, independentemente da existência de culpa, pela reparação dos danos causados aos consumidores por defeitos decorrentes de projeto, fabricação, construção, montagem, fórmulas, manipulação, apresentação ou acondicionamento de seus produtos.'},
+    {q:'O prazo para reclamar por vício de produto durável no CDC é de:',ops:['30 dias','90 dias','6 meses','1 ano'],c:1,e:'Art. 26, II CDC: o direito de reclamar pelos vícios aparentes ou de fácil constatação caduca em noventa dias, tratando-se de fornecimento de serviço e de produto duráveis.'},
+  ],
+  default:[
+    {q:'Qual dos seguintes é princípio expresso da Administração Pública na CF/88 (LIMPE)?',ops:['Razoabilidade','Proporcionalidade','Moralidade','Supremacia do interesse público'],c:2,e:'Art. 37, caput CF elenca expressamente os princípios: Legalidade, Impessoalidade, Moralidade, Publicidade e Eficiência (LIMPE).'},
+    {q:'A incorporação de tratados internacionais ao ordenamento brasileiro exige:',ops:['Decreto legislativo + decreto presidencial','Apenas decreto presidencial','Aprovação pelo STF','Lei ordinária do Congresso'],c:0,e:'Tratados internacionais comuns são aprovados pelo Congresso Nacional via decreto legislativo (art. 49, I CF) e promulgados pelo Presidente da República por decreto presidencial.'},
+    {q:'O princípio da proporcionalidade é desdobrado em:',ops:['Legalidade, moralidade e eficiência','Adequação, necessidade e proporcionalidade em sentido estrito','Ampla defesa, contraditório e devido processo','Publicidade, impessoalidade e moralidade'],c:1,e:'O princípio da proporcionalidade desdobra-se em três subprincípios: adequação (o meio deve ser apto ao fim), necessidade (o meio menos gravoso) e proporcionalidade em sentido estrito (custo-benefício entre meio e fim).'},
+    {q:'A hermenêutica jurídica utiliza os seguintes métodos de interpretação:',ops:['Apenas literal','Apenas sistemática','Gramatical, histórico, sistemático e teleológico','Somente extensiva'],c:2,e:'A interpretação jurídica pode utilizar o método gramatical (literal), histórico (gênese da norma), sistemático (norma no sistema) e teleológico (finalidade da norma), podendo ser restritiva, extensiva ou declarativa quanto ao resultado.'},
+    {q:'A analogia como forma de integração do Direito consiste em:',ops:['Aplicar a lei por seu sentido literal','Aplicar norma existente a caso semelhante não previsto em lei','Criar nova norma para preencher lacuna','Aplicar os costumes jurídicos'],c:1,e:'A analogia (art. 4° LINDB) consiste na aplicação a um caso não regulado de norma prevista para caso semelhante, quando houver identidade de razão (ubi eadem ratio, ibi eadem ius).'},
+    {q:'O direito adquirido é garantia constitucional que:',ops:['Impede qualquer mudança legislativa','Protege direitos já incorporados ao patrimônio jurídico do titular contra lei nova','Garante que leis antigas nunca serão revogadas','Aplica-se apenas ao Direito Público'],c:1,e:'Art. 5°, XXXVI CF: a lei não prejudicará o direito adquirido, o ato jurídico perfeito e a coisa julgada. O direito adquirido é aquele que já se incorporou definitivamente ao patrimônio jurídico do titular.'},
+  ]
+};
 
-  // Normaliza o nome da matéria para chave do banco
-  function _normalizarMateria(mat) {
-      const m = (mat||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-      if (/const/i.test(m)) return 'constitucional';
-      if (/civil|familia|successao|obrigacao|contrato|propriedade/i.test(m)) return 'civil';
-      if (/penal|criminal|crime/i.test(m)) return 'penal';
-      if (/tribut|fiscal|imposto|receita federal/i.test(m)) return 'tributario';
-      if (/admin|licitacao|servidor|improbidade/i.test(m)) return 'administrativo';
-      if (/process/i.test(m)) return 'processual';
-      if (/trabalh|trabalhist|emprego|clt/i.test(m)) return 'trabalhista';
-      if (/empresar|comercial|falencia|recupera/i.test(m)) return 'empresarial';
-      return 'default';
-  }
+// --- Identificação inteligente da matéria ---
+function _identificarMateria(disciplina, conteudo) {
+    const txt = ((disciplina||'') + ' ' + (conteudo||'')).toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    // Mapeamento expandido com termos comuns em disciplinas de direito
+    const mapa = [
+        { chave:'constitucional', termos:/constituc|direitos fundamentais|poder constituinte|controle de constituc|remedio|federalismo|tripartição|separacao de poder/ },
+        { chave:'civil', termos:/civil|obrigac|contrato|responsabilidade civil|familia|success|heranca|propriedade|posse|usucapiao|negocio juridico|pessoa juridica/ },
+        { chave:'penal', termos:/penal|criminal|crime|dolo|culpa|pena|tipicidade|antijuricidade|culpabilidade|prescricao penal|concurso de crime/ },
+        { chave:'tributario', termos:/tribut|fiscal|imposto|taxa|contribuicao|icms|iss|ipi|irpf|irpj|ctn|lançamento|fato gerador/ },
+        { chave:'administrativo', termos:/administrat|licitacao|concurso publico|servidor|ato administrat|improbidade|poder de policia|concessao|permissao/ },
+        { chave:'processual', termos:/process|cpc|cpp|procedimento|competencia processual|recurso|citacao|intimacao|coisa julgada|tutela/ },
+        { chave:'trabalhista', termos:/trabalh|trabalhist|clt|emprego|empregado|empregador|salario|fgts|aviso previo|rescisao/ },
+        { chave:'empresarial', termos:/empresar|comercial|societario|falencia|recuperacao judicial|titulo de credito|cheque|duplicata|nota promissoria|contrato empresarial/ },
+        { chave:'ambiental', termos:/ambiental|ecologico|biodiversidade|app|reserva legal|poluicao|codigo florestal|licenciamento/ },
+        { chave:'consumidor', termos:/consumidor|cdc|fornecedor|relacao de consumo|produto defeituoso|publicidade enganosa/ },
+    ];
+    for (const item of mapa) {
+        if (item.termos.test(txt)) return item.chave;
+    }
+    return 'default';
+}
 
-  let quizState = { questoes:[], atual:0, acertos:0, respondida:false, materia:'', assunto:'' };
+// --- Embaralhamento com seed (Fisher-Yates determinístico) ---
+function _shuffleWithSeed(arr, seed) {
+    const a = [...arr];
+    let s = seed;
+    for (let i = a.length - 1; i > 0; i--) {
+        s = (s * 1664525 + 1013904223) & 0xffffffff;
+        const j = Math.abs(s) % (i + 1);
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
 
-  window.abrirQuizProva = async function(materiaEnc, assuntoEnc) {
-      const materia = decodeURIComponent(materiaEnc||'');
-      const assunto = decodeURIComponent(assuntoEnc||'');
-      const modal = new bootstrap.Modal(document.getElementById('quizModal'));
-      const chave = _normalizarMateria(materia + ' ' + assunto);
-      const titulo = materia || assunto || 'Direito';
+// --- Estado do quiz ---
+let quizState = { questoes:[], atual:0, acertos:0, respondida:false, materia:'', assunto:'', seed:0 };
 
-      document.getElementById('quizModal').querySelector('.modal-title').innerHTML =
-          `<i class="fas fa-question-circle me-2"></i>Quiz — ${titulo}`;
-      document.getElementById('quizModalBody').innerHTML =
-          `<div class="text-center py-4"><div class="spinner-border text-danger" role="status"></div>
-           <p class="mt-3 text-muted">Gerando questões sobre <strong>${titulo}</strong>...</p></div>`;
-      document.getElementById('quizModalFooter').style.display = 'none';
-      modal.show();
+// --- Ponto de entrada ---
+window.abrirQuizProva = async function(materiaEnc, assuntoEnc) {
+    const materia = decodeURIComponent(materiaEnc||'');
+    const assunto = decodeURIComponent(assuntoEnc||'');
+    const seed    = Date.now(); // seed único a cada abertura → questões sempre novas
+    const chave   = _identificarMateria(materia, assunto);
+    const titulo  = materia || assunto || 'Direito';
 
-      let questoes = [];
+    const modal = new bootstrap.Modal(document.getElementById('quizModal'));
+    document.getElementById('quizModal').querySelector('.modal-title').innerHTML =
+        `<i class="fas fa-question-circle me-2"></i>Quiz — ${titulo}`;
+    document.getElementById('quizModalBody').innerHTML =
+        `<div class="text-center py-5">
+           <div class="spinner-border text-danger mb-3" role="status"></div>
+           <p class="text-muted mb-1">Gerando questões personalizadas sobre</p>
+           <strong style="color:#1a2332;">${titulo}</strong>
+         </div>`;
+    document.getElementById('quizModalFooter').style.display = 'none';
+    modal.show();
 
-      // 1. Tentar gerar questões via Claude API (contextuais à matéria)
-      try {
-          const prompt = `Você é um professor de Direito brasileiro especialista em ${titulo}.
-Gere EXATAMENTE 8 questões de múltipla escolha sobre "${assunto || titulo}" para revisão de prova universitária de direito.
-Cada questão deve ter 4 alternativas (A, B, C, D), sendo apenas uma correta.
-Responda APENAS com JSON válido neste formato (sem markdown, sem texto extra):
-[
-  {"q":"texto da questão","ops":["A","B","C","D"],"c":0,"e":"explicação curta com fundamento legal"},
-  ...
-]
-Onde "c" é o índice (0-3) da alternativa correta. Foque em ${titulo} — artigos de lei, princípios, jurisprudência e conceitos essenciais.`;
+    let questoes = [];
 
-          const resp = await fetch('https://api.anthropic.com/v1/messages', {
-              method:'POST',
-              headers:{'Content-Type':'application/json'},
-              body: JSON.stringify({
-                  model:'claude-sonnet-4-20250514',
-                  max_tokens:2000,
-                  messages:[{role:'user', content:prompt}]
-              }),
-              signal: AbortSignal.timeout(20000)
-          });
-          const data = await resp.json();
-          const txt = (data.content||[]).map(b=>b.text||'').join('').trim();
-          const cleaned = txt.replace(/```json|```/g,'').trim();
-          const parsed = JSON.parse(cleaned);
-          if (Array.isArray(parsed) && parsed.length >= 4) {
-              questoes = parsed.map(q=>({ q:q.q, ops:q.ops, c:parseInt(q.c), e:q.e||'' }));
-          }
-      } catch(e) { /* fallback para banco local */ }
+    // 1. Gerar via Claude API (questões inéditas, contextuais, em português)
+    try {
+        const systemPrompt = `Você é um professor universitário de Direito brasileiro altamente experiente.
+Sua tarefa é criar questões de múltipla escolha rigorosas para revisão de provas universitárias.
+Regras obrigatórias:
+- As questões devem ser DIRETAMENTE relacionadas à matéria indicada
+- Use linguagem técnico-jurídica precisa
+- Baseie-se em: artigos de lei, princípios constitucionais, jurisprudência do STF/STJ, doutrina consagrada
+- Cada questão deve ter 4 alternativas (ops[0] a ops[3]), sendo exatamente UMA correta
+- O campo "c" indica o índice (0, 1, 2 ou 3) da alternativa correta
+- O campo "e" deve conter a fundamentação legal/doutrinária da resposta correta (máx 2 frases)
+- NUNCA repita as mesmas questões — use seed ${seed} para variar
+- Responda SOMENTE com JSON válido, sem markdown, sem texto extra`;
 
-      // 2. Fallback: banco local por matéria
-      if (questoes.length < 4) {
-          const banco = BANCO_QUESTOES[chave] || BANCO_QUESTOES.default;
-          questoes = [...banco].sort(()=>Math.random()-0.5);
-      }
+        const userPrompt = `Matéria: ${titulo}
+Conteúdo específico da prova: ${assunto || titulo}
+Área identificada: ${chave}
 
-      quizState = { questoes: questoes.slice(0,10), atual:0, acertos:0, respondida:false, materia:titulo, assunto };
-      _renderQuizQ();
-  };
+Gere EXATAMENTE 8 questões de múltipla escolha sobre "${assunto || titulo}" no seguinte formato JSON:
+[{"q":"enunciado da questão?","ops":["alternativa A","alternativa B","alternativa C","alternativa D"],"c":0,"e":"fundamento legal/doutrinário da resposta correta"}]`;
 
-  function _decEnt(str) {
-      const t = document.createElement('textarea');
-      t.innerHTML = str; return t.value;
-  }
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 3000,
+                system: systemPrompt,
+                messages: [{ role: 'user', content: userPrompt }]
+            }),
+            signal: AbortSignal.timeout(25000)
+        });
 
-  function _renderQuizQ() {
-      const { questoes, atual, acertos, materia } = quizState;
-      if (atual >= questoes.length) { _renderQuizScore(); return; }
-      const q = questoes[atual];
-      const pct = Math.round((atual/questoes.length)*100);
-      const letters = ['A','B','C','D','E'];
-      // suporte tanto 'c' quanto 'correta'
-      const corrIdx = (q.c !== undefined) ? q.c : q.correta;
-      const exp = q.e || q.exp || '';
-      document.getElementById('quizModalBody').innerHTML = `
-        <div class="quiz-container">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <span style="font-size:0.72rem;color:#7f8c8d;font-weight:600;background:#f8f9fa;padding:3px 10px;border-radius:20px;">${materia}</span>
-            <span style="font-size:0.75rem;color:#27ae60;font-weight:700;">${atual+1}/${questoes.length} · <i class="fas fa-check-circle"></i> ${acertos}</span>
-          </div>
-          <div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width:${pct}%"></div></div>
-          <div class="quiz-question-text">${q.q}</div>
-          ${q.ops.map((op,i)=>`<button class="quiz-option-btn" data-idx="${i}" onclick="window._respQuiz(${i},${corrIdx})">
+        if (resp.ok) {
+            const data = await resp.json();
+            const txt = (data.content||[]).map(b=>b.text||'').join('').trim();
+            // Remove markdown se presente
+            const clean = txt.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim();
+            const parsed = JSON.parse(clean);
+            if (Array.isArray(parsed) && parsed.length >= 4) {
+                // Valida estrutura mínima
+                questoes = parsed
+                    .filter(q => q.q && Array.isArray(q.ops) && q.ops.length >= 2 && q.c !== undefined)
+                    .map(q => ({
+                        q: String(q.q),
+                        ops: q.ops.map(String),
+                        c: Math.min(parseInt(q.c)||0, q.ops.length-1),
+                        e: String(q.e||''),
+                        fonte: 'ia'
+                    }));
+            }
+        }
+    } catch(err) {
+        console.warn('[Quiz] Falha na API Claude, usando banco local:', err.message||err);
+    }
+
+    // 2. Fallback: banco local, embaralhado com seed único
+    if (questoes.length < 4) {
+        const banco = QB[chave] || QB.default;
+        // Embaralha perguntas e alternativas com seed para variar a cada abertura
+        questoes = _shuffleWithSeed(banco, seed).slice(0, 8).map(q => {
+            // Embaralha as alternativas mas mantém rastreio da correta
+            const original = q.ops[q.c];
+            const ops = _shuffleWithSeed(q.ops, seed + q.ops.length);
+            const c   = ops.indexOf(original);
+            return { ...q, ops, c, fonte: 'local' };
+        });
+    }
+
+    quizState = { questoes: questoes.slice(0, 8), atual: 0, acertos: 0, respondida: false,
+                  materia: titulo, assunto, seed, chave };
+    _renderQuizQ();
+};
+
+function _decEnt(str) { const t=document.createElement('textarea'); t.innerHTML=str; return t.value; }
+
+function _renderQuizQ() {
+    const { questoes, atual, acertos, materia, chave } = quizState;
+    if (atual >= questoes.length) { _renderQuizScore(); return; }
+    const q = questoes[atual];
+    const pct = Math.round((atual / questoes.length) * 100);
+    const letters = ['A','B','C','D','E'];
+    const corrIdx = (q.c !== undefined) ? parseInt(q.c) : 0;
+    const exp = q.e || q.exp || '';
+    const areaBadge = chave !== 'default' ? `<span style="background:rgba(231,76,60,0.1);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);border-radius:20px;font-size:0.62rem;font-weight:700;padding:2px 10px;letter-spacing:0.04em;text-transform:uppercase;">${materia}</span>` : '';
+    const fonteBadge = q.fonte==='ia'
+        ? `<span style="background:rgba(26,188,156,0.1);color:#1abc9c;border:1px solid rgba(26,188,156,0.3);border-radius:20px;font-size:0.6rem;padding:2px 8px;font-weight:600;"><i class="fas fa-robot" style="font-size:0.55rem;"></i> IA</span>`
+        : `<span style="background:rgba(52,152,219,0.1);color:#3498db;border:1px solid rgba(52,152,219,0.3);border-radius:20px;font-size:0.6rem;padding:2px 8px;font-weight:600;"><i class="fas fa-database" style="font-size:0.55rem;"></i> Banco</span>`;
+
+    document.getElementById('quizModalBody').innerHTML = `
+      <div class="quiz-container">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${areaBadge}${fonteBadge}</div>
+          <span style="font-size:0.75rem;color:#27ae60;font-weight:700;">${atual+1}/${questoes.length} &nbsp;·&nbsp; <i class="fas fa-check-circle"></i> ${acertos}</span>
+        </div>
+        <div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width:${pct}%"></div></div>
+        <div class="quiz-question-text">${q.q}</div>
+        ${q.ops.map((op,i)=>`
+          <button class="quiz-option-btn" data-idx="${i}" onclick="window._respQuiz(${i},${corrIdx})">
             <span class="opt-letter">${letters[i]||i+1}</span>
-            <span style="flex:1;">${op}</span>
+            <span style="flex:1;text-align:left;">${op}</span>
           </button>`).join('')}
-          <div class="quiz-feedback" id="quizFeedback"></div>
-        </div>`;
-      document.getElementById('quizModalFooter').style.display = 'none';
-  }
+        <div class="quiz-feedback" id="quizFeedback"></div>
+      </div>`;
+    document.getElementById('quizModalFooter').style.display = 'none';
+}
 
-  window._respQuiz = function(idxEsc, corrIdx) {
-      if (quizState.respondida) return;
-      quizState.respondida = true;
-      const q = quizState.questoes[quizState.atual];
-      const exp = q.e || q.exp || '';
-      const btns = document.querySelectorAll('#quizModalBody .quiz-option-btn');
-      const fb = document.getElementById('quizFeedback');
-      const acertou = idxEsc === corrIdx;
-      if (acertou) {
-          quizState.acertos++;
-          btns[idxEsc].classList.add('correct');
-          fb.className='quiz-feedback show correct-fb';
-          fb.innerHTML=`<i class="fas fa-check-circle me-2"></i><strong>Correto!</strong> ${exp}`;
-      } else {
-          btns[idxEsc].classList.add('wrong');
-          if(btns[corrIdx]) btns[corrIdx].classList.add('correct');
-          fb.className='quiz-feedback show wrong-fb';
-          fb.innerHTML=`<i class="fas fa-times-circle me-2"></i><strong>Incorreto.</strong> ${exp}`;
-      }
-      btns.forEach(b=>b.disabled=true);
-      const footer=document.getElementById('quizModalFooter');
-      footer.style.display='flex';
-      const isLast=quizState.atual>=quizState.questoes.length-1;
-      const nb=document.getElementById('quizNextBtn');
-      nb.innerHTML=isLast?'<i class="fas fa-trophy me-1"></i> Ver Resultado':'Próxima <i class="fas fa-arrow-right ms-1"></i>';
-      nb.onclick=()=>{ quizState.atual++; quizState.respondida=false; _renderQuizQ(); };
-  };
+window._respQuiz = function(idxEsc, corrIdx) {
+    if (quizState.respondida) return;
+    quizState.respondida = true;
+    const q   = quizState.questoes[quizState.atual];
+    const exp = q.e || q.exp || '';
+    const btns = document.querySelectorAll('#quizModalBody .quiz-option-btn');
+    const fb   = document.getElementById('quizFeedback');
+    const acertou = idxEsc === corrIdx;
 
-  function _renderQuizScore() {
-      const { acertos, questoes, materia } = quizState;
-      const pct = Math.round((acertos/questoes.length)*100);
-      const msg = pct>=80?'Excelente! Você está bem preparado! 🎉':pct>=60?'Bom resultado! Continue revisando. 📚':'Precisa de mais revisão. Não desista! 💪';
-      const cor = pct>=80?'#27ae60':pct>=60?'#f39c12':'#e74c3c';
-      const mat = encodeURIComponent(materia);
-      document.getElementById('quizModalBody').innerHTML=`
-        <div class="quiz-score-card">
-          <div class="quiz-score-circle" style="border-color:${cor};color:${cor};">${pct}<span style="font-size:0.55rem;font-weight:400;margin-top:2px;">%</span></div>
-          <h5 style="font-weight:700;color:#1a2332;margin-top:12px;">${acertos} de ${questoes.length} acertos</h5>
-          <p style="color:#7f8c8d;">${msg}</p>
-          <p style="font-size:0.78rem;color:#aaa;margin-bottom:12px;">Matéria: <strong>${materia}</strong></p>
-          <button class="btn btn-danger mt-2" onclick="abrirQuizProva('${mat}','${mat}')"><i class="fas fa-redo me-1"></i> Tentar Novamente</button>
-        </div>`;
-      document.getElementById('quizModalFooter').style.display='none';
-  }
+    if (acertou) {
+        quizState.acertos++;
+        if (btns[idxEsc]) btns[idxEsc].classList.add('correct');
+        fb.className = 'quiz-feedback show correct-fb';
+        fb.innerHTML = `<i class="fas fa-check-circle me-2"></i><strong>Correto!</strong>${exp ? ' ' + exp : ''}`;
+    } else {
+        if (btns[idxEsc]) btns[idxEsc].classList.add('wrong');
+        if (btns[corrIdx]) btns[corrIdx].classList.add('correct');
+        fb.className = 'quiz-feedback show wrong-fb';
+        fb.innerHTML = `<i class="fas fa-times-circle me-2"></i><strong>Incorreto.</strong>${exp ? ' ' + exp : ''}`;
+    }
+    btns.forEach(b => b.disabled = true);
+
+    const footer = document.getElementById('quizModalFooter');
+    footer.style.display = 'flex';
+    const isLast = quizState.atual >= quizState.questoes.length - 1;
+    const nb = document.getElementById('quizNextBtn');
+    nb.innerHTML = isLast
+        ? '<i class="fas fa-trophy me-1"></i> Ver Resultado'
+        : 'Próxima <i class="fas fa-arrow-right ms-1"></i>';
+    nb.onclick = () => { quizState.atual++; quizState.respondida = false; _renderQuizQ(); };
+};
+
+function _renderQuizScore() {
+    const { acertos, questoes, materia, assunto } = quizState;
+    const total = questoes.length;
+    const pct   = Math.round((acertos / total) * 100);
+    const msg   = pct>=80 ? 'Excelente! Você está bem preparado! 🎉'
+                : pct>=60 ? 'Bom resultado! Continue revisando. 📚'
+                :           'Precisa de mais revisão. Não desista! 💪';
+    const cor   = pct>=80 ? '#27ae60' : pct>=60 ? '#f39c12' : '#e74c3c';
+    const mat   = encodeURIComponent(materia);
+    const ass   = encodeURIComponent(assunto||materia);
+    // Medalha
+    const medalha = pct>=80 ? '🥇' : pct>=60 ? '🥈' : '🥉';
+
+    document.getElementById('quizModalBody').innerHTML = `
+      <div class="quiz-score-card">
+        <div class="quiz-score-circle" style="border-color:${cor};color:${cor};">
+          ${pct}<span style="font-size:0.5rem;font-weight:400;margin-top:2px;">%</span>
+        </div>
+        <div style="font-size:2rem;margin:8px 0;">${medalha}</div>
+        <h5 style="font-weight:700;color:#1a2332;">${acertos} de ${total} corretas</h5>
+        <p style="color:#7f8c8d;margin-bottom:4px;">${msg}</p>
+        <p style="font-size:0.75rem;color:#aaa;margin-bottom:16px;">Matéria: <strong style="color:#34495e;">${materia}</strong></p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+          <button class="btn btn-danger" onclick="abrirQuizProva('${mat}','${ass}')">
+            <i class="fas fa-redo me-1"></i> Novo Quiz (questões novas)
+          </button>
+        </div>
+      </div>`;
+    document.getElementById('quizModalFooter').style.display = 'none';
+}
 </script>
-<!-- ===== FIM HTML VIEWER + QUIZ ENGINE ===== -->
+<!-- ===== FIM HTML VIEWER + QUIZ ENGINE v3 ===== -->
 
 <!-- ===== ACERVO VIRTUAL JURIDICO v2 — Google Books + Fontes Abertas ===== -->
 <script>
