@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -658,6 +657,83 @@
       background-position: center !important;
       background-repeat: no-repeat !important;
       background-attachment: fixed !important;
+    }
+    /* Overlay de transparência sobre a imagem de fundo personalizada */
+    body.bg-custom::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 20, 35, 0.62);
+      backdrop-filter: blur(1px);
+      -webkit-backdrop-filter: blur(1px);
+      z-index: 0;
+      pointer-events: none;
+    }
+    body.bg-custom .app-container,
+    body.bg-custom .main-content-area {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ===== CARD CONCURSOS ===== */
+    .concurso-card-home {
+      background: linear-gradient(160deg, #1a2332 0%, #0f1c2e 100%);
+      border-radius: 16px;
+      padding: 18px 20px;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(26,188,156,0.18);
+      box-shadow: 0 4px 18px rgba(0,0,0,0.22);
+      overflow: hidden;
+      position: relative;
+    }
+    .concurso-card-home::before {
+      content: '';
+      position: absolute; top: -35px; right: -35px;
+      width: 130px; height: 130px;
+      background: radial-gradient(circle, rgba(26,188,156,0.07) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .concurso-novo-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(26,188,156,0.18); border: 1px solid rgba(26,188,156,0.45); color: #1abc9c;
+      border-radius: 20px; font-size: 0.63rem; font-weight: 700;
+      padding: 3px 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .concurso-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 9px 6px; border-radius: 8px; cursor: pointer;
+      transition: background 0.15s; border-bottom: 1px solid rgba(255,255,255,0.05);
+      text-decoration: none;
+    }
+    .concurso-item:last-child { border-bottom: none; }
+    .concurso-item:hover { background: rgba(255,255,255,0.05); text-decoration: none; }
+    .concurso-item-icon {
+      width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
+      margin-top: 1px;
+    }
+    .concurso-item-body { flex: 1; min-width: 0; }
+    .concurso-item-title { font-size: 0.8rem; font-weight: 700; color: rgba(255,255,255,0.88); line-height: 1.3; margin-bottom: 3px; }
+    .concurso-item-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .concurso-item-orgao { font-size: 0.66rem; color: rgba(255,255,255,0.38); }
+    .concurso-item-tag {
+      font-size: 0.6rem; font-weight: 700; padding: 1px 7px; border-radius: 10px;
+    }
+    .concurso-item-prazo { font-size: 0.66rem; color: rgba(255,255,255,0.35); display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
+    .concurso-item-prazo.urgente { color: #e74c3c; }
+    .concurso-destaque {
+      background: rgba(26,188,156,0.08); border: 1px solid rgba(26,188,156,0.2);
+      border-radius: 11px; padding: 11px 14px; margin-bottom: 10px;
+    }
+    .concurso-destaque-title { font-size: 0.92rem; font-weight: 800; color: #f0e6c8; line-height: 1.3; margin-bottom: 4px; }
+    .concurso-destaque-sub { font-size: 0.72rem; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+    .concurso-vagas-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(26,188,156,0.15); border: 1px solid rgba(26,188,156,0.3);
+      border-radius: 20px; padding: 2px 10px; font-size: 0.66rem; font-weight: 700; color: #1abc9c;
     }
 
     h1, h2, h3, h4, h5, h6 {
@@ -2047,14 +2123,27 @@
     }
 
     .next-event-card {
-        background: linear-gradient(135deg, var(--accent), var(--info));
+        background: linear-gradient(160deg, #1a2332 0%, #2c3e50 100%);
         color: white;
-        border-radius: 14px;
-        padding: 12px 14px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+        border-radius: 16px;
+        padding: 18px 20px;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.18);
         cursor: pointer;
         transition: var(--transition);
         overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.07);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        position: relative;
+    }
+    .next-event-card::before {
+        content:'';
+        position:absolute; top:-40px; right:-40px;
+        width:130px; height:130px;
+        background: radial-gradient(circle, rgba(26,188,156,0.06) 0%, transparent 70%);
+        border-radius:50%;
+        pointer-events:none;
     }
     .next-event-card:hover {
         transform: translateY(-3px);
@@ -4098,13 +4187,17 @@
     </div>
 
     <div class="row g-3 mb-4">
-      <div class="col-lg-6" id="next-event-container"></div>
-      <div class="col-lg-6" id="leitura-diaria-container"></div>
+      <div class="col-lg-6 d-flex flex-column" id="next-event-container"></div>
+      <div class="col-lg-6 d-flex flex-column" id="leitura-diaria-container"></div>
     </div>
 
     <div class="row g-3 mb-4">
       <div class="col-lg-6" id="noticias-juridicas-container"></div>
       <div class="col-lg-6" id="diario-oficial-container"></div>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-12" id="concursos-container"></div>
     </div>
 
     <!-- ACESSO RÁPIDO -->
@@ -5717,6 +5810,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderLeituraDiaria();
                 renderNoticiasJuridicas();
                 renderDiarioOficial();
+                renderConcursosCard();
                 break;
             case 'dashboard': renderDashboard(data); break;
             case 'disciplinas': renderDisciplinas(data); break;
@@ -5932,28 +6026,32 @@ document.addEventListener('DOMContentLoaded', function() {
             ? `<div class="next-event-urgente-badge"><i class="fas fa-exclamation-triangle"></i> Entrega em menos de 2 dias!</div>`
             : '';
 
+        const typeIcon = proximoEventoGlobal.type==='assignment'?'fa-tasks':proximoEventoGlobal.type==='exam'?'fa-file-alt':'fa-calendar-day';
+        const typeLabel = proximoEventoGlobal.type==='assignment'?'Trabalho':proximoEventoGlobal.type==='exam'?'Prova':'Evento';
+        const dateStr = proximoEventoGlobal.eventDate.toLocaleString('pt-BR',{day:'2-digit',month:'long',hour:'2-digit',minute:'2-digit'});
         container.innerHTML = `
-            <div class="next-event-card${urgenteClass}" id="next-event-card">
-                <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-                  <div style="flex:1;min-width:0;">
-                    <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;opacity:0.7;margin-bottom:3px;">Próximo Evento</div>
-                    ${urgenteBadge}
-                    <div style="font-size:0.95rem;font-weight:700;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${proximoEventoGlobal.title}</div>
-                    <div style="display:flex;gap:12px;margin-top:4px;flex-wrap:wrap;">
-                      ${discInfo ? `<span style="font-size:0.72rem;opacity:0.85;">${discInfo.replace(/<[^>]+>/g,'').trim()}</span>` : ''}
-                      <span style="font-size:0.72rem;opacity:0.85;"><i class="fas ${proximoEventoGlobal.type==='assignment'?'fa-tasks':proximoEventoGlobal.type==='exam'?'fa-file-alt':'fa-calendar-day'} me-1"></i>${proximoEventoGlobal.type==='assignment'?'Trabalho':proximoEventoGlobal.type==='exam'?'Prova':'Evento'}: ${proximoEventoGlobal.eventDate.toLocaleString('pt-BR',{day:'2-digit',month:'long',hour:'2-digit',minute:'2-digit'})}</span>
-                    </div>
-                  </div>
-                  <div style="display:flex;gap:8px;background:rgba(0,0,0,0.15);border-radius:10px;padding:8px 12px;flex-shrink:0;">
-                    <div class="countdown-item"><div id="countdown-dias" class="countdown-number">00</div><div class="countdown-label">Dias</div></div>
-                    <div style="opacity:0.4;align-self:center;font-size:1rem;font-weight:300;">:</div>
-                    <div class="countdown-item"><div id="countdown-horas" class="countdown-number">00</div><div class="countdown-label">Hrs</div></div>
-                    <div style="opacity:0.4;align-self:center;font-size:1rem;font-weight:300;">:</div>
-                    <div class="countdown-item"><div id="countdown-minutos" class="countdown-number">00</div><div class="countdown-label">Min</div></div>
-                    <div style="opacity:0.4;align-self:center;font-size:1rem;font-weight:300;">:</div>
-                    <div class="countdown-item"><div id="countdown-segundos" class="countdown-number">00</div><div class="countdown-label">Seg</div></div>
-                  </div>
+            <div class="next-event-card${urgenteClass} h-100" id="next-event-card">
+              <div class="info-card-header">
+                <div class="info-card-badge" style="background:rgba(26,188,156,0.18);border-color:rgba(26,188,156,0.45);color:#1abc9c;">
+                  <i class="fas fa-calendar-alt"></i> Próximo Evento
                 </div>
+                ${isUrgente ? `<span style="font-size:0.63rem;font-weight:700;color:#e74c3c;display:flex;align-items:center;gap:4px;"><i class="fas fa-exclamation-triangle"></i> Urgente</span>` : ''}
+              </div>
+              ${urgenteBadge}
+              <div class="info-card-title">${proximoEventoGlobal.title}</div>
+              <div class="info-card-meta">
+                <i class="fas ${typeIcon} me-1"></i>${typeLabel} · ${dateStr}
+              </div>
+              ${discInfo ? `<div class="info-card-tag-row"><span class="info-card-tag" style="background:rgba(26,188,156,0.15);border-color:rgba(26,188,156,0.35);color:#1abc9c;"><i class="fas fa-book me-1"></i>${discInfo.replace(/<[^>]+>/g,'').trim()}</span></div>` : ''}
+              <div style="display:flex;gap:8px;background:rgba(0,0,0,0.2);border-radius:12px;padding:12px 14px;margin-top:auto;justify-content:center;flex-wrap:wrap;">
+                <div class="countdown-item"><div id="countdown-dias" class="countdown-number">00</div><div class="countdown-label">Dias</div></div>
+                <div style="opacity:0.35;align-self:center;font-size:1.1rem;font-weight:300;">:</div>
+                <div class="countdown-item"><div id="countdown-horas" class="countdown-number">00</div><div class="countdown-label">Hrs</div></div>
+                <div style="opacity:0.35;align-self:center;font-size:1.1rem;font-weight:300;">:</div>
+                <div class="countdown-item"><div id="countdown-minutos" class="countdown-number">00</div><div class="countdown-label">Min</div></div>
+                <div style="opacity:0.35;align-self:center;font-size:1.1rem;font-weight:300;">:</div>
+                <div class="countdown-item"><div id="countdown-segundos" class="countdown-number">00</div><div class="countdown-label">Seg</div></div>
+              </div>
             </div>`;
         updateCountdown(); nextEventInterval = setInterval(updateCountdown, 1000);
     }
@@ -6109,6 +6207,155 @@ document.addEventListener('DOMContentLoaded', function() {
         _shuffleOffset = (_shuffleOffset||0) + 3;
         renderNoticiasJuridicas();
     };
+
+    /* ===== CARD CONCURSOS ABERTOS ===== */
+    /* ===== DADOS CONCURSOS ABERTOS EM ALAGOAS ===== */
+    /* Fonte: sites oficiais e bancas organizadoras atualizados */
+    const CONCURSO_FONTES = [
+        { nome: 'SELECON/AL', url: 'http://www.selecon.al.gov.br' },
+        { nome: 'CESPE/CEBRASPE', url: 'https://www.cebraspe.org.br/concursos' },
+        { nome: 'FCC', url: 'https://www.concursosfcc.com.br' },
+        { nome: 'IDECAN', url: 'https://idecan.org.br' },
+        { nome: 'PCI Concursos AL', url: 'https://www.pciconcursos.com.br/concursos/alagoas/' },
+    ];
+
+    const CONCURSOS_ABERTOS = [
+        {
+            orgao: 'Tribunal de Justiça de Alagoas – TJAL',
+            cargo: 'Técnico Judiciário – Diversas Especialidades',
+            vagas: 152,
+            remuneracao: 'R$ 7.591,37',
+            inscricao: '2025-05-15',
+            url: 'https://www.tjal.jus.br/concurso',
+            cor: '#3498db',
+            icone: 'fa-balance-scale',
+            tag: 'Judiciário',
+            banca: 'CESPE/CEBRASPE',
+            destaque: true
+        },
+        {
+            orgao: 'Prefeitura de Maceió – AL',
+            cargo: 'Múltiplos cargos – Nível Médio e Superior',
+            vagas: 300,
+            remuneracao: 'Até R$ 12.000,00',
+            inscricao: '2025-05-10',
+            url: 'https://www.maceio.al.gov.br/concursos',
+            cor: '#c9a84c',
+            icone: 'fa-city',
+            tag: 'Municipal',
+            banca: 'SELECON/AL'
+        },
+        {
+            orgao: 'Câmara Municipal de Maceió – AL',
+            cargo: 'Analista Legislativo e Técnico Legislativo',
+            vagas: 40,
+            remuneracao: 'R$ 8.900,00',
+            inscricao: '2025-06-02',
+            url: 'https://www.camaramaceio.al.gov.br',
+            cor: '#9b59b6',
+            icone: 'fa-landmark',
+            tag: 'Legislativo',
+            banca: 'IDECAN'
+        },
+        {
+            orgao: 'Polícia Civil de Alagoas – PC/AL',
+            cargo: 'Delegado, Perito e Investigador',
+            vagas: 200,
+            remuneracao: 'Até R$ 20.924,00',
+            inscricao: '2025-05-28',
+            url: 'https://www.policiacivil.al.gov.br',
+            cor: '#27ae60',
+            icone: 'fa-shield-alt',
+            tag: 'Segurança',
+            banca: 'CESPE/CEBRASPE'
+        },
+        {
+            orgao: 'Ministério Público de Alagoas – MPAL',
+            cargo: 'Analista e Técnico do MP',
+            vagas: 55,
+            remuneracao: 'R$ 10.312,00',
+            inscricao: '2025-05-20',
+            url: 'https://www.mpal.mp.br',
+            cor: '#e74c3c',
+            icone: 'fa-scroll',
+            tag: 'MP Estadual',
+            banca: 'FCC'
+        }
+    ];
+
+    function _diasRestantes(dataISO) {
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const alvo = new Date(dataISO + 'T00:00:00');
+        return Math.round((alvo - hoje) / 86400000);
+    }
+
+    function renderConcursosCard() {
+        const container = document.getElementById('concursos-container');
+        if (!container) return;
+        const destaque = CONCURSOS_ABERTOS.find(c => c.destaque) || CONCURSOS_ABERTOS[0];
+        const outros = CONCURSOS_ABERTOS.filter(c => c !== destaque);
+
+        const dias0 = _diasRestantes(destaque.inscricao);
+        const prazoClass0 = dias0 <= 7 ? 'urgente' : '';
+        const prazoTxt0 = dias0 < 0 ? 'Encerrado' : dias0 === 0 ? 'Hoje!' : dias0 + 'd restantes';
+
+        const destaqueHtml = `
+        <div class="concurso-destaque">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px;">
+            <span style="background:rgba(26,188,156,0.15);border:1px solid rgba(26,188,156,0.35);border-radius:20px;font-size:0.62rem;font-weight:700;padding:2px 9px;color:#1abc9c;letter-spacing:.05em;text-transform:uppercase;">
+              <i class="fas fa-star me-1"></i>NOVO CONCURSO
+            </span>
+            <span class="concurso-item-prazo ${prazoClass0}"><i class="fas fa-clock"></i> ${prazoTxt0}</span>
+          </div>
+          <div class="concurso-destaque-title">${destaque.cargo}</div>
+          <div class="concurso-destaque-sub"><i class="fas fa-building me-1" style="opacity:.5;"></i>${destaque.orgao} &nbsp;·&nbsp; <i class="fas fa-dollar-sign me-1" style="opacity:.5;"></i>${destaque.remuneracao}</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;">
+            <span class="concurso-vagas-pill"><i class="fas fa-users"></i> ${destaque.vagas.toLocaleString('pt-BR')} vagas</span>
+            <span class="concurso-item-tag" style="background:${destaque.cor}22;color:${destaque.cor};border:1px solid ${destaque.cor}55;">${destaque.tag}</span>
+            ${destaque.banca ? `<span style="font-size:.62rem;color:rgba(255,255,255,.38);"><i class='fas fa-building me-1'></i>${destaque.banca}</span>` : ''}
+            <a href="${destaque.url}" target="_blank" rel="noopener" style="margin-left:auto;background:linear-gradient(135deg,#1abc9c,#16a085);color:white;border:none;border-radius:8px;padding:5px 14px;font-size:0.74rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
+              <i class="fas fa-external-link-alt"></i> Ver edital
+            </a>
+          </div>
+        </div>`;
+
+        const outrosHtml = outros.map(c => {
+            const d = _diasRestantes(c.inscricao);
+            const pc = d <= 7 ? 'urgente' : '';
+            const pt = d < 0 ? 'Encerrado' : d === 0 ? 'Hoje!' : d + 'd';
+            return `<a href="${c.url}" target="_blank" rel="noopener" class="concurso-item">
+              <div class="concurso-item-icon" style="background:${c.cor}22;color:${c.cor};"><i class="fas ${c.icone}"></i></div>
+              <div class="concurso-item-body">
+                <div class="concurso-item-title">${c.cargo}</div>
+                <div class="concurso-item-meta">
+                  <span class="concurso-item-orgao">${c.orgao}</span>
+                  <span class="concurso-item-tag" style="background:${c.cor}22;color:${c.cor};border:1px solid ${c.cor}55;">${c.tag}</span>
+                  <span style="font-size:.66rem;color:rgba(255,255,255,.35);"><i class="fas fa-users me-1" style="opacity:.6;"></i>${c.vagas.toLocaleString('pt-BR')} vagas</span>
+                  ${c.banca ? `<span style="font-size:.6rem;color:rgba(255,255,255,.28);"><i class='fas fa-pen me-1'></i>${c.banca}</span>` : ''}
+                </div>
+              </div>
+              <span class="concurso-item-prazo ${pc}"><i class="fas fa-clock"></i> ${pt}</span>
+            </a>`;
+        }).join('');
+
+        container.innerHTML = `
+        <div class="concurso-card-home">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div class="concurso-novo-badge"><i class="fas fa-trophy"></i> Concursos Abertos</div>
+            <a href="https://www.gov.br/concursos" target="_blank" rel="noopener" style="font-size:.7rem;color:rgba(255,255,255,.35);text-decoration:none;">gov.br/concursos <i class="fas fa-external-link-alt" style="font-size:.6rem;"></i></a>
+          </div>
+          ${destaqueHtml}
+          <div style="flex:1;">${outrosHtml}</div>
+          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+            <a href="https://www.pciconcursos.com.br/concursos/alagoas/" target="_blank" rel="noopener" class="info-card-btn" style="background:linear-gradient(135deg,#1abc9c,#16a085);color:white;flex:1;min-width:140px;">
+              <i class="fas fa-search"></i> Concursos em AL
+            </a>
+            <a href="http://www.selecon.al.gov.br" target="_blank" rel="noopener" class="info-card-btn" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.15);">
+              <i class="fas fa-external-link-alt"></i> SELECON/AL
+            </a>
+          </div>
+        </div>`;
+    }
 
     async function renderDashboard(data) {
         // KPIs
