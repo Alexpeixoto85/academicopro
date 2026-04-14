@@ -13,6 +13,181 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* ===== LEITURA DIÁRIA CARD ===== */
+    .leitura-diaria-card {
+        background: linear-gradient(135deg, #1a2332 0%, #2c3e50 100%);
+        border-radius: 16px;
+        padding: 18px 20px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(201,168,76,0.25);
+        box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+    }
+    .leitura-diaria-card::before {
+        content: '';
+        position: absolute;
+        top: -30px; right: -30px;
+        width: 120px; height: 120px;
+        background: rgba(201,168,76,0.08);
+        border-radius: 50%;
+    }
+    .leitura-diaria-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(201,168,76,0.18);
+        border: 1px solid rgba(201,168,76,0.4);
+        color: #c9a84c;
+        border-radius: 20px;
+        font-size: 0.62rem;
+        font-weight: 700;
+        padding: 3px 10px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+    .leitura-diaria-title {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #f0e6c8;
+        line-height: 1.35;
+        margin-bottom: 4px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .leitura-diaria-meta {
+        font-size: 0.72rem;
+        color: rgba(255,255,255,0.5);
+        margin-bottom: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .leitura-diaria-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(26,188,156,0.15);
+        border: 1px solid rgba(26,188,156,0.3);
+        color: #1abc9c;
+        border-radius: 12px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        padding: 2px 9px;
+        margin-right: 5px;
+        margin-bottom: 5px;
+    }
+    .leitura-diaria-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(135deg, #c9a84c, #a8862e);
+        color: #1a1f2e;
+        border: none;
+        border-radius: 8px;
+        padding: 7px 14px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    .leitura-diaria-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(201,168,76,0.4);
+        color: #1a1f2e;
+    }
+    .leitura-noticias-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        cursor: pointer;
+        transition: background 0.15s;
+        border-radius: 6px;
+        padding-left: 4px;
+    }
+    .leitura-noticias-item:last-child { border-bottom: none; }
+    .leitura-noticias-item:hover { background: rgba(255,255,255,0.04); }
+    .leitura-noticias-item .noticia-dot {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: #c9a84c;
+        flex-shrink: 0;
+        margin-top: 6px;
+    }
+    .leitura-noticias-item .noticia-text {
+        font-size: 0.77rem;
+        color: rgba(255,255,255,0.75);
+        line-height: 1.4;
+    }
+    .leitura-noticias-item .noticia-text span {
+        font-size: 0.65rem;
+        color: rgba(255,255,255,0.35);
+        display: block;
+        margin-top: 2px;
+    }
+    .leitura-diaria-refresh {
+        background: rgba(255,255,255,0.08);
+        border: none;
+        color: rgba(255,255,255,0.5);
+        border-radius: 6px;
+        padding: 3px 8px;
+        font-size: 0.72rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .leitura-diaria-refresh:hover { background: rgba(255,255,255,0.14); color: white; }
+    /* ===== QUIZ MODAL ===== */
+    .quiz-container { max-width: 100%; }
+    .quiz-progress-bar { height: 6px; background: #e9ecef; border-radius: 3px; overflow: hidden; margin-bottom: 20px; }
+    .quiz-progress-fill { height: 100%; background: linear-gradient(90deg, #1abc9c, #3498db); border-radius: 3px; transition: width 0.4s ease; }
+    .quiz-question-text { font-size: 1rem; font-weight: 600; color: #1a2332; line-height: 1.55; margin-bottom: 20px; }
+    .quiz-option-btn {
+        width: 100%; text-align: left; padding: 12px 16px; margin-bottom: 8px;
+        border-radius: 10px; border: 2px solid #e9ecef; background: white;
+        font-size: 0.88rem; color: #34495e; cursor: pointer;
+        transition: all 0.18s; font-family: 'Poppins', sans-serif;
+        display: flex; align-items: flex-start; gap: 10px;
+    }
+    .quiz-option-btn:hover:not(:disabled) { border-color: #3498db; background: #f0f8ff; }
+    .quiz-option-btn.correct { border-color: #27ae60; background: #eafaf1; color: #1e8449; }
+    .quiz-option-btn.wrong { border-color: #e74c3c; background: #fdedec; color: #c0392b; }
+    .quiz-option-btn .opt-letter { width: 24px; height: 24px; border-radius: 50%; background: #f0f2f4; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; flex-shrink: 0; }
+    .quiz-option-btn.correct .opt-letter { background: #27ae60; color: white; }
+    .quiz-option-btn.wrong .opt-letter { background: #e74c3c; color: white; }
+    .quiz-feedback { padding: 12px 16px; border-radius: 10px; margin-top: 12px; font-size: 0.87rem; line-height: 1.5; display: none; }
+    .quiz-feedback.show { display: block; }
+    .quiz-feedback.correct-fb { background: #eafaf1; border: 1px solid #27ae60; color: #1e8449; }
+    .quiz-feedback.wrong-fb { background: #fdedec; border: 1px solid #e74c3c; color: #c0392b; }
+    .quiz-score-card { text-align: center; padding: 30px 20px; }
+    .quiz-score-circle { width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 800; border: 5px solid #1abc9c; color: #1abc9c; }
+    .prova-quiz-link {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white; border-radius: 8px; padding: 5px 12px;
+        font-size: 0.75rem; font-weight: 700; cursor: pointer;
+        border: none; transition: all 0.2s; text-decoration: none;
+        margin-top: 6px;
+    }
+    .prova-quiz-link:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(231,76,60,0.4); color: white; }
+    /* HTML file viewer */
+    .html-viewer-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.95); z-index: 999999;
+        display: none; flex-direction: column; overflow: hidden;
+    }
+    .html-viewer-overlay.active { display: flex; animation: fvFadeIn 0.22s ease; }
+    .html-viewer-header {
+        display: flex; align-items: center; gap: 12px;
+        padding: 14px 20px; background: #1a1a2e; flex-shrink: 0;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .html-viewer-iframe { flex: 1; border: none; background: white; }
     /* ===== PDF TEXT LAYER — seleção e cópia de texto ===== */
     #academico-pdf-viewer-wrap {
         position: relative;
@@ -1054,9 +1229,9 @@
       .mobile-bottom-nav { display: block; }
     }
 
-    /* ===== CARD EVENTO — estreito no desktop ===== */
+    /* ===== CARD EVENTO — sem limite de largura, usa col-lg-6 ===== */
     #next-event-container {
-      max-width: 520px;
+      max-width: 100%;
     }
 
     /* ===== MOBILE TOTAL ===== */
@@ -3794,7 +3969,10 @@
       </div>
     </div>
 
-    <div id="next-event-container" class="mb-4"></div>
+    <div class="row g-3 mb-4">
+      <div class="col-lg-6" id="next-event-container"></div>
+      <div class="col-lg-6" id="leitura-diaria-container"></div>
+    </div>
 
     <!-- ACESSO RÁPIDO -->
     <div class="home-section-title">Acesso Rápido</div>
@@ -4615,7 +4793,7 @@
 <div class="modal fade" id="provaModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Prova</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="provaForm"><input type="hidden" id="provaId"><div class="mb-3"><label for="provaDisciplina" class="form-label">Disciplina</label><select class="form-select" id="provaDisciplina" required></select></div><div class="mb-3"><label for="provaConteudo" class="form-label">Conteúdo</label><input type="text" class="form-control" id="provaConteudo" required></div><div class="mb-3"><label for="provaData" class="form-label">Data</label><input type="date" class="form-control" id="provaData" required></div><div class="mb-3"><label for="provaHora" class="form-label">Hora</label><input type="time" class="form-control" id="provaHora"></div><div class="mb-3"><label for="provaStatus" class="form-label">Status</label><select class="form-select" id="provaStatus"><option value="Agendada">Agendada</option><option value="Realizada">Realizada</option></select></div><div class="mb-3"><label for="provaNota" class="form-label">Nota</label><input type="number" step="0.1" class="form-control" id="provaNota" min="0" max="10"></div>
 <div class="mb-3">
     <label for="provaAnexo" class="form-label">Anexo (PDF, imagem, Word)</label>
-    <input type="file" class="form-control" id="provaAnexo" accept=".pdf,.docx,image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+    <input type="file" class="form-control" id="provaAnexo" accept=".pdf,.docx,.html,.htm,image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/html">
     <div id="provaAnexoPreview" class="mt-2"></div>
     <input type="hidden" id="provaAnexoExistente" value="">
 </div>
@@ -5213,6 +5391,7 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'home-links':
                 renderProximoEventoCard(data);
                 updateHomeStats();
+                renderLeituraDiaria();
                 break;
             case 'dashboard': renderDashboard(data); break;
             case 'disciplinas': renderDisciplinas(data); break;
@@ -5452,6 +5631,106 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>`;
         updateCountdown(); nextEventInterval = setInterval(updateCountdown, 1000);
+        // Render daily reading card after next event
+        renderLeituraDiaria();
+    }
+
+    // ===== LEITURA DIÁRIA =====
+    const LEITURA_CURADORIA = [
+        // Livros de Direito
+        { tipo:'livro', titulo:'Curso de Direito Constitucional', autor:'Alexandre de Moraes', area:'Constitucional', url:'https://www.google.com/search?q=Curso+Direito+Constitucional+Alexandre+Moraes+PDF', icone:'fa-book' },
+        { tipo:'livro', titulo:'Manual de Direito Civil', autor:'Flávio Tartuce', area:'Civil', url:'https://www.google.com/search?q=Manual+Direito+Civil+Tartuce+PDF', icone:'fa-book' },
+        { tipo:'livro', titulo:'Direito Penal: Parte Geral', autor:'Rogério Greco', area:'Penal', url:'https://www.google.com/search?q=Direito+Penal+Parte+Geral+Rogerio+Greco+PDF', icone:'fa-book' },
+        { tipo:'livro', titulo:'Processo Civil Brasileiro', autor:'Humberto Theodoro Jr.', area:'Processual Civil', url:'https://www.google.com/search?q=Processo+Civil+Brasileiro+Theodoro+PDF', icone:'fa-book' },
+        { tipo:'livro', titulo:'Teoria Geral do Direito Tributário', autor:'Alfredo Becker', area:'Tributário', url:'https://www.google.com/search?q=Teoria+Geral+Direito+Tributario+Becker', icone:'fa-book' },
+        { tipo:'livro', titulo:'Direito Administrativo Brasileiro', autor:'Hely Lopes Meirelles', area:'Administrativo', url:'https://www.google.com/search?q=Direito+Administrativo+Brasileiro+Meirelles+PDF', icone:'fa-book' },
+        { tipo:'livro', titulo:'Direito do Trabalho', autor:'Maurício Godinho Delgado', area:'Trabalhista', url:'https://www.google.com/search?q=Direito+Trabalho+Godinho+Delgado+PDF', icone:'fa-book' },
+        { tipo:'livro', titulo:'O Espírito das Leis', autor:'Montesquieu', area:'Filosofia do Direito', url:'https://www.dominiopublico.gov.br/pesquisa/DetalheObraForm.do?select_action=&co_obra=2555', icone:'fa-book' },
+        { tipo:'livro', titulo:'Teoria Pura do Direito', autor:'Hans Kelsen', area:'Teoria Geral', url:'https://www.google.com/search?q=Teoria+Pura+Direito+Kelsen+PDF+gratuito', icone:'fa-book' },
+        // Artigos
+        { tipo:'artigo', titulo:'Princípios Constitucionais e sua Aplicação', autor:'Revista Consultor Jurídico', area:'Constitucional', url:'https://www.conjur.com.br/', icone:'fa-newspaper' },
+        { tipo:'artigo', titulo:'O STF e o Controle de Constitucionalidade', autor:'Revista JOTA', area:'Constitucional', url:'https://www.jota.info/', icone:'fa-newspaper' },
+        { tipo:'artigo', titulo:'Responsabilidade Civil no Código Civil de 2002', autor:'Portal Jusbrasil', area:'Civil', url:'https://www.jusbrasil.com.br/', icone:'fa-newspaper' },
+        { tipo:'artigo', titulo:'Atualidades do Direito Penal e Processo Penal', autor:'Empório do Direito', area:'Penal', url:'https://emporiododireito.com.br/', icone:'fa-newspaper' },
+        { tipo:'artigo', titulo:'Contratos Digitais e a LGPD', autor:'Migalhas', area:'Digital', url:'https://www.migalhas.uol.com.br/', icone:'fa-newspaper' },
+        { tipo:'artigo', titulo:'Direito e Tecnologia: Inteligência Artificial no Judiciário', autor:'Consultor Jurídico', area:'Tecnologia', url:'https://www.conjur.com.br/', icone:'fa-newspaper' },
+    ];
+    const NOTICIAS_DIREITO = [
+        { titulo:'Últimas decisões do STF e STJ', fonte:'JusBrasil', url:'https://www.jusbrasil.com.br/noticias/populares', tag:'STF/STJ' },
+        { titulo:'Atualizações legislativas do Congresso Nacional', fonte:'Câmara', url:'https://www.camara.leg.br/noticias', tag:'Legislação' },
+        { titulo:'Novidades do Direito Digital e LGPD', fonte:'Migalhas', url:'https://www.migalhas.uol.com.br/', tag:'Digital' },
+        { titulo:'Jurisprudência recente em Direito do Trabalho', fonte:'TRT', url:'https://www.tst.jus.br/noticias', tag:'Trabalhista' },
+        { titulo:'Reformas tributárias e impactos no Direito Fiscal', fonte:'JOTA', url:'https://www.jota.info/', tag:'Tributário' },
+        { titulo:'Novas súmulas e enunciados dos tribunais superiores', fonte:'STJ', url:'https://www.stj.jus.br/sites/portalp/Inicio', tag:'Sumulas' },
+    ];
+
+    function renderLeituraDiaria() {
+        const container = document.getElementById('leitura-diaria-container');
+        if (!container) return;
+        // Seleciona leitura do dia (baseado no dia do ano para variar diariamente)
+        const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(),0,0)) / 864e5);
+        const leitura = LEITURA_CURADORIA[dayOfYear % LEITURA_CURADORIA.length];
+        // Seleciona 3 notícias rotativas
+        const noticias = [
+            NOTICIAS_DIREITO[dayOfYear % NOTICIAS_DIREITO.length],
+            NOTICIAS_DIREITO[(dayOfYear+1) % NOTICIAS_DIREITO.length],
+            NOTICIAS_DIREITO[(dayOfYear+2) % NOTICIAS_DIREITO.length],
+        ];
+        const tipoBadge = leitura.tipo === 'livro' ? '📚 Livro do Dia' : '📰 Artigo do Dia';
+        container.innerHTML = `
+        <div class="leitura-diaria-card h-100">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+            <div class="leitura-diaria-badge"><i class="fas fa-book-open me-1"></i>${tipoBadge}</div>
+            <button class="leitura-diaria-refresh" onclick="shuffleLeitura()" title="Próxima sugestão"><i class="fas fa-sync-alt"></i></button>
+          </div>
+          <div class="leitura-diaria-title">${leitura.titulo}</div>
+          <div class="leitura-diaria-meta"><i class="fas fa-user me-1 opacity-50"></i>${leitura.autor}</div>
+          <div style="margin-bottom:12px;">
+            <span class="leitura-diaria-tag"><i class="fas fa-balance-scale me-1"></i>${leitura.area}</span>
+          </div>
+          <a href="${leitura.url}" target="_blank" rel="noopener" class="leitura-diaria-btn mb-14">
+            <i class="fas fa-external-link-alt"></i> Acessar Leitura
+          </a>
+          <hr style="border-color:rgba(255,255,255,0.1);margin:14px 0 10px;">
+          <div style="font-size:0.68rem;font-weight:700;color:#c9a84c;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;"><i class="fas fa-rss me-1"></i>Notícias Jurídicas</div>
+          ${noticias.map(n=>`
+          <div class="leitura-noticias-item" onclick="window.open('${n.url}','_blank')">
+            <div class="noticia-dot"></div>
+            <div class="noticia-text">${n.titulo}<span>${n.fonte} · <span class="leitura-diaria-tag" style="font-size:0.6rem;padding:1px 7px;">${n.tag}</span></span></div>
+          </div>`).join('')}
+        </div>`;
+    }
+    let _shuffleOffset = 0;
+    function shuffleLeitura() {
+        _shuffleOffset++;
+        const container = document.getElementById('leitura-diaria-container');
+        if (!container) return;
+        const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(),0,0)) / 864e5) + _shuffleOffset;
+        const leitura = LEITURA_CURADORIA[dayOfYear % LEITURA_CURADORIA.length];
+        const noticias = [
+            NOTICIAS_DIREITO[dayOfYear % NOTICIAS_DIREITO.length],
+            NOTICIAS_DIREITO[(dayOfYear+1) % NOTICIAS_DIREITO.length],
+            NOTICIAS_DIREITO[(dayOfYear+2) % NOTICIAS_DIREITO.length],
+        ];
+        const tipoBadge = leitura.tipo === 'livro' ? '📚 Livro do Dia' : '📰 Artigo do Dia';
+        container.innerHTML = `
+        <div class="leitura-diaria-card h-100">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+            <div class="leitura-diaria-badge"><i class="fas fa-book-open me-1"></i>${tipoBadge}</div>
+            <button class="leitura-diaria-refresh" onclick="shuffleLeitura()" title="Próxima sugestão"><i class="fas fa-sync-alt"></i></button>
+          </div>
+          <div class="leitura-diaria-title">${leitura.titulo}</div>
+          <div class="leitura-diaria-meta"><i class="fas fa-user me-1 opacity-50"></i>${leitura.autor}</div>
+          <div style="margin-bottom:12px;"><span class="leitura-diaria-tag"><i class="fas fa-balance-scale me-1"></i>${leitura.area}</span></div>
+          <a href="${leitura.url}" target="_blank" rel="noopener" class="leitura-diaria-btn mb-14"><i class="fas fa-external-link-alt"></i> Acessar Leitura</a>
+          <hr style="border-color:rgba(255,255,255,0.1);margin:14px 0 10px;">
+          <div style="font-size:0.68rem;font-weight:700;color:#c9a84c;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;"><i class="fas fa-rss me-1"></i>Notícias Jurídicas</div>
+          ${noticias.map(n=>`
+          <div class="leitura-noticias-item" onclick="window.open('${n.url}','_blank')">
+            <div class="noticia-dot"></div>
+            <div class="noticia-text">${n.titulo}<span>${n.fonte} · <span class="leitura-diaria-tag" style="font-size:0.6rem;padding:1px 7px;">${n.tag}</span></span></div>
+          </div>`).join('')}
+        </div>`;
     }
 
     async function renderDashboard(data) {
@@ -5815,7 +6094,6 @@ document.addEventListener('DOMContentLoaded', function() {
         data.provas.sort((a,b)=>new Date(a.data)-new Date(b.data)).forEach(p => {
             const disc = data.disciplinas.find(d=>d.id===p.disciplinaId);
             const isUrgent = p.id===_proximaProvaId && p.status==='Agendada';
-            const attachmentHtml = p.anexo ? renderAnexoIcon(p) : '';
             const dataProva = new Date(p.data+'T00:00');
             const diasRestantes = Math.ceil((dataProva - _hojeP)/(1000*60*60*24));
             let diasHtml = '';
@@ -5827,6 +6105,37 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const nota = p.nota!==null&&p.nota!==undefined ? parseFloat(p.nota) : null;
             const notaHtml = nota!==null ? `<div class="grade-badge ${nota>=7?'grade-a':nota>=5?'grade-b':nota>=3?'grade-c':'grade-d'}" style="width:48px;height:48px;font-size:1rem;">${nota.toFixed(1)}</div>` : `<div class="grade-badge grade-d" style="width:48px;height:48px;font-size:0.75rem;">–</div>`;
+
+            // Build attachment HTML - support PDF, image, HTML
+            let attachmentHtml = '';
+            const allAnexos = p.anexos && Array.isArray(p.anexos) ? p.anexos :
+                (p.anexo ? [{id:'pv_'+p.id, nome:p.anexoNome||'anexo', tipo:p.anexoTipo||'', dados:p.anexo}] : []);
+            if (allAnexos.length) {
+                attachmentHtml = allAnexos.map(a => {
+                    const tipo = a.tipo||'';
+                    const nome = a.nome||'arquivo';
+                    const dadosEnc = encodeURIComponent(a.dados||'');
+                    const tipoEnc = encodeURIComponent(tipo);
+                    const nomeEnc = encodeURIComponent(nome);
+                    let iconClass='fa-file', iconColor='text-secondary', btnStyle='btn-outline-secondary';
+                    if (tipo==='application/pdf'||nome.endsWith('.pdf')) { iconClass='fa-file-pdf'; iconColor='text-danger'; btnStyle='btn-outline-danger'; }
+                    else if (tipo.startsWith('image/')) { iconClass='fa-image'; iconColor='text-success'; btnStyle='btn-outline-success'; }
+                    else if (tipo==='text/html'||nome.endsWith('.html')||nome.endsWith('.htm')) { iconClass='fa-code'; iconColor='text-info'; btnStyle='btn-outline-info'; }
+                    else if (tipo.includes('word')||nome.endsWith('.docx')) { iconClass='fa-file-word'; iconColor='text-primary'; btnStyle='btn-outline-primary'; }
+                    return `<button class="btn btn-sm ${btnStyle} prova-view-anexo" data-dados="${dadosEnc}" data-tipo="${tipoEnc}" data-nome="${nomeEnc}" title="Visualizar: ${nome}" style="font-size:0.72rem;padding:3px 10px;border-radius:6px;">
+                        <i class="fas ${iconClass} ${iconColor} me-1"></i>${nome.length>18?nome.substring(0,15)+'...':nome}
+                    </button>`;
+                }).join('');
+            }
+
+            // Quiz link — only when 0 or 1 day remaining and agendada
+            let quizHtml = '';
+            if (p.status==='Agendada' && diasRestantes>=0 && diasRestantes<=1) {
+                const materia = disc ? encodeURIComponent(disc.nome) : encodeURIComponent(p.conteudo);
+                const assunto = encodeURIComponent(p.conteudo);
+                quizHtml = `<button class="prova-quiz-link" onclick="abrirQuizProva('${materia}','${assunto}')" title="Questões para revisão da prova"><i class="fas fa-question-circle"></i> Questões de Revisão</button>`;
+            }
+
             const card = document.createElement('div');
             card.className = 'col-md-6 col-xl-4';
             card.innerHTML = `
@@ -5846,7 +6155,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     ${diasHtml}
                     <span class="pill ${p.status==='Agendada'?'pill-warning':'pill-success'}">${p.status==='Agendada'?'⏰ Agendada':'✅ Realizada'}</span>
                   </div>
-                  ${attachmentHtml?`<div class="mt-2 d-flex gap-2">${attachmentHtml}</div>`:''}
+                  ${attachmentHtml?`<div class="mt-2 d-flex gap-2 flex-wrap">${attachmentHtml}</div>`:''}
+                  ${quizHtml?`<div class="mt-2">${quizHtml}</div>`:''}
                 </div>
                 <div class="pro-card-footer">
                   <div class="ms-auto card-actions">
@@ -5857,6 +6167,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
               </div>`;
             container.appendChild(card);
+        });
+
+        // Delegate click for viewing prova attachments inline
+        container.querySelectorAll('.prova-view-anexo').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const dados = decodeURIComponent(this.dataset.dados);
+                const tipo = decodeURIComponent(this.dataset.tipo);
+                const nome = decodeURIComponent(this.dataset.nome);
+                viewProvaAnexo(dados, tipo, nome);
+            });
         });
     }
 
@@ -7340,6 +7661,7 @@ document.addEventListener('DOMContentLoaded', function() {
             else if (tipo === 'application/pdf') iconClass = 'fa-file-pdf';
             else if (tipo.includes('word') || nome.endsWith('.docx')) iconClass = 'fa-file-word';
             else if (tipo.includes('presentation') || nome.endsWith('.pptx')) iconClass = 'fa-file-powerpoint';
+            else if (tipo === 'text/html' || nome.endsWith('.html') || nome.endsWith('.htm')) iconClass = 'fa-code';
             const div = document.createElement('div');
             div.className = 'anexo-item';
             div.innerHTML = `
@@ -7397,6 +7719,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     preview.innerHTML = '<span class="badge bg-primary"><i class="fas fa-file-word"></i> Word selecionado</span>';
                 } else if (file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' || file.name.endsWith('.pptx')) {
                     preview.innerHTML = '<span class="badge bg-warning text-dark"><i class="fas fa-file-powerpoint"></i> PowerPoint selecionado</span>';
+                } else if (file.type === 'text/html' || file.name.endsWith('.html') || file.name.endsWith('.htm')) {
+                    preview.innerHTML = '<span class="badge bg-info"><i class="fas fa-code"></i> HTML selecionado</span>';
                 } else {
                     preview.innerHTML = '<span class="badge bg-secondary">Arquivo selecionado</span>';
                 }
@@ -7901,6 +8225,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (tipo === 'application/pdf' || (a.nome || '').endsWith('.pdf')) { iconClass = 'fa-file-pdf'; iconColor = 'text-danger'; }
                 else if (tipo.includes('word') || (a.nome || '').endsWith('.docx')) { iconClass = 'fa-file-word'; iconColor = 'text-primary'; }
                 else if (tipo.includes('presentation') || (a.nome || '').endsWith('.pptx')) { iconClass = 'fa-file-powerpoint'; iconColor = 'text-warning'; }
+                else if (tipo === 'text/html' || (a.nome||'').endsWith('.html') || (a.nome||'').endsWith('.htm')) { iconClass = 'fa-code'; iconColor = 'text-info'; }
                 else if (tipo.startsWith('image/')) { iconClass = 'fa-image'; iconColor = 'text-success'; }
                 html += `<div class="quick-attach-file-item">
                     <span><i class="fas ${iconClass} ${iconColor} file-icon"></i>${a.nome || 'arquivo'}</span>
@@ -7953,6 +8278,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (tipo === 'application/pdf' || file.name.endsWith('.pdf')) { iconClass = 'fa-file-pdf'; iconColor = 'text-danger'; }
             else if (tipo.includes('word') || file.name.endsWith('.docx')) { iconClass = 'fa-file-word'; iconColor = 'text-primary'; }
             else if (tipo.includes('presentation') || file.name.endsWith('.pptx')) { iconClass = 'fa-file-powerpoint'; iconColor = 'text-warning'; }
+            else if (tipo === 'text/html' || file.name.endsWith('.html') || file.name.endsWith('.htm')) { iconClass = 'fa-code'; iconColor = 'text-info'; }
             else if (tipo.startsWith('image/')) { iconClass = 'fa-image'; iconColor = 'text-success'; }
             const div = document.createElement('div');
             div.className = 'quick-attach-file-item';
@@ -10826,6 +11152,12 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     };
 
+    // Expor funções globais usadas via onclick no HTML
+    window.shuffleLeitura = function() {
+        _shuffleOffset = (_shuffleOffset||0) + 1;
+        renderLeituraDiaria();
+    };
+
 });
 </script>
 
@@ -11787,7 +12119,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <h6>Clique para selecionar arquivos</h6>
           <p class="text-muted small mb-0">ou arraste e solte aqui</p>
           <p class="text-muted small">PDF, Word, PowerPoint, imagens, etc.</p>
-          <input type="file" id="quickAttachInput" multiple class="d-none">
+          <input type="file" id="quickAttachInput" multiple accept=".pdf,.docx,.pptx,.html,.htm,image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/html" class="d-none">
         </div>
         <div id="quickAttachFilesList" class="quick-attach-files-list d-none">
           <p class="text-muted small mb-2 fw-bold">Arquivos selecionados:</p>
@@ -13198,6 +13530,175 @@ document.addEventListener('keydown', (e) => {
 
 
 
+<!-- ===== HTML VIEWER + QUIZ ENGINE ===== -->
+<script>
+  // ===== HTML VIEWER =====
+  function viewProvaAnexo(dados, tipo, nome) {
+      const isHtml = tipo === 'text/html' || nome.endsWith('.html') || nome.endsWith('.htm');
+      const isPdf = tipo === 'application/pdf' || nome.endsWith('.pdf');
+      const isImage = tipo.startsWith('image/');
+      if (isHtml) {
+          const overlay = document.getElementById('htmlViewerOverlay');
+          const iframe = document.getElementById('htmlViewerIframe');
+          const title = document.getElementById('htmlViewerTitle');
+          const dlLink = document.getElementById('htmlViewerDownload');
+          title.textContent = nome;
+          dlLink.href = dados;
+          dlLink.download = nome;
+          try {
+              const arr = dados.split(',');
+              const mime = arr[0].match(/:(.*?);/)[1];
+              const bstr = atob(arr[1]);
+              let n = bstr.length;
+              const u8arr = new Uint8Array(n);
+              while(n--) u8arr[n] = bstr.charCodeAt(n);
+              const blob = new Blob([u8arr], {type: mime});
+              iframe.src = URL.createObjectURL(blob);
+          } catch(e) {
+              iframe.srcdoc = dados;
+          }
+          overlay.classList.add('active');
+      } else if (isPdf) {
+          const modal = document.getElementById('viewPdfModal');
+          if (modal) {
+              document.getElementById('pdfViewer').src = dados;
+              const dlBtn = document.getElementById('downloadPdfBtn');
+              if (dlBtn) { dlBtn.onclick = () => { const a=document.createElement('a');a.href=dados;a.download=nome;a.click(); }; }
+              new bootstrap.Modal(modal).show();
+          }
+      } else if (isImage) {
+          const modal = document.getElementById('viewImageModal');
+          if (modal) {
+              document.getElementById('modalImage').src = dados;
+              document.getElementById('modalImageDescription').textContent = nome;
+              new bootstrap.Modal(modal).show();
+          }
+      } else {
+          const a = document.createElement('a');
+          a.href = dados; a.download = nome; a.click();
+      }
+  }
+  window.closeHtmlViewer = function() {
+      document.getElementById('htmlViewerOverlay').classList.remove('active');
+      document.getElementById('htmlViewerIframe').src = 'about:blank';
+  };
+  document.addEventListener('keydown', function(e) {
+      if (e.key==='Escape') {
+          const ov=document.getElementById('htmlViewerOverlay');
+          if(ov && ov.classList.contains('active')) closeHtmlViewer();
+      }
+  });
+
+  // ===== QUIZ ENGINE =====
+  const QUIZ_QUESTOES_DIREITO = [
+      { q:'Qual é o remédio constitucional que protege a liberdade de locomoção?', ops:['Mandado de Segurança','Habeas Corpus','Habeas Data','Mandado de Injunção'], correta:1, exp:'O Habeas Corpus protege a liberdade de locomoção, conforme art. 5°, LXVIII da CF/88.' },
+      { q:'Segundo o Código Civil de 2002, a maioridade civil ocorre aos:', ops:['16 anos','18 anos','21 anos','20 anos'], correta:1, exp:'Art. 5° do CC/2002: a menoridade cessa aos 18 anos completos.' },
+      { q:'O princípio "nullum crimen, nulla poena sine lege" corresponde ao princípio da:', ops:['Culpabilidade','Proporcionalidade','Legalidade','Intervenção mínima'], correta:2, exp:'Art. 5°, XXXIX da CF e art. 1° do CP — não há crime sem lei anterior que o defina.' },
+      { q:'O prazo prescricional geral para ações pessoais no Código Civil é de:', ops:['3 anos','5 anos','10 anos','15 anos'], correta:2, exp:'Art. 205 do CC: a prescrição ocorre em 10 anos quando a lei não fixar prazo menor.' },
+      { q:'Qual princípio do Direito Administrativo proíbe o agente público de agir sem autorização legal?', ops:['Razoabilidade','Moralidade','Publicidade','Legalidade'], correta:3, exp:'Princípio da legalidade (art. 37, caput CF): o administrador público só pode fazer o que a lei autoriza.' },
+      { q:'O Mandado de Segurança protege direito:', ops:['Coletivo difuso','Líquido e certo não amparado por HC ou HD','À locomoção','À privacidade de dados'], correta:1, exp:'Art. 5°, LXIX da CF: MS protege direito líquido e certo não amparado por habeas corpus ou habeas data.' },
+      { q:'No Direito Tributário, o fato gerador é:', ops:['A lei que cria o tributo','O lançamento do crédito','A situação prevista em lei que origina a obrigação tributária','O sujeito passivo da relação tributária'], correta:2, exp:'Art. 114 do CTN: fato gerador é a situação definida em lei como necessária e suficiente à sua ocorrência.' },
+      { q:'A Teoria da Imprevisão é aplicada no Direito Civil quando:', ops:['O contrato é nulo','Uma das partes é incapaz','Eventos imprevisíveis tornam a prestação excessivamente onerosa','O objeto é ilícito'], correta:2, exp:'Art. 478 do CC: permite resolução ou revisão contratual por eventos imprevisíveis e extraordinários.' },
+      { q:'O contrato de trabalho padrão previsto na CLT é:', ops:['Por prazo determinado','Por experiência','Temporário','Por prazo indeterminado'], correta:3, exp:'A regra geral da CLT é o contrato de trabalho por prazo indeterminado.' },
+      { q:'A Constituição Federal de 1988 é classificada quanto à mutabilidade como:', ops:['Flexível','Semirrígida','Rígida','Imutável'], correta:2, exp:'A CF/88 é rígida pois exige processo legislativo mais dificultoso para sua alteração (art. 60).' },
+      { q:'Segundo a CF, são cláusulas pétreas, EXCETO:', ops:['Voto direto e secreto','Separação dos Poderes','Direito de propriedade absoluto','Forma Federativa de Estado'], correta:2, exp:'Art. 60, §4°: são cláusulas pétreas a forma federativa, o voto direto/secreto, separação dos poderes e os direitos e garantias individuais.' },
+      { q:'O prazo para ajuizamento de ação trabalhista após a rescisão contratual é de:', ops:['1 ano','2 anos','3 anos','5 anos'], correta:1, exp:'Art. 7°, XXIX da CF: prazo prescricional de 2 anos para ação trabalhista após a extinção do contrato.' },
+      { q:'O princípio da anterioridade tributária garante que o tributo:', ops:['Não pode ser cobrado retroativamente','Só pode ser cobrado no exercício financeiro seguinte à lei que o instituiu','Deve ser igual para todos','Precisa de lei complementar'], correta:1, exp:'Art. 150, III, "b" da CF: vedada a cobrança de tributos no mesmo exercício financeiro em que foi publicada a lei que os instituiu.' },
+      { q:'A desconsideração da personalidade jurídica está prevista no Código Civil no art.:', ops:['50','100','150','200'], correta:0, exp:'Art. 50 do CC: permite desconsiderar a personalidade jurídica em caso de abuso, desvio de finalidade ou confusão patrimonial.' },
+      { q:'No processo civil, a citação é o ato pelo qual:', ops:['O juiz decide a causa','O réu é chamado a responder à ação','O processo é suspenso','O autor faz pedido inicial'], correta:1, exp:'Art. 238 do CPC/2015: citação é o ato pelo qual são convocados o réu, o executado ou o interessado para integrar a relação processual.' },
+  ];
+
+  let quizState = { questoes:[], atual:0, acertos:0, respondida:false };
+
+  window.abrirQuizProva = async function(materia, assunto) {
+      const modal = new bootstrap.Modal(document.getElementById('quizModal'));
+      document.getElementById('quizModalBody').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-danger" role="status"></div><p class="mt-3 text-muted">Carregando questões...</p></div>';
+      document.getElementById('quizModalFooter').style.display = 'none';
+      modal.show();
+
+      // Shuffle curated questions, take 8
+      let questoes = [...QUIZ_QUESTOES_DIREITO].sort(()=>Math.random()-0.5).slice(0,8);
+
+      // Try Open Trivia DB for extra questions (free, no key)
+      try {
+          const resp = await fetch('https://opentdb.com/api.php?amount=4&category=9&difficulty=medium&type=multiple', {signal: AbortSignal.timeout(4000)});
+          const json = await resp.json();
+          if (json.results && json.results.length) {
+              json.results.forEach(r => {
+                  const allOps = [...r.incorrect_answers, r.correct_answer].sort(()=>Math.random()-0.5);
+                  const correta = allOps.indexOf(r.correct_answer);
+                  questoes.push({ q:_decEnt(r.question), ops:allOps.map(_decEnt), correta, exp:`Resposta: ${_decEnt(r.correct_answer)}` });
+              });
+          }
+      } catch(e) { /* sem internet — usa curadoria local */ }
+
+      quizState = { questoes: questoes.slice(0, 10), atual:0, acertos:0, respondida:false };
+      _renderQuizQ();
+  };
+
+  function _decEnt(str) {
+      const t = document.createElement('textarea');
+      t.innerHTML = str; return t.value;
+  }
+
+  function _renderQuizQ() {
+      const { questoes, atual, acertos } = quizState;
+      if (atual >= questoes.length) { _renderQuizScore(); return; }
+      const q = questoes[atual];
+      const pct = Math.round((atual/questoes.length)*100);
+      const letters = ['A','B','C','D','E'];
+      document.getElementById('quizModalBody').innerHTML = `
+        <div class="quiz-container">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:0.75rem;color:#7f8c8d;font-weight:600;">Questão ${atual+1} de ${questoes.length}</span>
+            <span style="font-size:0.75rem;color:#27ae60;font-weight:700;"><i class="fas fa-check-circle me-1"></i>${acertos} acerto${acertos!==1?'s':''}</span>
+          </div>
+          <div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width:${pct}%"></div></div>
+          <div class="quiz-question-text">${q.q}</div>
+          ${q.ops.map((op,i)=>`<button class="quiz-option-btn" data-idx="${i}" onclick="window._respQuiz(${i})">
+            <span class="opt-letter">${letters[i]||i+1}</span>
+            <span style="flex:1;">${op}</span>
+          </button>`).join('')}
+          <div class="quiz-feedback" id="quizFeedback"></div>
+        </div>`;
+      document.getElementById('quizModalFooter').style.display = 'none';
+  }
+
+  window._respQuiz = function(idxEsc) {
+      if (quizState.respondida) return;
+      quizState.respondida = true;
+      const q = quizState.questoes[quizState.atual];
+      const btns = document.querySelectorAll('#quizModalBody .quiz-option-btn');
+      const fb = document.getElementById('quizFeedback');
+      const acertou = idxEsc === q.correta;
+      if (acertou) { quizState.acertos++; btns[idxEsc].classList.add('correct'); fb.className='quiz-feedback show correct-fb'; fb.innerHTML=`<i class="fas fa-check-circle me-2"></i><strong>Correto!</strong> ${q.exp||''}`; }
+      else { btns[idxEsc].classList.add('wrong'); if(btns[q.correta]) btns[q.correta].classList.add('correct'); fb.className='quiz-feedback show wrong-fb'; fb.innerHTML=`<i class="fas fa-times-circle me-2"></i><strong>Incorreto.</strong> ${q.exp||''}`; }
+      btns.forEach(b=>b.disabled=true);
+      const footer=document.getElementById('quizModalFooter');
+      footer.style.display='flex';
+      const isLast=quizState.atual>=quizState.questoes.length-1;
+      const nb=document.getElementById('quizNextBtn');
+      nb.innerHTML=isLast?'<i class="fas fa-trophy me-1"></i> Ver Resultado':'Próxima <i class="fas fa-arrow-right ms-1"></i>';
+      nb.onclick=()=>{ quizState.atual++; quizState.respondida=false; _renderQuizQ(); };
+  };
+
+  function _renderQuizScore() {
+      const { acertos, questoes } = quizState;
+      const pct = Math.round((acertos/questoes.length)*100);
+      const msg = pct>=80?'Excelente! Você está bem preparado! 🎉':pct>=60?'Bom resultado! Continue revisando. 📚':'Precisa de mais revisão. Não desista! 💪';
+      const cor = pct>=80?'#27ae60':pct>=60?'#f39c12':'#e74c3c';
+      document.getElementById('quizModalBody').innerHTML=`
+        <div class="quiz-score-card">
+          <div class="quiz-score-circle" style="border-color:${cor};color:${cor};">${pct}<span style="font-size:0.55rem;font-weight:400;margin-top:2px;">%</span></div>
+          <h5 style="font-weight:700;color:#1a2332;margin-top:12px;">${acertos} de ${questoes.length} acertos</h5>
+          <p style="color:#7f8c8d;">${msg}</p>
+          <button class="btn btn-danger mt-2" onclick="abrirQuizProva('Direito','Revisão')"><i class="fas fa-redo me-1"></i> Tentar Novamente</button>
+        </div>`;
+      document.getElementById('quizModalFooter').style.display='none';
+  }
+</script>
+<!-- ===== FIM HTML VIEWER + QUIZ ENGINE ===== -->
+
 <!-- ===== ACERVO VIRTUAL JURIDICO v2 — Google Books + Fontes Abertas ===== -->
 <script>
 (function() {
@@ -13569,6 +14070,33 @@ document.addEventListener('keydown', (e) => {
 })();
 </script>
 <!-- ===== FIM ACERVO VIRTUAL ===== -->
+<!-- HTML FILE VIEWER OVERLAY -->
+<div class="html-viewer-overlay" id="htmlViewerOverlay">
+  <div class="html-viewer-header">
+    <button onclick="closeHtmlViewer()" style="background:rgba(255,255,255,0.15);border:none;color:white;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-times"></i></button>
+    <div class="file-viewer-title" id="htmlViewerTitle">Visualizando arquivo HTML</div>
+    <a id="htmlViewerDownload" href="#" download style="background:rgba(255,255,255,0.12);border:none;color:rgba(255,255,255,0.75);border-radius:8px;padding:6px 12px;font-size:0.78rem;cursor:pointer;display:flex;align-items:center;gap:5px;text-decoration:none;"><i class="fas fa-download"></i> Baixar</a>
+  </div>
+  <iframe class="html-viewer-iframe" id="htmlViewerIframe" sandbox="allow-scripts allow-same-origin"></iframe>
+</div>
+
+<!-- QUIZ MODAL -->
+<div class="modal fade" id="quizModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header" style="background:linear-gradient(135deg,#e74c3c,#c0392b);color:white;">
+        <h5 class="modal-title"><i class="fas fa-question-circle me-2"></i> Quiz de Revisão</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="quizModalBody" style="padding:24px;">
+        <div class="text-center py-4"><div class="spinner-border text-danger" role="status"></div><p class="mt-3 text-muted">Carregando questões...</p></div>
+      </div>
+      <div class="modal-footer" id="quizModalFooter" style="display:none;">
+        <button class="btn btn-danger" id="quizNextBtn">Próxima <i class="fas fa-arrow-right ms-1"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
