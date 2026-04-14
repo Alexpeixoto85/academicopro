@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -649,71 +650,14 @@
     body.bg-blue { --bg-color: #d4e6f1; background-image: none !important; }
     body.bg-green { --bg-color: #d4efdf; background-image: none !important; }
 
-    /* bg-custom: usa pseudo-elemento para imagem com opacidade elegante */
+    /* bg-custom: usa CSS variable definida via JS, com !important para vencer todas as outras regras */
     body.bg-custom {
-      background-color: #1a1a2e !important;
-      background-image: none !important;
-      position: relative;
-    }
-
-    /* A imagem fica no pseudo-elemento com opacidade controlada — efeito elegante */
-    body.bg-custom::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: var(--custom-bg-url);
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-      opacity: var(--bg-opacity, 0.22);
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    /* Overlay escuro sutil para garantir legibilidade do conteúdo */
-    body.bg-custom::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(15,20,40,0.45) 0%, rgba(10,15,35,0.35) 100%);
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    /* Todos os elementos acima do pseudo-elemento */
-    body.bg-custom .app-wrapper,
-    body.bg-custom .sidebar,
-    body.bg-custom .main-area,
-    body.bg-custom .top-header,
-    body.bg-custom .app-container,
-    body.bg-custom .modal {
-      position: relative;
-      z-index: 1;
-    }
-
-    /* Cards ficam com leve glassmorphism quando há imagem de fundo */
-    body.bg-custom .pro-card,
-    body.bg-custom .card-dashboard,
-    body.bg-custom .stat-card-new,
-    body.bg-custom .next-event-card,
-    body.bg-custom .info-card-home {
-      background: rgba(255,255,255,0.88) !important;
-      backdrop-filter: blur(12px) !important;
-      -webkit-backdrop-filter: blur(12px) !important;
-      border: 1px solid rgba(255,255,255,0.45) !important;
-    }
-
-    body.bg-custom .top-header {
-      background: rgba(255,255,255,0.82) !important;
-      backdrop-filter: blur(16px) !important;
-      -webkit-backdrop-filter: blur(16px) !important;
-    }
-
-    body.bg-custom .sidebar {
-      background: rgba(22,30,48,0.92) !important;
-      backdrop-filter: blur(16px) !important;
-      -webkit-backdrop-filter: blur(16px) !important;
+      background-color: transparent !important;
+      background-image: var(--custom-bg-url) !important;
+      background-size: cover !important;
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+      background-attachment: fixed !important;
     }
 
     h1, h2, h3, h4, h5, h6 {
@@ -4640,19 +4584,6 @@
                   <i class="fas fa-info-circle"></i> <span id="bgCurrentStatusText">Nenhuma imagem aplicada.</span>
                   <button class="btn btn-sm btn-outline-danger py-0 px-2 ms-1" id="removeCustomBackground" style="font-size:0.72rem;display:none;"><i class="fas fa-trash me-1"></i>Remover</button>
                 </div>
-
-                <!-- Controle de opacidade (visível apenas com imagem ativa) -->
-                <div id="bgOpacityControl" style="display:none;margin-top:14px;padding:14px 16px;background:#f8f9fa;border-radius:10px;border:1px solid #e9ecef;">
-                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                    <label style="font-size:0.82rem;font-weight:600;color:#34495e;margin:0;"><i class="fas fa-adjust me-1 text-primary"></i>Intensidade da imagem</label>
-                    <span id="bgOpacityValue" style="font-size:0.82rem;font-weight:700;color:#3498db;">22%</span>
-                  </div>
-                  <input type="range" id="bgOpacitySlider" min="5" max="70" value="22" step="1"
-                    style="width:100%;accent-color:#3498db;cursor:pointer;">
-                  <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:#adb5bd;margin-top:4px;">
-                    <span>Sutil</span><span>Equilibrado</span><span>Intenso</span>
-                  </div>
-                </div>
               </div>
 
               <button class="btn btn-sm btn-outline-secondary" id="resetTheme"><i class="fas fa-undo me-1"></i>Restaurar padrão</button>
@@ -5439,53 +5370,38 @@ document.addEventListener('DOMContentLoaded', function() {
         const savedTheme = localStorage.getItem('academicoTheme') || 'light';
         const customBg   = localStorage.getItem('academicoCustomBg');
         if (customBg) {
-            const savedOpacity = parseFloat(localStorage.getItem('academicoCustomBgOpacity') || '0.22');
-            _applyCustomBg(customBg, savedOpacity);
-            _updateBgStatus(true, savedOpacity);
+            _applyCustomBg(customBg);
+            _updateBgStatus(true);
         } else {
             applyTheme(savedTheme);
             _updateBgStatus(false);
         }
     }
 
-    function _applyCustomBg(dataUrl, opacity) {
-        const op = opacity !== undefined ? opacity : 0.22;
+    function _applyCustomBg(dataUrl) {
         document.body.className = 'bg-custom';
         document.body.style.setProperty('--custom-bg-url', `url('${dataUrl}')`);
-        document.body.style.setProperty('--bg-opacity', String(op));
     }
 
     function applyTheme(theme) {
         document.body.className = '';
         document.body.classList.add(`bg-${theme}`);
         document.body.style.removeProperty('--custom-bg-url');
-        document.body.style.removeProperty('--bg-opacity');
         localStorage.setItem('academicoTheme', theme);
         localStorage.removeItem('academicoCustomBg');
-        localStorage.removeItem('academicoCustomBgOpacity');
         _updateBgStatus(false);
     }
 
-    function _updateBgStatus(hasCustom, opacity) {
-        const statusText     = document.getElementById('bgCurrentStatusText');
-        const removeBtn      = document.getElementById('removeCustomBackground');
-        const opacityControl = document.getElementById('bgOpacityControl');
-        const slider         = document.getElementById('bgOpacitySlider');
-        const sliderVal      = document.getElementById('bgOpacityValue');
+    function _updateBgStatus(hasCustom) {
+        const statusText = document.getElementById('bgCurrentStatusText');
+        const removeBtn  = document.getElementById('removeCustomBackground');
         if (!statusText) return;
         if (hasCustom) {
             statusText.innerHTML = '<strong style="color:#1abc9c;"><i class="fas fa-check-circle me-1"></i>Imagem personalizada ativa.</strong>';
-            if (removeBtn)      removeBtn.style.display      = '';
-            if (opacityControl) opacityControl.style.display = '';
-            if (slider && opacity !== undefined) {
-                const pct = Math.round(opacity * 100);
-                slider.value = pct;
-                if (sliderVal) sliderVal.textContent = pct + '%';
-            }
+            if (removeBtn) removeBtn.style.display = '';
         } else {
             statusText.textContent = 'Nenhuma imagem personalizada aplicada.';
-            if (removeBtn)      removeBtn.style.display      = 'none';
-            if (opacityControl) opacityControl.style.display = 'none';
+            if (removeBtn) removeBtn.style.display = 'none';
         }
     }
 
@@ -5536,17 +5452,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Slider de opacidade — atualiza em tempo real
-    document.getElementById('bgOpacitySlider')?.addEventListener('input', function() {
-        const pct = parseInt(this.value);
-        const op  = pct / 100;
-        document.body.style.setProperty('--bg-opacity', String(op));
-        const valEl = document.getElementById('bgOpacityValue');
-        if (valEl) valEl.textContent = pct + '%';
-        // Salva a preferência
-        try { localStorage.setItem('academicoCustomBgOpacity', String(op)); } catch(e){}
-    });
-
     // Input de arquivo
     const _bgInput = document.getElementById('customBackgroundImage');
     if (_bgInput) {
@@ -5580,24 +5485,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Botão aplicar
     document.getElementById('applyCustomBackground').addEventListener('click', function() {
-        const img    = document.getElementById('bgPreviewImg');
+        const img = document.getElementById('bgPreviewImg');
         const bgData = img?.dataset.bgData;
         if (!bgData) {
             alert('Selecione uma imagem primeiro na área acima.');
             return;
         }
-        const slider  = document.getElementById('bgOpacitySlider');
-        const opacity = slider ? parseInt(slider.value) / 100 : 0.22;
-        _applyCustomBg(bgData, opacity);
+        _applyCustomBg(bgData);
         try {
             localStorage.setItem('academicoCustomBg', bgData);
-            localStorage.setItem('academicoCustomBgOpacity', String(opacity));
             localStorage.removeItem('academicoTheme');
         } catch(storageErr) {
+            // localStorage cheio — aplica só na sessão atual
             console.warn('localStorage cheio, plano de fundo não persiste entre sessões.');
-            alert('Plano de fundo aplicado! ⚠️ Não foi possível salvar permanentemente (imagem muito grande). Tente uma imagem menor.');
+            alert('Plano de fundo aplicado com sucesso! ⚠️ Não foi possível salvar permanentemente (imagem muito grande). Ao recarregar, voltará ao padrão. Tente uma imagem menor.');
         }
-        _updateBgStatus(true, opacity);
+        _updateBgStatus(true);
         // Fecha preview
         const wrap = document.getElementById('bgPreviewWrap');
         const zone = document.getElementById('bgDropZone');
