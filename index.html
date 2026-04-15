@@ -6209,77 +6209,125 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     /* ===== CARD CONCURSOS ABERTOS ===== */
-    /* ===== DADOS CONCURSOS ABERTOS EM ALAGOAS ===== */
-    /* Fonte: sites oficiais e bancas organizadoras atualizados */
+    /* ===== DADOS CONCURSOS PREVISTOS EM ALAGOAS ===== */
+    /* Fonte: estrategiaconcursos.com.br/blog/concursos-alagoas/ — atualizado abr/2026 */
     const CONCURSO_FONTES = [
+        { nome: 'Estratégia Concursos AL', url: 'https://www.estrategiaconcursos.com.br/blog/concursos-alagoas/' },
         { nome: 'SELECON/AL', url: 'http://www.selecon.al.gov.br' },
-        { nome: 'CESPE/CEBRASPE', url: 'https://www.cebraspe.org.br/concursos' },
-        { nome: 'FCC', url: 'https://www.concursosfcc.com.br' },
-        { nome: 'IDECAN', url: 'https://idecan.org.br' },
         { nome: 'PCI Concursos AL', url: 'https://www.pciconcursos.com.br/concursos/alagoas/' },
     ];
 
     const CONCURSOS_ABERTOS = [
         {
-            orgao: 'Tribunal de Justiça de Alagoas – TJAL',
-            cargo: 'Técnico Judiciário – Diversas Especialidades',
-            vagas: 152,
-            remuneracao: 'R$ 7.591,37',
-            inscricao: '2025-05-15',
-            url: 'https://www.tjal.jus.br/concurso',
-            cor: '#3498db',
-            icone: 'fa-balance-scale',
-            tag: 'Judiciário',
-            banca: 'CESPE/CEBRASPE',
+            orgao: 'SESAU AL – Secretaria de Saúde de Alagoas',
+            cargo: 'Diversos cargos – Nível Técnico e Superior',
+            vagas: 1750,
+            remuneracao: 'R$ 1.100,00 a R$ 3.707,43',
+            status: 'Comissão formada',
+            url: 'https://www.estrategiaconcursos.com.br/blog/concurso-sesau-al/',
+            cor: '#27ae60',
+            icone: 'fa-heartbeat',
+            tag: 'Saúde',
             destaque: true
         },
         {
-            orgao: 'Prefeitura de Maceió – AL',
-            cargo: 'Múltiplos cargos – Nível Médio e Superior',
-            vagas: 300,
-            remuneracao: 'Até R$ 12.000,00',
-            inscricao: '2025-05-10',
-            url: 'https://www.maceio.al.gov.br/concursos',
-            cor: '#c9a84c',
-            icone: 'fa-city',
-            tag: 'Municipal',
-            banca: 'SELECON/AL'
-        },
-        {
-            orgao: 'Câmara Municipal de Maceió – AL',
-            cargo: 'Analista Legislativo e Técnico Legislativo',
-            vagas: 40,
-            remuneracao: 'R$ 8.900,00',
-            inscricao: '2025-06-02',
-            url: 'https://www.camaramaceio.al.gov.br',
-            cor: '#9b59b6',
-            icone: 'fa-landmark',
-            tag: 'Legislativo',
-            banca: 'IDECAN'
-        },
-        {
             orgao: 'Polícia Civil de Alagoas – PC/AL',
-            cargo: 'Delegado, Perito e Investigador',
-            vagas: 200,
-            remuneracao: 'Até R$ 20.924,00',
-            inscricao: '2025-05-28',
-            url: 'https://www.policiacivil.al.gov.br',
-            cor: '#27ae60',
+            cargo: 'Agente e Escrivão de Polícia',
+            vagas: 150,
+            remuneracao: 'R$ 3.971,76',
+            status: 'Comissão formada',
+            url: 'https://www.estrategiaconcursos.com.br/blog/concurso-pc-al/',
+            cor: '#3498db',
             icone: 'fa-shield-alt',
-            tag: 'Segurança',
-            banca: 'CESPE/CEBRASPE'
+            tag: 'Segurança'
         },
         {
-            orgao: 'Ministério Público de Alagoas – MPAL',
-            cargo: 'Analista e Técnico do MP',
-            vagas: 55,
-            remuneracao: 'R$ 10.312,00',
-            inscricao: '2025-05-20',
-            url: 'https://www.mpal.mp.br',
+            orgao: 'Corpo de Bombeiros Militar de AL – CBM/AL',
+            cargo: 'Soldado e Oficial',
+            vagas: 172,
+            remuneracao: 'R$ 1.649,35 a R$ 2.713,89',
+            status: 'Comissão formada',
+            url: 'https://www.estrategiaconcursos.com.br/blog/concurso-bombeiro-al/',
             cor: '#e74c3c',
-            icone: 'fa-scroll',
-            tag: 'MP Estadual',
-            banca: 'FCC'
+            icone: 'fa-fire',
+            tag: 'Segurança'
+        },
+        {
+            orgao: 'Tribunal de Justiça de Alagoas – TJ/AL',
+            cargo: 'Analista – Oficial de Justiça Avaliador',
+            vagas: 0,
+            remuneracao: 'R$ 6.291,20',
+            status: 'Comissão formada',
+            url: 'https://www.estrategiaconcursos.com.br/blog/concurso-tj-al/',
+            cor: '#9b59b6',
+            icone: 'fa-balance-scale',
+            tag: 'Judiciário'
+        },
+        {
+            orgao: 'Sefaz AL – Secretaria da Fazenda',
+            cargo: 'Auditor Fiscal da Administração Tributária',
+            vagas: 25,
+            remuneracao: 'R$ 8.638,75 a R$ 9.899,81',
+            status: 'Anunciado',
+            url: 'https://www.estrategiaconcursos.com.br/blog/concurso-sefaz-al/',
+            cor: '#c9a84c',
+            icone: 'fa-landmark',
+            tag: 'Fiscal'
+        },
+        {
+            orgao: 'Polícia Penal de Alagoas',
+            cargo: 'Policial Penal',
+            vagas: 350,
+            remuneracao: 'R$ 3.800,00',
+            status: 'Solicitado',
+            url: 'https://www.estrategiaconcursos.com.br/blog/concurso-policia-penal-al/',
+            cor: '#e67e22',
+            icone: 'fa-user-shield',
+            tag: 'Segurança'
+        },
+        {
+            orgao: 'Detran AL',
+            cargo: 'Analista e Assistente de Trânsito',
+            vagas: 50,
+            remuneracao: 'R$ 3.024,82 a R$ 5.041,37',
+            status: 'Comissão formada',
+            url: 'https://www.estrategiaconcursos.com.br/blog/concurso-detran-al/',
+            cor: '#1abc9c',
+            icone: 'fa-car',
+            tag: 'Trânsito'
+        },
+        {
+            orgao: 'Prefeitura de Maceió – AL',
+            cargo: 'Múltiplos cargos (a definir)',
+            vagas: 0,
+            remuneracao: 'a definir',
+            status: 'Comissão formada',
+            url: 'https://www.estrategiaconcursos.com.br/blog/concurso-prefeitura-maceio/',
+            cor: '#2980b9',
+            icone: 'fa-city',
+            tag: 'Municipal'
+        },
+        {
+            orgao: 'ALPREV – Alagoas Previdência',
+            cargo: 'Analista Previdenciário',
+            vagas: 20,
+            remuneracao: 'a definir',
+            status: 'Comissão formada',
+            url: 'https://www.estrategiaconcursos.com.br/blog/concurso-alprev/',
+            cor: '#8e44ad',
+            icone: 'fa-hand-holding-heart',
+            tag: 'Previdência'
+        },
+        {
+            orgao: 'ARSAL – Agência Reguladora de AL',
+            cargo: 'Analista de Regulação',
+            vagas: 15,
+            remuneracao: 'R$ 2.133,33 a R$ 5.359,57',
+            status: 'Comissão formada',
+            url: 'https://www.estrategiaconcursos.com.br/blog/concurso-arsal/',
+            cor: '#16a085',
+            icone: 'fa-cogs',
+            tag: 'Regulação'
         }
     ];
 
@@ -6289,40 +6337,42 @@ document.addEventListener('DOMContentLoaded', function() {
         return Math.round((alvo - hoje) / 86400000);
     }
 
+    function _statusColor(status) {
+        const s = (status||'').toLowerCase();
+        if (s.includes('comissão') || s.includes('comissao')) return { bg: 'rgba(52,152,219,0.18)', border: '#3498db55', color: '#3498db' };
+        if (s.includes('anunciado') || s.includes('autorizado')) return { bg: 'rgba(26,188,156,0.18)', border: '#1abc9c55', color: '#1abc9c' };
+        if (s.includes('solicitado') || s.includes('previsto')) return { bg: 'rgba(243,156,18,0.18)', border: '#f39c1255', color: '#f39c12' };
+        return { bg: 'rgba(149,165,166,0.18)', border: '#95a5a655', color: '#95a5a6' };
+    }
+
     function renderConcursosCard() {
         const container = document.getElementById('concursos-container');
         if (!container) return;
         const destaque = CONCURSOS_ABERTOS.find(c => c.destaque) || CONCURSOS_ABERTOS[0];
         const outros = CONCURSOS_ABERTOS.filter(c => c !== destaque);
 
-        const dias0 = _diasRestantes(destaque.inscricao);
-        const prazoClass0 = dias0 <= 7 ? 'urgente' : '';
-        const prazoTxt0 = dias0 < 0 ? 'Encerrado' : dias0 === 0 ? 'Hoje!' : dias0 + 'd restantes';
-
+        const sc0 = _statusColor(destaque.status);
         const destaqueHtml = `
         <div class="concurso-destaque">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px;">
             <span style="background:rgba(26,188,156,0.15);border:1px solid rgba(26,188,156,0.35);border-radius:20px;font-size:0.62rem;font-weight:700;padding:2px 9px;color:#1abc9c;letter-spacing:.05em;text-transform:uppercase;">
-              <i class="fas fa-star me-1"></i>NOVO CONCURSO
+              <i class="fas fa-star me-1"></i>DESTAQUE AL
             </span>
-            <span class="concurso-item-prazo ${prazoClass0}"><i class="fas fa-clock"></i> ${prazoTxt0}</span>
+            <span style="background:${sc0.bg};border:1px solid ${sc0.border};color:${sc0.color};border-radius:12px;font-size:.6rem;font-weight:700;padding:2px 9px;white-space:nowrap;"><i class="fas fa-info-circle me-1"></i>${destaque.status}</span>
           </div>
           <div class="concurso-destaque-title">${destaque.cargo}</div>
           <div class="concurso-destaque-sub"><i class="fas fa-building me-1" style="opacity:.5;"></i>${destaque.orgao} &nbsp;·&nbsp; <i class="fas fa-dollar-sign me-1" style="opacity:.5;"></i>${destaque.remuneracao}</div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;">
-            <span class="concurso-vagas-pill"><i class="fas fa-users"></i> ${destaque.vagas.toLocaleString('pt-BR')} vagas</span>
+            ${destaque.vagas > 0 ? `<span class="concurso-vagas-pill"><i class="fas fa-users"></i> ${destaque.vagas.toLocaleString('pt-BR')} vagas</span>` : ''}
             <span class="concurso-item-tag" style="background:${destaque.cor}22;color:${destaque.cor};border:1px solid ${destaque.cor}55;">${destaque.tag}</span>
-            ${destaque.banca ? `<span style="font-size:.62rem;color:rgba(255,255,255,.38);"><i class='fas fa-building me-1'></i>${destaque.banca}</span>` : ''}
             <a href="${destaque.url}" target="_blank" rel="noopener" style="margin-left:auto;background:linear-gradient(135deg,#1abc9c,#16a085);color:white;border:none;border-radius:8px;padding:5px 14px;font-size:0.74rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
-              <i class="fas fa-external-link-alt"></i> Ver edital
+              <i class="fas fa-external-link-alt"></i> Saiba mais
             </a>
           </div>
         </div>`;
 
         const outrosHtml = outros.map(c => {
-            const d = _diasRestantes(c.inscricao);
-            const pc = d <= 7 ? 'urgente' : '';
-            const pt = d < 0 ? 'Encerrado' : d === 0 ? 'Hoje!' : d + 'd';
+            const sc = _statusColor(c.status);
             return `<a href="${c.url}" target="_blank" rel="noopener" class="concurso-item">
               <div class="concurso-item-icon" style="background:${c.cor}22;color:${c.cor};"><i class="fas ${c.icone}"></i></div>
               <div class="concurso-item-body">
@@ -6330,25 +6380,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="concurso-item-meta">
                   <span class="concurso-item-orgao">${c.orgao}</span>
                   <span class="concurso-item-tag" style="background:${c.cor}22;color:${c.cor};border:1px solid ${c.cor}55;">${c.tag}</span>
-                  <span style="font-size:.66rem;color:rgba(255,255,255,.35);"><i class="fas fa-users me-1" style="opacity:.6;"></i>${c.vagas.toLocaleString('pt-BR')} vagas</span>
-                  ${c.banca ? `<span style="font-size:.6rem;color:rgba(255,255,255,.28);"><i class='fas fa-pen me-1'></i>${c.banca}</span>` : ''}
+                  ${c.vagas > 0 ? `<span style="font-size:.66rem;color:rgba(255,255,255,.35);"><i class="fas fa-users me-1" style="opacity:.6;"></i>${c.vagas.toLocaleString('pt-BR')} vagas</span>` : ''}
                 </div>
               </div>
-              <span class="concurso-item-prazo ${pc}"><i class="fas fa-clock"></i> ${pt}</span>
+              <span style="background:${sc.bg};border:1px solid ${sc.border};color:${sc.color};border-radius:10px;font-size:.58rem;font-weight:700;padding:2px 7px;white-space:nowrap;flex-shrink:0;">${c.status}</span>
             </a>`;
         }).join('');
 
         container.innerHTML = `
         <div class="concurso-card-home">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-            <div class="concurso-novo-badge"><i class="fas fa-trophy"></i> Concursos Abertos</div>
-            <a href="https://www.gov.br/concursos" target="_blank" rel="noopener" style="font-size:.7rem;color:rgba(255,255,255,.35);text-decoration:none;">gov.br/concursos <i class="fas fa-external-link-alt" style="font-size:.6rem;"></i></a>
+            <div class="concurso-novo-badge"><i class="fas fa-trophy"></i> Concursos AL – 2025/2026</div>
+            <a href="https://www.estrategiaconcursos.com.br/blog/concursos-alagoas/" target="_blank" rel="noopener" style="font-size:.7rem;color:rgba(255,255,255,.35);text-decoration:none;">Estratégia <i class="fas fa-external-link-alt" style="font-size:.6rem;"></i></a>
           </div>
           ${destaqueHtml}
           <div style="flex:1;">${outrosHtml}</div>
           <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
-            <a href="https://www.pciconcursos.com.br/concursos/alagoas/" target="_blank" rel="noopener" class="info-card-btn" style="background:linear-gradient(135deg,#1abc9c,#16a085);color:white;flex:1;min-width:140px;">
-              <i class="fas fa-search"></i> Concursos em AL
+            <a href="https://www.estrategiaconcursos.com.br/blog/concursos-alagoas/" target="_blank" rel="noopener" class="info-card-btn" style="background:linear-gradient(135deg,#1abc9c,#16a085);color:white;flex:1;min-width:140px;">
+              <i class="fas fa-search"></i> Ver todos em AL
             </a>
             <a href="http://www.selecon.al.gov.br" target="_blank" rel="noopener" class="info-card-btn" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.15);">
               <i class="fas fa-external-link-alt"></i> SELECON/AL
