@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -6,12 +7,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#1a2332">
-  <!-- ===== BLOQUEIO DE ANÚNCIOS ===== -->
-  <!-- Bloqueia rastreadores e redes de anúncios via Referrer Policy restritiva -->
-  <meta name="referrer" content="no-referrer">
-  <!-- Impede que o YouTube e outros serviços identifiquem o usuário para anúncios direcionados -->
-  <meta http-equiv="Permissions-Policy" content="interest-cohort=()">
-  <!-- ===== FIM BLOQUEIO DE ANÚNCIOS ===== -->
   <title>Acadêmico Pro - Controle Universitário</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -4189,7 +4184,7 @@
         </div>
         <div id="yt-tab-player" style="display:block;">
           <div style="position:relative;width:100%;padding-top:56.25%;">
-            <iframe id="yt-iframe" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allow="accelerometer; autoplay; clipboard-write; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>
+            <iframe id="yt-iframe" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
           </div>
         </div>
         <div id="yt-tab-videos" style="display:none;padding:16px;">
@@ -4270,8 +4265,8 @@
         _activeIdx = idx;
         var iframe = document.getElementById('yt-iframe');
         var wrap   = document.getElementById('yt-player-wrap');
-        iframe.src = 'https://www.youtube-nocookie.com/embed/' + c.videoInicio +
-                     '?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=0&fs=1&playsinline=1&cc_load_policy=0&origin=' + encodeURIComponent(window.location.origin || 'null');
+        iframe.src = 'https://www.youtube.com/embed/' + c.videoInicio +
+                     '?autoplay=1&rel=0&modestbranding=1';
         document.getElementById('yt-player-channel-name').textContent = c.nome;
         var iconEl = document.getElementById('yt-player-channel-icon');
         iconEl.style.background = c.cor + '33';
@@ -4395,7 +4390,7 @@
       /* ---- toca vídeo específico ---- */
       window.ytPlayVideo = function(videoId) {
         document.getElementById('yt-iframe').src =
-          'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=0&fs=1&playsinline=1&cc_load_policy=0&origin=' + encodeURIComponent(window.location.origin || 'null');
+          'https://www.youtube.com/embed/' + videoId + '?autoplay=1&rel=0&modestbranding=1';
         document.getElementById('yt-tab-player').style.display = 'block';
         document.getElementById('yt-tab-videos').style.display = 'none';
       };
@@ -15193,256 +15188,6 @@ function _renderQuizScore() {
     </div>
   </div>
 </div>
-
-<!-- ===== MOTOR DE BLOQUEIO DE ANÚNCIOS ===== -->
-<script>
-(function() {
-  'use strict';
-
-  /* Log seguro — evita erros em ambientes sem console */
-  var _log = (typeof console !== 'undefined' && typeof console.log === 'function')
-    ? function(msg) { console.log(msg); }
-    : function() {};
-
-  /* -------------------------------------------------------
-   * 1. BLOQUEIO VIA OVERRIDE DE fetch/XMLHttpRequest
-   *    Intercepta requisições para redes de anúncios
-   * ------------------------------------------------------- */
-  const AD_HOSTNAMES = [
-    'doubleclick.net', 'googleadservices.com', 'googlesyndication.com',
-    'adservice.google.com', 'ads.youtube.com', 'pagead2.googlesyndication.com',
-    'tpc.googlesyndication.com', 'adnxs.com', 'adsystem.amazon.com',
-    'ads.twitter.com', 'advertising.com', 'adsrvr.org', 'rubiconproject.com',
-    'pubmatic.com', 'openx.net', 'criteo.com', 'amazon-adsystem.com',
-    'moatads.com', 'scorecardresearch.com', 'krxd.net', 'demdex.net'
-  ];
-
-  function isAdUrl(url) {
-    try {
-      const hostname = new URL(url).hostname.toLowerCase();
-      return AD_HOSTNAMES.some(function(h) { return hostname === h || hostname.endsWith('.' + h); });
-    } catch(e) { return false; }
-  }
-
-  /* Override fetch */
-  const _fetch = window.fetch;
-  window.fetch = function(input, init) {
-    const url = (typeof input === 'string') ? input : (input && input.url) ? input.url : '';
-    if (url && isAdUrl(url)) {
-      _log('[AdBlock] fetch bloqueado: ' + url);
-      return Promise.resolve(new Response('', { status: 200 }));
-    }
-    return _fetch.apply(this, arguments);
-  };
-
-  /* Override XMLHttpRequest */
-  const _open = XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open = function(method, url) {
-    if (url && isAdUrl(String(url))) {
-      _log('[AdBlock] XHR bloqueado: ' + url);
-      this._blocked = true;
-    }
-    return _open.apply(this, arguments);
-  };
-  const _send = XMLHttpRequest.prototype.send;
-  XMLHttpRequest.prototype.send = function() {
-    if (this._blocked) return;
-    return _send.apply(this, arguments);
-  };
-
-  /* -------------------------------------------------------
-   * 2. BLOQUEIO DE SCRIPTS DE ANÚNCIOS INSERIDOS
-   *    MutationObserver observa novos <script>/<iframe>
-   * ------------------------------------------------------- */
-  const observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-      mutation.addedNodes.forEach(function(node) {
-        if (!node || !node.tagName) return;
-        const tag = node.tagName.toLowerCase();
-
-        /* Bloqueia <script src="..."> de redes de anúncios */
-        if (tag === 'script' && node.src && isAdUrl(node.src)) {
-          _log('[AdBlock] script bloqueado: ' + node.src);
-          node.remove();
-          return;
-        }
-
-        /* Bloqueia <iframe src="..."> de redes de anúncios */
-        if (tag === 'iframe' && node.src && isAdUrl(node.src)) {
-          _log('[AdBlock] iframe de anúncio bloqueado: ' + node.src);
-          node.remove();
-          return;
-        }
-
-        /* Remove elementos com classes/ids típicos de anúncios */
-        if (tag !== 'script' && tag !== 'link') {
-          const cls = (node.className || '').toString();
-          const id  = (node.id || '').toString();
-          const adPattern = /\b(ad[-_]?banner|advertisement|ad[-_]?slot|ad[-_]?container|dfp[-_]|gpt[-_]slot|adsbygoogle)\b/i;
-          if (adPattern.test(cls) || adPattern.test(id)) {
-            _log('[AdBlock] elemento removido: ' + tag + ' ' + (id || cls));
-            node.style.display = 'none';
-          }
-        }
-      });
-    });
-  });
-  observer.observe(document.documentElement, { childList: true, subtree: true });
-
-  /* -------------------------------------------------------
-   * 3. AUTO-SKIP DE ANÚNCIOS NO YOUTUBE (via postMessage)
-   *    Quando o iframe está ativo, monitora e pula anúncios
-   * ------------------------------------------------------- */
-  function setupYtAdSkipper() {
-    var ytIframe = document.getElementById('yt-iframe');
-    if (!ytIframe) return;
-
-    /* Injeta script no iframe via srcdoc trick não é possível cross-origin,
-       mas podemos usar postMessage + YouTube iframe API para detectar estado */
-
-    /* Observa mudanças de src no iframe para re-aplicar configurações */
-    var iframeObserver = new MutationObserver(function(muts) {
-      muts.forEach(function(m) {
-        if (m.attributeName === 'src' && ytIframe.src) {
-          /* Garante que sempre usa nocookie */
-          if (ytIframe.src.includes('youtube.com') && !ytIframe.src.includes('youtube-nocookie.com')) {
-            ytIframe.src = ytIframe.src.replace('youtube.com', 'youtube-nocookie.com');
-          }
-          /* Garante parâmetros anti-anúncio */
-          if (!ytIframe.src.includes('iv_load_policy')) {
-            var sep = ytIframe.src.includes('?') ? '&' : '?';
-            ytIframe.src += sep + 'iv_load_policy=3&rel=0&modestbranding=1';
-          }
-        }
-      });
-    });
-    iframeObserver.observe(ytIframe, { attributes: true });
-
-    /* Escuta mensagens postMessage do YouTube iframe para skip automático */
-    window.addEventListener('message', function(event) {
-      try {
-        var data = (typeof event.data === 'string') ? JSON.parse(event.data) : event.data;
-        if (!data) return;
-        /* YouTube envia info sobre anúncios via postMessage em alguns contextos */
-        var info = data.info || data;
-        /* Se detectar estado de anúncio, tenta avançar */
-        if (info && (info.ad_tag || info.watching_now === 'ad')) {
-          if (ytIframe.contentWindow) {
-            ytIframe.contentWindow.postMessage(
-              JSON.stringify({ event: 'command', func: 'seekTo', args: [9999, true] }),
-              '*'
-            );
-          }
-        }
-      } catch(e) {}
-    });
-  }
-
-  /* -------------------------------------------------------
-   * 4. OVERLAY ANTI-ANÚNCIO COM BOTÃO DE PULAR
-   *    Overlay que detecta anúncios visíveis e oferece pular
-   * ------------------------------------------------------- */
-  function setupYtAdOverlay() {
-    var ytIframe = document.getElementById('yt-iframe');
-    if (!ytIframe) return;
-
-    var container = ytIframe.parentElement;
-    if (!container) return;
-
-    /* Garante posicionamento relativo no container */
-    if (getComputedStyle(container).position === 'static') {
-      container.style.position = 'relative';
-    }
-
-    /* Cria overlay transparente para capturar detecção de anúncio */
-    var overlay = document.createElement('div');
-    overlay.id = 'yt-ad-overlay';
-    overlay.style.cssText = [
-      'position:absolute', 'bottom:10px', 'right:10px',
-      'z-index:9999', 'display:none', 'pointer-events:auto'
-    ].join(';');
-
-    var skipBtn = document.createElement('button');
-    skipBtn.id = 'yt-skip-ad-btn';
-    skipBtn.innerHTML = '<i class="fas fa-forward"></i> Pular Anúncio';
-    skipBtn.style.cssText = [
-      'background:rgba(26,28,30,0.92)', 'color:#fff',
-      'border:1px solid rgba(255,255,255,0.25)', 'border-radius:8px',
-      'padding:7px 14px', 'font-size:0.78rem', 'font-weight:700',
-      'cursor:pointer', 'display:flex', 'align-items:center', 'gap:6px',
-      'backdrop-filter:blur(6px)', 'transition:all 0.2s'
-    ].join(';');
-    skipBtn.onmouseenter = function() { skipBtn.style.background = 'rgba(231,76,60,0.9)'; };
-    skipBtn.onmouseleave = function() { skipBtn.style.background = 'rgba(26,28,30,0.92)'; };
-    skipBtn.onclick = function() {
-      /* Tenta clicar no botão de skip do YouTube via postMessage */
-      if (ytIframe.contentWindow) {
-        ytIframe.contentWindow.postMessage('{"event":"command","func":"seekTo","args":[9999,true]}', '*');
-      }
-      overlay.style.display = 'none';
-    };
-
-    overlay.appendChild(skipBtn);
-    container.appendChild(overlay);
-
-    /* Monitor periódico: verifica se o iframe está carregado e mostra overlay
-       quando provável que um anúncio esteja tocando (primeiros 30s de um novo vídeo) */
-    var adCheckTimer = null;
-    var adShownTime  = 0;
-
-    function startAdMonitor() {
-      clearInterval(adCheckTimer);
-      adShownTime = Date.now();
-      /* Mostra botão de skip nos primeiros 30 segundos (janela típica de anúncios) */
-      overlay.style.display = 'block';
-      adCheckTimer = setInterval(function() {
-        if (Date.now() - adShownTime > 30000) {
-          overlay.style.display = 'none';
-          clearInterval(adCheckTimer);
-        }
-      }, 1000);
-    }
-
-    /* Dispara monitor quando src do iframe muda (novo vídeo carregado) */
-    var lastSrc = '';
-    setInterval(function() {
-      if (ytIframe.src && ytIframe.src !== lastSrc && ytIframe.src.length > 10) {
-        lastSrc = ytIframe.src;
-        startAdMonitor();
-      }
-    }, 500);
-  }
-
-  /* -------------------------------------------------------
-   * 5. BLOQUEIO DE window.open para popups de anúncios
-   * ------------------------------------------------------- */
-  var _windowOpen = window.open;
-  window.open = function(url, name, features) {
-    if (url && isAdUrl(String(url))) {
-      _log('[AdBlock] window.open bloqueado: ' + url);
-      return null;
-    }
-    return _windowOpen.apply(this, arguments);
-  };
-
-  /* -------------------------------------------------------
-   * 6. INICIALIZAÇÃO
-   * ------------------------------------------------------- */
-  function init() {
-    setupYtAdSkipper();
-    setupYtAdOverlay();
-    _log('[AdBlock] Motor de bloqueio de anúncios ativado ✓');
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-
-})();
-</script>
-<!-- ===== FIM MOTOR DE BLOQUEIO DE ANÚNCIOS ===== -->
 
 </body>
 </html>
