@@ -4151,40 +4151,7 @@
       <h2>Início</h2>
     </div>
 
-    <!-- VISÃO GERAL -->
-    <div class="home-section-title">Visão Geral</div>
-    <div class="stats-grid" id="stats-overview-grid">
-      <div class="stat-card-new">
-        <span class="stat-icon" style="color:#3498db;"><i class="fas fa-book"></i></span>
-        <div class="stat-number" id="stat-disciplinas">0</div>
-        <div class="stat-label">Disciplinas</div>
-      </div>
-      <div class="stat-card-new">
-        <span class="stat-icon" style="color:#e67e22;"><i class="fas fa-tasks"></i></span>
-        <div class="stat-number" id="stat-trabalhos">0</div>
-        <div class="stat-label">Trabalhos</div>
-      </div>
-      <div class="stat-card-new">
-        <span class="stat-icon" style="color:#9b59b6;"><i class="fas fa-calendar-check"></i></span>
-        <div class="stat-number" id="stat-provas">0</div>
-        <div class="stat-label">Provas</div>
-      </div>
-      <div class="stat-card-new">
-        <span class="stat-icon" style="color:#1abc9c;"><i class="fas fa-chart-line"></i></span>
-        <div class="stat-number" id="stat-media">0.0</div>
-        <div class="stat-label">Média</div>
-      </div>
-      <div class="stat-card-new">
-        <span class="stat-icon" style="color:#e74c3c;"><i class="fas fa-dollar-sign"></i></span>
-        <div class="stat-number" id="stat-financeiro-saldo">R$0</div>
-        <div class="stat-label">Saldo</div>
-      </div>
-      <div class="stat-card-new">
-        <span class="stat-icon" style="color:#f39c12;"><i class="fas fa-sticky-note"></i></span>
-        <div class="stat-number" id="stat-notas">0</div>
-        <div class="stat-label">Notas</div>
-      </div>
-    </div>
+    <!-- VISÃO GERAL REMOVIDA -->
 
     <div class="row g-3 mb-4">
       <div class="col-lg-6 d-flex flex-column" id="next-event-container"></div>
@@ -4196,9 +4163,134 @@
       <div class="col-lg-6" id="diario-oficial-container"></div>
     </div>
 
-    <div class="row g-3 mb-4">
-      <div class="col-12" id="concursos-container"></div>
+    <!-- CANAIS YOUTUBE DIREITO -->
+    <div class="home-section-title" style="margin-top:8px;">Canais de Aulas de Direito</div>
+    <div id="yt-juridico-section" style="margin-bottom:24px;">
+      <div id="yt-canais-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:16px;"></div>
+      <div id="yt-player-wrap" style="display:none;background:#1a2332;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);box-shadow:0 4px 24px rgba(0,0,0,0.3);">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(0,0,0,0.3);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span id="yt-player-channel-icon" style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;flex-shrink:0;"></span>
+            <div>
+              <div id="yt-player-channel-name" style="font-size:0.82rem;font-weight:700;color:white;"></div>
+              <div style="font-size:0.65rem;color:rgba(255,255,255,0.4);">Assistindo no sistema</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button id="yt-btn-lista" onclick="ytShowVideos()" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.7);border-radius:8px;padding:6px 12px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;gap:5px;"><i class="fas fa-list"></i> Vídeos</button>
+            <button onclick="ytClosePlayer()" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.6);border-radius:8px;padding:6px 10px;font-size:0.78rem;cursor:pointer;"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+        <div id="yt-tab-player" style="display:block;">
+          <div style="position:relative;width:100%;padding-top:56.25%;">
+            <iframe id="yt-iframe" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          </div>
+        </div>
+        <div id="yt-tab-videos" style="display:none;padding:16px;">
+          <div style="font-size:0.78rem;color:rgba(255,255,255,0.5);margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;"><i class="fab fa-youtube me-2" style="color:#e74c3c;"></i>Últimos vídeos do canal</div>
+          <div id="yt-video-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+          <div id="yt-video-loading" style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:0.82rem;display:none;"><i class="fas fa-spinner fa-spin me-2"></i>Carregando vídeos...</div>
+        </div>
+      </div>
     </div>
+    <script>
+    (function(){
+      const YT_CANAIS = [
+        { nome:'Prof. Estratégia', sub:'Concursos & OAB', icone:'fa-graduation-cap', cor:'#e74c3c', channelId:'UCGswNPmEzMIBNFAfkXLLhFw', playlistId:'UUGswNPmEzMIBNFAfkXLLhFw', tema:'Constitucional' },
+        { nome:'Gran Cursos Online', sub:'Direito Público', icone:'fa-balance-scale', cor:'#3498db', channelId:'UCKIFaB-rMZH7l9niGdTFEXA', playlistId:'UUKIFaB-rMZH7l9niGdTFEXA', tema:'Penal / Processo' },
+        { nome:'Direito Diário', sub:'Resumos & Dicas', icone:'fa-gavel', cor:'#1abc9c', channelId:'UCHtSB_h5U8MCExq41rB6qxA', playlistId:'UUHtSB_h5U8MCExq41rB6qxA', tema:'OAB & Concursos' },
+        { nome:'Neyse Fonseca', sub:'Direito do Trabalho', icone:'fa-briefcase', cor:'#f39c12', channelId:'UC9zIXrOxbr1IHtfkJnoLJOQ', playlistId:'UU9zIXrOxbr1IHtfkJnoLJOQ', tema:'CLT & Processo' },
+        { nome:'Supremo TV', sub:'STF ao vivo', icone:'fa-landmark', cor:'#9b59b6', channelId:'UCiACFSGOsyKSUPFMRQDnCwA', playlistId:'UUiACFSGOsyKSUPFMRQDnCwA', tema:'Jurisprudência' },
+        { nome:'Alfacon Concursos', sub:'Direito para Concursos', icone:'fa-star', cor:'#e67e22', channelId:'UCFEZBCdC9KQvPQjNFBF5FKg', playlistId:'UUFEZBCdC9KQvPQjNFBF5FKg', tema:'Administrativo' },
+        { nome:'Prof. Laércio Leal', sub:'Direito Civil', icone:'fa-book-open', cor:'#27ae60', channelId:'UCRrXSB5k4z8nYuFNFpI-Btg', playlistId:'UURrXSB5k4z8nYuFNFpI-Btg', tema:'Código Civil' },
+        { nome:'TJ Talks', sub:'Prática Jurídica', icone:'fa-comments', cor:'#2980b9', channelId:'UCBHsPFoIEpFjPzWYGEYbYEA', playlistId:'UUBHsPFoIEpFjPzWYGEYbYEA', tema:'OAB & Prática' },
+      ];
+
+      let _activeChannel = null;
+
+      function renderCanais() {
+        const grid = document.getElementById('yt-canais-grid');
+        if (!grid) return;
+        grid.innerHTML = YT_CANAIS.map((c,i) => `
+          <div onclick="ytOpenChannel(${i})" style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:16px 10px;border-radius:14px;background:white;border:2px solid #f0f2f4;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.05);" onmouseover="this.style.borderColor='${c.cor}';this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.12)';" onmouseout="this.style.borderColor='#f0f2f4';this.style.transform='';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)';">
+            <div style="width:48px;height:48px;border-radius:50%;background:${c.cor}22;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:${c.cor};margin-bottom:10px;border:2px solid ${c.cor}44;">
+              <i class="fas ${c.icone}"></i>
+            </div>
+            <div style="font-weight:800;font-size:0.82rem;color:#1a2332;margin-bottom:2px;line-height:1.2;">${c.nome}</div>
+            <div style="font-size:0.63rem;color:#95a5a6;font-weight:500;margin-bottom:7px;">${c.sub}</div>
+            <div style="font-size:0.6rem;color:${c.cor};background:${c.cor}15;border:1px solid ${c.cor}33;border-radius:10px;padding:2px 8px;font-weight:600;">${c.tema}</div>
+            <div style="margin-top:10px;display:flex;align-items:center;gap:5px;font-size:0.72rem;font-weight:700;color:${c.cor};">
+              <i class="fab fa-youtube"></i> Assistir
+            </div>
+          </div>`).join('');
+      }
+
+      window.ytOpenChannel = function(idx) {
+        const c = YT_CANAIS[idx];
+        _activeChannel = c;
+        const wrap = document.getElementById('yt-player-wrap');
+        const iframe = document.getElementById('yt-iframe');
+        iframe.src = 'https://www.youtube.com/embed/videoseries?list=' + c.playlistId + '&autoplay=1&rel=0';
+        document.getElementById('yt-player-channel-name').textContent = c.nome;
+        const iconEl = document.getElementById('yt-player-channel-icon');
+        iconEl.style.background = c.cor + '33';
+        iconEl.style.color = c.cor;
+        iconEl.style.border = '2px solid ' + c.cor + '55';
+        iconEl.innerHTML = '<i class="fas ' + c.icone + '"></i>';
+        document.getElementById('yt-tab-player').style.display = 'block';
+        document.getElementById('yt-tab-videos').style.display = 'none';
+        wrap.style.display = 'block';
+        setTimeout(function(){ wrap.scrollIntoView({ behavior:'smooth', block:'nearest' }); }, 100);
+      };
+
+      window.ytClosePlayer = function() {
+        document.getElementById('yt-iframe').src = '';
+        document.getElementById('yt-player-wrap').style.display = 'none';
+        _activeChannel = null;
+      };
+
+      window.ytShowVideos = function() {
+        if (!_activeChannel) return;
+        document.getElementById('yt-tab-player').style.display = 'none';
+        document.getElementById('yt-tab-videos').style.display = 'block';
+        const listEl = document.getElementById('yt-video-list');
+        const loadEl = document.getElementById('yt-video-loading');
+        listEl.innerHTML = '';
+        loadEl.style.display = 'block';
+        const rssUrl = 'https://www.youtube.com/feeds/videos.xml?channel_id=' + _activeChannel.channelId;
+        const apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl);
+        fetch(apiUrl)
+          .then(function(r){ return r.json(); })
+          .then(function(data) {
+            loadEl.style.display = 'none';
+            if (!data.items || data.items.length === 0) {
+              listEl.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.8rem;text-align:center;padding:16px;">Não foi possível carregar os vídeos. <a href="https://www.youtube.com/channel/' + _activeChannel.channelId + '" target="_blank" style="color:#1abc9c;">Abrir no YouTube</a></div>';
+              return;
+            }
+            var cor = _activeChannel.cor;
+            listEl.innerHTML = data.items.slice(0,8).map(function(item){
+              var vidId = (item.link.split('v=')[1] || item.guid.split(':').pop()).split('&')[0];
+              var thumb = 'https://img.youtube.com/vi/' + vidId + '/mqdefault.jpg';
+              var date = new Date(item.pubDate).toLocaleDateString('pt-BR');
+              return '<div onclick="ytPlayVideo(\''+ vidId +'\')" style="display:flex;gap:12px;align-items:center;cursor:pointer;padding:8px;border-radius:10px;transition:background 0.15s;" onmouseover="this.style.background=\'rgba(255,255,255,0.06)\'" onmouseout="this.style.background=\'transparent\'"><div style="position:relative;flex-shrink:0;width:96px;height:54px;border-radius:8px;overflow:hidden;background:#000;"><img src="' + thumb + '" style="width:100%;height:100%;object-fit:cover;" loading="lazy"></div><div style="flex:1;min-width:0;"><div style="font-size:0.78rem;color:rgba(255,255,255,0.85);font-weight:600;line-height:1.35;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + item.title + '</div><div style="font-size:0.65rem;color:rgba(255,255,255,0.35);">' + date + '</div></div><i class="fas fa-play-circle" style="color:' + cor + ';font-size:1.1rem;flex-shrink:0;opacity:0.7;"></i></div>';
+            }).join('');
+          })
+          .catch(function(){
+            loadEl.style.display = 'none';
+            listEl.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.8rem;text-align:center;padding:16px;">Não foi possível carregar. <a href="https://www.youtube.com/channel/' + _activeChannel.channelId + '" target="_blank" style="color:#1abc9c;">Abrir no YouTube</a></div>';
+          });
+      };
+
+      window.ytPlayVideo = function(videoId) {
+        document.getElementById('yt-iframe').src = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&rel=0';
+        document.getElementById('yt-tab-player').style.display = 'block';
+        document.getElementById('yt-tab-videos').style.display = 'none';
+      };
+
+      document.addEventListener('DOMContentLoaded', renderCanais);
+    })();
+    </script>
+    <!-- FIM CANAIS YOUTUBE DIREITO -->
 
     <!-- ACESSO RÁPIDO -->
     <div class="home-section-title">Acesso Rápido</div>
