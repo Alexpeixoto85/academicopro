@@ -4195,94 +4195,201 @@
     </div>
     <script>
     (function(){
-      const YT_CANAIS = [
-        { nome:'Prof. Estratégia', sub:'Concursos & OAB', icone:'fa-graduation-cap', cor:'#e74c3c', channelId:'UCGswNPmEzMIBNFAfkXLLhFw', playlistId:'UUGswNPmEzMIBNFAfkXLLhFw', tema:'Constitucional' },
-        { nome:'Gran Cursos Online', sub:'Direito Público', icone:'fa-balance-scale', cor:'#3498db', channelId:'UCKIFaB-rMZH7l9niGdTFEXA', playlistId:'UUKIFaB-rMZH7l9niGdTFEXA', tema:'Penal / Processo' },
-        { nome:'Direito Diário', sub:'Resumos & Dicas', icone:'fa-gavel', cor:'#1abc9c', channelId:'UCHtSB_h5U8MCExq41rB6qxA', playlistId:'UUHtSB_h5U8MCExq41rB6qxA', tema:'OAB & Concursos' },
-        { nome:'Neyse Fonseca', sub:'Direito do Trabalho', icone:'fa-briefcase', cor:'#f39c12', channelId:'UC9zIXrOxbr1IHtfkJnoLJOQ', playlistId:'UU9zIXrOxbr1IHtfkJnoLJOQ', tema:'CLT & Processo' },
-        { nome:'Supremo TV', sub:'STF ao vivo', icone:'fa-landmark', cor:'#9b59b6', channelId:'UCiACFSGOsyKSUPFMRQDnCwA', playlistId:'UUiACFSGOsyKSUPFMRQDnCwA', tema:'Jurisprudência' },
-        { nome:'Alfacon Concursos', sub:'Direito para Concursos', icone:'fa-star', cor:'#e67e22', channelId:'UCFEZBCdC9KQvPQjNFBF5FKg', playlistId:'UUFEZBCdC9KQvPQjNFBF5FKg', tema:'Administrativo' },
-        { nome:'Prof. Laércio Leal', sub:'Direito Civil', icone:'fa-book-open', cor:'#27ae60', channelId:'UCRrXSB5k4z8nYuFNFpI-Btg', playlistId:'UURrXSB5k4z8nYuFNFpI-Btg', tema:'Código Civil' },
-        { nome:'TJ Talks', sub:'Prática Jurídica', icone:'fa-comments', cor:'#2980b9', channelId:'UCBHsPFoIEpFjPzWYGEYbYEA', playlistId:'UUBHsPFoIEpFjPzWYGEYbYEA', tema:'OAB & Prática' },
+      var YT_CANAIS = [
+        { nome:'AlfaCon Concursos',         sub:'O maior canal de concursos',    icone:'fa-star',          cor:'#e67e22', channelId:'UCoihrBTsIlpFnTkJFU-kdtQ', videoInicio:'hG5TACMZhSw', tema:'Constitucional'    },
+        { nome:'Estratégia Concursos',       sub:'Cursos e Concursos Públicos',   icone:'fa-graduation-cap',cor:'#e74c3c', channelId:'UCnHqzsnOo3z6oRXk2eN7gFg', videoInicio:'e_KFS87Ydsw', tema:'Dir. Constitucional'},
+        { nome:'Gran Cursos Online',         sub:'Direito Público',               icone:'fa-balance-scale', cor:'#3498db', channelId:'UC74icFVsxTFr2BW3Vm8n_iw', videoInicio:'I87Y43YFaMI', tema:'Dir. Administrativo'},
+        { nome:'AlfaCon – Direito Penal',    sub:'Aulas de Direito Penal',        icone:'fa-gavel',         cor:'#c0392b', channelId:'UCoihrBTsIlpFnTkJFU-kdtQ', videoInicio:'4LKecwQBCBg', tema:'Dir. Penal'         },
+        { nome:'Estratégia – Administrativo',sub:'Dir. Administrativo completo',  icone:'fa-landmark',      cor:'#9b59b6', channelId:'UCnHqzsnOo3z6oRXk2eN7gFg', videoInicio:'hDRIv5modxY', tema:'Dir. Administrativo'},
+        { nome:'AlfaCon – Parte Geral Penal',sub:'Parte Geral atualizada 2024',   icone:'fa-shield-alt',    cor:'#27ae60', channelId:'UCoihrBTsIlpFnTkJFU-kdtQ', videoInicio:'H6FujSlqtY0', tema:'Dir. Penal'         },
+        { nome:'Estratégia – Proc. Civil',   sub:'As mais cobradas em provas',    icone:'fa-book-open',     cor:'#1abc9c', channelId:'UCnHqzsnOo3z6oRXk2eN7gFg', videoInicio:'O5wv5XzvvTg', tema:'Processo Civil'     },
+        { nome:'Gran – Administrativo 2025', sub:'Do zero para concursos',        icone:'fa-briefcase',     cor:'#2980b9', channelId:'UC74icFVsxTFr2BW3Vm8n_iw', videoInicio:'Vd3_2y1EdA0', tema:'OAB & Concursos'   }
       ];
 
-      let _activeChannel = null;
+      var _activeIdx = null;
 
+      /* ---- renderiza os cards de canal ---- */
       function renderCanais() {
-        const grid = document.getElementById('yt-canais-grid');
+        var grid = document.getElementById('yt-canais-grid');
         if (!grid) return;
-        grid.innerHTML = YT_CANAIS.map((c,i) => `
-          <div onclick="ytOpenChannel(${i})" style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:16px 10px;border-radius:14px;background:white;border:2px solid #f0f2f4;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.05);" onmouseover="this.style.borderColor='${c.cor}';this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.12)';" onmouseout="this.style.borderColor='#f0f2f4';this.style.transform='';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)';">
-            <div style="width:48px;height:48px;border-radius:50%;background:${c.cor}22;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:${c.cor};margin-bottom:10px;border:2px solid ${c.cor}44;">
-              <i class="fas ${c.icone}"></i>
-            </div>
-            <div style="font-weight:800;font-size:0.82rem;color:#1a2332;margin-bottom:2px;line-height:1.2;">${c.nome}</div>
-            <div style="font-size:0.63rem;color:#95a5a6;font-weight:500;margin-bottom:7px;">${c.sub}</div>
-            <div style="font-size:0.6rem;color:${c.cor};background:${c.cor}15;border:1px solid ${c.cor}33;border-radius:10px;padding:2px 8px;font-weight:600;">${c.tema}</div>
-            <div style="margin-top:10px;display:flex;align-items:center;gap:5px;font-size:0.72rem;font-weight:700;color:${c.cor};">
-              <i class="fab fa-youtube"></i> Assistir
-            </div>
-          </div>`).join('');
+        var html = '';
+        for (var i = 0; i < YT_CANAIS.length; i++) {
+          var c = YT_CANAIS[i];
+          html +=
+            '<div class="yt-canal-card" data-idx="' + i + '" data-cor="' + c.cor + '"' +
+            ' style="display:flex;flex-direction:column;align-items:center;text-align:center;' +
+            'padding:16px 10px;border-radius:14px;background:white;border:2px solid #f0f2f4;' +
+            'cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.05);">' +
+              '<div style="width:48px;height:48px;border-radius:50%;' +
+              'background:' + c.cor + '22;display:flex;align-items:center;justify-content:center;' +
+              'font-size:1.2rem;color:' + c.cor + ';margin-bottom:10px;border:2px solid ' + c.cor + '44;">' +
+                '<i class="fas ' + c.icone + '"></i>' +
+              '</div>' +
+              '<div style="font-weight:800;font-size:0.82rem;color:#1a2332;margin-bottom:2px;line-height:1.2;">' + c.nome + '</div>' +
+              '<div style="font-size:0.63rem;color:#95a5a6;font-weight:500;margin-bottom:7px;">' + c.sub + '</div>' +
+              '<div style="font-size:0.6rem;color:' + c.cor + ';background:' + c.cor + '15;' +
+              'border:1px solid ' + c.cor + '33;border-radius:10px;padding:2px 8px;font-weight:600;">' + c.tema + '</div>' +
+              '<div style="margin-top:10px;display:flex;align-items:center;gap:5px;' +
+              'font-size:0.72rem;font-weight:700;color:' + c.cor + ';">' +
+                '<i class="fab fa-youtube"></i> Assistir' +
+              '</div>' +
+            '</div>';
+        }
+        grid.innerHTML = html;
+
+        /* hover via JS — sem inline onmouseover */
+        var cards = grid.querySelectorAll('.yt-canal-card');
+        for (var j = 0; j < cards.length; j++) {
+          (function(card) {
+            var cor = card.getAttribute('data-cor');
+            var idx = parseInt(card.getAttribute('data-idx'), 10);
+            card.addEventListener('mouseenter', function() {
+              card.style.borderColor = cor;
+              card.style.transform = 'translateY(-3px)';
+              card.style.boxShadow = '0 8px 20px rgba(0,0,0,0.12)';
+            });
+            card.addEventListener('mouseleave', function() {
+              card.style.borderColor = '#f0f2f4';
+              card.style.transform = '';
+              card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
+            });
+            card.addEventListener('click', function() { ytOpenChannel(idx); });
+          })(cards[j]);
+        }
       }
 
+      /* ---- abre canal no player ---- */
       window.ytOpenChannel = function(idx) {
-        const c = YT_CANAIS[idx];
-        _activeChannel = c;
-        const wrap = document.getElementById('yt-player-wrap');
-        const iframe = document.getElementById('yt-iframe');
-        iframe.src = 'https://www.youtube.com/embed/videoseries?list=' + c.playlistId + '&autoplay=1&rel=0';
+        var c = YT_CANAIS[idx];
+        _activeIdx = idx;
+        var iframe = document.getElementById('yt-iframe');
+        var wrap   = document.getElementById('yt-player-wrap');
+        iframe.src = 'https://www.youtube.com/embed/' + c.videoInicio +
+                     '?autoplay=1&rel=0&modestbranding=1';
         document.getElementById('yt-player-channel-name').textContent = c.nome;
-        const iconEl = document.getElementById('yt-player-channel-icon');
+        var iconEl = document.getElementById('yt-player-channel-icon');
         iconEl.style.background = c.cor + '33';
-        iconEl.style.color = c.cor;
-        iconEl.style.border = '2px solid ' + c.cor + '55';
+        iconEl.style.color      = c.cor;
+        iconEl.style.border     = '2px solid ' + c.cor + '55';
         iconEl.innerHTML = '<i class="fas ' + c.icone + '"></i>';
         document.getElementById('yt-tab-player').style.display = 'block';
         document.getElementById('yt-tab-videos').style.display = 'none';
         wrap.style.display = 'block';
-        setTimeout(function(){ wrap.scrollIntoView({ behavior:'smooth', block:'nearest' }); }, 100);
+        setTimeout(function() {
+          wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 120);
       };
 
+      /* ---- fecha player ---- */
       window.ytClosePlayer = function() {
         document.getElementById('yt-iframe').src = '';
         document.getElementById('yt-player-wrap').style.display = 'none';
-        _activeChannel = null;
+        _activeIdx = null;
       };
 
+      /* ---- lista vídeos do canal via RSS ---- */
       window.ytShowVideos = function() {
-        if (!_activeChannel) return;
+        if (_activeIdx === null) return;
+        var c      = YT_CANAIS[_activeIdx];
+        var listEl = document.getElementById('yt-video-list');
+        var loadEl = document.getElementById('yt-video-loading');
         document.getElementById('yt-tab-player').style.display = 'none';
         document.getElementById('yt-tab-videos').style.display = 'block';
-        const listEl = document.getElementById('yt-video-list');
-        const loadEl = document.getElementById('yt-video-loading');
         listEl.innerHTML = '';
         loadEl.style.display = 'block';
-        const rssUrl = 'https://www.youtube.com/feeds/videos.xml?channel_id=' + _activeChannel.channelId;
-        const apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl);
+
+        var rssUrl = 'https://www.youtube.com/feeds/videos.xml?channel_id=' + c.channelId;
+        var apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl);
+
         fetch(apiUrl)
-          .then(function(r){ return r.json(); })
+          .then(function(r) { return r.json(); })
           .then(function(data) {
             loadEl.style.display = 'none';
             if (!data.items || data.items.length === 0) {
-              listEl.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.8rem;text-align:center;padding:16px;">Não foi possível carregar os vídeos. <a href="https://www.youtube.com/channel/' + _activeChannel.channelId + '" target="_blank" style="color:#1abc9c;">Abrir no YouTube</a></div>';
-              return;
+              ytShowVideosStatic(c); return;
             }
-            var cor = _activeChannel.cor;
-            listEl.innerHTML = data.items.slice(0,8).map(function(item){
-              var vidId = (item.link.split('v=')[1] || item.guid.split(':').pop()).split('&')[0];
+            var cor  = c.cor;
+            var rows = '';
+            var items = data.items.slice(0, 10);
+            for (var k = 0; k < items.length; k++) {
+              var item  = items[k];
+              var vidId = '';
+              if (item.link && item.link.indexOf('v=') > -1)
+                vidId = item.link.split('v=')[1].split('&')[0];
+              else if (item.guid && item.guid.indexOf(':') > -1)
+                vidId = item.guid.split(':').pop();
+              if (!vidId) continue;
               var thumb = 'https://img.youtube.com/vi/' + vidId + '/mqdefault.jpg';
-              var date = new Date(item.pubDate).toLocaleDateString('pt-BR');
-              return '<div onclick="ytPlayVideo(\''+ vidId +'\')" style="display:flex;gap:12px;align-items:center;cursor:pointer;padding:8px;border-radius:10px;transition:background 0.15s;" onmouseover="this.style.background=\'rgba(255,255,255,0.06)\'" onmouseout="this.style.background=\'transparent\'"><div style="position:relative;flex-shrink:0;width:96px;height:54px;border-radius:8px;overflow:hidden;background:#000;"><img src="' + thumb + '" style="width:100%;height:100%;object-fit:cover;" loading="lazy"></div><div style="flex:1;min-width:0;"><div style="font-size:0.78rem;color:rgba(255,255,255,0.85);font-weight:600;line-height:1.35;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + item.title + '</div><div style="font-size:0.65rem;color:rgba(255,255,255,0.35);">' + date + '</div></div><i class="fas fa-play-circle" style="color:' + cor + ';font-size:1.1rem;flex-shrink:0;opacity:0.7;"></i></div>';
-            }).join('');
+              var date  = item.pubDate ? new Date(item.pubDate).toLocaleDateString('pt-BR') : '';
+              rows +=
+                '<div class="yt-video-row" data-vid="' + vidId + '"' +
+                ' style="display:flex;gap:12px;align-items:center;cursor:pointer;' +
+                'padding:8px;border-radius:10px;transition:background 0.15s;">' +
+                  '<div style="flex-shrink:0;width:96px;height:54px;border-radius:8px;overflow:hidden;background:#000;">' +
+                    '<img src="' + thumb + '" style="width:100%;height:100%;object-fit:cover;" loading="lazy">' +
+                  '</div>' +
+                  '<div style="flex:1;min-width:0;">' +
+                    '<div style="font-size:0.78rem;color:rgba(255,255,255,0.85);font-weight:600;line-height:1.35;' +
+                    'margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' +
+                    item.title + '</div>' +
+                    '<div style="font-size:0.65rem;color:rgba(255,255,255,0.35);">' + date + '</div>' +
+                  '</div>' +
+                  '<i class="fas fa-play-circle" style="color:' + cor + ';font-size:1.1rem;flex-shrink:0;opacity:0.75;"></i>' +
+                '</div>';
+            }
+            listEl.innerHTML = rows;
+
+            /* clique nas linhas de vídeo */
+            var rows2 = listEl.querySelectorAll('.yt-video-row');
+            for (var m = 0; m < rows2.length; m++) {
+              (function(row) {
+                var vid = row.getAttribute('data-vid');
+                row.addEventListener('mouseenter', function() { row.style.background = 'rgba(255,255,255,0.07)'; });
+                row.addEventListener('mouseleave', function() { row.style.background = 'transparent'; });
+                row.addEventListener('click',      function() { ytPlayVideo(vid); });
+              })(rows2[m]);
+            }
           })
-          .catch(function(){
+          .catch(function() {
             loadEl.style.display = 'none';
-            listEl.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.8rem;text-align:center;padding:16px;">Não foi possível carregar. <a href="https://www.youtube.com/channel/' + _activeChannel.channelId + '" target="_blank" style="color:#1abc9c;">Abrir no YouTube</a></div>';
+            ytShowVideosStatic(c);
           });
       };
 
+      function ytShowVideosStatic(c) {
+        var listEl = document.getElementById('yt-video-list');
+        var thumb  = 'https://img.youtube.com/vi/' + c.videoInicio + '/mqdefault.jpg';
+        listEl.innerHTML =
+          '<div class="yt-video-row" data-vid="' + c.videoInicio + '"' +
+          ' style="display:flex;gap:12px;align-items:center;cursor:pointer;' +
+          'padding:8px;border-radius:10px;background:rgba(255,255,255,0.05);">' +
+            '<div style="flex-shrink:0;width:96px;height:54px;border-radius:8px;overflow:hidden;background:#000;">' +
+              '<img src="' + thumb + '" style="width:100%;height:100%;object-fit:cover;">' +
+            '</div>' +
+            '<div style="flex:1;min-width:0;">' +
+              '<div style="font-size:0.78rem;color:rgba(255,255,255,0.85);font-weight:600;">' +
+              'Aula do canal: ' + c.nome + '</div>' +
+              '<div style="font-size:0.65rem;color:rgba(255,255,255,0.35);">' + c.tema + '</div>' +
+            '</div>' +
+            '<i class="fas fa-play-circle" style="color:' + c.cor + ';font-size:1.1rem;flex-shrink:0;opacity:0.75;"></i>' +
+          '</div>' +
+          '<div style="margin-top:12px;text-align:center;">' +
+            '<a href="https://www.youtube.com/channel/' + c.channelId + '" target="_blank"' +
+            ' style="color:#1abc9c;font-size:0.78rem;text-decoration:none;">' +
+            '<i class="fab fa-youtube me-1"></i>Ver mais vídeos no YouTube</a>' +
+          '</div>';
+
+        var row = listEl.querySelector('.yt-video-row');
+        if (row) {
+          var vid = row.getAttribute('data-vid');
+          row.addEventListener('click', function() { ytPlayVideo(vid); });
+        }
+      }
+
+      /* ---- toca vídeo específico ---- */
       window.ytPlayVideo = function(videoId) {
-        document.getElementById('yt-iframe').src = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&rel=0';
+        document.getElementById('yt-iframe').src =
+          'https://www.youtube.com/embed/' + videoId + '?autoplay=1&rel=0&modestbranding=1';
         document.getElementById('yt-tab-player').style.display = 'block';
         document.getElementById('yt-tab-videos').style.display = 'none';
       };
