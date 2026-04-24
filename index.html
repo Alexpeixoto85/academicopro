@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -4114,11 +4113,11 @@
   <div class="sidebar-section-label">Outros</div>
   <button class="sidebar-nav-item" data-panel="configuracoes" id="snav-configuracoes"><i class="fas fa-cog"></i> <span class="sidebar-nav-item-label">Configurações</span></button>
 
-  <div class="sidebar-profile" id="sidebarProfileBtn" data-bs-toggle="modal" data-bs-target="#profileManagementModal">
+  <div class="sidebar-profile" id="sidebarProfileBtn" data-bs-toggle="modal" data-bs-target="#semesterManagementModal">
     <div class="sidebar-avatar" id="sidebarAvatarInitials">U</div>
     <div class="sidebar-profile-info">
-      <div class="sidebar-profile-name" id="sidebarProfileName">Usuário</div>
-      <div class="sidebar-profile-role">Ver perfis</div>
+      <div class="sidebar-profile-name" id="sidebarProfileName">Semestre</div>
+      <div class="sidebar-profile-role">Trocar semestre</div>
     </div>
     <i class="fas fa-chevron-right" style="color:rgba(255,255,255,0.3);font-size:0.7rem;"></i>
   </div>
@@ -4137,7 +4136,7 @@
       <button class="btn btn-outline-secondary btn-sm" id="openBackupBtn" title="Backup & Restauração">
         <i class="fas fa-database me-1"></i> <span class="d-none d-sm-inline">Backup</span>
       </button>
-      <div class="header-avatar" id="headerAvatarBtn" data-bs-toggle="modal" data-bs-target="#profileManagementModal" title="Gerenciar Perfis">A</div>
+      <div class="header-avatar" id="headerAvatarBtn" data-bs-toggle="modal" data-bs-target="#semesterManagementModal" title="Gerenciar Semestres">S</div>
     </div>
   </div>
 
@@ -4834,7 +4833,7 @@
 
   <div class="content-panel" id="configuracoes">
     <div class="panel-header">
-      <div class="panel-header-left"><h3><i class="fas fa-cog me-2" style="color:#7f8c8d;"></i>Configurações</h3><p>Personalização de tema, perfis e backup</p></div>
+      <div class="panel-header-left"><h3><i class="fas fa-cog me-2" style="color:#7f8c8d;"></i>Configurações</h3><p>Personalização de tema, semestres e backup</p></div>
     </div>
       <div class="card card-dashboard mb-4">
           <div class="card-body">
@@ -4884,14 +4883,13 @@
       </div>
       <div class="card card-dashboard">
           <div class="card-body">
-              <h4 class="card-title">Perfis e Backup</h4>
-              <p class="text-muted">Gerencie seus perfis acadêmicos e faça backup dos dados.</p>
-              <div class="mt-4">
-                  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#profileManagementModal"><i class="fas fa-users"></i> Gerenciar Perfis</button>
-                  <button class="btn btn-outline-primary ms-2" id="backup-btn" data-bs-toggle="modal" data-bs-target="#backupModal"><i class="fas fa-database"></i> Backup Completo</button>
-                  <input type="file" id="restore-input" class="d-none" accept=".json">
+              <h4 class="card-title"><i class="fas fa-calendar-alt me-2 text-primary"></i>Semestres e Backup</h4>
+              <p class="text-muted">Gerencie seus semestres acadêmicos e faça backup individual por semestre.</p>
+              <div class="mt-4 d-flex flex-wrap gap-2">
+                  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#semesterManagementModal"><i class="fas fa-graduation-cap me-1"></i> Gerenciar Semestres</button>
+                  <button class="btn btn-outline-primary" id="backup-btn"><i class="fas fa-database me-1"></i> Backup Completo</button>
               </div>
-              <div class="alert alert-warning mt-4"><strong>Atenção:</strong> Restaurar um backup substituirá TODOS os perfis e dados atuais. Esta ação não pode ser desfeita.</div>
+              <div class="alert alert-warning mt-4"><strong>Atenção:</strong> Restaurar um backup substituirá TODOS os semestres e dados atuais. Esta ação não pode ser desfeita.</div>
           </div>
       </div>
   </div>
@@ -5229,13 +5227,46 @@
 </nav>
 
 <div class="footer-nav" style="display:none;">
-    <button class="footer-nav-btn" id="footer-perfis"><i class="fas fa-users"></i><span>Perfis</span></button>
+    <button class="footer-nav-btn" id="footer-perfis"><i class="fas fa-graduation-cap"></i><span>Semestres</span></button>
     <button class="footer-nav-btn active" id="footer-inicio"><i class="fas fa-home"></i><span>Início</span></button>
     <button class="footer-nav-btn" id="footer-financeiro"><i class="fas fa-dollar-sign"></i><span>Financeiro</span></button>
 </div>
 
 <!-- MODAIS (mantidos intactos) -->
-<div class="modal fade" id="profileManagementModal" tabindex="-1" aria-labelledby="profileManagementModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Gerenciar Perfis</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p>Selecione um perfil para ativar ou gerencie seus perfis existentes.</p><ul class="list-group" id="profile-management-list"></ul><hr><form id="profileForm"><input type="hidden" id="profileId"><div class="input-group"><input type="text" class="form-control" id="profileName" placeholder="Nome do novo perfil" required><button class="btn btn-primary" type="submit" id="saveProfileBtn"><i class="fas fa-plus"></i> Adicionar</button></div></form></div></div></div></div>
+<div class="modal fade" id="semesterManagementModal" tabindex="-1" aria-labelledby="semesterManagementModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border-radius:16px;overflow:hidden;">
+      <div class="modal-header" style="background:linear-gradient(135deg,#1a2a3a,#2c3e50);border:none;">
+        <div class="d-flex align-items-center gap-3">
+          <div style="width:42px;height:42px;background:rgba(26,188,156,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+            <i class="fas fa-graduation-cap" style="color:#1abc9c;font-size:1.1rem;"></i>
+          </div>
+          <div>
+            <h5 class="modal-title text-white mb-0" id="semesterManagementModalLabel">Gerenciar Semestres</h5>
+            <small style="color:rgba(255,255,255,0.55);font-size:0.75rem;">Cada semestre é um espaço independente de dados</small>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <!-- Lista de semestres -->
+        <div id="semester-list-wrap" class="mb-4"></div>
+        <hr>
+        <!-- Formulário novo semestre -->
+        <h6 class="fw-bold mb-3"><i class="fas fa-plus-circle me-2 text-success"></i>Novo Semestre</h6>
+        <div class="row g-2">
+          <div class="col-sm-8">
+            <input type="text" class="form-control" id="semesterName" placeholder="Ex: 1º Semestre 2025 — Direito">
+          </div>
+          <div class="col-sm-4">
+            <button class="btn btn-success w-100" id="saveSemesterBtn"><i class="fas fa-plus me-1"></i>Criar Semestre</button>
+          </div>
+        </div>
+        <input type="hidden" id="semesterId">
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="modal fade" id="horarioModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nova Aula</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="horarioForm"><input type="hidden" id="horarioId"><div class="mb-3"><label for="horarioDisciplina" class="form-label">Disciplina</label><select class="form-select" id="horarioDisciplina" required></select></div><div class="mb-3"><label for="horarioDiaSemana" class="form-label">Dia da Semana</label><select class="form-select" id="horarioDiaSemana"><option value="1">Segunda</option><option value="2">Terça</option><option value="3">Quarta</option><option value="4">Quinta</option><option value="5">Sexta</option><option value="6">Sábado</option></select></div><div class="row"><div class="col-6 mb-3"><label for="horarioInicio" class="form-label">Início</label><input type="time" class="form-control" id="horarioInicio" step="1800" required></div><div class="col-6 mb-3"><label for="horarioFim" class="form-label">Fim</label><input type="time" class="form-control" id="horarioFim" step="1800" required></div></div><div class="mb-3"><label for="horarioLocal" class="form-label">Local</label><input type="text" class="form-control" id="horarioLocal"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-danger me-auto d-none" id="deleteHorario">Excluir</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveHorario">Salvar</button></div></div></div></div>
 
@@ -5942,7 +5973,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function getCurrentProfileId() {
         const profiles = await getAllData('profiles');
         if (!profiles.length) {
-            const defaultProfile = { id: 1, name: "Perfil Principal", currentProfileId: 1 };
+            const defaultProfile = { id: 1, name: "1º Semestre", currentProfileId: 1 };
             await saveData('profiles', defaultProfile);
             return 1;
         }
@@ -7840,7 +7871,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     function updateFixedBackButton() { document.getElementById('fixed-back-home').style.display = activePanel === 'home-links' ? 'none' : 'block'; }
     function setupFooterNavigation() {
-        document.getElementById('footer-perfis').addEventListener('click', ()=>{ renderProfileManagementList(); new bootstrap.Modal(document.getElementById('profileManagementModal')).show(); });
+        document.getElementById('footer-perfis').addEventListener('click', ()=>{ renderSemesterManagementList(); new bootstrap.Modal(document.getElementById('semesterManagementModal')).show(); });
         document.getElementById('footer-inicio').addEventListener('click', goToHome);
         document.getElementById('footer-financeiro').addEventListener('click', ()=>{ 
             activePanel = 'financeiro';
@@ -9765,20 +9796,27 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         document.getElementById('financeiroTipo').addEventListener('change', function(){ document.getElementById('financeiroStatusWrapper').style.display = this.value==='despesa'?'block':'none'; });
         document.getElementById('financeiroRecurrence').addEventListener('change', function(){ document.getElementById('financeiroRecurrenceEndDateWrapper').classList.toggle('d-none', this.value==='none'); });
-        document.getElementById('profileForm').addEventListener('submit', async e=>{
-            e.preventDefault();
-            let name = document.getElementById('profileName').value.trim(), id = +document.getElementById('profileId').value;
-            if (!name) return alert('Nome obrigatório.');
-            if (id) { let p = await getData('profiles', id); if (p) { p.name = name; await saveData('profiles', p); } }
-            else {
-                let profiles = await getAllData('profiles');
-                let newId = profiles.length ? Math.max(...profiles.map(p=>p.id))+1 : 1;
+        document.getElementById('saveSemesterBtn').addEventListener('click', async e=>{
+            const name = document.getElementById('semesterName').value.trim();
+            const id = +document.getElementById('semesterId').value;
+            if (!name) return alert('Nome do semestre é obrigatório.');
+            if (id) {
+                const p = await getData('profiles', id);
+                if (p) { p.name = name; await saveData('profiles', p); }
+            } else {
+                const profiles = await getAllData('profiles');
+                const newId = profiles.length ? Math.max(...profiles.map(p=>p.id))+1 : 1;
                 await saveData('profiles', { id: newId, name, currentProfileId: null });
                 await switchProfile(newId);
             }
-            document.getElementById('profileName').value = ''; document.getElementById('profileId').value = '';
-            document.getElementById('saveProfileBtn').innerHTML = '<i class="fas fa-plus"></i> Adicionar';
-            renderProfileManagementList();
+            document.getElementById('semesterName').value = '';
+            document.getElementById('semesterId').value = '';
+            document.getElementById('saveSemesterBtn').innerHTML = '<i class="fas fa-plus me-1"></i>Criar Semestre';
+            await renderSemesterManagementList();
+        });
+
+        document.getElementById('semesterManagementModal').addEventListener('show.bs.modal', ()=>{
+            renderSemesterManagementList();
         });
 
         document.querySelectorAll('.modal').forEach(m => {
@@ -10590,17 +10628,172 @@ document.addEventListener('DOMContentLoaded', function() {
         if (active) document.getElementById('main-header-title').textContent = active.querySelector('h2')?.textContent || 'Acadêmico Pro';
     }
 
+    async function renderSemesterManagementList() {
+        const wrap = document.getElementById('semester-list-wrap');
+        if (!wrap) return;
+        const profiles = await getAllData('profiles');
+        const current = await getCurrentProfileId();
+
+        if (!profiles.length) {
+            wrap.innerHTML = '<p class="text-muted small">Nenhum semestre criado ainda.</p>';
+            return;
+        }
+
+        // Count records per semester
+        const STORES_COUNT = ['disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links','certificados'];
+        let html = '<div class="d-flex flex-column gap-2">';
+        for (const p of profiles) {
+            let total = 0;
+            for (const s of STORES_COUNT) {
+                const recs = await getAllData(s, 'profileId', p.id);
+                total += recs.length;
+            }
+            const isActive = p.id === current;
+            html += `
+            <div class="semester-item d-flex align-items-center gap-2 p-3 rounded-3 ${isActive ? 'border border-success bg-light' : 'border border-secondary-subtle bg-white'}" style="transition:all 0.2s;">
+              <div style="width:40px;height:40px;background:${isActive ? 'linear-gradient(135deg,#1abc9c,#16a085)' : '#e9ecef'};border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fas fa-graduation-cap" style="color:${isActive ? 'white' : '#6c757d'};font-size:0.95rem;"></i>
+              </div>
+              <div class="flex-grow-1 min-width-0">
+                <div class="fw-bold" style="font-size:0.9rem;color:#1a2332;">${p.name}${isActive ? ' <span class="badge bg-success ms-1" style="font-size:0.65rem;">Ativo</span>' : ''}</div>
+                <div class="text-muted" style="font-size:0.72rem;">${total} registro${total !== 1 ? 's' : ''}</div>
+              </div>
+              <div class="d-flex gap-1 flex-shrink-0">
+                ${!isActive ? `<button class="btn btn-sm btn-outline-success sem-switch" data-id="${p.id}" title="Ativar"><i class="fas fa-check"></i></button>` : ''}
+                <button class="btn btn-sm btn-outline-primary sem-edit" data-id="${p.id}" data-name="${p.name.replace(/"/g,'&quot;')}" title="Renomear"><i class="fas fa-pen"></i></button>
+                <button class="btn btn-sm btn-outline-info sem-backup" data-id="${p.id}" data-name="${p.name.replace(/"/g,'&quot;')}" title="Backup deste semestre"><i class="fas fa-download"></i></button>
+                <button class="btn btn-sm btn-outline-warning sem-backup-clear" data-id="${p.id}" data-name="${p.name.replace(/"/g,'&quot;')}" title="Backup e Limpar (arquivar semestre)"><i class="fas fa-archive"></i></button>
+                <button class="btn btn-sm btn-outline-danger sem-delete" data-id="${p.id}" ${profiles.length === 1 ? 'disabled' : ''} title="Excluir"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>`;
+        }
+        html += '</div>';
+        wrap.innerHTML = html;
+
+        // Events
+        wrap.querySelectorAll('.sem-switch').forEach(b => b.addEventListener('click', async e => {
+            const id = +e.currentTarget.dataset.id;
+            await switchProfile(id);
+            const modal = bootstrap.Modal.getInstance(document.getElementById('semesterManagementModal'));
+            if (modal) modal.hide();
+        }));
+
+        wrap.querySelectorAll('.sem-edit').forEach(b => b.addEventListener('click', e => {
+            const id = e.currentTarget.dataset.id;
+            const name = e.currentTarget.dataset.name;
+            document.getElementById('semesterName').value = name;
+            document.getElementById('semesterId').value = id;
+            document.getElementById('saveSemesterBtn').innerHTML = '<i class="fas fa-save me-1"></i>Atualizar';
+            document.getElementById('semesterName').focus();
+        }));
+
+        wrap.querySelectorAll('.sem-backup').forEach(b => b.addEventListener('click', async e => {
+            const id = +e.currentTarget.dataset.id;
+            const name = e.currentTarget.dataset.name;
+            await exportSemesterBackup(id, name, false, false);
+        }));
+
+        wrap.querySelectorAll('.sem-backup-clear').forEach(b => b.addEventListener('click', async e => {
+            const id = +e.currentTarget.dataset.id;
+            const name = e.currentTarget.dataset.name;
+            if (confirm(`Arquivar "${name}"?\n\nIsso irá:\n1. Exportar o backup completo do semestre\n2. Apagar TODOS os dados deste semestre do sistema\n\nEsta ação não pode ser desfeita. Deseja continuar?`)) {
+                await exportSemesterBackup(id, name, true, true);
+            }
+        }));
+
+        wrap.querySelectorAll('.sem-delete').forEach(b => b.addEventListener('click', async e => {
+            const id = +e.currentTarget.dataset.id;
+            const profList = await getAllData('profiles');
+            if (profList.length === 1) return;
+            if (confirm('Excluir este semestre? Todos os dados serão perdidos PERMANENTEMENTE.')) {
+                await deleteSemester(id);
+                await renderSemesterManagementList();
+            }
+        }));
+    }
+
+    async function deleteSemester(id) {
+        const stores = ['disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links','certificados'];
+        for (const s of stores) {
+            const items = await getAllData(s, 'profileId', id);
+            for (const i of items) await deleteData(s, i.id);
+        }
+        await deleteData('profiles', id);
+        profileDataCache = null;
+        const profiles = await getAllData('profiles');
+        if (profiles.length > 0) {
+            const first = profiles[0];
+            await switchProfile(first.id);
+        }
+        renderCurrentPanel();
+    }
+
+    async function exportSemesterBackup(semId, semName, clearAfter, showConfirmClear) {
+        const app = window._acadApp;
+        if (!app) { alert('Sistema não iniciado ainda. Aguarde.'); return; }
+
+        const STORES_ALL = ['profiles','disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links','certificados'];
+        const backup = {
+            _meta: {
+                app: 'academicoProDB',
+                version: 3,
+                exportedAt: new Date().toISOString(),
+                semesterId: semId,
+                semesterName: semName,
+                profileFilter: String(semId),
+                lightBackup: false,
+                exportedBy: 'Acadêmico Pro — Backup de Semestre'
+            },
+            localStorage: {},
+            stores: {}
+        };
+
+        for (const s of STORES_ALL) {
+            let recs = await app.readAllFromStore(s);
+            if (s === 'profiles') {
+                recs = recs.filter(r => r.id === semId);
+            } else {
+                recs = recs.filter(r => r.profileId === semId || r.profileId === undefined);
+            }
+            backup.stores[s] = recs;
+        }
+
+        const json = JSON.stringify(backup);
+        const blob = new Blob([json], { type: 'application/json' });
+        const safeName = semName.replace(/[^a-zA-Z0-9\u00C0-\u017E\s_-]/g, '').replace(/\s+/g, '_').substring(0, 60);
+        const date = new Date().toISOString().split('T')[0];
+        const filename = `semestre_${safeName}_${date}.json`;
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 8000);
+
+        if (clearAfter) {
+            await deleteSemester(semId);
+            // Show success toast
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;';
+            toast.innerHTML = `<div class="alert alert-success alert-dismissible shadow" role="alert"><i class="fas fa-check-circle me-2"></i><strong>Semestre arquivado!</strong> Backup salvo como <em>${filename}</em> e dados removidos do sistema.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 6000);
+            // Close semester modal if open
+            const semModal = bootstrap.Modal.getInstance(document.getElementById('semesterManagementModal'));
+            if (semModal) semModal.hide();
+        } else {
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;';
+            toast.innerHTML = `<div class="alert alert-info alert-dismissible shadow" role="alert"><i class="fas fa-download me-2"></i><strong>Backup exportado!</strong> ${filename}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+    }
+
+    // Alias para compatibilidade com código legado que chama renderProfileManagementList
     async function renderProfileManagementList() {
-        let list = document.getElementById('profile-management-list');
-        list.innerHTML = '';
-        let profiles = await getAllData('profiles');
-        let current = await getCurrentProfileId();
-        profiles.forEach(p => {
-            list.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center"><button type="button" class="btn btn-link text-start flex-grow-1 switch-profile ${p.id===current?'fw-bold':''}" data-id="${p.id}">${p.name}</button><div><button class="btn btn-sm btn-outline-primary edit-profile" data-id="${p.id}"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline-danger delete-profile" data-id="${p.id}" ${profiles.length===1?'disabled':''}><i class="fas fa-trash"></i></button></div></li>`;
-        });
-        document.querySelectorAll('.switch-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.switch-profile').dataset.id; if (id!==current) { await switchProfile(id); bootstrap.Modal.getInstance(document.getElementById('profileManagementModal')).hide(); } }));
-        document.querySelectorAll('.edit-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.edit-profile').dataset.id; let p = await getData('profiles', id); if (p) { document.getElementById('profileName').value = p.name; document.getElementById('profileId').value = p.id; document.getElementById('saveProfileBtn').innerHTML = '<i class="fas fa-save"></i> Atualizar'; } }));
-        document.querySelectorAll('.delete-profile').forEach(b=> b.addEventListener('click', async e=>{ e.preventDefault(); let id = +e.target.closest('.delete-profile').dataset.id; if (profiles.length===1) return; if (confirm('Excluir perfil? Todos os dados serão perdidos.')) { await deleteData('profiles', id); let stores = ['disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links']; for (let s of stores) { let items = await getAllData(s, 'profileId', id); for (let i of items) await deleteData(s, i.id); } await renderProfileManagementList(); profileDataCache = null; await loadProfileData(); renderCurrentPanel(); } }));
+        return renderSemesterManagementList();
     }
 
     async function handleEdit(store, prefix, id) {
@@ -12089,9 +12282,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
               </div>
               <div class="col-sm-5">
-                <label class="form-label fw-semibold small mb-1">Perfil</label>
+                <label class="form-label fw-semibold small mb-1">Semestre</label>
                 <select class="form-select form-select-sm" id="bk-profile-sel">
-                  <option value="all">Todos os perfis</option>
+                  <option value="all">Todos os semestres</option>
                 </select>
               </div>
             </div>
@@ -12217,6 +12410,11 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <style>
+/* ===== SEMESTER MANAGEMENT STYLES ===== */
+.semester-item { transition: all 0.2s; }
+.semester-item:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+.semester-item .btn-sm { width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; }
+#semester-list-wrap { max-height: 380px; overflow-y: auto; }
 /* ===== BACKUP STYLES ===== */
 .bk-export-btn {
   padding: 10px 14px;
@@ -12287,7 +12485,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var STORES = ['profiles','disciplinas','horarios','trabalhos','provas','eventos',
                 'financeiro','biblioteca','filmes','notas','links','certificados'];
   var LABELS = {
-    profiles:'Perfis', disciplinas:'Disciplinas', horarios:'Horários',
+    profiles:'Semestres', disciplinas:'Disciplinas', horarios:'Horários',
     trabalhos:'Trabalhos', provas:'Provas', eventos:'Eventos',
     financeiro:'Financeiro', biblioteca:'Biblioteca', filmes:'Filmes',
     notas:'Notas', links:'Links', certificados:'Certificados'
@@ -12727,11 +12925,11 @@ document.addEventListener('DOMContentLoaded', function() {
       // Popula seletor de perfis
       app.readAllFromStore('profiles').then(function(profiles) {
         if (profSel) {
-          profSel.innerHTML = '<option value="all">✅ Todos os perfis</option>';
+          profSel.innerHTML = '<option value="all">✅ Todos os semestres</option>';
           profiles.forEach(function(p) {
             var o = document.createElement('option');
             o.value = p.id;
-            o.textContent = p.name || 'Perfil ' + p.id;
+            o.textContent = p.name || 'Semestre ' + p.id;
             profSel.appendChild(o);
           });
         }
