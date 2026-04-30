@@ -6970,6 +6970,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="pro-card-footer">
                   <span class="pill ${st.pill}"><i class="fas ${st.icon}"></i> ${st.label}</span>
                   <div class="ms-auto card-actions">
+                    ${disc && disc.professorEmail ? `<button class="btn-icon send-trabalho-email" data-id="${t.id}" title="Enviar ao professor por e-mail" style="color:#3498db;"><i class="fas fa-envelope"></i></button>` : ''}
                     <button class="btn-icon edit edit-trabalho" data-id="${t.id}" title="Editar"><i class="fas fa-edit"></i></button>
                     <button class="btn-icon attach quick-attach-btn" data-id="${t.id}" data-type="trabalhos" title="Anexar arquivo"><i class="fas fa-paperclip"></i></button>
                     <button class="btn-icon delete delete-trabalho" data-id="${t.id}" title="Excluir"><i class="fas fa-trash"></i></button>
@@ -10359,13 +10360,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 await visualizarDocumento(id);
                 return;
             }
-            target = e.target.closest('.edit-disciplina, .delete-disciplina, .edit-trabalho, .delete-trabalho, .edit-prova, .delete-prova, .schedule-class-item, .delete-horario, .edit-financeiro, .delete-financeiro, .delete-livro, .edit-livro, .delete-filme, .edit-link, .delete-link, .edit-filme, .edit-nota, .delete-nota');
+            target = e.target.closest('.edit-disciplina, .delete-disciplina, .edit-trabalho, .delete-trabalho, .send-trabalho-email, .edit-prova, .delete-prova, .schedule-class-item, .delete-horario, .edit-financeiro, .delete-financeiro, .delete-livro, .edit-livro, .delete-filme, .edit-link, .delete-link, .edit-filme, .edit-nota, .delete-nota');
             if (!target) return;
             let id = target.dataset.id;
             if (target.matches('.edit-disciplina')) handleEdit('disciplinas', 'disciplina', id);
             else if (target.matches('.delete-disciplina')) handleDelete('disciplinas', id, 'Excluir disciplina e dados associados?');
             else if (target.matches('.edit-trabalho')) editTrabalho(id);
             else if (target.matches('.delete-trabalho')) handleDelete('trabalhos', id, 'Excluir trabalho?');
+            else if (target.matches('.send-trabalho-email')) abrirEmailTrabalho(id);
             else if (target.matches('.edit-prova')) handleEdit('provas', 'prova', id);
             else if (target.matches('.delete-prova')) handleDelete('provas', id, 'Excluir prova?');
             else if (target.matches('.schedule-class-item')) editHorario(id);
@@ -14795,6 +14797,91 @@ function _shuffleWithSeed(arr, seed) {
 let quizState = { questoes:[], atual:0, acertos:0, respondida:false, materia:'', assunto:'', seed:0 };
 
 // --- Ponto de entrada ---
+// ===== ENVIAR TRABALHO POR E-MAIL =====
+window.abrirEmailTrabalho = async function(id) {
+    const t = await getData('trabalhos', parseInt(id));
+    if (!t) return;
+    const data = profileDataCache;
+    if (!data) return;
+    const disc = data.disciplinas.find(d => d.id === t.disciplinaId);
+    if (!disc || !disc.professorEmail) {
+        alert('Este trabalho não tem e-mail de professor cadastrado na disciplina.');
+        return;
+    }
+
+    const entregaDate = new Date(t.entrega + 'T00:00').toLocaleDateString('pt-BR');
+    const nomeDisciplina = disc.nome || 'Disciplina';
+    const nomeProf = disc.professor || 'Professor(a)';
+    const emailProf = disc.professorEmail;
+
+    // Assunto padrão
+    const assunto = `[${nomeDisciplina}] Entrega: ${t.titulo}`;
+
+    // Mensagem padrão
+    const mensagem =
+`Prezado(a) ${nomeProf},
+
+Segue em anexo o trabalho "${t.titulo}", da disciplina ${nomeDisciplina}, conforme solicitado, com entrega prevista para ${entregaDate}.
+
+Fico à disposição para quaisquer dúvidas ou esclarecimentos.
+
+Atenciosamente,`;
+
+    // Preencher modal
+    document.getElementById('emailTrabalhoAssunto').value = assunto;
+    document.getElementById('emailTrabalhoMensagem').value = mensagem;
+    document.getElementById('emailTrabalhoDestinatario').textContent = 'Para: ' + emailProf;
+    document.getElementById('emailTrabalhoAnexo').value = '';
+    document.getElementById('emailTrabalhoInfo').innerHTML =
+        `<div style="display:flex;gap:14px;flex-wrap:wrap;">
+            <div><i class="fas fa-tasks me-1 text-primary"></i><strong>Trabalho:</strong> ${t.titulo}</div>
+            <div><i class="fas fa-book me-1 text-success"></i><strong>Disciplina:</strong> ${nomeDisciplina}</div>
+            <div><i class="fas fa-calendar me-1 text-warning"></i><strong>Entrega:</strong> ${entregaDate}</div>
+        </div>`;
+
+    // Botão enviar
+    const btnEnviar = document.getElementById('emailTrabalhoBtnEnviar');
+    btnEnviar.onclick = function() {
+        const assuntoFinal = encodeURIComponent(document.getElementById('emailTrabalhoAssunto').value);
+        const bodyFinal = encodeURIComponent(document.getElementById('emailTrabalhoMensagem').value);
+        const mailtoLink = `mailto:${emailProf}?subject=${assuntoFinal}&body=${bodyFinal}`;
+
+        // Verificar se há arquivo selecionado
+        const anexoInput = document.getElementById('emailTrabalhoAnexo');
+        const temAnexo = anexoInput.files && anexoInput.files.length > 0;
+
+        if (temAnexo) {
+            // Com anexo: abrir o app de e-mail e avisar sobre o arquivo
+            const nomeArquivo = anexoInput.files[0].name;
+            // Baixar o arquivo para o usuário poder anexar manualmente
+            const url = URL.createObjectURL(anexoInput.files[0]);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = nomeArquivo;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+            // Mostrar aviso
+            const avisoDiv = document.createElement('div');
+            avisoDiv.style.cssText = 'margin-top:12px;padding:10px 14px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;font-size:0.82rem;color:#856404;';
+            avisoDiv.innerHTML = `<i class="fas fa-download me-1"></i> O arquivo <strong>${nomeArquivo}</strong> foi baixado. Após abrir o e-mail, anexe-o manualmente.`;
+            const modalBody = document.querySelector('#emailTrabalhoModal .modal-body');
+            const existingAviso = modalBody.querySelector('.email-aviso-anexo');
+            if (existingAviso) existingAviso.remove();
+            avisoDiv.className = 'email-aviso-anexo';
+            modalBody.appendChild(avisoDiv);
+
+            // Pequeno delay para o download iniciar antes de abrir o mailto
+            setTimeout(() => { window.location.href = mailtoLink; }, 400);
+        } else {
+            window.location.href = mailtoLink;
+            bootstrap.Modal.getInstance(document.getElementById('emailTrabalhoModal')).hide();
+        }
+    };
+
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('emailTrabalhoModal')).show();
+};
+
 window.abrirQuizProva = async function(materiaEnc, assuntoEnc) {
     const materia = decodeURIComponent(materiaEnc||'');
     const assunto = decodeURIComponent(assuntoEnc||'');
@@ -15367,6 +15454,54 @@ function _renderQuizScore() {
     <a id="htmlViewerDownload" href="#" download style="background:rgba(255,255,255,0.12);border:none;color:rgba(255,255,255,0.75);border-radius:8px;padding:6px 12px;font-size:0.78rem;cursor:pointer;display:flex;align-items:center;gap:5px;text-decoration:none;"><i class="fas fa-download"></i> Baixar</a>
   </div>
   <iframe class="html-viewer-iframe" id="htmlViewerIframe" sandbox="allow-scripts allow-same-origin"></iframe>
+</div>
+
+<!-- MODAL ENVIAR TRABALHO POR E-MAIL -->
+<div class="modal fade" id="emailTrabalhoModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px;overflow:hidden;">
+      <div class="modal-header" style="background:linear-gradient(135deg,#3498db,#2980b9);color:white;padding:18px 24px;">
+        <div>
+          <h5 class="modal-title mb-0"><i class="fas fa-envelope me-2"></i>Enviar Trabalho ao Professor</h5>
+          <div id="emailTrabalhoDestinatario" style="font-size:0.8rem;opacity:0.85;margin-top:3px;"></div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="padding:24px;">
+
+        <!-- Info do trabalho -->
+        <div id="emailTrabalhoInfo" style="background:#f0f8ff;border:1px solid #d6eaf8;border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:0.83rem;color:#2c3e50;">
+        </div>
+
+        <!-- Assunto -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold" style="font-size:0.85rem;">Assunto do e-mail</label>
+          <input type="text" class="form-control" id="emailTrabalhoAssunto" style="border-radius:8px;font-size:0.88rem;">
+        </div>
+
+        <!-- Mensagem -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold" style="font-size:0.85rem;">Mensagem</label>
+          <textarea class="form-control" id="emailTrabalhoMensagem" rows="7" style="border-radius:8px;font-size:0.87rem;line-height:1.7;resize:vertical;"></textarea>
+          <div style="font-size:0.73rem;color:#95a5a6;margin-top:5px;"><i class="fas fa-info-circle me-1"></i>Você pode editar a mensagem antes de enviar.</div>
+        </div>
+
+        <!-- Anexo -->
+        <div class="mb-1">
+          <label class="form-label fw-semibold" style="font-size:0.85rem;"><i class="fas fa-paperclip me-1 text-secondary"></i>Anexar arquivo do trabalho</label>
+          <input type="file" class="form-control" id="emailTrabalhoAnexo" accept=".pdf,.docx,.pptx,.doc,.txt,image/*" style="border-radius:8px;font-size:0.85rem;">
+          <div style="font-size:0.73rem;color:#95a5a6;margin-top:5px;"><i class="fas fa-exclamation-circle me-1"></i>O arquivo será aberto no seu app de e-mail para ser enviado.</div>
+        </div>
+
+      </div>
+      <div class="modal-footer" style="padding:14px 24px;border-top:1px solid #f0f2f4;gap:10px;">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal" style="border-radius:8px;font-size:0.85rem;">Cancelar</button>
+        <button class="btn" id="emailTrabalhoBtnEnviar" style="background:linear-gradient(135deg,#3498db,#2980b9);color:white;border-radius:8px;font-size:0.85rem;font-weight:600;padding:8px 22px;">
+          <i class="fas fa-paper-plane me-2"></i>Abrir no App de E-mail
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- QUIZ MODAL -->
