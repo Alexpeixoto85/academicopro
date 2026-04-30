@@ -6981,6 +6981,77 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // ===== ENVIAR TRABALHO POR E-MAIL =====
+    window.abrirEmailTrabalho = async function(id) {
+        const t = await getData('trabalhos', parseInt(id));
+        if (!t) return;
+        const data = await getProfileData();
+        if (!data) return;
+        const disc = data.disciplinas.find(d => d.id === t.disciplinaId);
+        if (!disc || !disc.professorEmail) {
+            alert('Este trabalho não tem e-mail de professor cadastrado na disciplina.');
+            return;
+        }
+
+        const entregaDate = new Date(t.entrega + 'T00:00').toLocaleDateString('pt-BR');
+        const nomeDisciplina = disc.nome || 'Disciplina';
+        const nomeProf = disc.professor || 'Professor(a)';
+        const emailProf = disc.professorEmail;
+
+        const assunto = `[${nomeDisciplina}] Entrega: ${t.titulo}`;
+        const mensagem =
+`Prezado(a) ${nomeProf},
+
+Segue em anexo o trabalho "${t.titulo}", da disciplina ${nomeDisciplina}, conforme solicitado, com entrega prevista para ${entregaDate}.
+
+Fico à disposição para quaisquer dúvidas ou esclarecimentos.
+
+Atenciosamente,`;
+
+        document.getElementById('emailTrabalhoAssunto').value = assunto;
+        document.getElementById('emailTrabalhoMensagem').value = mensagem;
+        document.getElementById('emailTrabalhoDestinatario').textContent = 'Para: ' + emailProf;
+        document.getElementById('emailTrabalhoAnexo').value = '';
+        document.getElementById('emailTrabalhoInfo').innerHTML =
+            `<div style="display:flex;gap:14px;flex-wrap:wrap;">
+                <div><i class="fas fa-tasks me-1 text-primary"></i><strong>Trabalho:</strong> ${t.titulo}</div>
+                <div><i class="fas fa-book me-1 text-success"></i><strong>Disciplina:</strong> ${nomeDisciplina}</div>
+                <div><i class="fas fa-calendar me-1 text-warning"></i><strong>Entrega:</strong> ${entregaDate}</div>
+            </div>`;
+
+        const modalEl = document.getElementById('emailTrabalhoModal');
+        const existingAviso = modalEl.querySelector('.email-aviso-anexo');
+        if (existingAviso) existingAviso.remove();
+
+        document.getElementById('emailTrabalhoBtnEnviar').onclick = function() {
+            const assuntoFinal = encodeURIComponent(document.getElementById('emailTrabalhoAssunto').value);
+            const bodyFinal = encodeURIComponent(document.getElementById('emailTrabalhoMensagem').value);
+            const mailtoLink = `mailto:${emailProf}?subject=${assuntoFinal}&body=${bodyFinal}`;
+            const anexoInput = document.getElementById('emailTrabalhoAnexo');
+            const temAnexo = anexoInput.files && anexoInput.files.length > 0;
+
+            if (temAnexo) {
+                const nomeArquivo = anexoInput.files[0].name;
+                const url = URL.createObjectURL(anexoInput.files[0]);
+                const a = document.createElement('a');
+                a.href = url; a.download = nomeArquivo; a.click();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+                const avisoDiv = document.createElement('div');
+                avisoDiv.className = 'email-aviso-anexo';
+                avisoDiv.style.cssText = 'margin-top:12px;padding:10px 14px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;font-size:0.82rem;color:#856404;';
+                avisoDiv.innerHTML = `<i class="fas fa-download me-1"></i> O arquivo <strong>${nomeArquivo}</strong> foi baixado. Após abrir o e-mail, anexe-o manualmente.`;
+                document.querySelector('#emailTrabalhoModal .modal-body').appendChild(avisoDiv);
+                setTimeout(() => { window.location.href = mailtoLink; }, 400);
+            } else {
+                window.location.href = mailtoLink;
+                bootstrap.Modal.getInstance(modalEl).hide();
+            }
+        };
+
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    };
+
     async function renderProvas(data) {
         const container = document.getElementById('provas-cards');
         container.innerHTML = '';
@@ -14795,92 +14866,6 @@ function _shuffleWithSeed(arr, seed) {
 
 // --- Estado do quiz ---
 let quizState = { questoes:[], atual:0, acertos:0, respondida:false, materia:'', assunto:'', seed:0 };
-
-// --- Ponto de entrada ---
-// ===== ENVIAR TRABALHO POR E-MAIL =====
-window.abrirEmailTrabalho = async function(id) {
-    const t = await getData('trabalhos', parseInt(id));
-    if (!t) return;
-    const data = profileDataCache;
-    if (!data) return;
-    const disc = data.disciplinas.find(d => d.id === t.disciplinaId);
-    if (!disc || !disc.professorEmail) {
-        alert('Este trabalho não tem e-mail de professor cadastrado na disciplina.');
-        return;
-    }
-
-    const entregaDate = new Date(t.entrega + 'T00:00').toLocaleDateString('pt-BR');
-    const nomeDisciplina = disc.nome || 'Disciplina';
-    const nomeProf = disc.professor || 'Professor(a)';
-    const emailProf = disc.professorEmail;
-
-    // Assunto padrão
-    const assunto = `[${nomeDisciplina}] Entrega: ${t.titulo}`;
-
-    // Mensagem padrão
-    const mensagem =
-`Prezado(a) ${nomeProf},
-
-Segue em anexo o trabalho "${t.titulo}", da disciplina ${nomeDisciplina}, conforme solicitado, com entrega prevista para ${entregaDate}.
-
-Fico à disposição para quaisquer dúvidas ou esclarecimentos.
-
-Atenciosamente,`;
-
-    // Preencher modal
-    document.getElementById('emailTrabalhoAssunto').value = assunto;
-    document.getElementById('emailTrabalhoMensagem').value = mensagem;
-    document.getElementById('emailTrabalhoDestinatario').textContent = 'Para: ' + emailProf;
-    document.getElementById('emailTrabalhoAnexo').value = '';
-    document.getElementById('emailTrabalhoInfo').innerHTML =
-        `<div style="display:flex;gap:14px;flex-wrap:wrap;">
-            <div><i class="fas fa-tasks me-1 text-primary"></i><strong>Trabalho:</strong> ${t.titulo}</div>
-            <div><i class="fas fa-book me-1 text-success"></i><strong>Disciplina:</strong> ${nomeDisciplina}</div>
-            <div><i class="fas fa-calendar me-1 text-warning"></i><strong>Entrega:</strong> ${entregaDate}</div>
-        </div>`;
-
-    // Botão enviar
-    const btnEnviar = document.getElementById('emailTrabalhoBtnEnviar');
-    btnEnviar.onclick = function() {
-        const assuntoFinal = encodeURIComponent(document.getElementById('emailTrabalhoAssunto').value);
-        const bodyFinal = encodeURIComponent(document.getElementById('emailTrabalhoMensagem').value);
-        const mailtoLink = `mailto:${emailProf}?subject=${assuntoFinal}&body=${bodyFinal}`;
-
-        // Verificar se há arquivo selecionado
-        const anexoInput = document.getElementById('emailTrabalhoAnexo');
-        const temAnexo = anexoInput.files && anexoInput.files.length > 0;
-
-        if (temAnexo) {
-            // Com anexo: abrir o app de e-mail e avisar sobre o arquivo
-            const nomeArquivo = anexoInput.files[0].name;
-            // Baixar o arquivo para o usuário poder anexar manualmente
-            const url = URL.createObjectURL(anexoInput.files[0]);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = nomeArquivo;
-            a.click();
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-            // Mostrar aviso
-            const avisoDiv = document.createElement('div');
-            avisoDiv.style.cssText = 'margin-top:12px;padding:10px 14px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;font-size:0.82rem;color:#856404;';
-            avisoDiv.innerHTML = `<i class="fas fa-download me-1"></i> O arquivo <strong>${nomeArquivo}</strong> foi baixado. Após abrir o e-mail, anexe-o manualmente.`;
-            const modalBody = document.querySelector('#emailTrabalhoModal .modal-body');
-            const existingAviso = modalBody.querySelector('.email-aviso-anexo');
-            if (existingAviso) existingAviso.remove();
-            avisoDiv.className = 'email-aviso-anexo';
-            modalBody.appendChild(avisoDiv);
-
-            // Pequeno delay para o download iniciar antes de abrir o mailto
-            setTimeout(() => { window.location.href = mailtoLink; }, 400);
-        } else {
-            window.location.href = mailtoLink;
-            bootstrap.Modal.getInstance(document.getElementById('emailTrabalhoModal')).hide();
-        }
-    };
-
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('emailTrabalhoModal')).show();
-};
 
 window.abrirQuizProva = async function(materiaEnc, assuntoEnc) {
     const materia = decodeURIComponent(materiaEnc||'');
