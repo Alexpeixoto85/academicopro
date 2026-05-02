@@ -4481,13 +4481,37 @@
       }
 
       /* ---- abre canal no player ---- */
+      /* instâncias Invidious sem anúncios — usadas em ordem de fallback */
+      var INV_HOSTS = [
+        'https://inv.nadeko.net',
+        'https://invidious.privacyredirect.com',
+        'https://iv.melmac.space'
+      ];
+      var _invIdx = 0;
+
+      function invEmbed(videoId, start) {
+        var host = INV_HOSTS[_invIdx % INV_HOSTS.length];
+        return host + '/embed/' + videoId + '?autoplay=1' + (start ? '&start=' + start : '') + '&rel=0';
+      }
+
+      /* fallback automático se iframe não carregar */
+      document.addEventListener('DOMContentLoaded', function() {
+        var iframe = document.getElementById('yt-iframe');
+        if (!iframe) return;
+        iframe.addEventListener('error', function() {
+          _invIdx++;
+          var vid = iframe.getAttribute('data-current-vid');
+          if (vid) iframe.src = invEmbed(vid);
+        });
+      });
+
       window.ytOpenChannel = function(idx) {
         var c = YT_CANAIS[idx];
         _activeIdx = idx;
         var iframe = document.getElementById('yt-iframe');
         var wrap   = document.getElementById('yt-player-wrap');
-        iframe.src = 'https://www.youtube-nocookie.com/embed/' + c.videoInicio +
-                     '?autoplay=1&rel=0&modestbranding=1';
+        iframe.setAttribute('data-current-vid', c.videoInicio);
+        iframe.src = invEmbed(c.videoInicio);
         document.getElementById('yt-player-channel-name').textContent = c.nome;
         var iconEl = document.getElementById('yt-player-channel-icon');
         iconEl.style.background = c.cor + '33';
@@ -4610,8 +4634,9 @@
 
       /* ---- toca vídeo específico ---- */
       window.ytPlayVideo = function(videoId) {
-        document.getElementById('yt-iframe').src =
-          'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&rel=0&modestbranding=1';
+        var iframe = document.getElementById('yt-iframe');
+        iframe.setAttribute('data-current-vid', videoId);
+        iframe.src = invEmbed(videoId);
         document.getElementById('yt-tab-player').style.display = 'block';
         document.getElementById('yt-tab-videos').style.display = 'none';
       };
@@ -10910,7 +10935,10 @@ Atenciosamente,`;
         let id = null;
         let pat = [/(?:youtube\.com\/watch\?v=)([^&]+)/, /(?:youtu\.be\/)([^?]+)/, /(?:youtube\.com\/embed\/)([^?]+)/];
         for (let p of pat) { let m = url.match(p); if (m && m[1]) { id = m[1]; break; } }
-        return id ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&start=${start}&rel=0&modestbranding=1` : null;
+        if (!id) return null;
+        const hosts = ['https://inv.nadeko.net','https://invidious.privacyredirect.com','https://iv.melmac.space'];
+        const host  = hosts[0];
+        return `${host}/embed/${id}?autoplay=1${start ? '&start='+start : ''}`;
     }
 
     async function populateDisciplinaSelects(data) {
