@@ -4481,29 +4481,12 @@
       }
 
       /* ---- abre canal no player ---- */
-      /* instâncias Invidious sem anúncios — usadas em ordem de fallback */
-      var INV_HOSTS = [
-        'https://inv.nadeko.net',
-        'https://invidious.privacyredirect.com',
-        'https://iv.melmac.space'
-      ];
-      var _invIdx = 0;
-
+      /* Usando YouTube embed direto (nocookie) — mais confiável que Invidious */
       function invEmbed(videoId, start) {
-        var host = INV_HOSTS[_invIdx % INV_HOSTS.length];
-        return host + '/embed/' + videoId + '?autoplay=1' + (start ? '&start=' + start : '') + '&rel=0';
+        return 'https://www.youtube-nocookie.com/embed/' + videoId
+          + '?autoplay=1&rel=0'
+          + (start ? '&start=' + start : '');
       }
-
-      /* fallback automático se iframe não carregar */
-      document.addEventListener('DOMContentLoaded', function() {
-        var iframe = document.getElementById('yt-iframe');
-        if (!iframe) return;
-        iframe.addEventListener('error', function() {
-          _invIdx++;
-          var vid = iframe.getAttribute('data-current-vid');
-          if (vid) iframe.src = invEmbed(vid);
-        });
-      });
 
       window.ytOpenChannel = function(idx) {
         var c = YT_CANAIS[idx];
@@ -10936,9 +10919,7 @@ Atenciosamente,`;
         let pat = [/(?:youtube\.com\/watch\?v=)([^&]+)/, /(?:youtu\.be\/)([^?]+)/, /(?:youtube\.com\/embed\/)([^?]+)/];
         for (let p of pat) { let m = url.match(p); if (m && m[1]) { id = m[1]; break; } }
         if (!id) return null;
-        const hosts = ['https://inv.nadeko.net','https://invidious.privacyredirect.com','https://iv.melmac.space'];
-        const host  = hosts[0];
-        return `${host}/embed/${id}?autoplay=1${start ? '&start='+start : ''}`;
+        return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0${start ? '&start='+start : ''}`;
     }
 
     async function populateDisciplinaSelects(data) {
