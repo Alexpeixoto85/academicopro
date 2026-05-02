@@ -4055,9 +4055,231 @@
     @keyframes fvSpin { to { transform: rotate(360deg); } }
     #academico-file-viewer-toolbar { flex-wrap: wrap; gap: 6px; }
     #academico-pdf-page-info { color:white; font-size:0.8rem; font-weight:700; min-width:70px; text-align:center; display:flex; align-items:center; justify-content:center; }
+
+    /* ===== PROTEÇÃO ANTI-CÓPIA ===== */
+    body {
+      -webkit-user-select: none !important;
+      -moz-user-select: none !important;
+      -ms-user-select: none !important;
+      user-select: none !important;
+    }
+    input, textarea, [contenteditable="true"] {
+      -webkit-user-select: text !important;
+      -moz-user-select: text !important;
+      user-select: text !important;
+    }
+
+    /* ===== TELA DE LOGIN ===== */
+    #loginScreen {
+      position: fixed; inset: 0; z-index: 99999;
+      background: linear-gradient(135deg, #0f1923 0%, #1a2332 50%, #0d1b2a 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Poppins', sans-serif;
+      overflow-y: auto;
+    }
+    #loginScreen::before {
+      content:''; position:absolute; inset:0; pointer-events:none;
+      background: radial-gradient(ellipse at 20% 50%, rgba(26,188,156,0.08) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, rgba(52,152,219,0.06) 0%, transparent 50%);
+    }
+    .login-box {
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 24px;
+      padding: 40px 36px;
+      width: 100%; max-width: 420px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+      position: relative; z-index: 1;
+      margin: 20px;
+    }
+    .login-logo {
+      text-align: center; margin-bottom: 28px;
+    }
+    .login-logo-icon {
+      width: 64px; height: 64px; border-radius: 18px;
+      background: linear-gradient(135deg, #1abc9c, #16a085);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; color: white; margin-bottom: 12px;
+      box-shadow: 0 8px 24px rgba(26,188,156,0.35);
+    }
+    .login-title { font-size: 1.3rem; font-weight: 700; color: white; margin: 0; }
+    .login-sub { font-size: 0.78rem; color: rgba(255,255,255,0.45); margin-top: 3px; }
+
+    .login-tabs {
+      display: flex; background: rgba(0,0,0,0.3); border-radius: 12px;
+      padding: 4px; margin-bottom: 24px; gap: 4px;
+    }
+    .login-tab-btn {
+      flex: 1; border: none; background: transparent; color: rgba(255,255,255,0.5);
+      border-radius: 9px; padding: 9px; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; font-family: 'Poppins', sans-serif;
+    }
+    .login-tab-btn.active {
+      background: linear-gradient(135deg, #1abc9c, #16a085);
+      color: white; box-shadow: 0 4px 12px rgba(26,188,156,0.3);
+    }
+    .login-form-group { margin-bottom: 16px; }
+    .login-label {
+      display: block; font-size: 0.78rem; font-weight: 600;
+      color: rgba(255,255,255,0.65); margin-bottom: 6px;
+    }
+    .login-input {
+      width: 100%; background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+      color: white; padding: 11px 14px; font-size: 0.88rem;
+      font-family: 'Poppins', sans-serif; outline: none; transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    .login-input:focus { border-color: #1abc9c; background: rgba(26,188,156,0.07); }
+    .login-input::placeholder { color: rgba(255,255,255,0.25); }
+    .login-btn {
+      width: 100%; padding: 13px; border: none; border-radius: 12px;
+      background: linear-gradient(135deg, #1abc9c, #16a085);
+      color: white; font-size: 0.92rem; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; font-family: 'Poppins', sans-serif;
+      box-shadow: 0 6px 20px rgba(26,188,156,0.35); margin-top: 8px;
+    }
+    .login-btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
+    .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .login-msg {
+      margin-top: 14px; padding: 10px 14px; border-radius: 10px;
+      font-size: 0.8rem; text-align: center; display: none;
+    }
+    .login-msg.error { background: rgba(231,76,60,0.18); color: #e74c3c; border: 1px solid rgba(231,76,60,0.3); }
+    .login-msg.success { background: rgba(26,188,156,0.18); color: #1abc9c; border: 1px solid rgba(26,188,156,0.3); }
+    .login-msg.info { background: rgba(52,152,219,0.18); color: #3498db; border: 1px solid rgba(52,152,219,0.3); }
+    .login-divider { text-align:center; color:rgba(255,255,255,0.25); font-size:0.72rem; margin: 14px 0; }
+    .login-footer { text-align:center; margin-top:20px; font-size:0.72rem; color:rgba(255,255,255,0.3); }
+    .login-spinner { display: inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; animation: loginSpin 0.7s linear infinite; vertical-align:middle; margin-right:6px; }
+    @keyframes loginSpin { to { transform: rotate(360deg); } }
+    .login-eye-btn { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:rgba(255,255,255,0.4); cursor:pointer; padding:4px; }
+    .login-input-wrap { position:relative; }
+    .login-strength { height:4px; border-radius:2px; margin-top:6px; background:rgba(255,255,255,0.08); overflow:hidden; }
+    .login-strength-bar { height:100%; border-radius:2px; transition: width 0.3s, background 0.3s; width:0; }
   </style>
 </head>
 <body>
+
+<!-- ===== TELA DE LOGIN / CADASTRO ===== -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon"><i class="fas fa-graduation-cap"></i></div>
+      <div class="login-title">Acadêmico Pro</div>
+      <div class="login-sub">Sistema Universitário de Gestão</div>
+    </div>
+
+    <!-- PASSO 1: CONFIGURAR JSONBIN -->
+    <div id="stepConfig">
+      <div style="background:rgba(52,152,219,0.12);border:1px solid rgba(52,152,219,0.3);border-radius:12px;padding:14px 16px;margin-bottom:20px;">
+        <div style="font-size:0.78rem;font-weight:700;color:#3498db;margin-bottom:6px;"><i class="fas fa-database me-1"></i> Configuração do Banco de Dados</div>
+        <div style="font-size:0.73rem;color:rgba(255,255,255,0.55);line-height:1.6;">
+          Esta configuração é feita <strong style="color:rgba(255,255,255,0.8);">uma única vez</strong>. Acesse
+          <a href="https://jsonbin.io" target="_blank" style="color:#3498db;">jsonbin.io</a>,
+          crie uma conta gratuita, gere sua <strong style="color:rgba(255,255,255,0.8);">Master Key</strong> em
+          <em>API Keys</em> e crie um <strong style="color:rgba(255,255,255,0.8);">New Bin</strong> com o conteúdo
+          <code style="background:rgba(0,0,0,0.3);padding:1px 6px;border-radius:4px;font-size:0.7rem;">{"users":[]}</code>
+          para obter o <strong style="color:rgba(255,255,255,0.8);">Bin ID</strong>.
+        </div>
+      </div>
+
+      <div class="login-form-group">
+        <label class="login-label"><i class="fas fa-key me-1"></i> Master Key <span style="color:#e74c3c;">*</span></label>
+        <div class="login-input-wrap">
+          <input class="login-input" type="password" id="cfgMasterKey" placeholder="$2a$10$..." style="padding-right:42px;" autocomplete="off">
+          <button class="login-eye-btn" type="button" onclick="toggleLoginEye('cfgMasterKey', this)"><i class="fas fa-eye"></i></button>
+        </div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,0.3);margin-top:5px;"><i class="fas fa-info-circle me-1"></i>Encontrada em jsonbin.io → API Keys → Master Key</div>
+      </div>
+
+      <div class="login-form-group">
+        <label class="login-label"><i class="fas fa-database me-1"></i> Bin ID <span style="color:#e74c3c;">*</span></label>
+        <input class="login-input" type="text" id="cfgBinId" placeholder="Ex: 6642f3a1acd3cb34a836..." autocomplete="off">
+        <div style="font-size:0.68rem;color:rgba(255,255,255,0.3);margin-top:5px;"><i class="fas fa-info-circle me-1"></i>ID do bin que contém <code style="background:rgba(0,0,0,0.3);padding:1px 4px;border-radius:3px;">{"users":[]}</code></div>
+      </div>
+
+      <button class="login-btn" id="cfgBtn" onclick="salvarConfig()">
+        <i class="fas fa-check me-2"></i> Salvar e Continuar
+      </button>
+      <div class="login-msg" id="cfgMsg"></div>
+    </div>
+
+    <!-- PASSO 2: LOGIN / CADASTRO -->
+    <div id="stepAuth" style="display:none;">
+
+      <div class="login-tabs">
+        <button class="login-tab-btn active" id="tabLoginBtn" onclick="switchLoginTab('login')">
+          <i class="fas fa-sign-in-alt me-1"></i> Entrar
+        </button>
+        <button class="login-tab-btn" id="tabCadastroBtn" onclick="switchLoginTab('cadastro')">
+          <i class="fas fa-user-plus me-1"></i> Cadastrar
+        </button>
+      </div>
+
+      <!-- FORM LOGIN -->
+      <div id="formLogin">
+        <div class="login-form-group">
+          <label class="login-label"><i class="fas fa-envelope me-1"></i> E-mail</label>
+          <input class="login-input" type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="email">
+        </div>
+        <div class="login-form-group">
+          <label class="login-label"><i class="fas fa-lock me-1"></i> Senha</label>
+          <div class="login-input-wrap">
+            <input class="login-input" type="password" id="loginSenha" placeholder="••••••••" style="padding-right:42px;" autocomplete="current-password">
+            <button class="login-eye-btn" type="button" onclick="toggleLoginEye('loginSenha', this)"><i class="fas fa-eye"></i></button>
+          </div>
+        </div>
+        <button class="login-btn" id="loginBtn" onclick="fazerLogin()">
+          <i class="fas fa-sign-in-alt me-2"></i> Entrar
+        </button>
+        <div class="login-msg" id="loginMsg"></div>
+      </div>
+
+      <!-- FORM CADASTRO -->
+      <div id="formCadastro" style="display:none;">
+        <div class="login-form-group">
+          <label class="login-label"><i class="fas fa-user me-1"></i> Nome Completo</label>
+          <input class="login-input" type="text" id="cadNome" placeholder="Seu nome completo">
+        </div>
+        <div class="login-form-group">
+          <label class="login-label"><i class="fas fa-envelope me-1"></i> E-mail</label>
+          <input class="login-input" type="email" id="cadEmail" placeholder="seu@email.com">
+        </div>
+        <div class="login-form-group">
+          <label class="login-label"><i class="fas fa-lock me-1"></i> Senha</label>
+          <div class="login-input-wrap">
+            <input class="login-input" type="password" id="cadSenha" placeholder="Mínimo 6 caracteres" style="padding-right:42px;" oninput="avaliarSenha(this.value)">
+            <button class="login-eye-btn" type="button" onclick="toggleLoginEye('cadSenha', this)"><i class="fas fa-eye"></i></button>
+          </div>
+          <div class="login-strength"><div class="login-strength-bar" id="strengthBar"></div></div>
+        </div>
+        <div class="login-form-group">
+          <label class="login-label"><i class="fas fa-check-circle me-1"></i> Confirmar Senha</label>
+          <div class="login-input-wrap">
+            <input class="login-input" type="password" id="cadSenhaConf" placeholder="Repita a senha" style="padding-right:42px;">
+            <button class="login-eye-btn" type="button" onclick="toggleLoginEye('cadSenhaConf', this)"><i class="fas fa-eye"></i></button>
+          </div>
+        </div>
+        <button class="login-btn" id="cadBtn" onclick="fazerCadastro()">
+          <i class="fas fa-user-plus me-2"></i> Criar Conta
+        </button>
+        <div class="login-msg" id="cadMsg"></div>
+      </div>
+
+      <!-- Link para reconfigurar -->
+      <div style="text-align:center;margin-top:16px;">
+        <button onclick="voltarConfig()" style="background:none;border:none;color:rgba(255,255,255,0.25);font-size:0.7rem;cursor:pointer;font-family:'Poppins',sans-serif;padding:4px 8px;border-radius:6px;transition:color 0.2s;" onmouseover="this.style.color='rgba(255,255,255,0.5)'" onmouseout="this.style.color='rgba(255,255,255,0.25)'">
+          <i class="fas fa-cog me-1"></i> Reconfigurar conexão
+        </button>
+      </div>
+    </div>
+
+    <div class="login-footer">
+      <i class="fas fa-shield-alt me-1"></i> Acesso protegido · Dados criptografados
+    </div>
+  </div>
+</div>
 
 <!-- ===== TELA DE CARREGAMENTO (bloqueia UI até dados estarem prontos) ===== -->
 <div id="app-loading-overlay" style="
@@ -15506,6 +15728,323 @@ function _renderQuizScore() {
     </div>
   </div>
 </div>
+
+<!-- ===== SCRIPT DE LOGIN, CADASTRO E PROTEÇÃO ===== -->
+<script>
+(function() {
+  'use strict';
+
+  // ── CHAVES DE CONFIGURAÇÃO ─────────────────────────────────────
+  const CFG_KEY      = 'acpro_jsonbin_cfg_v1';
+  const SESSION_KEY  = 'acpro_session_v1';
+  const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b/';
+
+  // Lê config salva no localStorage
+  function getCfg() {
+    try { return JSON.parse(localStorage.getItem(CFG_KEY) || 'null'); } catch { return null; }
+  }
+  function saveCfg(masterKey, binId) {
+    localStorage.setItem(CFG_KEY, JSON.stringify({ masterKey, binId }));
+  }
+  function clearCfg() { localStorage.removeItem(CFG_KEY); }
+
+  // Expõe para uso nos forms de login
+  function getMasterKey() { const c = getCfg(); return c ? c.masterKey : ''; }
+  function getBinId()     { const c = getCfg(); return c ? c.binId     : ''; }
+
+  // ── HELPERS JSONBin ────────────────────────────────────────────
+  async function getBin() {
+    const r = await fetch(JSONBIN_BASE + getBinId() + '/latest', {
+      headers: { 'X-Master-Key': getMasterKey() }
+    });
+    if (!r.ok) {
+      const txt = await r.text().catch(()=>'');
+      throw new Error('Erro ' + r.status + (txt ? ': ' + txt.substring(0,80) : ''));
+    }
+    const j = await r.json();
+    return j.record;
+  }
+
+  async function setBin(data) {
+    const r = await fetch(JSONBIN_BASE + getBinId(), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': getMasterKey() },
+      body: JSON.stringify(data)
+    });
+    if (!r.ok) throw new Error('Erro ao salvar: ' + r.status);
+    return r.json();
+  }
+
+  // ── SESSÃO ─────────────────────────────────────────────────────
+  function salvarSessao(user) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ email: user.email, nome: user.nome, ts: Date.now() }));
+  }
+  function getSessao() {
+    try {
+      const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+      if (!s) return null;
+      if (Date.now() - s.ts > 7 * 24 * 3600 * 1000) { localStorage.removeItem(SESSION_KEY); return null; }
+      return s;
+    } catch { return null; }
+  }
+
+  // ── HASH SENHA ─────────────────────────────────────────────────
+  function hashSenha(s) {
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
+    return (h >>> 0).toString(16).padStart(8,'0') + btoa(s.split('').reverse().join('')).replace(/=/g,'');
+  }
+
+  // ── UI HELPERS ─────────────────────────────────────────────────
+  function showMsg(id, tipo, txt) {
+    const el = document.getElementById(id);
+    el.className = 'login-msg ' + tipo;
+    el.innerHTML = txt;
+    el.style.display = 'block';
+  }
+  function hideMsg(id) {
+    const el = document.getElementById(id);
+    if (el) { el.style.display = 'none'; el.innerHTML = ''; }
+  }
+  function setLoading(btnId, loading, label) {
+    const b = document.getElementById(btnId);
+    if (!b) return;
+    b.disabled = loading;
+    b.innerHTML = loading ? '<span class="login-spinner"></span> Aguarde...' : label;
+  }
+
+  // ── PASSO 1: SALVAR CONFIG ─────────────────────────────────────
+  window.salvarConfig = async function() {
+    const masterKey = document.getElementById('cfgMasterKey').value.trim();
+    const binId     = document.getElementById('cfgBinId').value.trim();
+
+    if (!masterKey || !binId) {
+      showMsg('cfgMsg','error','<i class="fas fa-exclamation-circle me-1"></i> Preencha a Master Key e o Bin ID.');
+      return;
+    }
+    if (!masterKey.startsWith('$2a$') && !masterKey.startsWith('$2b$')) {
+      showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Master Key inválida. Deve começar com <code>$2a$</code> ou <code>$2b$</code>.');
+      return;
+    }
+
+    setLoading('cfgBtn', true, '');
+    showMsg('cfgMsg','info','<i class="fas fa-spinner fa-spin me-1"></i> Validando conexão com JSONBin...');
+
+    try {
+      // Testa conexão lendo o bin
+      const testR = await fetch(JSONBIN_BASE + binId + '/latest', {
+        headers: { 'X-Master-Key': masterKey }
+      });
+
+      if (testR.status === 401) { showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Master Key incorreta ou sem permissão.'); return; }
+      if (testR.status === 404) { showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Bin ID não encontrado. Verifique o ID.'); return; }
+      if (!testR.ok) { showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Erro ' + testR.status + '. Verifique os dados.'); return; }
+
+      const j = await testR.json();
+      // Garante que o bin tem a estrutura correta
+      if (!j.record || typeof j.record !== 'object') {
+        showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Conteúdo do bin inválido. Crie um bin com <code>{"users":[]}</code>.');
+        return;
+      }
+      if (!Array.isArray(j.record.users)) {
+        // Tenta corrigir automaticamente o bin
+        await fetch(JSONBIN_BASE + binId, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'X-Master-Key': masterKey },
+          body: JSON.stringify({ users: [] })
+        });
+      }
+
+      // Tudo OK — salva e avança
+      saveCfg(masterKey, binId);
+      showMsg('cfgMsg','success','<i class="fas fa-check-circle me-1"></i> Conexão validada com sucesso!');
+      setTimeout(() => {
+        document.getElementById('stepConfig').style.display = 'none';
+        document.getElementById('stepAuth').style.display   = 'block';
+        hideMsg('cfgMsg');
+      }, 900);
+
+    } catch(e) {
+      showMsg('cfgMsg','error','<i class="fas fa-wifi me-1"></i> Sem conexão ou erro de rede: ' + e.message);
+    } finally {
+      setLoading('cfgBtn', false, '<i class="fas fa-check me-2"></i> Salvar e Continuar');
+    }
+  };
+
+  // ── VOLTAR PARA CONFIG ─────────────────────────────────────────
+  window.voltarConfig = function() {
+    clearCfg();
+    document.getElementById('stepAuth').style.display   = 'none';
+    document.getElementById('stepConfig').style.display = 'block';
+    document.getElementById('cfgMasterKey').value = '';
+    document.getElementById('cfgBinId').value = '';
+    hideMsg('cfgMsg');
+  };
+
+  // ── TABS LOGIN/CADASTRO ────────────────────────────────────────
+  window.switchLoginTab = function(tab) {
+    document.getElementById('formLogin').style.display    = tab === 'login'    ? 'block' : 'none';
+    document.getElementById('formCadastro').style.display = tab === 'cadastro' ? 'block' : 'none';
+    document.getElementById('tabLoginBtn').classList.toggle('active',   tab === 'login');
+    document.getElementById('tabCadastroBtn').classList.toggle('active', tab === 'cadastro');
+  };
+
+  // ── SHOW/HIDE SENHA ────────────────────────────────────────────
+  window.toggleLoginEye = function(inputId, btn) {
+    const inp = document.getElementById(inputId);
+    if (!inp) return;
+    const isPass = inp.type === 'password';
+    inp.type = isPass ? 'text' : 'password';
+    btn.innerHTML = isPass ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+  };
+
+  // ── FORÇA DA SENHA ─────────────────────────────────────────────
+  window.avaliarSenha = function(v) {
+    const bar = document.getElementById('strengthBar');
+    if (!bar) return;
+    let score = 0;
+    if (v.length >= 6) score++;
+    if (v.length >= 10) score++;
+    if (/[A-Z]/.test(v)) score++;
+    if (/[0-9]/.test(v)) score++;
+    if (/[^A-Za-z0-9]/.test(v)) score++;
+    const colors = ['#e74c3c','#e67e22','#f1c40f','#2ecc71','#1abc9c'];
+    const widths  = [20, 40, 60, 80, 100];
+    bar.style.width      = (widths[score-1] || 0) + '%';
+    bar.style.background = colors[score-1] || 'transparent';
+  };
+
+  // ── ENTRAR ─────────────────────────────────────────────────────
+  window.fazerLogin = async function() {
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    const senha = document.getElementById('loginSenha').value;
+    if (!email || !senha) { showMsg('loginMsg','error','<i class="fas fa-exclamation-circle me-1"></i> Preencha todos os campos.'); return; }
+
+    setLoading('loginBtn', true, '');
+    try {
+      const db    = await getBin();
+      const users = db.users || [];
+      const hash  = hashSenha(senha);
+      const user  = users.find(u => u.email === email && u.senha === hash);
+      if (!user) { showMsg('loginMsg','error','<i class="fas fa-times-circle me-1"></i> E-mail ou senha incorretos.'); return; }
+      showMsg('loginMsg','success','<i class="fas fa-check-circle me-1"></i> Bem-vindo, ' + user.nome + '!');
+      salvarSessao(user);
+      setTimeout(() => entrarNoSistema(user), 900);
+    } catch(e) {
+      showMsg('loginMsg','error','<i class="fas fa-wifi me-1"></i> ' + e.message);
+    } finally {
+      setLoading('loginBtn', false, '<i class="fas fa-sign-in-alt me-2"></i> Entrar');
+    }
+  };
+
+  // ── CADASTRAR ──────────────────────────────────────────────────
+  window.fazerCadastro = async function() {
+    const nome  = document.getElementById('cadNome').value.trim();
+    const email = document.getElementById('cadEmail').value.trim().toLowerCase();
+    const senha = document.getElementById('cadSenha').value;
+    const conf  = document.getElementById('cadSenhaConf').value;
+
+    if (!nome || !email || !senha || !conf) { showMsg('cadMsg','error','<i class="fas fa-exclamation-circle me-1"></i> Preencha todos os campos.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showMsg('cadMsg','error','<i class="fas fa-times-circle me-1"></i> E-mail inválido.'); return; }
+    if (senha.length < 6) { showMsg('cadMsg','error','<i class="fas fa-times-circle me-1"></i> Senha mínima: 6 caracteres.'); return; }
+    if (senha !== conf) { showMsg('cadMsg','error','<i class="fas fa-times-circle me-1"></i> As senhas não coincidem.'); return; }
+
+    setLoading('cadBtn', true, '');
+    try {
+      const db    = await getBin();
+      const users = db.users || [];
+      if (users.find(u => u.email === email)) { showMsg('cadMsg','error','<i class="fas fa-times-circle me-1"></i> Este e-mail já está cadastrado.'); return; }
+      const novoUser = { nome, email, senha: hashSenha(senha), criadoEm: new Date().toISOString() };
+      users.push(novoUser);
+      await setBin({ ...db, users });
+      showMsg('cadMsg','success','<i class="fas fa-check-circle me-1"></i> Conta criada! Entrando...');
+      salvarSessao(novoUser);
+      setTimeout(() => entrarNoSistema(novoUser), 1000);
+    } catch(e) {
+      showMsg('cadMsg','error','<i class="fas fa-wifi me-1"></i> ' + e.message);
+    } finally {
+      setLoading('cadBtn', false, '<i class="fas fa-user-plus me-2"></i> Criar Conta');
+    }
+  };
+
+  // ── ENTRAR NO SISTEMA ──────────────────────────────────────────
+  function entrarNoSistema(user) {
+    const ls = document.getElementById('loginScreen');
+    ls.style.transition = 'opacity 0.5s';
+    ls.style.opacity    = '0';
+    setTimeout(() => { ls.style.display = 'none'; }, 500);
+    const snEl = document.getElementById('sidebarProfileName');
+    if (snEl && user.nome) snEl.textContent = user.nome.split(' ')[0];
+  }
+
+  // ── PROTEÇÃO ANTI-CÓPIA ────────────────────────────────────────
+  document.addEventListener('contextmenu', function(e) {
+    const tag = e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    e.preventDefault(); return false;
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'F12') { e.preventDefault(); return false; }
+    if (e.ctrlKey && e.key === 'u') { e.preventDefault(); return false; }
+    if (e.ctrlKey && e.shiftKey && ['i','j','c','I','J','C'].includes(e.key)) { e.preventDefault(); return false; }
+    if (e.ctrlKey && ['a','c','x'].includes(e.key.toLowerCase())) {
+      const tag = document.activeElement ? document.activeElement.tagName : '';
+      const isEd = tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement && document.activeElement.isContentEditable);
+      if (!isEd) { e.preventDefault(); return false; }
+    }
+  });
+  document.addEventListener('selectstart', function(e) {
+    const tag = e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
+    e.preventDefault();
+  });
+  document.addEventListener('dragstart', function(e) { e.preventDefault(); });
+  (function devToolsDetect() {
+    const threshold = 160;
+    setInterval(function() {
+      const open = window.outerWidth  - window.innerWidth  > threshold ||
+                   window.outerHeight - window.innerHeight > threshold;
+      document.body.style.filter = open ? 'blur(8px)' : '';
+    }, 1000);
+  })();
+
+  // ── INICIALIZAÇÃO ──────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', function() {
+    const sessao = getSessao();
+    const cfg    = getCfg();
+
+    if (sessao && cfg) {
+      // Sessão válida + config existente → entra direto
+      const ls = document.getElementById('loginScreen');
+      if (ls) ls.style.display = 'none';
+      const snEl = document.getElementById('sidebarProfileName');
+      if (snEl && sessao.nome) snEl.textContent = sessao.nome.split(' ')[0];
+      return;
+    }
+
+    if (cfg) {
+      // Config existe mas sem sessão → vai para login
+      document.getElementById('stepConfig').style.display = 'none';
+      document.getElementById('stepAuth').style.display   = 'block';
+    }
+    // Se não há config → mostra stepConfig (já é o padrão)
+
+    // Enter nos campos
+    const loginSenha = document.getElementById('loginSenha');
+    const loginEmail = document.getElementById('loginEmail');
+    const cadSenhaConf = document.getElementById('cadSenhaConf');
+    const cfgMasterKey = document.getElementById('cfgMasterKey');
+    const cfgBinId     = document.getElementById('cfgBinId');
+
+    if (loginSenha)   loginSenha.addEventListener('keydown',   e => { if (e.key==='Enter') fazerLogin(); });
+    if (loginEmail)   loginEmail.addEventListener('keydown',   e => { if (e.key==='Enter') loginSenha && loginSenha.focus(); });
+    if (cadSenhaConf) cadSenhaConf.addEventListener('keydown', e => { if (e.key==='Enter') fazerCadastro(); });
+    if (cfgBinId)     cfgBinId.addEventListener('keydown',     e => { if (e.key==='Enter') salvarConfig(); });
+    if (cfgMasterKey) cfgMasterKey.addEventListener('keydown', e => { if (e.key==='Enter') cfgBinId && cfgBinId.focus(); });
+  });
+
+})();
+</script>
 
 </body>
 </html>
