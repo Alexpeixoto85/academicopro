@@ -5542,7 +5542,7 @@
               <input type="number" class="form-control" id="disciplinaFrequencia" min="0" max="100" value="100">
             </div>
             <div class="col-12" id="disciplinaPerfilBox" style="display:none;">
-              <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;">
+              <div id="disciplinaPerfilInner" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;transition:all 0.3s;">
                 <div style="font-size:0.75rem;font-weight:700;color:#166534;margin-bottom:6px;">
                   <i class="fas fa-brain me-1"></i>Perfil da Disciplina Gerado pela IA
                 </div>
@@ -9103,31 +9103,38 @@ Atenciosamente,`;
     }
 
     async function saveDisciplina() {
+        const saveBtn = document.getElementById('saveDisciplina');
         let pid = await getCurrentProfileId(), id = document.getElementById('disciplinaId').value;
-        const nome    = document.getElementById('disciplinaNome').value.trim();
-        const ementa  = document.getElementById('disciplinaEmenta').value.trim();
+        const nome    = (document.getElementById('disciplinaNome').value || '').trim();
+        const ementa  = (document.getElementById('disciplinaEmenta')  ? document.getElementById('disciplinaEmenta').value  : '').trim();
         const perfilEl = document.getElementById('disciplinaPerfil');
-        if (!nome) return alert('Nome obrigatório.');
 
-        // Se ainda não tem perfil gerado, gera agora antes de salvar
-        let perfil = perfilEl ? perfilEl.value : '';
-        if (!perfil && nome) {
-            perfil = await _gerarPerfilDisciplina(nome, ementa);
+        if (!nome) { alert('Nome obrigatório.'); return; }
+
+        // Usa perfil já gerado (via botão Analisar), ou salva sem perfil (será gerado na 1ª revisão)
+        const perfil = perfilEl ? (perfilEl.value || '') : '';
+
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Salvando...'; }
+
+        try {
+            let d = { 
+                id: id ? parseInt(id) : await getNewId('disciplinas'), 
+                profileId: pid, 
+                nome, ementa, perfil,
+                professor:     (document.getElementById('disciplinaProfessor').value || ''),
+                professorEmail:(document.getElementById('disciplinaEmail').value      || ''),
+                frequencia:    parseInt(document.getElementById('disciplinaFrequencia').value) || 85
+            };
+            await saveData('disciplinas', d); 
+            profileDataCache = null;
+            await loadProfileData();
+            renderCurrentPanel();
+            bootstrap.Modal.getInstance(document.getElementById('disciplinaModal')).hide();
+        } catch(e) {
+            alert('Erro ao salvar disciplina: ' + e.message);
+        } finally {
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fas fa-save me-1"></i> Salvar'; }
         }
-
-        let d = { 
-            id: id?parseInt(id):await getNewId('disciplinas'), 
-            profileId: pid, 
-            nome, ementa, perfil,
-            professor: document.getElementById('disciplinaProfessor').value, 
-            professorEmail: document.getElementById('disciplinaEmail').value,
-            frequencia: parseInt(document.getElementById('disciplinaFrequencia').value)||85
-        };
-        await saveData('disciplinas', d); 
-        profileDataCache = null;
-        await loadProfileData();
-        renderCurrentPanel();
-        bootstrap.Modal.getInstance(document.getElementById('disciplinaModal')).hide();
     }
 
     async function saveTrabalho() {
@@ -10473,26 +10480,52 @@ Atenciosamente,`;
         const btnAnalisar = document.getElementById('btnAnalisarDisciplina');
         if (btnAnalisar) {
             btnAnalisar.addEventListener('click', async function() {
-                const nome   = document.getElementById('disciplinaNome').value.trim();
-                const ementa = document.getElementById('disciplinaEmenta').value.trim();
-                if (!nome) { alert('Informe o nome da disciplina primeiro.'); return; }
+                const nome   = (document.getElementById('disciplinaNome').value || '').trim();
+                const ementa = (document.getElementById('disciplinaEmenta')  ? document.getElementById('disciplinaEmenta').value  : '').trim();
+                if (!nome) {
+                    document.getElementById('disciplinaNome').focus();
+                    document.getElementById('disciplinaNome').style.borderColor = '#e74c3c';
+                    setTimeout(() => { document.getElementById('disciplinaNome').style.borderColor = ''; }, 2000);
+                    return;
+                }
                 btnAnalisar.disabled = true;
-                btnAnalisar.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Analisando...';
+                btnAnalisar.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Analisando...';
+
+                // Mostra status na tela
+                const box = document.getElementById('disciplinaPerfilBox');
+                const txt = document.getElementById('disciplinaPerfilTexto');
+                if (box && txt) {
+                    txt.innerHTML = '<div style="display:flex;align-items:center;gap:8px;"><span class="spinner-border spinner-border-sm text-success"></span><span style="font-size:0.8rem;color:#166534;">Analisando disciplina com IA...</span></div>';
+                    box.style.display = 'block';
+                    const inner = document.getElementById('disciplinaPerfilInner');
+                    if (inner) { inner.style.background = '#f0fdf4'; inner.style.borderColor = '#bbf7d0'; }
+                }
+
                 try {
-                    const perfil = await _gerarPerfilDisciplina(nome, ementa);
+                    const perfil = await window._gerarPerfilDisciplina(nome, ementa);
                     document.getElementById('disciplinaPerfil').value = perfil;
                     const p = JSON.parse(perfil);
-                    const box = document.getElementById('disciplinaPerfilBox');
-                    const txt = document.getElementById('disciplinaPerfilTexto');
-                    if (box && txt) { txt.innerHTML = _renderPerfilHTML(p); box.style.display = 'block'; }
+                    if (box && txt) {
+                        txt.innerHTML = window._renderPerfilHTML(p);
+                        box.style.display = 'block';
+                        const inner = document.getElementById('disciplinaPerfilInner');
+                        if (inner) { inner.style.background = '#f0fdf4'; inner.style.borderColor = '#bbf7d0'; }
+                    }
+                    btnAnalisar.innerHTML = '<i class="fas fa-check-circle me-1" style="color:#27ae60;"></i> Analisado!';
+                    setTimeout(() => {
+                        if (btnAnalisar) btnAnalisar.innerHTML = '<i class="fas fa-brain me-1"></i> Reanalisar';
+                    }, 3000);
                 } catch(e) {
-                    alert('Não foi possível analisar agora. Você pode salvar assim mesmo.');
+                    console.error('[Analisar]', e);
+                    if (box && txt) {
+                        txt.innerHTML = `<span style="color:#c0392b;"><i class="fas fa-exclamation-circle me-1"></i>Não foi possível analisar (${e.message||'erro de rede'}). Você pode salvar assim mesmo — o perfil será gerado na primeira revisão.</span>`;
+                        box.style.display = 'block';
+                        const inner = document.getElementById('disciplinaPerfilInner');
+                        if (inner) { inner.style.background = '#fff3f3'; inner.style.borderColor = '#fcc'; }
+                    }
+                    btnAnalisar.innerHTML = '<i class="fas fa-brain me-1"></i> Tentar novamente';
                 } finally {
                     btnAnalisar.disabled = false;
-                    btnAnalisar.innerHTML = '<i class="fas fa-check me-1"></i> Analisado!';
-                    setTimeout(() => {
-                        if (btnAnalisar) btnAnalisar.innerHTML = '<i class="fas fa-brain me-1"></i> Analisar com IA';
-                    }, 3000);
                 }
             });
         }
@@ -10511,7 +10544,11 @@ Atenciosamente,`;
                 const perfilEl = document.getElementById('disciplinaPerfil');
                 if (perfilEl) perfilEl.value = '';
                 const box = document.getElementById('disciplinaPerfilBox');
-                if (box) box.style.display = 'none';
+                if (box) {
+                    box.style.display = 'none';
+                    const inner = document.getElementById('disciplinaPerfilInner');
+                    if (inner) { inner.style.background = '#f0fdf4'; inner.style.borderColor = '#bbf7d0'; }
+                }
                 const lbl = document.getElementById('disciplinaModalLabel');
                 if (lbl) lbl.innerHTML = '<i class="fas fa-book me-2" style="color:#3498db;"></i>Nova Disciplina';
             });
@@ -11486,7 +11523,7 @@ Atenciosamente,`;
             if (perfilBox && perfilTxt && item.perfil) {
                 try {
                     const p = JSON.parse(item.perfil);
-                    perfilTxt.innerHTML = _renderPerfilHTML(p);
+                    perfilTxt.innerHTML = window._renderPerfilHTML(p);
                     perfilBox.style.display = 'block';
                 } catch(e) { perfilBox.style.display = 'none'; }
             } else if (perfilBox) { perfilBox.style.display = 'none'; }
@@ -15511,7 +15548,7 @@ function _histDiscAdd(discId, qs) {
 }
 
 // ── Gera perfil completo de uma disciplina via IA ────────────────────────────
-async function _gerarPerfilDisciplina(nome, ementa) {
+window._gerarPerfilDisciplina = async function _gerarPerfilDisciplina(nome, ementa) {
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method:'POST',
     headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01'},
@@ -15541,17 +15578,17 @@ Responda SOMENTE o JSON, sem texto antes ou depois.` }]
   const data = await resp.json();
   const txt = (data.content||[]).map(b=>b.text||'').join('').trim()
     .replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim();
-  JSON.parse(txt); // valida
+  JSON.parse(txt); // valida — lança se inválido
   return txt;
-}
+};
 
 // ── Renderiza perfil em HTML legível ─────────────────────────────────────────
-function _renderPerfilHTML(p) {
+window._renderPerfilHTML = function _renderPerfilHTML(p) {
   const topicosHTML = (p.topicos||[]).map(t=>`<span style="background:#dcfce7;border:1px solid #bbf7d0;border-radius:12px;padding:1px 8px;font-size:0.68rem;color:#166534;display:inline-block;margin:2px;">${t}</span>`).join('');
   return `<div style="font-weight:700;font-size:0.8rem;margin-bottom:6px;">${p.area||''}</div>
 <div style="margin-bottom:6px;">${topicosHTML}</div>
 <div style="font-size:0.68rem;color:#15803d;">Fontes: ${(p.fontes||[]).join(' · ')}</div>`;
-}
+};
 
 // ── Dificuldade adaptativa ────────────────────────────────────────────────────
 // 1=fácil, 2=médio, 3=difícil — sobe ao acertar, desce ao errar
