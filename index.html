@@ -6155,7 +6155,7 @@
 <script>
 // ========== CÓDIGO OTIMIZADO PARA CARREGAMENTO RÁPIDO ==========
 document.addEventListener('DOMContentLoaded', function() {
-    const DB_NAME = 'academicoProDB', DB_VERSION = 3;
+    const DB_NAME = 'academicoProDB', DB_VERSION = 4;
     let db;
     let currentCalendarDate = new Date();
     let selectedCalendarDateStr = null; // tracks which day is selected in the calendar
@@ -6403,7 +6403,7 @@ document.addEventListener('DOMContentLoaded', function() {
             request.onsuccess = e => { db = e.target.result; resolve(db); };
             request.onupgradeneeded = e => {
                 const db = e.target.result;
-                const stores = ['profiles', 'disciplinas', 'horarios', 'trabalhos', 'provas', 'eventos', 'financeiro', 'biblioteca', 'filmes', 'notas', 'links', 'certificados'];
+                const stores = ['profiles', 'disciplinas', 'horarios', 'trabalhos', 'provas', 'eventos', 'financeiro', 'biblioteca', 'filmes', 'notas', 'links', 'certificados', 'leituras'];
                 stores.forEach(name => {
                     if (!db.objectStoreNames.contains(name)) {
                         const store = db.createObjectStore(name, { keyPath: 'id', autoIncrement: true });
@@ -6415,6 +6415,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (!store.indexNames.contains('mesAno')) store.createIndex('mesAno', 'mesAno', { unique: false });
                     if (!store.indexNames.contains('recorrenteId')) store.createIndex('recorrenteId', 'recorrenteId', { unique: false });
                 }
+                // Migração: move _leiturasPendentes do localStorage para IndexedDB
+                try {
+                    const lsData = localStorage.getItem('_leiturasPendentes');
+                    if (lsData && db.objectStoreNames.contains('leituras')) {
+                        const arr = JSON.parse(lsData);
+                        const leiturasTx = e.target.transaction.objectStore('leituras');
+                        arr.forEach(function(l, idx) {
+                            const obj = Object.assign({}, l);
+                            if (!obj.id) obj.id = idx + 1;
+                            leiturasTx.put(obj);
+                        });
+                        localStorage.removeItem('_leiturasPendentes');
+                    }
+                } catch(migErr) { console.warn('Migração leituras localStorage->IDB:', migErr); }
             };
         });
     }
@@ -6536,6 +6550,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderNoticiasJuridicas();
                 renderDiarioOficial();
                 renderConcursosCard();
+                renderLeiturasPendentesHome();
                 break;
             case 'dashboard': renderDashboard(data); break;
             case 'disciplinas': renderDisciplinas(data); break;
@@ -8112,6 +8127,7 @@ Atenciosamente,`;
                     const _nlFld = document.getElementById('notaLink');
                     if (_nlFld) _nlFld.value = nota.link || '';
                     _populateNotaAnexosPreview(nota);
+                    await _populateNotaLeituraFields(nota.id);
                     window._notaPendingFiles = [];
                     new bootstrap.Modal(document.getElementById('notaModal')).show();
                 }, 400);
@@ -8201,6 +8217,7 @@ Atenciosamente,`;
                     const _nlFld = document.getElementById('notaLink');
                     if (_nlFld) _nlFld.value = nota.link || '';
                     _populateNotaAnexosPreview(nota);
+                    await _populateNotaLeituraFields(nota.id);
                     window._notaPendingFiles = [];
                     new bootstrap.Modal(document.getElementById('notaModal')).show();
                 }, 400);
@@ -10247,6 +10264,61 @@ Atenciosamente,`;
         });
     }
 
+    // ── Helper: preenche campos de leitura ao editar nota que tem material vinculado ──
+    async function _populateNotaLeituraFields(notaId) {
+        // Limpa campos
+        const chk  = document.getElementById('notaLeituraAgenda');
+        const dw   = document.getElementById('notaLeituraDataWrap');
+        const da   = document.getElementById('notaLeituraDataAula');
+        const dl   = document.getElementById('notaLeituraDataLer');
+        const ad   = document.getElementById('notaLeituraAnexoData');
+        const an   = document.getElementById('notaLeituraAnexoNome');
+        const at   = document.getElementById('notaLeituraAnexoTipo');
+        const ll   = document.getElementById('notaLeituraLink');
+        const lp   = document.getElementById('notaLeituraPreview');
+        if (chk) { chk.checked = false; }
+        if (dw)  { dw.style.display = 'none'; }
+        if (da)  da.value = '';
+        if (dl)  dl.value = '';
+        if (ad)  ad.value = '';
+        if (an)  an.value = '';
+        if (at)  at.value = '';
+        if (ll)  ll.value = '';
+        if (lp)  lp.innerHTML = '';
+
+        if (!notaId) return;
+        try {
+            const todas = await getAllData('leituras');
+            const leitura = todas.find(function(l){ return l.notaId == notaId && !l.lido; });
+            if (!leitura) return;
+            // Preenche campos com dados da leitura salva
+            if (chk) { chk.checked = true; }
+            if (dw)  { dw.style.display = 'block'; }
+            if (da && leitura.dataAula) da.value = leitura.dataAula;
+            if (dl && leitura.dataLer)  dl.value = leitura.dataLer;
+            if (ll && leitura.link)     ll.value = leitura.link;
+            if (leitura.anexoNome && an) an.value = leitura.anexoNome;
+            if (leitura.anexoTipo && at) at.value = leitura.anexoTipo;
+            if (leitura.anexoDados && ad) {
+                ad.value = leitura.anexoDados;
+                // Mostra preview do arquivo
+                if (lp) {
+                    let ic = 'fa-file';
+                    const tipo = leitura.anexoTipo || '';
+                    if (tipo === 'text/html') ic = 'fa-file-code';
+                    else if (tipo === 'application/pdf') ic = 'fa-file-pdf';
+                    else if (tipo.includes('word')) ic = 'fa-file-word';
+                    else if (tipo.startsWith('image/')) ic = 'fa-image';
+                    lp.innerHTML =
+                        '<div style="background:#eafaf1;border:1px solid #27ae60;border-radius:8px;padding:7px 11px;display:flex;align-items:center;gap:8px;">' +
+                        '<i class="fas ' + ic + ' text-success"></i>' +
+                        '<span style="font-size:0.82rem;font-weight:600;color:#1e8449;">' + (leitura.anexoNome || 'arquivo') + '</span>' +
+                        '<button type="button" onclick="document.getElementById(\'notaLeituraAnexoData\').value=\'\';document.getElementById(\'notaLeituraAnexoNome\').value=\'\';document.getElementById(\'notaLeituraAnexoTipo\').value=\'\';this.closest(\'div\').parentElement.innerHTML=\'\';" style="margin-left:auto;background:none;border:none;color:#e74c3c;cursor:pointer;font-size:0.85rem;"><i class="fas fa-times"></i></button>' +
+                        '</div>';
+                }
+            }
+        } catch(e) { console.warn('_populateNotaLeituraFields:', e); }
+    }
 
     async function saveNota() {
         let pid = await getCurrentProfileId(), id = document.getElementById('notaId').value;
@@ -10301,6 +10373,10 @@ Atenciosamente,`;
         const leituraAnexoTipo = document.getElementById('notaLeituraAnexoTipo');
         const leituraLink = document.getElementById('notaLeituraLink');
         if (leituraAgenda && leituraAgenda.checked && leituraDataAula && leituraDataAula.value) {
+            // Remove entrada antiga para esta nota (se existir)
+            const todasLeituras = await getAllData('leituras');
+            const antiga = todasLeituras.find(function(l){ return l.notaId === n.id; });
+            if (antiga && antiga.id) await deleteData('leituras', antiga.id);
             const leituraObj = {
                 notaId: n.id,
                 notaTitulo: n.titulo,
@@ -10314,12 +10390,15 @@ Atenciosamente,`;
                 criadoEm: new Date().toISOString(),
                 lido: false
             };
-            // Salva em localStorage
-            let leiturasArr = JSON.parse(localStorage.getItem('_leiturasPendentes') || '[]');
-            // Remove entrada antiga para esta nota
-            leiturasArr = leiturasArr.filter(function(l){ return l.notaId !== n.id; });
-            leiturasArr.push(leituraObj);
-            localStorage.setItem('_leiturasPendentes', JSON.stringify(leiturasArr));
+            // Salva no IndexedDB
+            await saveData('leituras', leituraObj);
+        } else {
+            // Checkbox desmarcado: remove leitura existente desta nota, se houver
+            try {
+                const todasLeituras = await getAllData('leituras');
+                const antiga = todasLeituras.find(function(l){ return l.notaId === n.id; });
+                if (antiga && antiga.id) await deleteData('leituras', antiga.id);
+            } catch(e) {}
         }
 
         profileDataCache = null;
@@ -10335,16 +10414,18 @@ Atenciosamente,`;
     }
 
     // ===== LEITURAS PENDENTES — CARD HOME =====
-    function renderLeiturasPendentesHome() {
+    async function renderLeiturasPendentesHome() {
         const wrap = document.getElementById('leitura-pendente-home-wrap');
         if (!wrap) return;
         let arr = [];
-        try { arr = JSON.parse(localStorage.getItem('_leiturasPendentes') || '[]'); } catch(e){}
+        try { arr = await getAllData('leituras'); } catch(e){}
+        const pid = await getCurrentProfileId();
         const hoje = new Date().toISOString().split('T')[0];
-        // Filtra não lidas e cujo prazo não passou (ou não tem prazo)
+        // Filtra por perfil, não lidas e cujo prazo não passou (ou não tem prazo)
         const pending = arr.filter(function(l){
+            if (l.profileId && l.profileId !== pid) return false;
             if (l.lido) return false;
-            if (l.dataLer && l.dataLer < hoje) return false; // passou sem marcar lido
+            if (l.dataLer && l.dataLer < hoje) return false;
             return true;
         });
 
@@ -10400,24 +10481,31 @@ Atenciosamente,`;
           '</div>';
     }
 
-    window._marcarLeituraLida = function(idx) {
+    window._marcarLeituraLida = async function(idx) {
         let arr = [];
-        try { arr = JSON.parse(localStorage.getItem('_leiturasPendentes') || '[]'); } catch(e){}
+        try { arr = await getAllData('leituras'); } catch(e){}
+        const pid = await getCurrentProfileId();
         const hoje = new Date().toISOString().split('T')[0];
-        const pending = arr.filter(function(l){ return !l.lido && (!l.dataLer || l.dataLer >= hoje); });
+        const pending = arr.filter(function(l){
+            if (l.profileId && l.profileId !== pid) return false;
+            return !l.lido && (!l.dataLer || l.dataLer >= hoje);
+        });
         if (pending[idx]) {
-            const original = arr.find(function(l){ return l === pending[idx] || (l.notaId === pending[idx].notaId && l.criadoEm === pending[idx].criadoEm); });
-            if (original) { original.lido = true; }
-            localStorage.setItem('_leiturasPendentes', JSON.stringify(arr));
+            pending[idx].lido = true;
+            await saveData('leituras', pending[idx]);
             renderLeiturasPendentesHome();
         }
     };
 
-    window._abrirLeituraAnexo = function(idx) {
+    window._abrirLeituraAnexo = async function(idx) {
         let arr = [];
-        try { arr = JSON.parse(localStorage.getItem('_leiturasPendentes') || '[]'); } catch(e){}
+        try { arr = await getAllData('leituras'); } catch(e){}
+        const pid = await getCurrentProfileId();
         const hoje = new Date().toISOString().split('T')[0];
-        const pending = arr.filter(function(l){ return !l.lido && (!l.dataLer || l.dataLer >= hoje); });
+        const pending = arr.filter(function(l){
+            if (l.profileId && l.profileId !== pid) return false;
+            return !l.lido && (!l.dataLer || l.dataLer >= hoje);
+        });
         const l = pending[idx];
         if (l && l.anexoDados && window.visualizarAnexo) {
             window.visualizarAnexo(l.anexoDados, l.anexoTipo || '', l.anexoNome || 'material');
@@ -11425,6 +11513,7 @@ Atenciosamente,`;
                         const _nlFld2 = document.getElementById('notaLink');
                         if (_nlFld2) _nlFld2.value = nota.link || '';
                         _populateNotaAnexosPreview(nota);
+                        await _populateNotaLeituraFields(nota.id);
                         window._notaPendingFiles = [];
                         new bootstrap.Modal(document.getElementById('notaModal')).show();
                     }
@@ -11621,7 +11710,7 @@ Atenciosamente,`;
         }
 
         // Count records per semester
-        const STORES_COUNT = ['disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links','certificados'];
+        const STORES_COUNT = ['disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links','certificados','leituras'];
         let html = '<div class="d-flex flex-column gap-2">';
         for (const p of profiles) {
             let total = 0;
@@ -11713,7 +11802,7 @@ Atenciosamente,`;
         const app = window._acadApp;
         if (!app) { alert('Sistema não iniciado ainda. Aguarde.'); return; }
 
-        const STORES_ALL = ['profiles','disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links','certificados'];
+        const STORES_ALL = ['profiles','disciplinas','horarios','trabalhos','provas','eventos','financeiro','biblioteca','filmes','notas','links','certificados','leituras'];
         const backup = {
             _meta: {
                 app: 'academicoProDB',
@@ -13477,12 +13566,12 @@ Atenciosamente,`;
 
   /* ─── Constantes ──────────────────────────────────────────── */
   var STORES = ['profiles','disciplinas','horarios','trabalhos','provas','eventos',
-                'financeiro','biblioteca','filmes','notas','links','certificados'];
+                'financeiro','biblioteca','filmes','notas','links','certificados','leituras'];
   var LABELS = {
     profiles:'Semestres', disciplinas:'Disciplinas', horarios:'Horários',
     trabalhos:'Trabalhos', provas:'Provas', eventos:'Eventos',
     financeiro:'Financeiro', biblioteca:'Biblioteca', filmes:'Filmes',
-    notas:'Notas', links:'Links', certificados:'Certificados'
+    notas:'Notas', links:'Links', certificados:'Certificados', leituras:'Leituras'
   };
 
   /* ─── Estado ──────────────────────────────────────────────── */
