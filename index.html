@@ -13,6 +13,76 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* ===== LEITURA PENDENTE — CARD ALERTA HOME ===== */
+    .leitura-pendente-card {
+      background: linear-gradient(135deg, #1a2332 0%, #1e3a2f 100%);
+      border: 1.5px solid rgba(26,188,156,0.35);
+      border-radius: 16px;
+      padding: 16px 20px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(26,188,156,0.12);
+      animation: lpSlideIn 0.4s ease;
+    }
+    @keyframes lpSlideIn {
+      from { opacity:0; transform:translateY(-8px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .leitura-pendente-card::before {
+      content:'';
+      position:absolute; top:-40px; right:-40px;
+      width:140px; height:140px;
+      background: radial-gradient(circle, rgba(26,188,156,0.12) 0%, transparent 70%);
+      border-radius:50%;
+      pointer-events:none;
+    }
+    .lp-pulse {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:10px; height:10px; border-radius:50%;
+      background:#1abc9c; flex-shrink:0;
+      box-shadow:0 0 0 0 rgba(26,188,156,0.5);
+      animation:lpPulse 2s infinite;
+    }
+    @keyframes lpPulse {
+      0%  { box-shadow:0 0 0 0 rgba(26,188,156,0.5); }
+      70% { box-shadow:0 0 0 8px rgba(26,188,156,0); }
+      100%{ box-shadow:0 0 0 0 rgba(26,188,156,0); }
+    }
+    .lp-item {
+      display:flex; align-items:center; gap:10px;
+      padding:9px 10px; border-radius:10px;
+      background:rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.07);
+      margin-bottom:8px; transition:background 0.15s; cursor:pointer;
+    }
+    .lp-item:last-child { margin-bottom:0; }
+    .lp-item:hover { background:rgba(26,188,156,0.1); border-color:rgba(26,188,156,0.25); }
+    .lp-item-icon {
+      width:36px; height:36px; border-radius:9px; flex-shrink:0;
+      background:linear-gradient(135deg,rgba(26,188,156,0.25),rgba(26,188,156,0.1));
+      display:flex; align-items:center; justify-content:center; font-size:0.9rem;
+      color:#1abc9c;
+    }
+    .lp-item-body { flex:1; min-width:0; }
+    .lp-item-title { font-size:0.82rem; font-weight:700; color:rgba(255,255,255,0.9); margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .lp-item-meta  { font-size:0.67rem; color:rgba(255,255,255,0.45); display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+    .lp-item-urgente { color:#e74c3c !important; font-weight:700; }
+    .lp-item-action {
+      display:inline-flex; align-items:center; gap:5px;
+      background:linear-gradient(135deg,#1abc9c,#16a085);
+      color:#0d1f14; font-size:0.72rem; font-weight:700;
+      border:none; border-radius:7px; padding:5px 11px; cursor:pointer;
+      transition:all 0.18s; flex-shrink:0; text-decoration:none;
+    }
+    .lp-item-action:hover { filter:brightness(1.1); transform:translateY(-1px); color:#0d1f14; text-decoration:none; }
+    .lp-badge-count {
+      display:inline-flex; align-items:center; justify-content:center;
+      min-width:20px; height:20px; border-radius:10px;
+      background:#1abc9c; color:#0d1f14; font-size:0.65rem; font-weight:800;
+      padding:0 5px;
+    }
+
     /* ===== PORTAIS JURÍDICOS ===== */
     .portal-juridico-card {
         display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -4384,6 +4454,9 @@
 
     <!-- VISÃO GERAL REMOVIDA -->
 
+    <!-- ALERTA DE LEITURA PENDENTE -->
+    <div id="leitura-pendente-home-wrap" style="display:none;margin-bottom:16px;"></div>
+
     <div class="row g-3 mb-4">
       <div class="col-lg-6 d-flex flex-column" id="next-event-container"></div>
       <div class="col-lg-6 d-flex flex-column" id="leitura-diaria-container"></div>
@@ -5760,6 +5833,63 @@
             </div>
             <div class="mb-3"><label for="notaLink" class="form-label"><i class="fas fa-link me-1" style="color:var(--info);"></i>Link <span class="text-muted small">(opcional)</span></label><div class="input-group"><input type="url" class="form-control" id="notaLink" placeholder="https://..."><button type="button" class="btn btn-outline-secondary" id="notaLinkTestBtn" title="Abrir link"><i class="fas fa-external-link-alt"></i></button></div></div>
             <div class="mb-3"><label class="form-label"><i class="fas fa-paperclip me-1" style="color:var(--warning);"></i>Anexos <span class="text-muted small">(HTML, PDF, Word, Imagens)</span></label><div id="notaAnexosArea" class="image-upload-area" style="padding:12px;cursor:pointer;"><i class="fas fa-cloud-upload-alt" style="font-size:1.6rem;color:var(--accent);display:block;margin-bottom:4px;"></i><p class="mb-0 small">Clique ou arraste arquivos aqui</p><p class="mb-0 small text-muted">.html • .pdf • .docx • .jpg • .png</p><input type="file" id="notaAnexosInput" accept=".html,text/html,.pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*" class="d-none" multiple></div><div id="notaAnexosPreview" class="mt-2"></div><input type="hidden" id="notaAnexosRemovidos" value=""></div>
+
+            <!-- ===== MATERIAL DE LEITURA PARA PRÓXIMA AULA ===== -->
+            <div class="mb-3 nota-leitura-bloco" style="background:linear-gradient(135deg,rgba(26,188,156,0.06),rgba(52,152,219,0.06));border:1.5px solid rgba(26,188,156,0.25);border-radius:12px;padding:14px 16px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#1abc9c,#3498db);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <i class="fas fa-book-open" style="color:white;font-size:0.85rem;"></i>
+                </div>
+                <div>
+                  <div style="font-size:0.85rem;font-weight:700;color:#1a2332;line-height:1.1;">Material de Leitura — Próxima Aula</div>
+                  <div style="font-size:0.68rem;color:#95a5a6;">Anexe e sinalize para leitura antes da aula</div>
+                </div>
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label" style="font-size:0.8rem;font-weight:600;color:#34495e;"><i class="fas fa-file-alt me-1" style="color:#3498db;"></i>Material / Leitura obrigatória <span class="text-muted small">(PDF, Word, HTML, Imagem)</span></label>
+                <div id="notaLeituraAnexoArea" class="image-upload-area" style="padding:10px 12px;cursor:pointer;border-radius:9px;border:1.5px dashed rgba(26,188,156,0.4);background:rgba(26,188,156,0.03);">
+                  <i class="fas fa-cloud-upload-alt" style="font-size:1.3rem;color:var(--accent);display:block;margin-bottom:3px;"></i>
+                  <p class="mb-0 small">Clique ou arraste o material de leitura</p>
+                  <p class="mb-0 small text-muted">.pdf • .docx • .html • imagens</p>
+                  <input type="file" id="notaLeituraInput" accept=".html,text/html,.pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*" class="d-none">
+                </div>
+                <div id="notaLeituraPreview" class="mt-2"></div>
+                <input type="hidden" id="notaLeituraAnexoData" value="">
+                <input type="hidden" id="notaLeituraAnexoNome" value="">
+                <input type="hidden" id="notaLeituraAnexoTipo" value="">
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label" style="font-size:0.8rem;font-weight:600;color:#34495e;"><i class="fas fa-link me-1" style="color:#3498db;"></i>Ou link do material <span class="text-muted small">(opcional)</span></label>
+                <input type="url" class="form-control form-control-sm" id="notaLeituraLink" placeholder="https://..." style="border-radius:8px;font-size:0.85rem;">
+              </div>
+
+              <div style="background:white;border:1.5px solid #dee2e6;border-radius:10px;padding:12px 14px;margin-top:4px;">
+                <div class="form-check" style="margin-bottom:6px;">
+                  <input class="form-check-input" type="checkbox" id="notaLeituraAgenda" style="cursor:pointer;">
+                  <label class="form-check-label" for="notaLeituraAgenda" style="font-size:0.83rem;font-weight:600;color:#1a2332;cursor:pointer;">
+                    <i class="fas fa-calendar-check me-1" style="color:#e67e22;"></i> Sinalizar na Agenda para leitura antes da aula
+                  </label>
+                </div>
+                <div id="notaLeituraDataWrap" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid #f0f2f4;">
+                  <div class="row g-2">
+                    <div class="col-sm-6">
+                      <label class="form-label" style="font-size:0.75rem;font-weight:600;color:#7f8c8d;"><i class="fas fa-calendar me-1"></i>Data da Aula</label>
+                      <input type="date" class="form-control form-control-sm" id="notaLeituraDataAula" style="border-radius:8px;font-size:0.85rem;">
+                    </div>
+                    <div class="col-sm-6">
+                      <label class="form-label" style="font-size:0.75rem;font-weight:600;color:#7f8c8d;"><i class="fas fa-clock me-1"></i>Ler até (data)</label>
+                      <input type="date" class="form-control form-control-sm" id="notaLeituraDataLer" style="border-radius:8px;font-size:0.85rem;">
+                    </div>
+                  </div>
+                  <div class="mt-2 p-2" style="background:rgba(230,126,34,0.08);border-radius:8px;border:1px solid rgba(230,126,34,0.2);">
+                    <small style="color:#e67e22;font-weight:600;"><i class="fas fa-bell me-1"></i>Um lembrete aparecerá no card da tela inicial até a data de leitura.</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- ===== FIM MATERIAL DE LEITURA ===== -->
           </div>
 
           <!-- Layout Tela Cheia: Editor + Preview lado a lado -->
@@ -10161,9 +10291,41 @@ Atenciosamente,`;
         }
         await saveData('notas', n);
         window._notaPendingFiles = [];
+
+        // ===== SALVAR MATERIAL DE LEITURA =====
+        const leituraAgenda = document.getElementById('notaLeituraAgenda');
+        const leituraDataAula = document.getElementById('notaLeituraDataAula');
+        const leituraDataLer  = document.getElementById('notaLeituraDataLer');
+        const leituraAnexoData = document.getElementById('notaLeituraAnexoData');
+        const leituraAnexoNome = document.getElementById('notaLeituraAnexoNome');
+        const leituraAnexoTipo = document.getElementById('notaLeituraAnexoTipo');
+        const leituraLink = document.getElementById('notaLeituraLink');
+        if (leituraAgenda && leituraAgenda.checked && leituraDataAula && leituraDataAula.value) {
+            const leituraObj = {
+                notaId: n.id,
+                notaTitulo: n.titulo,
+                profileId: n.profileId,
+                dataAula: leituraDataAula.value,
+                dataLer: leituraDataLer ? leituraDataLer.value : '',
+                link: leituraLink ? leituraLink.value.trim() : '',
+                anexoNome: leituraAnexoNome ? leituraAnexoNome.value : '',
+                anexoTipo: leituraAnexoTipo ? leituraAnexoTipo.value : '',
+                anexoDados: leituraAnexoData ? leituraAnexoData.value : '',
+                criadoEm: new Date().toISOString(),
+                lido: false
+            };
+            // Salva em localStorage
+            let leiturasArr = JSON.parse(localStorage.getItem('_leiturasPendentes') || '[]');
+            // Remove entrada antiga para esta nota
+            leiturasArr = leiturasArr.filter(function(l){ return l.notaId !== n.id; });
+            leiturasArr.push(leituraObj);
+            localStorage.setItem('_leiturasPendentes', JSON.stringify(leiturasArr));
+        }
+
         profileDataCache = null;
         await loadProfileData();
         renderCurrentPanel();
+        renderLeiturasPendentesHome();
         bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide();
     }
 
@@ -10171,6 +10333,96 @@ Atenciosamente,`;
         let id = document.getElementById('notaId').value;
         if (id && confirm('Excluir nota?')) { await deleteData('notas', parseInt(id)); profileDataCache = null; await loadProfileData(); renderCurrentPanel(); bootstrap.Modal.getInstance(document.getElementById('notaModal')).hide(); }
     }
+
+    // ===== LEITURAS PENDENTES — CARD HOME =====
+    function renderLeiturasPendentesHome() {
+        const wrap = document.getElementById('leitura-pendente-home-wrap');
+        if (!wrap) return;
+        let arr = [];
+        try { arr = JSON.parse(localStorage.getItem('_leiturasPendentes') || '[]'); } catch(e){}
+        const hoje = new Date().toISOString().split('T')[0];
+        // Filtra não lidas e cujo prazo não passou (ou não tem prazo)
+        const pending = arr.filter(function(l){
+            if (l.lido) return false;
+            if (l.dataLer && l.dataLer < hoje) return false; // passou sem marcar lido
+            return true;
+        });
+
+        if (!pending.length) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+        wrap.style.display = 'block';
+
+        let itensHtml = '';
+        pending.forEach(function(l, i) {
+            const diasAula = l.dataAula ? Math.ceil((new Date(l.dataAula) - new Date(hoje)) / 86400000) : null;
+            const diasLer  = l.dataLer  ? Math.ceil((new Date(l.dataLer)  - new Date(hoje)) / 86400000) : null;
+            let urgClass = '';
+            let urgMsg   = '';
+            if (diasLer !== null && diasLer <= 1) { urgClass = 'lp-item-urgente'; urgMsg = diasLer <= 0 ? '⚠️ Prazo hoje!' : '⚠️ Leia hoje!'; }
+            else if (diasAula !== null && diasAula <= 2) { urgClass = 'lp-item-urgente'; urgMsg = '⚠️ Aula em breve!'; }
+
+            const dataAulaFmt = l.dataAula ? new Date(l.dataAula + 'T12:00:00').toLocaleDateString('pt-BR') : '';
+            const dataLerFmt  = l.dataLer  ? new Date(l.dataLer  + 'T12:00:00').toLocaleDateString('pt-BR') : '';
+
+            let actionHtml = '';
+            if (l.link) {
+                actionHtml = '<a href="' + l.link + '" target="_blank" class="lp-item-action"><i class="fas fa-external-link-alt"></i> Abrir</a>';
+            } else if (l.anexoDados) {
+                actionHtml = '<button type="button" class="lp-item-action" onclick="window._abrirLeituraAnexo(' + i + ')"><i class="fas fa-book-open"></i> Ler</button>';
+            }
+
+            itensHtml += '<div class="lp-item" data-lp-idx="' + i + '">' +
+              '<div class="lp-item-icon"><i class="fas fa-book-open"></i></div>' +
+              '<div class="lp-item-body">' +
+                '<div class="lp-item-title">' + (l.notaTitulo || 'Nota sem título') + (l.anexoNome ? ' <span style="font-size:0.65rem;color:rgba(255,255,255,0.4);">— ' + l.anexoNome + '</span>' : '') + '</div>' +
+                '<div class="lp-item-meta">' +
+                  (dataAulaFmt ? '<span><i class="fas fa-chalkboard-teacher me-1"></i>Aula: ' + dataAulaFmt + '</span>' : '') +
+                  (dataLerFmt  ? '<span><i class="fas fa-calendar-check me-1"></i>Ler até: ' + dataLerFmt + '</span>' : '') +
+                  (urgMsg      ? '<span class="' + urgClass + '">' + urgMsg + '</span>' : '') +
+                '</div>' +
+              '</div>' +
+              (actionHtml ? '<div>' + actionHtml + '</div>' : '') +
+              '<button type="button" class="btn btn-sm" title="Marcar como lido" onclick="window._marcarLeituraLida(' + i + ')" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);border-radius:7px;padding:4px 9px;font-size:0.7rem;margin-left:4px;"><i class="fas fa-check"></i></button>' +
+            '</div>';
+        });
+
+        wrap.innerHTML =
+          '<div class="leitura-pendente-card">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">' +
+              '<div style="display:flex;align-items:center;gap:8px;">' +
+                '<div class="lp-pulse"></div>' +
+                '<span style="font-size:0.82rem;font-weight:700;color:#1abc9c;text-transform:uppercase;letter-spacing:0.07em;">Leituras Pendentes</span>' +
+                '<span class="lp-badge-count">' + pending.length + '</span>' +
+              '</div>' +
+              '<button type="button" onclick="document.getElementById(\'leitura-pendente-home-wrap\').style.display=\'none\'" style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:0.75rem;cursor:pointer;padding:2px 6px;border-radius:5px;" title="Fechar"><i class="fas fa-times"></i></button>' +
+            '</div>' +
+            '<p style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-bottom:10px;"><i class="fas fa-info-circle me-1"></i>Materiais para ler antes das aulas abaixo:</p>' +
+            itensHtml +
+          '</div>';
+    }
+
+    window._marcarLeituraLida = function(idx) {
+        let arr = [];
+        try { arr = JSON.parse(localStorage.getItem('_leiturasPendentes') || '[]'); } catch(e){}
+        const hoje = new Date().toISOString().split('T')[0];
+        const pending = arr.filter(function(l){ return !l.lido && (!l.dataLer || l.dataLer >= hoje); });
+        if (pending[idx]) {
+            const original = arr.find(function(l){ return l === pending[idx] || (l.notaId === pending[idx].notaId && l.criadoEm === pending[idx].criadoEm); });
+            if (original) { original.lido = true; }
+            localStorage.setItem('_leiturasPendentes', JSON.stringify(arr));
+            renderLeiturasPendentesHome();
+        }
+    };
+
+    window._abrirLeituraAnexo = function(idx) {
+        let arr = [];
+        try { arr = JSON.parse(localStorage.getItem('_leiturasPendentes') || '[]'); } catch(e){}
+        const hoje = new Date().toISOString().split('T')[0];
+        const pending = arr.filter(function(l){ return !l.lido && (!l.dataLer || l.dataLer >= hoje); });
+        const l = pending[idx];
+        if (l && l.anexoDados && window.visualizarAnexo) {
+            window.visualizarAnexo(l.anexoDados, l.anexoTipo || '', l.anexoNome || 'material');
+        }
+    };
 
     // ===== HELPERS: Matéria em Notas =====
     async function populateNotaDisciplinaSelects(selectedId) {
@@ -17026,6 +17278,100 @@ function _renderScore() {
     if (cadSenhaConf) cadSenhaConf.addEventListener('keydown', e => { if (e.key==='Enter') fazerCadastro(); });
     if (cfgBinId)     cfgBinId.addEventListener('keydown',     e => { if (e.key==='Enter') salvarConfig(); });
     if (cfgMasterKey) cfgMasterKey.addEventListener('keydown', e => { if (e.key==='Enter') cfgBinId && cfgBinId.focus(); });
+  });
+
+  // ===== INIT: LEITURAS PENDENTES HOME + MODAL EVENTS =====
+  document.addEventListener('DOMContentLoaded', function() {
+
+    // Renderizar card de leitura na home ao carregar
+    if (typeof renderLeiturasPendentesHome === 'function') {
+      renderLeiturasPendentesHome();
+    }
+
+    // Toggle visibilidade da seção de datas ao marcar checkbox
+    const chkAgenda = document.getElementById('notaLeituraAgenda');
+    const dataWrap  = document.getElementById('notaLeituraDataWrap');
+    if (chkAgenda && dataWrap) {
+      chkAgenda.addEventListener('change', function() {
+        dataWrap.style.display = this.checked ? 'block' : 'none';
+        if (this.checked) {
+          // Pre-fill data da aula com amanhã
+          const amanha = new Date(); amanha.setDate(amanha.getDate() + 1);
+          const notaDataAula = document.getElementById('notaLeituraDataAula');
+          const notaDataLer  = document.getElementById('notaLeituraDataLer');
+          if (notaDataAula && !notaDataAula.value) notaDataAula.value = amanha.toISOString().split('T')[0];
+          if (notaDataLer  && !notaDataLer.value)  notaDataLer.value  = amanha.toISOString().split('T')[0];
+        }
+      });
+    }
+
+    // Upload do arquivo de leitura
+    const leituraArea  = document.getElementById('notaLeituraAnexoArea');
+    const leituraInput = document.getElementById('notaLeituraInput');
+    const leituraPreview = document.getElementById('notaLeituraPreview');
+    if (leituraArea && leituraInput) {
+      leituraArea.addEventListener('click', function() { leituraInput.click(); });
+      leituraArea.addEventListener('dragover', function(e) { e.preventDefault(); leituraArea.style.borderColor='#1abc9c'; });
+      leituraArea.addEventListener('dragleave', function()  { leituraArea.style.borderColor=''; });
+      leituraArea.addEventListener('drop', function(e) {
+        e.preventDefault(); leituraArea.style.borderColor='';
+        if (e.dataTransfer && e.dataTransfer.files[0]) processLeituraFile(e.dataTransfer.files[0]);
+      });
+      leituraInput.addEventListener('change', function() {
+        if (this.files[0]) processLeituraFile(this.files[0]);
+      });
+    }
+
+    function processLeituraFile(file) {
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const base64 = ev.target.result.split(',')[1];
+        document.getElementById('notaLeituraAnexoData').value = base64;
+        document.getElementById('notaLeituraAnexoNome').value = file.name;
+        document.getElementById('notaLeituraAnexoTipo').value = file.type;
+        if (leituraPreview) {
+          let ic = 'fa-file';
+          if (file.type === 'text/html') ic = 'fa-file-code';
+          else if (file.type === 'application/pdf') ic = 'fa-file-pdf';
+          else if (file.type.includes('word')) ic = 'fa-file-word';
+          else if (file.type.startsWith('image/')) ic = 'fa-image';
+          leituraPreview.innerHTML =
+            '<div style="background:#eafaf1;border:1px solid #27ae60;border-radius:8px;padding:7px 11px;display:flex;align-items:center;gap:8px;">' +
+            '<i class="fas ' + ic + ' text-success"></i>' +
+            '<span style="font-size:0.82rem;font-weight:600;color:#1e8449;">' + file.name + '</span>' +
+            '<button type="button" onclick="document.getElementById(\'notaLeituraAnexoData\').value=\'\';document.getElementById(\'notaLeituraAnexoNome\').value=\'\';document.getElementById(\'notaLeituraAnexoTipo\').value=\'\';this.closest(\'div\').parentElement.innerHTML=\'\';" style="margin-left:auto;background:none;border:none;color:#e74c3c;cursor:pointer;font-size:0.85rem;"><i class="fas fa-times"></i></button>' +
+            '</div>';
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Limpar campos de leitura ao fechar o modal
+    const notaModalEl = document.getElementById('notaModal');
+    if (notaModalEl) {
+      notaModalEl.addEventListener('hidden.bs.modal', function() {
+        const chk = document.getElementById('notaLeituraAgenda');
+        const dw  = document.getElementById('notaLeituraDataWrap');
+        const da  = document.getElementById('notaLeituraDataAula');
+        const dl  = document.getElementById('notaLeituraDataLer');
+        const ad  = document.getElementById('notaLeituraAnexoData');
+        const an  = document.getElementById('notaLeituraAnexoNome');
+        const at  = document.getElementById('notaLeituraAnexoTipo');
+        const ll  = document.getElementById('notaLeituraLink');
+        const lp  = document.getElementById('notaLeituraPreview');
+        if (chk) chk.checked = false;
+        if (dw)  dw.style.display = 'none';
+        if (da)  da.value = '';
+        if (dl)  dl.value = '';
+        if (ad)  ad.value = '';
+        if (an)  an.value = '';
+        if (at)  at.value = '';
+        if (ll)  ll.value = '';
+        if (lp)  lp.innerHTML = '';
+        if (leituraInput) leituraInput.value = '';
+      }, false);
+    }
+
   });
 
 })();
