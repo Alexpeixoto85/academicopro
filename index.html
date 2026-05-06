@@ -4770,7 +4770,10 @@
   <div class="content-panel" id="provas">
     <div class="panel-header">
       <div class="panel-header-left"><h3><i class="fas fa-file-alt me-2" style="color:#f39c12;"></i>Provas</h3><p>Controle suas avaliações e notas</p></div>
-      <button class="panel-btn panel-btn-primary" data-bs-toggle="modal" data-bs-target="#provaModal"><i class="fas fa-plus"></i> Nova Prova</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+        <button class="panel-btn" style="background:linear-gradient(135deg,#8e44ad,#9b59b6);color:#fff;border:none;" data-bs-toggle="modal" data-bs-target="#agendamentoAutoModal"><i class="fas fa-magic"></i> Agendar Automaticamente</button>
+        <button class="panel-btn panel-btn-primary" data-bs-toggle="modal" data-bs-target="#provaModal"><i class="fas fa-plus"></i> Nova Prova</button>
+      </div>
     </div>
       <div class="row g-4" id="provas-cards"></div>
   </div>
@@ -5544,6 +5547,52 @@
             <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="saveTrabalho">Salvar</button></div>
         </div>
     </div>
+</div>
+
+<!-- Modal Agendamento Automático de Provas -->
+<div class="modal fade" id="agendamentoAutoModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header" style="background:linear-gradient(135deg,#1a2332,#2c3e50);color:white;">
+        <h5 class="modal-title"><i class="fas fa-magic me-2" style="color:#9b59b6;"></i>Agendamento Automático de Provas</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info d-flex align-items-start gap-2" style="font-size:0.85rem;">
+          <i class="fas fa-info-circle mt-1"></i>
+          <span>Informe a data de início do período de provas. O sistema vai verificar os horários de cada disciplina e agendar automaticamente uma prova para o próximo dia de aula de cada matéria a partir desta data.</span>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold"><i class="fas fa-calendar-day me-1" style="color:#9b59b6;"></i>Data de Início das Provas</label>
+            <input type="date" class="form-control" id="autoProvaDataInicio">
+            <div class="form-text">Primeira data possível para agendar provas</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold"><i class="fas fa-tag me-1" style="color:#9b59b6;"></i>Conteúdo / Tipo</label>
+            <input type="text" class="form-control" id="autoProvaConteudo" placeholder="Ex: Avaliação 1, Prova Final...">
+            <div class="form-text">Será usado como conteúdo padrão para todas</div>
+          </div>
+        </div>
+
+        <div id="autoProvaPreview" style="display:none;">
+          <hr>
+          <h6 class="fw-bold mb-3"><i class="fas fa-list-check me-2" style="color:#1abc9c;"></i>Pré-visualização — Provas a serem criadas</h6>
+          <div id="autoProvaPreviewList" class="row g-2"></div>
+        </div>
+        <div id="autoProvaSemHorario" style="display:none;" class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>Nenhuma disciplina com horário cadastrado foi encontrada. Cadastre os horários primeiro em <strong>Horários</strong>.
+        </div>
+        <div id="autoProvaMsg" style="display:none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-secondary" id="btnPreviewAutoProvas"><i class="fas fa-eye me-1"></i> Pré-visualizar</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmarAutoProvas" style="background:#8e44ad;border-color:#8e44ad;" disabled><i class="fas fa-magic me-1"></i> Confirmar Agendamento</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Modal Prova com anexo único -->
@@ -9114,6 +9163,190 @@ Atenciosamente,`;
             alert('Erro ao abrir edição. Verifique o console.');
         }
     }
+
+    // ── AGENDAMENTO AUTOMÁTICO DE PROVAS ──────────────────────────
+    (function() {
+      // Dias da semana: diaSemana=1→Segunda(JS=1), 2→Terça(2)... 6→Sábado(6)
+      const diasMap = { '1':1,'2':2,'3':3,'4':4,'5':5,'6':6 };
+
+      function proximaDataParaDia(dataInicio, diaSemana) {
+        // dataInicio: Date object (midnight local)
+        // diaSemana: string '1'..'6' (1=Segunda…6=Sábado)
+        const alvo = diasMap[diaSemana]; // JS weekday: 1=Mon..6=Sat
+        const d = new Date(dataInicio);
+        let jsDay = d.getDay(); // 0=Sun,1=Mon...6=Sat
+        // diff: quantos dias até o próximo 'alvo'
+        let diff = (alvo - jsDay + 7) % 7;
+        if (diff === 0) diff = 0; // mesmo dia = usa este dia
+        d.setDate(d.getDate() + diff);
+        return d;
+      }
+
+      function formatDateISO(d) {
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      }
+
+      function buildPreview(disciplinas, horarios, dataInicio, conteudo) {
+        // Agrupa horários por disciplinaId → pega o de menor diaSemana ou mais próximo
+        const horPorDisc = {};
+        horarios.forEach(h => {
+          const did = h.disciplinaId;
+          if (!horPorDisc[did]) horPorDisc[did] = [];
+          horPorDisc[did].push(h);
+        });
+
+        const items = [];
+        disciplinas.forEach(disc => {
+          const hrs = horPorDisc[disc.id];
+          if (!hrs || !hrs.length) return;
+
+          // Encontra o horário com a data mais próxima a partir de dataInicio
+          let melhor = null, melhorData = null;
+          hrs.forEach(h => {
+            const dt = proximaDataParaDia(dataInicio, String(h.diaSemana));
+            if (!melhorData || dt < melhorData) {
+              melhorData = dt;
+              melhor = h;
+            }
+          });
+
+          const diasSemanaLabels = {'1':'Segunda','2':'Terça','3':'Quarta','4':'Quinta','5':'Sexta','6':'Sábado'};
+          items.push({
+            disciplinaId: disc.id,
+            disciplinaNome: disc.nome,
+            data: formatDateISO(melhorData),
+            hora: melhor.inicio,
+            local: melhor.local || '',
+            diaNome: diasSemanaLabels[String(melhor.diaSemana)] || '',
+            conteudo: conteudo || 'Avaliação'
+          });
+        });
+
+        items.sort((a,b) => a.data.localeCompare(b.data));
+        return items;
+      }
+
+      let _previewItems = [];
+
+      document.getElementById('btnPreviewAutoProvas').addEventListener('click', async function() {
+        const dataVal = document.getElementById('autoProvaDataInicio').value;
+        if (!dataVal) return alert('Informe a data de início das provas.');
+        const conteudo = document.getElementById('autoProvaConteudo').value.trim() || 'Avaliação';
+
+        const data = profileDataCache;
+        if (!data) return alert('Carregue os dados primeiro.');
+
+        const disciplinas = data.disciplinas || [];
+        const horarios    = data.horarios    || [];
+
+        const previewDiv = document.getElementById('autoProvaPreview');
+        const semHorDiv  = document.getElementById('autoProvaSemHorario');
+        const listDiv    = document.getElementById('autoProvaPreviewList');
+        const msgDiv     = document.getElementById('autoProvaMsg');
+        const btnConf    = document.getElementById('btnConfirmarAutoProvas');
+
+        previewDiv.style.display = 'none';
+        semHorDiv.style.display  = 'none';
+        msgDiv.style.display     = 'none';
+        btnConf.disabled = true;
+
+        // Parse data inicio como local (evitar off-by-one do UTC)
+        const [y,m,d2] = dataVal.split('-').map(Number);
+        const dataInicio = new Date(y, m-1, d2);
+
+        _previewItems = buildPreview(disciplinas, horarios, dataInicio, conteudo);
+
+        if (!_previewItems.length) {
+          semHorDiv.style.display = 'block'; return;
+        }
+
+        // Checa quais já existem (mesma disciplina+data)
+        const provasExist = data.provas || [];
+        const existSet = new Set(provasExist.map(p => p.disciplinaId + '|' + p.data));
+
+        listDiv.innerHTML = _previewItems.map((it, idx) => {
+          const jaExiste = existSet.has(it.disciplinaId + '|' + it.data);
+          const dtFmt = new Date(it.data+'T00:00').toLocaleDateString('pt-BR');
+          return `<div class="col-12">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;
+                        background:${jaExiste?'#fff8e1':'#f0fdf4'};border:1px solid ${jaExiste?'#f39c12':'#1abc9c'};">
+              <input type="checkbox" id="chkAutoProva_${idx}" ${jaExiste?'':'checked'} style="width:18px;height:18px;flex-shrink:0;">
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;font-size:0.9rem;color:#1a2332;">${it.disciplinaNome}</div>
+                <div style="font-size:0.8rem;color:#555;">${it.diaNome} · ${dtFmt}${it.hora?' às '+it.hora:''} ${it.local?'· '+it.local:''}</div>
+                ${jaExiste?'<span style="font-size:0.72rem;color:#e67e22;"><i class="fas fa-exclamation-triangle me-1"></i>Já existe prova nesta data</span>':''}
+              </div>
+              <span style="font-size:0.75rem;background:${jaExiste?'#f39c12':'#1abc9c'};color:white;padding:3px 10px;border-radius:20px;white-space:nowrap;">${it.conteudo}</span>
+            </div>
+          </div>`;
+        }).join('');
+
+        previewDiv.style.display = 'block';
+        btnConf.disabled = false;
+      });
+
+      document.getElementById('btnConfirmarAutoProvas').addEventListener('click', async function() {
+        if (!_previewItems.length) return;
+        const btnConf = document.getElementById('btnConfirmarAutoProvas');
+        const msgDiv  = document.getElementById('autoProvaMsg');
+        btnConf.disabled = true;
+        btnConf.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Agendando...';
+
+        try {
+          const pid = await getCurrentProfileId();
+          let criadas = 0, puladas = 0;
+
+          for (let idx = 0; idx < _previewItems.length; idx++) {
+            const chk = document.getElementById('chkAutoProva_'+idx);
+            if (!chk || !chk.checked) { puladas++; continue; }
+            const it = _previewItems[idx];
+            const novaProva = {
+              id: await getNewId('provas'),
+              profileId: pid,
+              disciplinaId: it.disciplinaId,
+              conteudo: it.conteudo,
+              data: it.data,
+              hora: it.hora,
+              status: 'Agendada',
+              nota: null
+            };
+            await saveData('provas', novaProva);
+            criadas++;
+          }
+
+          profileDataCache = null;
+          await loadProfileData();
+          renderCurrentPanel();
+
+          msgDiv.style.display = 'block';
+          msgDiv.innerHTML = `<div class="alert alert-success mt-3"><i class="fas fa-check-circle me-2"></i><strong>${criadas} prova(s) agendada(s) com sucesso!</strong>${puladas?' '+puladas+' pulada(s).':''}</div>`;
+          document.getElementById('autoProvaPreview').style.display = 'none';
+          btnConf.disabled = true;
+          btnConf.innerHTML = '<i class="fas fa-magic me-1"></i> Confirmar Agendamento';
+          setTimeout(() => {
+            bootstrap.Modal.getInstance(document.getElementById('agendamentoAutoModal')).hide();
+            msgDiv.style.display = 'none';
+          }, 2000);
+        } catch(e) {
+          msgDiv.style.display = 'block';
+          msgDiv.innerHTML = `<div class="alert alert-danger mt-3"><i class="fas fa-times-circle me-2"></i>Erro: ${e.message}</div>`;
+          btnConf.disabled = false;
+          btnConf.innerHTML = '<i class="fas fa-magic me-1"></i> Confirmar Agendamento';
+        }
+      });
+
+      // Limpa preview ao fechar modal
+      document.getElementById('agendamentoAutoModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('autoProvaDataInicio').value = '';
+        document.getElementById('autoProvaConteudo').value = '';
+        document.getElementById('autoProvaPreview').style.display = 'none';
+        document.getElementById('autoProvaSemHorario').style.display = 'none';
+        document.getElementById('autoProvaMsg').style.display = 'none';
+        document.getElementById('btnConfirmarAutoProvas').disabled = true;
+        _previewItems = [];
+      });
+    })();
+    // ── FIM AGENDAMENTO AUTOMÁTICO ─────────────────────────────────
 
     async function saveProva() {
         let pid = await getCurrentProfileId(), id = document.getElementById('provaId').value;
