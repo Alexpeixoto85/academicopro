@@ -4199,6 +4199,15 @@
         <div style="font-size:0.68rem;color:rgba(255,255,255,0.3);margin-top:5px;"><i class="fas fa-info-circle me-1"></i>ID do bin que contém <code style="background:rgba(0,0,0,0.3);padding:1px 4px;border-radius:3px;">{"users":[]}</code></div>
       </div>
 
+      <div class="login-form-group">
+        <label class="login-label"><i class="fas fa-brain me-1"></i> Anthropic API Key <span style="color:#95a5a6;font-weight:400;font-size:0.7rem;">(opcional — para análise IA)</span></label>
+        <div class="login-input-wrap">
+          <input class="login-input" type="password" id="cfgAnthropicKey" placeholder="sk-ant-api03-..." style="padding-right:42px;" autocomplete="off">
+          <button class="login-eye-btn" type="button" onclick="toggleLoginEye('cfgAnthropicKey', this)"><i class="fas fa-eye"></i></button>
+        </div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,0.3);margin-top:5px;"><i class="fas fa-info-circle me-1"></i>Obtenha em <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#3498db;">console.anthropic.com</a> → API Keys</div>
+      </div>
+
       <button class="login-btn" id="cfgBtn" onclick="salvarConfig()">
         <i class="fas fa-check me-2"></i> Salvar e Continuar
       </button>
@@ -5112,6 +5121,22 @@
               </div>
 
               <button class="btn btn-sm btn-outline-secondary" id="resetTheme"><i class="fas fa-undo me-1"></i>Restaurar padrão</button>
+          </div>
+      </div>
+      <div class="card card-dashboard mb-4">
+          <div class="card-body">
+              <h4 class="card-title"><i class="fas fa-brain me-2 text-success"></i>Inteligência Artificial</h4>
+              <p class="text-muted mb-3">Configure sua chave de API da Anthropic para habilitar análise de disciplinas, geração de questões e busca de jurisprudência com IA.</p>
+              <div class="mb-3">
+                <label class="form-label fw-semibold" style="font-size:0.82rem;">Anthropic API Key</label>
+                <div class="input-group">
+                  <input type="password" class="form-control" id="internalAnthropicKey" placeholder="sk-ant-api03-..." autocomplete="off" style="font-family:monospace;font-size:0.82rem;">
+                  <button class="btn btn-outline-secondary" type="button" onclick="(function(){const i=document.getElementById('internalAnthropicKey');i.type=i.type==='password'?'text':'password';})()"><i class="fas fa-eye"></i></button>
+                  <button class="btn btn-success" type="button" onclick="salvarAnthropicKeyInterna()"><i class="fas fa-save me-1"></i>Salvar</button>
+                </div>
+                <div id="anthropicKeyStatus" style="font-size:0.75rem;margin-top:6px;"></div>
+                <div style="font-size:0.72rem;color:#6c757d;margin-top:5px;"><i class="fas fa-info-circle me-1"></i>Obtenha em <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a> → API Keys. A chave é salva localmente no seu navegador.</div>
+              </div>
           </div>
       </div>
       <div class="card card-dashboard">
@@ -10517,8 +10542,12 @@ Atenciosamente,`;
                     }, 3000);
                 } catch(e) {
                     console.error('[Analisar]', e);
+                    const isKeyErr = e.message && (e.message.includes('API Key') || e.message.includes('api-key') || e.message.includes('não configurada'));
+                    const msgErro = isKeyErr
+                        ? `<i class="fas fa-key me-1"></i><strong>Chave de API não configurada.</strong> <a href="#" onclick="resetConfig()" style="color:#c0392b;text-decoration:underline;">Volte às Configurações</a> e insira sua Anthropic API Key para usar a análise com IA.`
+                        : `<i class="fas fa-exclamation-circle me-1"></i>Não foi possível analisar (${e.message||'erro de rede'}). Você pode salvar assim mesmo — o perfil será gerado na primeira revisão.`;
                     if (box && txt) {
-                        txt.innerHTML = `<span style="color:#c0392b;"><i class="fas fa-exclamation-circle me-1"></i>Não foi possível analisar (${e.message||'erro de rede'}). Você pode salvar assim mesmo — o perfil será gerado na primeira revisão.</span>`;
+                        txt.innerHTML = `<span style="color:#c0392b;">${msgErro}</span>`;
                         box.style.display = 'block';
                         const inner = document.getElementById('disciplinaPerfilInner');
                         if (inner) { inner.style.background = '#fff3f3'; inner.style.borderColor = '#fcc'; }
@@ -15549,9 +15578,16 @@ function _histDiscAdd(discId, qs) {
 
 // ── Gera perfil completo de uma disciplina via IA ────────────────────────────
 window._gerarPerfilDisciplina = async function _gerarPerfilDisciplina(nome, ementa) {
+  const apiKey = (typeof window._getAnthropicKey === 'function') ? window._getAnthropicKey() : '';
+  if (!apiKey) throw new Error('Chave de API da Anthropic não configurada. Acesse Configurações e insira sua API Key.');
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method:'POST',
-    headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01'},
+    headers:{
+      'Content-Type':'application/json',
+      'anthropic-version':'2023-06-01',
+      'x-api-key': apiKey,
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
     body: JSON.stringify({
       model:'claude-sonnet-4-20250514', max_tokens:1200,
       messages:[{ role:'user', content:
@@ -15611,9 +15647,16 @@ async function _buscarContextoWebDisc(cur, titulo, assunto) {
   const query  = terms[Math.floor(Math.random()*terms.length)];
   const foco   = assunto && assunto !== titulo ? assunto : titulo;
   try {
+    const _apiKey1 = (typeof window._getAnthropicKey === 'function') ? window._getAnthropicKey() : '';
+    if (!_apiKey1) return '';
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
-      headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01'},
+      headers:{
+        'Content-Type':'application/json',
+        'anthropic-version':'2023-06-01',
+        'x-api-key': _apiKey1,
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({
         model:'claude-sonnet-4-20250514', max_tokens:1400,
         tools:[{type:'web_search_20250305', name:'web_search'}],
@@ -15715,9 +15758,16 @@ function _extrair(buffer, coletadas) {
 async function _gerarStreaming(prompt, onQ, onDone, onError) {
   let buffer='', coletadas=[];
   try {
+    const _apiKey2 = (typeof window._getAnthropicKey === 'function') ? window._getAnthropicKey() : '';
+    if (!_apiKey2) { onError(new Error('Chave de API da Anthropic não configurada.')); return; }
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
-      headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01'},
+      headers:{
+        'Content-Type':'application/json',
+        'anthropic-version':'2023-06-01',
+        'x-api-key': _apiKey2,
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({
         model:'claude-sonnet-4-20250514', max_tokens:4500, stream:true,
         system: prompt.system,
@@ -16620,14 +16670,16 @@ function _renderScore() {
   function getCfg() {
     try { return JSON.parse(localStorage.getItem(CFG_KEY) || 'null'); } catch { return null; }
   }
-  function saveCfg(masterKey, binId) {
-    localStorage.setItem(CFG_KEY, JSON.stringify({ masterKey, binId }));
+  function saveCfg(masterKey, binId, anthropicKey) {
+    localStorage.setItem(CFG_KEY, JSON.stringify({ masterKey, binId, anthropicKey: anthropicKey || '' }));
   }
   function clearCfg() { localStorage.removeItem(CFG_KEY); }
 
   // Expõe para uso nos forms de login
-  function getMasterKey() { const c = getCfg(); return c ? c.masterKey : ''; }
-  function getBinId()     { const c = getCfg(); return c ? c.binId     : ''; }
+  function getMasterKey()    { const c = getCfg(); return c ? c.masterKey    : ''; }
+  function getBinId()        { const c = getCfg(); return c ? c.binId        : ''; }
+  function getAnthropicKey() { const c = getCfg(); return c ? (c.anthropicKey || '') : ''; }
+  window._getAnthropicKey = getAnthropicKey;
 
   // ── HELPERS JSONBin ────────────────────────────────────────────
   async function getBin() {
@@ -16692,8 +16744,9 @@ function _renderScore() {
 
   // ── PASSO 1: SALVAR CONFIG ─────────────────────────────────────
   window.salvarConfig = async function() {
-    const masterKey = document.getElementById('cfgMasterKey').value.trim();
-    const binId     = document.getElementById('cfgBinId').value.trim();
+    const masterKey    = document.getElementById('cfgMasterKey').value.trim();
+    const binId        = document.getElementById('cfgBinId').value.trim();
+    const anthropicKey = (document.getElementById('cfgAnthropicKey') ? document.getElementById('cfgAnthropicKey').value.trim() : '');
 
     if (!masterKey || !binId) {
       showMsg('cfgMsg','error','<i class="fas fa-exclamation-circle me-1"></i> Preencha a Master Key e o Bin ID.');
@@ -16733,7 +16786,7 @@ function _renderScore() {
       }
 
       // Tudo OK — salva e avança
-      saveCfg(masterKey, binId);
+      saveCfg(masterKey, binId, anthropicKey);
       showMsg('cfgMsg','success','<i class="fas fa-check-circle me-1"></i> Conexão validada com sucesso!');
       setTimeout(() => {
         document.getElementById('stepConfig').style.display = 'none';
@@ -16755,7 +16808,62 @@ function _renderScore() {
     document.getElementById('stepConfig').style.display = 'block';
     document.getElementById('cfgMasterKey').value = '';
     document.getElementById('cfgBinId').value = '';
+    const akEl = document.getElementById('cfgAnthropicKey'); if (akEl) akEl.value = '';
     hideMsg('cfgMsg');
+  };
+
+  // ── SALVAR API KEY ANTHROPIC pelo painel interno ───────────────
+  window.salvarAnthropicKeyInterna = function() {
+    const inp = document.getElementById('internalAnthropicKey');
+    const statusEl = document.getElementById('anthropicKeyStatus');
+    if (!inp) return;
+    const key = inp.value.trim();
+    if (!key) {
+      if (statusEl) statusEl.innerHTML = '<span style="color:#e74c3c;"><i class="fas fa-times-circle me-1"></i>Digite a chave antes de salvar.</span>';
+      return;
+    }
+    if (!key.startsWith('sk-ant-')) {
+      if (statusEl) statusEl.innerHTML = '<span style="color:#e74c3c;"><i class="fas fa-times-circle me-1"></i>Chave inválida. Deve começar com <code>sk-ant-</code>.</span>';
+      return;
+    }
+    const cfg = getCfg() || {};
+    cfg.anthropicKey = key;
+    localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+    if (statusEl) statusEl.innerHTML = '<span style="color:#27ae60;"><i class="fas fa-check-circle me-1"></i>Chave salva com sucesso! A IA já está disponível.</span>';
+    setTimeout(() => { if (statusEl) statusEl.innerHTML = ''; }, 3500);
+  };
+
+  // Popula o campo interno com a key já salva ao mostrar o painel
+  (function() {
+    const observer = new MutationObserver(function() {
+      const panel = document.getElementById('configuracoes');
+      if (panel && panel.style.display !== 'none') {
+        const inp = document.getElementById('internalAnthropicKey');
+        if (inp && !inp.value) {
+          const k = getAnthropicKey();
+          if (k) inp.value = k;
+        }
+      }
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+      const target = document.getElementById('configuracoes');
+      if (target) observer.observe(target, { attributes: true, attributeFilter: ['style'] });
+    });
+  })();
+
+  // Alias para uso fora do contexto de configuração (ex: link em mensagem de erro)
+  window.resetConfig = function() {
+    // Fecha quaisquer modais Bootstrap abertos
+    try {
+      document.querySelectorAll('.modal.show').forEach(m => {
+        const inst = bootstrap.Modal.getInstance(m);
+        if (inst) inst.hide();
+      });
+    } catch(e) {}
+    // Mostra a tela de login/config
+    const ls = document.getElementById('loginScreen');
+    if (ls) { ls.style.opacity = '1'; ls.style.display = 'flex'; }
+    window.voltarConfig();
   };
 
   // ── TABS LOGIN/CADASTRO ────────────────────────────────────────
