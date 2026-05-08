@@ -4469,6 +4469,208 @@
       display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
     }
     .cron-semana-label { font-size: 0.85rem; font-weight: 700; color: #1a2332; flex: 1; text-align: center; }
+
+    /* ===== PLAYER INTERNO DE VIDEOAULAS ===== */
+    #vaula-player-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 99998;
+      background: #000;
+      flex-direction: column;
+      font-family: 'Poppins', sans-serif;
+    }
+    #vaula-player-overlay.active { display: flex; }
+
+    /* Barra superior */
+    .vp-topbar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 18px;
+      background: rgba(10,10,10,0.95);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      flex-shrink: 0; z-index: 2;
+    }
+    .vp-title {
+      flex: 1; color: white; font-size: 0.88rem; font-weight: 600;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .vp-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.65rem; font-weight: 700; padding: 3px 9px;
+      border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+    }
+    .vp-badge-adblock { background: rgba(26,188,156,0.2); color: #1abc9c; border: 1px solid rgba(26,188,156,0.4); }
+    .vp-badge-src     { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.1); }
+    .vp-btn {
+      background: rgba(255,255,255,0.1); border: none; color: white;
+      width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; transition: background 0.15s; flex-shrink: 0;
+    }
+    .vp-btn:hover { background: rgba(255,255,255,0.22); }
+    .vp-btn.active { background: rgba(26,188,156,0.35); color: #1abc9c; }
+    .vp-btn-close { background: rgba(231,76,60,0.25); color: #e74c3c; }
+    .vp-btn-close:hover { background: rgba(231,76,60,0.5); }
+
+    /* Área principal: vídeo + sidebar */
+    .vp-body {
+      flex: 1; display: flex; overflow: hidden; min-height: 0;
+    }
+
+    /* Coluna vídeo */
+    .vp-main {
+      flex: 1; display: flex; flex-direction: column;
+      background: #000; position: relative; min-width: 0;
+    }
+    .vp-iframe-wrap {
+      flex: 1; position: relative; min-height: 0;
+    }
+    .vp-iframe-wrap iframe {
+      position: absolute; inset: 0; width: 100%; height: 100%; border: none;
+    }
+    /* Blocker overlay — cobre o banner de anúncio que aparece na parte inferior do iframe */
+    .vp-ad-blocker-bar {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 62px; /* altura típica do banner ads do YouTube */
+      background: #000;
+      pointer-events: none; z-index: 5;
+    }
+    /* Quando está em PiP/tela cheia nativa não mostra o blocker */
+    .vp-iframe-wrap.hide-adbar .vp-ad-blocker-bar { display: none; }
+
+    /* Barra de controles inferior */
+    .vp-controls {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px;
+      background: rgba(10,10,10,0.95);
+      border-top: 1px solid rgba(255,255,255,0.07);
+      flex-shrink: 0; flex-wrap: wrap;
+    }
+    .vp-ctrl-btn {
+      background: rgba(255,255,255,0.08); border: none; color: rgba(255,255,255,0.85);
+      padding: 6px 14px; border-radius: 8px; cursor: pointer;
+      font-size: 0.75rem; font-weight: 600; display: flex; align-items: center;
+      gap: 6px; transition: all 0.15s; white-space: nowrap;
+    }
+    .vp-ctrl-btn:hover { background: rgba(255,255,255,0.16); color: white; }
+    .vp-ctrl-btn.active { background: rgba(26,188,156,0.3); color: #1abc9c; }
+    .vp-ctrl-sep { flex: 1; }
+    .vp-src-label {
+      font-size: 0.68rem; color: rgba(255,255,255,0.3);
+      display: flex; align-items: center; gap: 5px;
+    }
+
+    /* Sidebar de playlist */
+    .vp-sidebar {
+      width: 300px; flex-shrink: 0;
+      background: rgba(15,15,15,0.98);
+      border-left: 1px solid rgba(255,255,255,0.07);
+      display: flex; flex-direction: column; overflow: hidden;
+      transition: width 0.2s;
+    }
+    .vp-sidebar.collapsed { width: 0; overflow: hidden; }
+    .vp-sidebar-header {
+      padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.78rem; font-weight: 700; color: rgba(255,255,255,0.7);
+      flex-shrink: 0; display: flex; align-items: center; gap: 6px;
+    }
+    .vp-sidebar-count {
+      background: rgba(26,188,156,0.2); color: #1abc9c;
+      border-radius: 10px; font-size: 0.65rem; font-weight: 800;
+      padding: 1px 7px;
+    }
+    .vp-playlist { flex: 1; overflow-y: auto; padding: 8px; }
+    .vp-playlist::-webkit-scrollbar { width: 4px; }
+    .vp-playlist::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius:2px; }
+
+    .vp-pl-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; border-radius: 10px; cursor: pointer;
+      transition: background 0.15s; margin-bottom: 4px;
+      border: 1.5px solid transparent;
+    }
+    .vp-pl-item:hover { background: rgba(255,255,255,0.07); }
+    .vp-pl-item.playing { background: rgba(26,188,156,0.12); border-color: rgba(26,188,156,0.3); }
+    .vp-pl-thumb {
+      width: 72px; min-width: 72px; height: 42px;
+      border-radius: 6px; overflow: hidden; background: #222;
+      position: relative; flex-shrink: 0;
+    }
+    .vp-pl-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .vp-pl-thumb-play {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.4);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .vp-pl-item:hover .vp-pl-thumb-play,
+    .vp-pl-item.playing .vp-pl-thumb-play { opacity: 1; }
+    .vp-pl-thumb-play i { color: #1abc9c; font-size: 1rem; }
+    .vp-pl-info { flex: 1; min-width: 0; }
+    .vp-pl-title {
+      font-size: 0.77rem; font-weight: 600; color: rgba(255,255,255,0.85);
+      line-height: 1.3; margin-bottom: 3px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .vp-pl-item.playing .vp-pl-title { color: #1abc9c; }
+    .vp-pl-meta { font-size: 0.65rem; color: rgba(255,255,255,0.35); }
+    .vp-pl-num {
+      font-size: 0.72rem; font-weight: 700; color: rgba(255,255,255,0.2);
+      min-width: 18px; text-align: center; flex-shrink: 0;
+    }
+    .vp-pl-item.playing .vp-pl-num { color: #1abc9c; }
+
+    /* Notas rápidas no player */
+    .vp-notes {
+      width: 280px; flex-shrink: 0;
+      background: rgba(12,12,12,0.98);
+      border-left: 1px solid rgba(255,255,255,0.07);
+      display: flex; flex-direction: column; overflow: hidden;
+      transition: width 0.2s;
+    }
+    .vp-notes.collapsed { width: 0; overflow: hidden; }
+    .vp-notes-header {
+      padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.78rem; font-weight: 700; color: rgba(255,255,255,0.7);
+      flex-shrink: 0;
+    }
+    .vp-notes-area {
+      flex: 1; padding: 10px; min-height: 0;
+    }
+    .vp-notes-textarea {
+      width: 100%; height: 100%; background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+      color: rgba(255,255,255,0.85); padding: 10px; font-size: 0.8rem;
+      font-family: 'Poppins', sans-serif; resize: none; outline: none;
+      line-height: 1.6;
+    }
+    .vp-notes-textarea:focus { border-color: rgba(26,188,156,0.4); }
+    .vp-notes-save {
+      margin: 0 10px 10px;
+      padding: 7px; border: none; border-radius: 8px;
+      background: linear-gradient(135deg,#1abc9c,#16a085);
+      color: white; font-size: 0.75rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 6px;
+    }
+    .vp-notes-save:hover { filter: brightness(1.1); }
+
+    /* Fontes alternativas badge */
+    .vp-src-switch {
+      display: flex; gap: 4px; align-items: center;
+    }
+    .vp-src-opt {
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.5); border-radius: 6px;
+      padding: 4px 10px; font-size: 0.68rem; font-weight: 700;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .vp-src-opt:hover { background: rgba(255,255,255,0.14); color: white; }
+    .vp-src-opt.active { background: rgba(26,188,156,0.25); color: #1abc9c; border-color: rgba(26,188,156,0.4); }
+
+    /* Responsivo mobile */
+    @media (max-width: 768px) {
+      .vp-sidebar, .vp-notes { display: none !important; }
+      .vp-title { font-size: 0.78rem; }
+      .vp-badge { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -15187,6 +15389,350 @@ Atenciosamente,`;
         sel.innerHTML = '<option value="">— Nenhuma —</option>' + insts.map(i => `<option value="${i.id}">${i.nome} — ${i.curso}</option>`).join('');
     }
 
+
+    // ===================================================================
+    // PLAYER INTERNO DE VIDEOAULAS — motor principal
+    // ===================================================================
+    var _vpState = {
+      concId:      null,
+      videoaulas:  [],
+      currentIdx:  0,
+      src:         'nocookie',  // 'nocookie' | 'invidious' | 'piped'
+      adbarActive: true,
+      notesOpen:   false,
+      sidebarOpen: false,
+      currentVideoId: null
+    };
+
+    // Instâncias públicas para cada fonte (sem anúncio)
+    var _vpSources = {
+      nocookie: function(id) { return 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=0&fs=1&color=white&enablejsapi=0'; },
+      invidious: function(id) { return 'https://invidious.io.lol/embed/' + id + '?autoplay=1'; },
+      piped:    function(id) { return 'https://pipedapi.kavin.rocks/embed/' + id + '?autoplay=1'; }
+    };
+    var _vpSrcLabels = { nocookie: 'YT Privacy', invidious: 'Invidious', piped: 'Piped' };
+
+    function _vpBuildUrl(videoId) {
+        var fn = _vpSources[_vpState.src] || _vpSources.nocookie;
+        return fn(videoId);
+    }
+
+    // Abre o player com uma videoaula específica (e carrega playlist do concurso)
+    window.abrirPlayerVaula = function(concId, vaulaId) {
+        var arr = _getConcursos();
+        var c = arr.find(function(x){ return x.id === concId; });
+        if (!c) return;
+
+        _vpState.concId = concId;
+        _vpState.videoaulas = (c.videoaulas || []).slice();
+
+        // Acha o índice da videoaula
+        var idx = _vpState.videoaulas.findIndex(function(v){ return v.id === vaulaId; });
+        _vpState.currentIdx = idx >= 0 ? idx : 0;
+
+        _vpCarregarVideo(_vpState.currentIdx);
+        _vpRenderPlaylist();
+        _vpAtualizarSidebar();
+
+        // Mostra overlay
+        var overlay = document.getElementById('vaula-player-overlay');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+
+    function _vpCarregarVideo(idx) {
+        var vaulas = _vpState.videoaulas;
+        if (!vaulas.length || idx < 0 || idx >= vaulas.length) return;
+        _vpState.currentIdx = idx;
+
+        var v = vaulas[idx];
+        var videoId = _ytId(v.url);
+        if (!videoId) return;
+        _vpState.currentVideoId = videoId;
+
+        // Atualiza iframe
+        var iframe = document.getElementById('vp-iframe');
+        iframe.src = _vpBuildUrl(videoId);
+
+        // Atualiza título e badge
+        document.getElementById('vp-title').textContent = v.titulo || 'Videoaula';
+        document.getElementById('vp-src-badge').textContent = _vpSrcLabels[_vpState.src] || _vpState.src;
+
+        // Preenche anotações salvas
+        var notesTA = document.getElementById('vp-notes-textarea');
+        if (notesTA) notesTA.value = v.obs || '';
+
+        // Marca botão "marcar assistida"
+        var doneBtn = document.getElementById('vp-mark-done');
+        if (doneBtn) {
+            if (v.assistida) {
+                doneBtn.classList.add('active');
+                doneBtn.innerHTML = '<i class="fas fa-check-circle"></i> Assistida';
+            } else {
+                doneBtn.classList.remove('active');
+                doneBtn.innerHTML = '<i class="fas fa-check"></i> Marcar assistida';
+            }
+        }
+
+        // Destaca na playlist
+        document.querySelectorAll('.vp-pl-item').forEach(function(el, i){
+            el.classList.toggle('playing', i === idx);
+        });
+    }
+
+    function _vpRenderPlaylist() {
+        var pl = document.getElementById('vp-playlist');
+        var vaulas = _vpState.videoaulas;
+        if (!pl) return;
+        if (!vaulas.length) { pl.innerHTML = '<div style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;font-size:0.8rem;">Nenhuma videoaula</div>'; return; }
+
+        pl.innerHTML = vaulas.map(function(v, i) {
+            var thumb = _ytThumb(v.url);
+            var playing = i === _vpState.currentIdx;
+            return '<div class="vp-pl-item' + (playing?' playing':'') + '" data-pl-idx="' + i + '">'
+                + '<div class="vp-pl-num">' + (i+1) + '</div>'
+                + '<div class="vp-pl-thumb">'
+                +   '<img src="' + thumb + '" loading="lazy" alt="">'
+                +   '<div class="vp-pl-thumb-play"><i class="fas fa-play-circle"></i></div>'
+                + '</div>'
+                + '<div class="vp-pl-info">'
+                +   '<div class="vp-pl-title">' + (v.titulo||'Sem título') + '</div>'
+                +   '<div class="vp-pl-meta">'
+                +     (v.materia ? '<span style="color:rgba(26,188,156,0.8);">' + v.materia + '</span> · ' : '')
+                +     (v.duracao ? v.duracao + 'min' : '')
+                +     (v.assistida ? ' · <span style="color:#27ae60;">✓ vista</span>' : '')
+                +   '</div>'
+                + '</div>'
+                + '</div>';
+        }).join('');
+
+        pl.querySelectorAll('.vp-pl-item').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var idx = parseInt(this.dataset.plIdx, 10);
+                _vpCarregarVideo(idx);
+            });
+        });
+    }
+
+    function _vpAtualizarSidebar() {
+        var cnt = document.getElementById('vp-sidebar-count');
+        if (cnt) cnt.textContent = _vpState.videoaulas.length;
+    }
+
+    function _vpFechar() {
+        document.getElementById('vaula-player-overlay').classList.remove('active');
+        document.body.style.overflow = '';
+        // Para o vídeo
+        var iframe = document.getElementById('vp-iframe');
+        iframe.src = '';
+    }
+
+    function _vpTrocarFonte(src) {
+        _vpState.src = src;
+        document.querySelectorAll('.vp-src-opt').forEach(function(b){
+            b.classList.toggle('active', b.dataset.src === src);
+        });
+        document.getElementById('vp-src-badge').textContent = _vpSrcLabels[src] || src;
+        // Recarrega vídeo atual
+        if (_vpState.currentVideoId) {
+            document.getElementById('vp-iframe').src = _vpBuildUrl(_vpState.currentVideoId);
+        }
+    }
+
+    function _vpFullscreen() {
+        var wrap = document.getElementById('vaula-player-overlay');
+        if (!document.fullscreenElement) {
+            wrap.requestFullscreen && wrap.requestFullscreen();
+        } else {
+            document.exitFullscreen && document.exitFullscreen();
+        }
+    }
+
+    function _vpToggleAdBar() {
+        _vpState.adbarActive = !_vpState.adbarActive;
+        var bar = document.getElementById('vp-ad-bar');
+        var btn = document.getElementById('vp-toggle-adbar');
+        var wrap = document.getElementById('vp-iframe-wrap');
+        if (_vpState.adbarActive) {
+            bar.style.display = '';
+            btn.classList.add('active');
+            wrap.classList.remove('hide-adbar');
+        } else {
+            bar.style.display = 'none';
+            btn.classList.remove('active');
+            wrap.classList.add('hide-adbar');
+        }
+    }
+
+    function _vpMarcarAssistida() {
+        var idx = _vpState.currentIdx;
+        var vaulas = _vpState.videoaulas;
+        if (idx < 0 || idx >= vaulas.length) return;
+
+        var vaulaId = vaulas[idx].id;
+        var concId = _vpState.concId;
+
+        var arr = _getConcursos();
+        var c = arr.find(function(x){ return x.id === concId; });
+        if (!c) return;
+        var v = (c.videoaulas||[]).find(function(x){ return x.id === vaulaId; });
+        if (!v) return;
+        v.assistida = !v.assistida;
+        vaulas[idx].assistida = v.assistida;
+        _saveConcursos(arr);
+
+        var doneBtn = document.getElementById('vp-mark-done');
+        if (v.assistida) {
+            doneBtn.classList.add('active');
+            doneBtn.innerHTML = '<i class="fas fa-check-circle"></i> Assistida';
+        } else {
+            doneBtn.classList.remove('active');
+            doneBtn.innerHTML = '<i class="fas fa-check"></i> Marcar assistida';
+        }
+        // Atualiza playlist visual
+        document.querySelectorAll('.vp-pl-item').forEach(function(el, i) {
+            var metaEl = el.querySelector('.vp-pl-meta');
+            if (i === idx && metaEl) {
+                var existing = metaEl.querySelector('.vp-assistida-tag');
+                if (v.assistida) {
+                    if (!existing) metaEl.insertAdjacentHTML('beforeend', '<span class="vp-assistida-tag" style="color:#27ae60;"> · ✓ vista</span>');
+                } else {
+                    if (existing) existing.remove();
+                }
+            }
+        });
+        if (activePanel === 'concursos-panel') renderConcursosPanel();
+    }
+
+    function _vpSalvarNota() {
+        var idx = _vpState.currentIdx;
+        var vaulas = _vpState.videoaulas;
+        if (idx < 0 || idx >= vaulas.length) return;
+        var texto = document.getElementById('vp-notes-textarea').value.trim();
+        var vaulaId = vaulas[idx].id;
+        var concId = _vpState.concId;
+        var arr = _getConcursos();
+        var c = arr.find(function(x){ return x.id === concId; });
+        if (!c) return;
+        var v = (c.videoaulas||[]).find(function(x){ return x.id === vaulaId; });
+        if (v) {
+            v.obs = texto;
+            vaulas[idx].obs = texto;
+            _saveConcursos(arr);
+            _showToast('success', 'Anotação salva!');
+        }
+    }
+
+    // Atualizar _buildVaulasHtml para usar o player interno
+    // (sobrescreve _bindVaulaListEvents para chamar abrirPlayerVaula)
+    var _origBindVaulas = _bindVaulaListEvents;
+    _bindVaulaListEvents = function(container) {
+        if (!container) return;
+        // Usa player interno ao clicar na thumb
+        container.querySelectorAll('.vaula-play-btn').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var concId = _vpState.concId;
+                // Acha concId a partir do card
+                var card = this.closest('[id^="vc-"]');
+                if (card) {
+                    var vid = card.id.replace('vc-','');
+                    // Busca em qual concurso
+                    var todos = _getConcursos();
+                    for (var ci=0; ci<todos.length; ci++) {
+                        var vv = (todos[ci].videoaulas||[]).find(function(x){ return x.id===vid; });
+                        if (vv) { abrirPlayerVaula(todos[ci].id, vid); return; }
+                    }
+                }
+                // Fallback
+                var url = decodeURIComponent(this.dataset.url);
+                var embed = _ytEmbed(url);
+                if (!embed) { window.open(url,'_blank'); return; }
+                this.style.width='200px'; this.style.height='112px';
+                this.innerHTML='<iframe src="'+embed+'" style="width:100%;height:100%;border:none;" allow="autoplay" allowfullscreen></iframe>';
+            });
+        });
+        container.querySelectorAll('.vaula-toggle-btn').forEach(function(el) {
+            el.addEventListener('click', function() { toggleVaulaAssistida(+this.dataset.conc, this.dataset.vid); });
+        });
+        container.querySelectorAll('.vaula-edit-btn').forEach(function(el) {
+            el.addEventListener('click', function() { editVaula(+this.dataset.conc, this.dataset.vid); });
+        });
+        container.querySelectorAll('.vaula-del-btn').forEach(function(el) {
+            el.addEventListener('click', function() { deleteVaula(+this.dataset.conc, this.dataset.vid); });
+        });
+    };
+
+    // Setup de todos os botões do player
+    function setupPlayerEvents() {
+        // Fechar
+        document.getElementById('vp-close').addEventListener('click', _vpFechar);
+
+        // Tela cheia
+        document.getElementById('vp-fullscreen').addEventListener('click', _vpFullscreen);
+        document.addEventListener('fullscreenchange', function() {
+            var btn = document.getElementById('vp-fullscreen');
+            if (document.fullscreenElement) {
+                btn.innerHTML = '<i class="fas fa-compress"></i>';
+                btn.title = 'Sair da tela cheia';
+            } else {
+                btn.innerHTML = '<i class="fas fa-expand"></i>';
+                btn.title = 'Tela cheia nativa';
+            }
+        });
+
+        // Cobrir ads
+        document.getElementById('vp-toggle-adbar').addEventListener('click', _vpToggleAdBar);
+
+        // Marcar assistida
+        document.getElementById('vp-mark-done').addEventListener('click', _vpMarcarAssistida);
+
+        // Abrir no YouTube
+        document.getElementById('vp-open-yt').addEventListener('click', function() {
+            if (_vpState.currentVideoId) {
+                window.open('https://www.youtube.com/watch?v=' + _vpState.currentVideoId, '_blank');
+            }
+        });
+
+        // Toggle playlist
+        document.getElementById('vp-toggle-playlist').addEventListener('click', function() {
+            _vpState.sidebarOpen = !_vpState.sidebarOpen;
+            var sb = document.getElementById('vp-sidebar');
+            sb.classList.toggle('collapsed', !_vpState.sidebarOpen);
+            this.classList.toggle('active', _vpState.sidebarOpen);
+        });
+
+        // Toggle notas
+        document.getElementById('vp-toggle-notes').addEventListener('click', function() {
+            _vpState.notesOpen = !_vpState.notesOpen;
+            var np = document.getElementById('vp-notes-panel');
+            np.classList.toggle('collapsed', !_vpState.notesOpen);
+            this.classList.toggle('active', _vpState.notesOpen);
+        });
+
+        // Salvar notas
+        document.getElementById('vp-notes-save').addEventListener('click', _vpSalvarNota);
+
+        // Troca de fonte (YT Privacy / Invidious / Piped)
+        document.querySelectorAll('.vp-src-opt').forEach(function(btn) {
+            btn.addEventListener('click', function() { _vpTrocarFonte(this.dataset.src); });
+        });
+
+        // Fecha com ESC (se não estiver em fullscreen nativo)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                var overlay = document.getElementById('vaula-player-overlay');
+                if (overlay.classList.contains('active') && !document.fullscreenElement) {
+                    _vpFechar();
+                }
+            }
+        });
+    }
+
+    setupPlayerEvents();
+    // ===================================================================
+    // FIM PLAYER INTERNO
+    // ===================================================================
+
     // ===== INICIALIZAÇÃO DO APP =====
     init();
 
@@ -19510,6 +20056,88 @@ function _renderScore() {
 
 })();
 </script>
+
+
+<!-- ===================================================================
+     PLAYER INTERNO DE VIDEOAULAS — Acadêmico Pro
+     =================================================================== -->
+<div id="vaula-player-overlay">
+
+  <!-- TOP BAR -->
+  <div class="vp-topbar">
+    <button class="vp-btn vp-btn-close" id="vp-close" title="Fechar player"><i class="fas fa-times"></i></button>
+    <div class="vp-title" id="vp-title">Videoaula</div>
+    <span class="vp-badge vp-badge-adblock"><i class="fas fa-shield-alt"></i> Ad-block ativo</span>
+    <span class="vp-badge vp-badge-src" id="vp-src-badge">youtube-nocookie</span>
+    <button class="vp-btn" id="vp-toggle-notes" title="Anotações rápidas"><i class="fas fa-sticky-note"></i></button>
+    <button class="vp-btn" id="vp-toggle-playlist" title="Lista de videoaulas"><i class="fas fa-list"></i></button>
+    <button class="vp-btn" id="vp-fullscreen" title="Tela cheia nativa"><i class="fas fa-expand"></i></button>
+  </div>
+
+  <!-- BODY -->
+  <div class="vp-body">
+
+    <!-- COLUNA PRINCIPAL: vídeo + controles -->
+    <div class="vp-main">
+      <div class="vp-iframe-wrap" id="vp-iframe-wrap">
+        <iframe
+          id="vp-iframe"
+          src=""
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+          allowfullscreen
+          referrerpolicy="no-referrer"
+          sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+        ></iframe>
+        <!-- Cobre área de banner de anúncio inferior do YouTube -->
+        <div class="vp-ad-blocker-bar" id="vp-ad-bar"></div>
+      </div>
+
+      <!-- BARRA DE CONTROLES -->
+      <div class="vp-controls">
+        <!-- Fonte do vídeo -->
+        <div class="vp-src-switch">
+          <span class="vp-src-label"><i class="fas fa-satellite-dish me-1"></i>Fonte:</span>
+          <button class="vp-src-opt active" data-src="nocookie" title="youtube-nocookie.com — menos rastreamento, sem anúncios personalizados">YT Privacy</button>
+          <button class="vp-src-opt" data-src="invidious" title="Invidious — instância sem anúncios (requer internet)">Invidious</button>
+          <button class="vp-src-opt" data-src="piped" title="Piped — instância alternativa sem anúncios">Piped</button>
+        </div>
+        <div class="vp-ctrl-sep"></div>
+        <!-- Bloquear overlay de ads -->
+        <button class="vp-ctrl-btn active" id="vp-toggle-adbar" title="Cobrir área de banner de anúncios inferior">
+          <i class="fas fa-ban"></i> Cobrir ads
+        </button>
+        <!-- Marcar assistida -->
+        <button class="vp-ctrl-btn" id="vp-mark-done" title="Marcar como assistida">
+          <i class="fas fa-check"></i> Marcar assistida
+        </button>
+        <!-- Abrir no YouTube -->
+        <button class="vp-ctrl-btn" id="vp-open-yt" title="Abrir no YouTube original">
+          <i class="fab fa-youtube"></i> YouTube
+        </button>
+      </div>
+    </div>
+
+    <!-- ANOTAÇÕES RÁPIDAS -->
+    <div class="vp-notes collapsed" id="vp-notes-panel">
+      <div class="vp-notes-header"><i class="fas fa-sticky-note me-2" style="color:#f39c12;"></i>Anotações da Aula</div>
+      <div class="vp-notes-area">
+        <textarea class="vp-notes-textarea" id="vp-notes-textarea" placeholder="Anote os pontos importantes desta aula...&#10;&#10;Dicas, conceitos, artigos de lei, súmulas..."></textarea>
+      </div>
+      <button class="vp-notes-save" id="vp-notes-save"><i class="fas fa-save"></i> Salvar Anotação</button>
+    </div>
+
+    <!-- PLAYLIST / LISTA DE VIDEOAULAS -->
+    <div class="vp-sidebar collapsed" id="vp-sidebar">
+      <div class="vp-sidebar-header">
+        <i class="fas fa-list me-2" style="color:#1abc9c;"></i>
+        Videoaulas do Concurso
+        <span class="vp-sidebar-count ms-auto" id="vp-sidebar-count">0</span>
+      </div>
+      <div class="vp-playlist" id="vp-playlist"></div>
+    </div>
+
+  </div><!-- /vp-body -->
+</div><!-- /vaula-player-overlay -->
 
 </body>
 </html>
