@@ -15398,7 +15398,7 @@ Atenciosamente,`;
       videoaulas:  [],
       currentIdx:  0,
       src:         'nocookie',  // 'nocookie' | 'invidious' | 'piped'
-      adbarActive: true,
+      adbarActive: false,
       notesOpen:   false,
       sidebarOpen: false,
       currentVideoId: null
@@ -15406,7 +15406,7 @@ Atenciosamente,`;
 
     // Instâncias públicas para cada fonte (sem anúncio)
     var _vpSources = {
-      nocookie: function(id) { return 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=0&fs=1&color=white&enablejsapi=0'; },
+      nocookie: function(id) { return 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&fs=1&color=white'; },
       invidious: function(id) { return 'https://invidious.io.lol/embed/' + id + '?autoplay=1'; },
       piped:    function(id) { return 'https://pipedapi.kavin.rocks/embed/' + id + '?autoplay=1'; }
     };
@@ -20085,11 +20085,9 @@ function _renderScore() {
           src=""
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
           allowfullscreen
-          referrerpolicy="no-referrer"
-          sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
         ></iframe>
         <!-- Cobre área de banner de anúncio inferior do YouTube -->
-        <div class="vp-ad-blocker-bar" id="vp-ad-bar"></div>
+        <div class="vp-ad-blocker-bar" id="vp-ad-bar" style="display:none;"></div>
       </div>
 
       <!-- BARRA DE CONTROLES -->
@@ -20103,7 +20101,7 @@ function _renderScore() {
         </div>
         <div class="vp-ctrl-sep"></div>
         <!-- Bloquear overlay de ads -->
-        <button class="vp-ctrl-btn active" id="vp-toggle-adbar" title="Cobrir área de banner de anúncios inferior">
+        <button class="vp-ctrl-btn" id="vp-toggle-adbar" title="Cobrir área de banner de anúncios inferior">
           <i class="fas fa-ban"></i> Cobrir ads
         </button>
         <!-- Marcar assistida -->
