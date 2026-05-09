@@ -4684,46 +4684,26 @@
       <div class="login-sub">Sistema Universitário de Gestão</div>
     </div>
 
-    <!-- PASSO 1: CONFIGURAR JSONBIN -->
+    <!-- PASSO 1: CONFIGURAR JSONBIN — apenas Bin ID -->
     <div id="stepConfig">
-      <div style="background:rgba(52,152,219,0.12);border:1px solid rgba(52,152,219,0.3);border-radius:12px;padding:14px 16px;margin-bottom:20px;">
-        <div style="font-size:0.78rem;font-weight:700;color:#3498db;margin-bottom:6px;"><i class="fas fa-database me-1"></i> Configuração do Banco de Dados</div>
+      <div style="background:rgba(26,188,156,0.10);border:1px solid rgba(26,188,156,0.28);border-radius:12px;padding:14px 16px;margin-bottom:22px;">
+        <div style="font-size:0.78rem;font-weight:700;color:#1abc9c;margin-bottom:5px;"><i class="fas fa-database me-1"></i> Configuração Inicial</div>
         <div style="font-size:0.73rem;color:rgba(255,255,255,0.55);line-height:1.6;">
-          Esta configuração é feita <strong style="color:rgba(255,255,255,0.8);">uma única vez</strong>. Acesse
-          <a href="https://jsonbin.io" target="_blank" style="color:#3498db;">jsonbin.io</a>,
-          crie uma conta gratuita, gere sua <strong style="color:rgba(255,255,255,0.8);">Master Key</strong> em
-          <em>API Keys</em> e crie um <strong style="color:rgba(255,255,255,0.8);">New Bin</strong> com o conteúdo
-          <code style="background:rgba(0,0,0,0.3);padding:1px 6px;border-radius:4px;font-size:0.7rem;">{"users":[]}</code>
-          para obter o <strong style="color:rgba(255,255,255,0.8);">Bin ID</strong>.
+          Para usar o sistema em um novo dispositivo, insira o seu <strong style="color:rgba(255,255,255,0.85);">Bin ID</strong> abaixo. Essa configuração é feita <strong style="color:rgba(255,255,255,0.85);">uma única vez</strong> por dispositivo.
         </div>
       </div>
 
-      <div class="login-form-group">
-        <label class="login-label"><i class="fas fa-key me-1"></i> Master Key <span style="color:#e74c3c;">*</span></label>
-        <div class="login-input-wrap">
-          <input class="login-input" type="password" id="cfgMasterKey" placeholder="$2a$10$..." style="padding-right:42px;" autocomplete="off">
-          <button class="login-eye-btn" type="button" onclick="toggleLoginEye('cfgMasterKey', this)"><i class="fas fa-eye"></i></button>
-        </div>
-        <div style="font-size:0.68rem;color:rgba(255,255,255,0.3);margin-top:5px;"><i class="fas fa-info-circle me-1"></i>Encontrada em jsonbin.io → API Keys → Master Key</div>
-      </div>
+      <!-- Campo oculto — master key embutida internamente -->
+      <input type="hidden" id="cfgMasterKey" value="">
 
       <div class="login-form-group">
         <label class="login-label"><i class="fas fa-database me-1"></i> Bin ID <span style="color:#e74c3c;">*</span></label>
         <input class="login-input" type="text" id="cfgBinId" placeholder="Ex: 6642f3a1acd3cb34a836..." autocomplete="off">
-        <div style="font-size:0.68rem;color:rgba(255,255,255,0.3);margin-top:5px;"><i class="fas fa-info-circle me-1"></i>ID do bin que contém <code style="background:rgba(0,0,0,0.3);padding:1px 4px;border-radius:3px;">{"users":[]}</code></div>
-      </div>
-
-      <div class="login-form-group">
-        <label class="login-label"><i class="fas fa-brain me-1"></i> Anthropic API Key <span style="color:#95a5a6;font-weight:400;font-size:0.7rem;">(opcional — para análise IA)</span></label>
-        <div class="login-input-wrap">
-          <input class="login-input" type="password" id="cfgAnthropicKey" placeholder="sk-ant-api03-..." style="padding-right:42px;" autocomplete="off">
-          <button class="login-eye-btn" type="button" onclick="toggleLoginEye('cfgAnthropicKey', this)"><i class="fas fa-eye"></i></button>
-        </div>
-        <div style="font-size:0.68rem;color:rgba(255,255,255,0.3);margin-top:5px;"><i class="fas fa-info-circle me-1"></i>Obtenha em <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#3498db;">console.anthropic.com</a> → API Keys</div>
+        <div style="font-size:0.68rem;color:rgba(255,255,255,0.3);margin-top:5px;"><i class="fas fa-info-circle me-1"></i>Código de identificação do banco de dados do sistema</div>
       </div>
 
       <button class="login-btn" id="cfgBtn" onclick="salvarConfig()">
-        <i class="fas fa-check me-2"></i> Salvar e Continuar
+        <i class="fas fa-plug me-2"></i> Conectar
       </button>
       <div class="login-msg" id="cfgMsg"></div>
     </div>
@@ -19970,23 +19950,40 @@ function _renderScore() {
 (function() {
   'use strict';
 
+  // ── MIGRAÇÃO: configs antigas tinham masterKey no localStorage ──
+  // Remove o campo masterKey do storage se existir (não é mais necessário)
+  (function migrateOldCfg() {
+    try {
+      const raw = localStorage.getItem('acpro_jsonbin_cfg_v1');
+      if (!raw) return;
+      const obj = JSON.parse(raw);
+      if (obj && obj.masterKey) {
+        delete obj.masterKey;
+        localStorage.setItem('acpro_jsonbin_cfg_v1', JSON.stringify(obj));
+      }
+    } catch(e) {}
+  })();
+
   // ── CHAVES DE CONFIGURAÇÃO ─────────────────────────────────────
   const CFG_KEY      = 'acpro_jsonbin_cfg_v1';
   const SESSION_KEY  = 'acpro_session_v1';
   const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b/';
 
+  // Master key embutida — não exposta ao usuário
+  const _MK = '$2a$10$xxIvXXIjG7A86QLIGEifv.jhyYGb3oxNTy37NWXJwY4/PDwozFjvK';
+
   // Lê config salva no localStorage
   function getCfg() {
     try { return JSON.parse(localStorage.getItem(CFG_KEY) || 'null'); } catch { return null; }
   }
-  function saveCfg(masterKey, binId, anthropicKey) {
-    localStorage.setItem(CFG_KEY, JSON.stringify({ masterKey, binId, anthropicKey: anthropicKey || '' }));
+  function saveCfg(binId, anthropicKey) {
+    localStorage.setItem(CFG_KEY, JSON.stringify({ binId, anthropicKey: anthropicKey || '' }));
   }
   function clearCfg() { localStorage.removeItem(CFG_KEY); }
 
   // Expõe para uso nos forms de login
-  function getMasterKey()    { const c = getCfg(); return c ? c.masterKey    : ''; }
-  function getBinId()        { const c = getCfg(); return c ? c.binId        : ''; }
+  function getMasterKey()    { return _MK; }
+  function getBinId()        { const c = getCfg(); return c ? c.binId : ''; }
   function getAnthropicKey() { const c = getCfg(); return c ? (c.anthropicKey || '') : ''; }
   window._getAnthropicKey = getAnthropicKey;
 
@@ -20053,49 +20050,44 @@ function _renderScore() {
 
   // ── PASSO 1: SALVAR CONFIG ─────────────────────────────────────
   window.salvarConfig = async function() {
-    const masterKey    = document.getElementById('cfgMasterKey').value.trim();
     const binId        = document.getElementById('cfgBinId').value.trim();
     const anthropicKey = (document.getElementById('cfgAnthropicKey') ? document.getElementById('cfgAnthropicKey').value.trim() : '');
 
-    if (!masterKey || !binId) {
-      showMsg('cfgMsg','error','<i class="fas fa-exclamation-circle me-1"></i> Preencha a Master Key e o Bin ID.');
-      return;
-    }
-    if (!masterKey.startsWith('$2a$') && !masterKey.startsWith('$2b$')) {
-      showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Master Key inválida. Deve começar com <code>$2a$</code> ou <code>$2b$</code>.');
+    if (!binId) {
+      showMsg('cfgMsg','error','<i class="fas fa-exclamation-circle me-1"></i> Insira o Bin ID para continuar.');
       return;
     }
 
     setLoading('cfgBtn', true, '');
-    showMsg('cfgMsg','info','<i class="fas fa-spinner fa-spin me-1"></i> Validando conexão com JSONBin...');
+    showMsg('cfgMsg','info','<i class="fas fa-spinner fa-spin me-1"></i> Validando conexão...');
 
     try {
-      // Testa conexão lendo o bin
+      // Testa conexão lendo o bin com a master key embutida
       const testR = await fetch(JSONBIN_BASE + binId + '/latest', {
-        headers: { 'X-Master-Key': masterKey }
+        headers: { 'X-Master-Key': _MK }
       });
 
-      if (testR.status === 401) { showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Master Key incorreta ou sem permissão.'); return; }
-      if (testR.status === 404) { showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Bin ID não encontrado. Verifique o ID.'); return; }
-      if (!testR.ok) { showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Erro ' + testR.status + '. Verifique os dados.'); return; }
+      if (testR.status === 401) { showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Sem permissão de acesso ao banco. Verifique o Bin ID.'); return; }
+      if (testR.status === 404) { showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Bin ID não encontrado. Verifique o código digitado.'); return; }
+      if (!testR.ok) { showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Erro ' + testR.status + '. Verifique o Bin ID.'); return; }
 
       const j = await testR.json();
       // Garante que o bin tem a estrutura correta
       if (!j.record || typeof j.record !== 'object') {
-        showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Conteúdo do bin inválido. Crie um bin com <code>{"users":[]}</code>.');
+        showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Banco de dados com formato inválido.');
         return;
       }
       if (!Array.isArray(j.record.users)) {
-        // Tenta corrigir automaticamente o bin
+        // Corrige automaticamente a estrutura do bin
         await fetch(JSONBIN_BASE + binId, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'X-Master-Key': masterKey },
+          headers: { 'Content-Type': 'application/json', 'X-Master-Key': _MK },
           body: JSON.stringify({ users: [] })
         });
       }
 
-      // Tudo OK — salva e avança
-      saveCfg(masterKey, binId, anthropicKey);
+      // Tudo OK — salva apenas binId e avança
+      saveCfg(binId, anthropicKey);
       showMsg('cfgMsg','success','<i class="fas fa-check-circle me-1"></i> Conexão validada com sucesso!');
       setTimeout(() => {
         document.getElementById('stepConfig').style.display = 'none';
@@ -20106,7 +20098,7 @@ function _renderScore() {
     } catch(e) {
       showMsg('cfgMsg','error','<i class="fas fa-wifi me-1"></i> Sem conexão ou erro de rede: ' + e.message);
     } finally {
-      setLoading('cfgBtn', false, '<i class="fas fa-check me-2"></i> Salvar e Continuar');
+      setLoading('cfgBtn', false, '<i class="fas fa-plug me-2"></i> Conectar');
     }
   };
 
@@ -20115,7 +20107,6 @@ function _renderScore() {
     clearCfg();
     document.getElementById('stepAuth').style.display   = 'none';
     document.getElementById('stepConfig').style.display = 'block';
-    document.getElementById('cfgMasterKey').value = '';
     document.getElementById('cfgBinId').value = '';
     const akEl = document.getElementById('cfgAnthropicKey'); if (akEl) akEl.value = '';
     hideMsg('cfgMsg');
@@ -20327,14 +20318,12 @@ function _renderScore() {
     const loginSenha = document.getElementById('loginSenha');
     const loginEmail = document.getElementById('loginEmail');
     const cadSenhaConf = document.getElementById('cadSenhaConf');
-    const cfgMasterKey = document.getElementById('cfgMasterKey');
     const cfgBinId     = document.getElementById('cfgBinId');
 
     if (loginSenha)   loginSenha.addEventListener('keydown',   e => { if (e.key==='Enter') fazerLogin(); });
     if (loginEmail)   loginEmail.addEventListener('keydown',   e => { if (e.key==='Enter') loginSenha && loginSenha.focus(); });
     if (cadSenhaConf) cadSenhaConf.addEventListener('keydown', e => { if (e.key==='Enter') fazerCadastro(); });
     if (cfgBinId)     cfgBinId.addEventListener('keydown',     e => { if (e.key==='Enter') salvarConfig(); });
-    if (cfgMasterKey) cfgMasterKey.addEventListener('keydown', e => { if (e.key==='Enter') cfgBinId && cfgBinId.focus(); });
   });
 
   // ===== INIT: LEITURAS PENDENTES HOME + MODAL EVENTS =====
