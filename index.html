@@ -14445,16 +14445,50 @@ Atenciosamente,`;
         const simulados = c.simulados || [];
         let simHtml = simulados.length === 0 ? '<div class="pro-empty"><i class="fas fa-clipboard"></i><p>Nenhum simulado registrado. Importe um JSON ou registre manualmente.</p></div>' :
             simulados.map((s, sIdx) => {
-                const pct = s.total ? Math.round((s.acertos/s.total)*100) : 0;
+                const pct         = s.total ? Math.round((s.acertos / s.total) * 100) : 0;
                 const hasQuestoes = s.questoes && s.questoes.length > 0;
-                return `<div class="simulado-item" style="cursor:${hasQuestoes?'pointer':'default'};" onclick="${hasQuestoes?`window.iniciarSimuladoJson(${c.id},${sIdx})`:''}">
-                  <div class="simulado-score ${pct>=70?'score-alto':pct>=50?'score-medio':'score-baixo'}">${hasQuestoes&&!s.acertos?'<i class="fas fa-play" style="font-size:0.7rem;"></i>':pct+'%'}</div>
-                  <div class="flex-grow-1">
-                    <div style="font-size:0.85rem;font-weight:600;color:#2c3e50;">${s.materia||s.titulo||'Geral'} — ${s.total||s.questoes?.length||0} questões</div>
-                    <div style="font-size:0.72rem;color:#95a5a6;">${s.data ? new Date(s.data+'T00:00').toLocaleDateString('pt-BR') : ''} ${s.obs ? '• '+s.obs : ''} ${hasQuestoes?'<span style="color:#1abc9c;font-weight:700;">• Clique para iniciar</span>':''}</div>
-                  </div>
-                  ${hasQuestoes?`<span style="font-size:0.72rem;background:rgba(26,188,156,0.12);color:#0e6655;border:1px solid rgba(26,188,156,0.3);border-radius:8px;padding:3px 8px;flex-shrink:0;">▶ Fazer</span>`:''}
-                </div>`;
+                const qtdReal     = s.total || (s.questoes ? s.questoes.length : 0);
+                const dataFmt     = s.data ? new Date(s.data + 'T00:00').toLocaleDateString('pt-BR') : '';
+                const corScore    = pct >= 70 ? 'score-alto' : pct >= 50 ? 'score-medio' : 'score-baixo';
+                const scoreLabel  = hasQuestoes && !s.acertos
+                    ? '<i class="fas fa-play" style="font-size:0.7rem;"></i>'
+                    : pct + '%';
+
+                // Linha de metadados
+                const metaParts = [];
+                if (dataFmt)  metaParts.push(dataFmt);
+                if (s.banca)  metaParts.push(s.banca);
+                if (s.ano)    metaParts.push(String(s.ano));
+                const metaStr = metaParts.join(' · ');
+
+                // Distribuição de disciplinas (se disponível)
+                let distHtml = '';
+                if (s.distribuicao && typeof s.distribuicao === 'object') {
+                    const entries = Object.entries(s.distribuicao);
+                    distHtml = '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;">'
+                        + entries.map(([disc, n]) =>
+                            '<span style="font-size:.6rem;background:rgba(52,152,219,.1);color:#2471a3;border:1px solid rgba(52,152,219,.25);border-radius:10px;padding:1px 7px;">'
+                            + disc + ': ' + n + '</span>'
+                          ).join('')
+                        + '</div>';
+                }
+
+                const cliqueHtml = hasQuestoes
+                    ? '<span style="color:#1abc9c;font-weight:700;font-size:.7rem;">▶ Clique para iniciar</span>'
+                    : '';
+
+                return '<div class="simulado-item" style="cursor:' + (hasQuestoes ? 'pointer' : 'default') + ';flex-direction:column;align-items:flex-start;gap:0;" onclick="' + (hasQuestoes ? 'window.iniciarSimuladoJson(' + c.id + ',' + sIdx + ')' : '') + '">'
+                    + '<div style="display:flex;align-items:center;gap:10px;width:100%;">'
+                    +   '<div class="simulado-score ' + corScore + '">' + scoreLabel + '</div>'
+                    +   '<div class="flex-grow-1" style="min-width:0;">'
+                    +     '<div style="font-size:.85rem;font-weight:700;color:#2c3e50;">' + (s.titulo || s.materia || 'Simulado') + '</div>'
+                    +     '<div style="font-size:.72rem;color:#95a5a6;">' + qtdReal + ' questões' + (metaStr ? ' · ' + metaStr : '') + '</div>'
+                    +     cliqueHtml
+                    +   '</div>'
+                    +   (hasQuestoes ? '<span style="font-size:.72rem;background:rgba(26,188,156,.12);color:#0e6655;border:1px solid rgba(26,188,156,.3);border-radius:8px;padding:4px 10px;flex-shrink:0;font-weight:700;">▶ Fazer</span>' : '')
+                    + '</div>'
+                    + distHtml
+                    + '</div>';
             }).join('');
 
         document.getElementById('concursoDetalheBody').innerHTML = `
@@ -15906,54 +15940,97 @@ Atenciosamente,`;
     // IMPORTAR CONCURSO VIA JSON
     // =====================================================================
     window.importarConcursoJson = function() {
-        const input = document.getElementById('inputImportConcursoJson');
-        if (!input) return;
-        input.value = '';
-        input.onchange = function() {
-            const file = this.files[0];
+        var input = document.createElement('input');
+        input.type   = 'file';
+        input.accept = '.json,application/json';
+        input.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+        document.body.appendChild(input);
+
+        // Limpa o input anterior se existir
+        var old = document.getElementById('_import_conc_input');
+        if (old) old.parentNode && old.parentNode.removeChild(old);
+        input.id = '_import_conc_input';
+
+        input.addEventListener('change', function() {
+            var file = this.files[0];
             if (!file) return;
-            const reader = new FileReader();
+
+            _toastSuccess('<i class="fas fa-spinner fa-spin me-1"></i> Processando arquivo...');
+
+            var reader = new FileReader();
+            reader.onerror = function() {
+                input.parentNode && input.parentNode.removeChild(input);
+                alert('Erro ao ler o arquivo. Tente novamente.');
+            };
             reader.onload = function(e) {
+                input.parentNode && input.parentNode.removeChild(input);
                 try {
-                    let data = JSON.parse(e.target.result);
-                    const concursos = Array.isArray(data) ? data : (data.concursos ? data.concursos : [data]);
-                    const arr = _getConcursos();
-                    let importados = 0;
-                    for (const c of concursos) {
-                        if (!c.nome) continue;
-                        const novo = {
-                            id: Date.now() + Math.random(),
-                            nome: c.nome || '',
-                            orgao: c.orgao || '',
-                            cargo: c.cargo || '',
-                            status: c.status || 'Estudando',
-                            vagas: c.vagas || 0,
-                            salario: c.salario || '',
-                            dataProva: c.dataProva || c.data_prova || '',
-                            horaProva: c.horaProva || c.hora_prova || '',
-                            inscricaoFim: c.inscricaoFim || c.inscricao_fim || c.inscricao_ate || '',
-                            resultado: c.resultado || '',
-                            local: c.local || '',
-                            edital: c.edital || '',
-                            obs: c.obs || c.observacoes || '',
-                            materias: (c.materias || []).map(m => typeof m === 'string' ? {nome: m, feita: false} : {nome: m.nome||m, feita: m.feita||false}),
-                            simulados: c.simulados || [],
-                            videoaulas: c.videoaulas || [],
-                            cronograma: c.cronograma || []
-                        };
-                        arr.push(novo);
+                    var raw = e.target.result;
+                    var data = JSON.parse(raw);
+
+                    // Aceita array direto ou { concursos: [...] }
+                    var lista = Array.isArray(data)
+                        ? data
+                        : (Array.isArray(data.concursos) ? data.concursos : [data]);
+
+                    var arr = _getConcursos();
+                    var importados = 0;
+
+                    for (var i = 0; i < lista.length; i++) {
+                        var c = lista[i];
+                        if (!c || !c.nome) continue;
+
+                        var materias = [];
+                        if (Array.isArray(c.materias)) {
+                            materias = c.materias.map(function(m) {
+                                if (typeof m === 'string') return { nome: m, feita: false };
+                                return { nome: m.nome || String(m), feita: !!m.feita };
+                            });
+                        }
+
+                        arr.push({
+                            id:           Date.now() + Math.random(),
+                            nome:         String(c.nome   || ''),
+                            orgao:        String(c.orgao  || ''),
+                            cargo:        String(c.cargo  || ''),
+                            status:       String(c.status || 'Estudando'),
+                            vagas:        Number(c.vagas  || 0),
+                            salario:      String(c.salario || ''),
+                            dataProva:    String(c.dataProva    || c.data_prova    || ''),
+                            horaProva:    String(c.horaProva    || c.hora_prova    || ''),
+                            inscricaoFim: String(c.inscricaoFim || c.inscricao_fim || c.inscricao_ate || ''),
+                            resultado:    String(c.resultado || ''),
+                            local:        String(c.local   || ''),
+                            edital:       String(c.edital  || ''),
+                            obs:          String(c.obs     || c.observacoes || ''),
+                            materias:     materias,
+                            simulados:    Array.isArray(c.simulados)  ? c.simulados  : [],
+                            videoaulas:   Array.isArray(c.videoaulas) ? c.videoaulas : [],
+                            cronograma:   Array.isArray(c.cronograma) ? c.cronograma : []
+                        });
                         importados++;
                     }
-                    if (!importados) { alert('Nenhum concurso válido encontrado no JSON.\nVerifique se o campo "nome" está presente.'); return; }
+
+                    if (importados === 0) {
+                        alert('Nenhum concurso v\u00e1lido encontrado.\nO JSON precisa ter o campo "nome" em cada concurso.');
+                        return;
+                    }
+
                     _saveConcursos(arr);
-                    if (activePanel === 'concursos-panel') renderConcursosPanel();
-                    _toastSuccess('✅ ' + importados + ' concurso(s) importado(s) com sucesso!');
+
+                    // Navega para o painel de concursos e renderiza
+                    navigateTo('concursos-panel');
+
+                    _toastSuccess('\u2705 ' + importados + ' concurso(s) importado(s) com sucesso!');
+
                 } catch(err) {
-                    alert('Erro ao ler JSON: ' + err.message + '\n\nVerifique o formato do arquivo.');
+                    console.error('[importarConcursoJson]', err);
+                    alert('Erro ao processar o JSON:\n' + err.message + '\n\nVerifique se o arquivo \u00e9 um JSON v\u00e1lido.');
                 }
             };
-            input.click();
-        };
+            reader.readAsText(file, 'UTF-8');
+        });
+
         input.click();
     };
 
@@ -15961,58 +16038,130 @@ Atenciosamente,`;
     // IMPORTAR SIMULADO COM QUESTÕES VIA JSON
     // =====================================================================
     window.importarSimuladoConcurso = function(concId) {
-        const input = document.getElementById('inputImportSimuladoJson');
-        if (!input) return;
-        input.value = '';
-        input.onchange = function() {
-            const file = this.files[0];
+        var input = document.createElement('input');
+        input.type   = 'file';
+        input.accept = '.json,application/json';
+        input.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+        document.body.appendChild(input);
+
+        var old = document.getElementById('_import_sim_input');
+        if (old) old.parentNode && old.parentNode.removeChild(old);
+        input.id = '_import_sim_input';
+
+        input.addEventListener('change', function() {
+            var file = this.files[0];
             if (!file) return;
-            const reader = new FileReader();
+
+            _toastSuccess('<i class="fas fa-spinner fa-spin me-1"></i> Processando simulado...');
+
+            var reader = new FileReader();
+            reader.onerror = function() {
+                input.parentNode && input.parentNode.removeChild(input);
+                alert('Erro ao ler o arquivo. Tente novamente.');
+            };
             reader.onload = function(e) {
+                input.parentNode && input.parentNode.removeChild(input);
                 try {
-                    const data = JSON.parse(e.target.result);
-                    let titulo = data.titulo || data.nome || file.name.replace('.json','');
-                    let materia = data.materia || data.disciplina || 'Geral';
-                    let questoes = Array.isArray(data) ? data : (data.questoes || data.perguntas || []);
-                    if (!questoes.length) { alert('Nenhuma questão encontrada no JSON.\nVerifique o campo "questoes".'); return; }
-                    if (questoes.length > 40) questoes = questoes.slice(0, 40);
-                    questoes = questoes.map(function(q, i) {
+                    var data = JSON.parse(e.target.result);
+
+                    // ── Metadados ─────────────────────────────────────
+                    var titulo       = data.titulo       || data.nome       || file.name.replace(/\.json$/i, '');
+                    var concurso     = data.concurso     || '';
+                    var banca        = data.banca        || '';
+                    var ano          = data.ano          || '';
+                    var materia      = data.materia      || data.disciplina || (concurso ? concurso : 'Geral');
+                    var distribuicao = data.distribuicao || null;
+
+                    // ── Lista de questões ─────────────────────────────
+                    var questoesRaw = Array.isArray(data)
+                        ? data
+                        : (data.questoes || data.perguntas || []);
+
+                    if (!questoesRaw.length) {
+                        alert('Nenhuma questão encontrada no JSON.\nVerifique se o campo "questoes" existe e não está vazio.');
+                        return;
+                    }
+                    if (questoesRaw.length > 40) questoesRaw = questoesRaw.slice(0, 40);
+
+                    // ── Normaliza cada questão ─────────────────────────
+                    var questoes = questoesRaw.map(function(q, i) {
+                        var gab = 0;
+                        if (typeof q.gabarito === 'number') {
+                            gab = q.gabarito;
+                        } else if (typeof q.gabarito === 'string') {
+                            var li1 = ['A','B','C','D','E'].indexOf(q.gabarito.toUpperCase().trim());
+                            gab = li1 >= 0 ? li1 : (parseInt(q.gabarito) || 0);
+                        } else if (q.gabarito_letra) {
+                            var li2 = ['A','B','C','D','E'].indexOf(String(q.gabarito_letra).toUpperCase().trim());
+                            gab = li2 >= 0 ? li2 : 0;
+                        } else if (q.resposta_correta != null) {
+                            gab = Number(q.resposta_correta);
+                        }
+
+                        var opcoes = (q.opcoes || q.alternativas || q.alternatives || []).map(function(o) {
+                            return typeof o === 'string' ? o : (o.texto || o.text || String(o));
+                        });
+
                         return {
-                            enunciado: q.enunciado || q.pergunta || q.questao || q.texto || ('Questão ' + (i+1)),
-                            opcoes: (q.opcoes || q.alternativas || q.alternatives || ['A','B','C','D']).map(function(o){ return typeof o === 'string' ? o : (o.texto || o.text || String(o)); }),
-                            gabarito: typeof q.gabarito === 'number' ? q.gabarito : (q.resposta_correta != null ? Number(q.resposta_correta) : 0),
-                            explicacao: q.explicacao || q.comentario || q.explanation || ''
+                            numero:         q.numero         || (i + 1),
+                            disciplina:     q.disciplina     || q.materia || q.area || '',
+                            enunciado:      q.enunciado      || q.pergunta || q.questao || q.texto || ('Questão ' + (i + 1)),
+                            opcoes:         opcoes,
+                            gabarito:       gab,
+                            gabarito_letra: q.gabarito_letra || (['A','B','C','D','E'][gab] || String(gab)),
+                            explicacao:     q.explicacao     || q.comentario || q.explanation || ''
                         };
                     });
-                    const arr = _getConcursos();
-                    const c = arr.find(function(x){ return x.id == concId; });
-                    if (!c) { alert('Concurso não encontrado.'); return; }
+
+                    // ── Obs com metadados ─────────────────────────────
+                    var obsParts = [];
+                    if (banca)                            obsParts.push('Banca: ' + banca);
+                    if (ano)                              obsParts.push('Ano: ' + ano);
+                    if (concurso && concurso !== titulo)  obsParts.push(concurso);
+                    var obs = obsParts.length ? obsParts.join(' \u00b7 ') : ('Importado de ' + file.name);
+
+                    // ── Salva no concurso ─────────────────────────────
+                    var arr = _getConcursos();
+                    var c = arr.find(function(x) { return x.id == concId; });
+                    if (!c) { alert('Concurso não encontrado. Reabra o painel e tente novamente.'); return; }
                     if (!c.simulados) c.simulados = [];
                     c.simulados.push({
-                        id: Date.now(),
-                        titulo: titulo,
-                        materia: materia,
-                        data: new Date().toISOString().split('T')[0],
-                        total: questoes.length,
-                        acertos: 0,
-                        obs: 'Importado de ' + file.name,
-                        questoes: questoes
+                        id:           Date.now(),
+                        titulo:       titulo,
+                        materia:      materia,
+                        banca:        banca,
+                        ano:          ano,
+                        concurso:     concurso,
+                        distribuicao: distribuicao,
+                        data:         new Date().toISOString().split('T')[0],
+                        total:        questoes.length,
+                        acertos:      0,
+                        obs:          obs,
+                        questoes:     questoes
                     });
                     _saveConcursos(arr);
-                    const detModal = bootstrap.Modal.getInstance(document.getElementById('concursoDetalheModal'));
+
+                    // ── Reabre modal na aba Simulados ─────────────────
+                    var detModal = bootstrap.Modal.getInstance(document.getElementById('concursoDetalheModal'));
                     if (detModal) detModal.hide();
                     setTimeout(function() {
-                        const updated = _getConcursos().find(function(x){ return x.id == concId; });
+                        var updated = _getConcursos().find(function(x) { return x.id == concId; });
                         if (updated) abrirConcursoDetalhe(updated);
-                    }, 300);
-                    setTimeout(function(){ if (window.switchConcursoTab) window.switchConcursoTab('simulados', null); }, 700);
-                    _toastSuccess('✅ Simulado "' + titulo + '" importado com ' + questoes.length + ' questões!');
+                    }, 350);
+                    setTimeout(function() {
+                        if (window.switchConcursoTab) window.switchConcursoTab('simulados', null);
+                    }, 750);
+
+                    _toastSuccess('\u2705 "' + titulo + '" importado \u2014 ' + questoes.length + ' quest\u00f5es!');
+
                 } catch(err) {
-                    alert('Erro ao ler JSON: ' + err.message);
+                    console.error('[importarSimuladoConcurso]', err);
+                    alert('Erro ao processar o JSON:\n' + err.message + '\n\nVerifique se o arquivo é um JSON válido no formato correto.');
                 }
             };
-            input.click();
-        };
+            reader.readAsText(file, 'UTF-8');
+        });
+
         input.click();
     };
 
@@ -16039,65 +16188,138 @@ Atenciosamente,`;
     };
 
     function _runSimuladoQuiz(sim, onFinish) {
-        const questoes = sim.questoes;
-        let qIdx = 0, acertos = 0;
-        const total = questoes.length;
-        const modalEl = document.getElementById('quizModal');
-        const bodyEl  = document.getElementById('quizModalBody');
-        const footerEl = document.getElementById('quizModalFooter');
-        const titleEl = modalEl ? modalEl.querySelector('.modal-title') : null;
+        var questoes  = sim.questoes;
+        var qIdx      = 0;
+        var acertos   = 0;
+        var erros     = [];   // {qIdx, disciplina, enunciado, gabarito_letra, escolha_letra}
+        var total     = questoes.length;
+        var modalEl   = document.getElementById('quizModal');
+        var bodyEl    = document.getElementById('quizModalBody');
+        var footerEl  = document.getElementById('quizModalFooter');
+        var titleEl   = modalEl ? modalEl.querySelector('.modal-title') : null;
+        var letters   = ['A','B','C','D','E','F'];
         if (!modalEl || !bodyEl) { alert('Modal de quiz não encontrado.'); return; }
-        if (titleEl) titleEl.innerHTML = '<i class="fas fa-clipboard-check me-2"></i>' + (sim.titulo||sim.materia||'Simulado');
-        const letters = ['A','B','C','D','E','F'];
+        if (titleEl) titleEl.innerHTML =
+            '<i class="fas fa-clipboard-check me-2"></i>' + (sim.titulo || sim.materia || 'Simulado')
+            + (sim.banca ? '<span style="font-size:.65rem;font-weight:400;opacity:.6;margin-left:8px;">' + sim.banca + (sim.ano ? ' ' + sim.ano : '') + '</span>' : '');
 
         function renderQ() {
-            const q = questoes[qIdx];
-            const pct = Math.round((qIdx/total)*100);
-            const opcsHtml = (q.opcoes||[]).map(function(op, i){
-                return '<button class="quiz-option-btn" data-idx="'+i+'"><span class="opt-letter">'+(letters[i]||i+1)+'</span><span>'+op+'</span></button>';
+            var q     = questoes[qIdx];
+            var pct   = Math.round((qIdx / total) * 100);
+            var numLbl = (q.numero ? 'Q' + q.numero : 'Questão ' + (qIdx + 1)) + ' de ' + total;
+            var discBadge = q.disciplina
+                ? '<span style="font-size:.65rem;font-weight:700;background:rgba(52,152,219,.15);color:#2471a3;border:1px solid rgba(52,152,219,.35);border-radius:10px;padding:2px 9px;margin-left:6px;">'
+                  + q.disciplina + '</span>'
+                : '';
+            var opcsHtml = (q.opcoes || []).map(function(op, i) {
+                return '<button class="quiz-option-btn" data-idx="' + i + '">'
+                    + '<span class="opt-letter">' + (letters[i] || i + 1) + '</span>'
+                    + '<span>' + op + '</span></button>';
             }).join('');
-            bodyEl.innerHTML = '<div class="quiz-container">'
-                + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
-                + '<span style="font-size:.78rem;color:#95a5a6;">Questão '+(qIdx+1)+' de '+total+'</span>'
-                + '<span style="font-size:.78rem;font-weight:700;color:#1abc9c;">'+acertos+' acerto(s)</span></div>'
-                + '<div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width:'+pct+'%;"></div></div>'
-                + '<div class="quiz-question-text">'+q.enunciado+'</div>'
+
+            bodyEl.innerHTML =
+                '<div class="quiz-container">'
+                + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px;">'
+                +   '<span style="font-size:.78rem;color:#95a5a6;">' + numLbl + discBadge + '</span>'
+                +   '<span style="font-size:.78rem;font-weight:700;color:#1abc9c;">' + acertos + ' certo(s) · <span style="color:#e74c3c;">' + erros.length + ' errado(s)</span></span>'
+                + '</div>'
+                + '<div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width:' + pct + '%;"></div></div>'
+                + '<div class="quiz-question-text">' + q.enunciado + '</div>'
                 + opcsHtml
                 + '<div class="quiz-feedback" id="quiz-fb-inner"></div>'
                 + '</div>';
+
             footerEl.style.display = 'none';
+
             bodyEl.querySelectorAll('.quiz-option-btn').forEach(function(btn) {
                 btn.addEventListener('click', function() {
-                    const chosen = parseInt(this.dataset.idx);
-                    const correct = q.gabarito;
-                    bodyEl.querySelectorAll('.quiz-option-btn').forEach(function(b){ b.disabled = true; });
-                    bodyEl.querySelectorAll('.quiz-option-btn').forEach(function(b, i){
-                        if (i === correct) b.classList.add('correct');
-                        else if (i === chosen) b.classList.add('wrong');
+                    var chosen  = parseInt(this.dataset.idx);
+                    var correct = q.gabarito;
+                    bodyEl.querySelectorAll('.quiz-option-btn').forEach(function(b) { b.disabled = true; });
+                    bodyEl.querySelectorAll('.quiz-option-btn').forEach(function(b, i) {
+                        if (i === correct)       b.classList.add('correct');
+                        else if (i === chosen)   b.classList.add('wrong');
                     });
-                    if (chosen === correct) acertos++;
-                    const fb = document.getElementById('quiz-fb-inner');
+                    var isCorrect = (chosen === correct);
+                    if (isCorrect) {
+                        acertos++;
+                    } else {
+                        erros.push({
+                            numero:         q.numero || (qIdx + 1),
+                            disciplina:     q.disciplina || '',
+                            enunciado:      q.enunciado.substring(0, 80) + (q.enunciado.length > 80 ? '...' : ''),
+                            gabarito_letra: q.gabarito_letra || letters[correct] || String(correct),
+                            escolha_letra:  letters[chosen]  || String(chosen)
+                        });
+                    }
+                    var fb = document.getElementById('quiz-fb-inner');
                     if (fb) {
-                        fb.className = 'quiz-feedback show ' + (chosen===correct?'correct-fb':'wrong-fb');
-                        fb.innerHTML = '<strong>'+(chosen===correct?'✅ Correto!':'❌ Incorreto!')+'</strong>'+(q.explicacao?'<br><span style="font-size:.85rem;margin-top:6px;display:block;">'+q.explicacao+'</span>':'');
+                        fb.className = 'quiz-feedback show ' + (isCorrect ? 'correct-fb' : 'wrong-fb');
+                        var gabLetra = q.gabarito_letra || letters[correct] || '';
+                        fb.innerHTML = '<strong>' + (isCorrect ? '✅ Correto!' : '❌ Incorreto! Gabarito: ' + gabLetra) + '</strong>'
+                            + (q.explicacao ? '<br><span style="font-size:.84rem;margin-top:6px;display:block;line-height:1.55;">' + q.explicacao + '</span>' : '');
                     }
                     footerEl.style.display = 'flex';
-                    document.getElementById('_quiz-next-btn').textContent = (qIdx+1>=total) ? 'Ver Resultado' : 'Próxima →';
+                    document.getElementById('_quiz-next-btn').textContent = (qIdx + 1 >= total) ? 'Ver Resultado' : 'Próxima →';
                 });
             });
         }
 
         function showResult() {
-            const pct = Math.round(acertos/total*100);
-            const cor = pct>=70?'#1abc9c':pct>=50?'#f39c12':'#e74c3c';
-            bodyEl.innerHTML = '<div class="quiz-score-card">'
-                + '<div class="quiz-score-circle" style="border-color:'+cor+';color:'+cor+';">'+pct+'%</div>'
-                + '<h4 style="font-family:\'Playfair Display\',serif;color:#1a2332;margin-bottom:8px;">'+(pct>=70?'🏆 Parabéns!':pct>=50?'📚 Bom esforço!':'💪 Continue praticando!')+'</h4>'
-                + '<p style="color:#7f8c8d;font-size:.9rem;">'+acertos+' de '+total+' questões corretas</p>'
+            var pct = Math.round(acertos / total * 100);
+            var cor = pct >= 70 ? '#1abc9c' : pct >= 50 ? '#f39c12' : '#e74c3c';
+            var msg = pct >= 70 ? '🏆 Parabéns!' : pct >= 50 ? '📚 Bom esforço!' : '💪 Continue praticando!';
+
+            // Agrupa erros por disciplina
+            var discErros = {};
+            erros.forEach(function(e) {
+                var d = e.disciplina || 'Geral';
+                if (!discErros[d]) discErros[d] = 0;
+                discErros[d]++;
+            });
+            var discHtml = Object.keys(discErros).length > 0
+                ? '<div style="margin:16px 0 8px;text-align:left;font-size:.8rem;font-weight:700;color:#2c3e50;">Erros por disciplina:</div>'
+                  + '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:12px;">'
+                  + Object.entries(discErros).map(function(kv) {
+                      return '<span style="background:#fdedec;color:#c0392b;border:1px solid #e74c3c44;border-radius:20px;font-size:.72rem;padding:3px 10px;">'
+                          + kv[0] + ': ' + kv[1] + ' erro(s)</span>';
+                  }).join('')
+                  + '</div>'
+                : '';
+
+            var errosHtml = erros.length > 0
+                ? '<details style="text-align:left;margin-top:8px;">'
+                  + '<summary style="font-size:.78rem;color:#3498db;cursor:pointer;font-weight:600;">Ver questões erradas (' + erros.length + ')</summary>'
+                  + '<div style="margin-top:10px;">'
+                  + erros.map(function(e) {
+                      return '<div style="background:#fdedec;border-left:3px solid #e74c3c;border-radius:6px;padding:8px 12px;margin-bottom:6px;font-size:.76rem;">'
+                          + '<div style="font-weight:700;color:#c0392b;">Q' + e.numero + (e.disciplina ? ' · ' + e.disciplina : '') + '</div>'
+                          + '<div style="color:#34495e;margin:3px 0;">' + e.enunciado + '</div>'
+                          + '<div>Sua resposta: <strong style="color:#e74c3c;">' + e.escolha_letra + '</strong>'
+                          + ' &nbsp;|&nbsp; Gabarito: <strong style="color:#27ae60;">' + e.gabarito_letra + '</strong></div>'
+                          + '</div>';
+                  }).join('')
+                  + '</div></details>'
+                : '';
+
+            bodyEl.innerHTML =
+                '<div class="quiz-score-card">'
+                + '<div class="quiz-score-circle" style="border-color:' + cor + ';color:' + cor + ';">' + pct + '%</div>'
+                + '<h4 style="font-family:\'Playfair Display\',serif;color:#1a2332;margin-bottom:6px;">' + msg + '</h4>'
+                + '<p style="color:#7f8c8d;font-size:.9rem;margin-bottom:4px;">' + acertos + ' de ' + total + ' questões corretas</p>'
+                + discHtml
+                + errosHtml
                 + '</div>';
+
             footerEl.style.display = 'flex';
-            const nb = document.getElementById('_quiz-next-btn');
-            if (nb) { nb.textContent = 'Fechar'; nb.onclick = function(){ bootstrap.Modal.getInstance(modalEl)?.hide(); if(onFinish) onFinish(acertos, total); }; }
+            var nb = document.getElementById('_quiz-next-btn');
+            if (nb) {
+                nb.textContent = 'Fechar';
+                nb.onclick = function() {
+                    bootstrap.Modal.getInstance(modalEl)?.hide();
+                    if (onFinish) onFinish(acertos, total);
+                };
+            }
         }
 
         footerEl.innerHTML = '<button class="btn btn-primary" id="_quiz-next-btn" style="border-radius:8px;font-weight:700;padding:8px 24px;">Próxima →</button>';
