@@ -7688,43 +7688,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCountdown(); nextEventInterval = setInterval(updateCountdown, 1000);
     }
 
-    // ===== LEITURA DIÁRIA — 3 cards separados =====
-    const LEITURA_CURADORIA = [
-        { tipo:'livro', titulo:'Curso de Direito Constitucional', autor:'Alexandre de Moraes', area:'Constitucional', url:'https://www.amazon.com.br/s?k=Curso+Direito+Constitucional+Alexandre+Moraes', urlLabel:'Ver livro' },
-        { tipo:'livro', titulo:'Manual de Direito Civil', autor:'Flávio Tartuce', area:'Civil', url:'https://www.amazon.com.br/s?k=Manual+Direito+Civil+Tartuce', urlLabel:'Ver livro' },
-        { tipo:'livro', titulo:'Direito Penal: Parte Geral', autor:'Rogério Greco', area:'Penal', url:'https://www.amazon.com.br/s?k=Direito+Penal+Parte+Geral+Rogerio+Greco', urlLabel:'Ver livro' },
-        { tipo:'livro', titulo:'Processo Civil Brasileiro', autor:'Humberto Theodoro Jr.', area:'Processual Civil', url:'https://www.amazon.com.br/s?k=Processo+Civil+Brasileiro+Theodoro', urlLabel:'Ver livro' },
-        { tipo:'livro', titulo:'Teoria Geral do Direito Tributário', autor:'Alfredo Becker', area:'Tributário', url:'https://www.amazon.com.br/s?k=Teoria+Geral+Direito+Tributario+Becker', urlLabel:'Ver livro' },
-        { tipo:'livro', titulo:'Direito Administrativo Brasileiro', autor:'Hely Lopes Meirelles', area:'Administrativo', url:'https://www.amazon.com.br/s?k=Direito+Administrativo+Brasileiro+Meirelles', urlLabel:'Ver livro' },
-        { tipo:'livro', titulo:'Direito do Trabalho', autor:'Maurício Godinho Delgado', area:'Trabalhista', url:'https://www.amazon.com.br/s?k=Direito+Trabalho+Godinho+Delgado', urlLabel:'Ver livro' },
-        { tipo:'livro', titulo:'O Espírito das Leis', autor:'Montesquieu', area:'Filosofia do Direito', url:'http://www.dominiopublico.gov.br/pesquisa/DetalheObraForm.do?select_action=&co_obra=2555', urlLabel:'Acessar (Domínio Público)' },
-        { tipo:'livro', titulo:'Teoria Pura do Direito', autor:'Hans Kelsen', area:'Teoria Geral', url:'https://edisciplinas.usp.br/pluginfile.php/297730/mod_resource/content/1/Kelsen%20-%20Teoria%20Pura%20do%20Direito.pdf', urlLabel:'Ler PDF (USP)' },
-        { tipo:'livro', titulo:'Direito Empresarial Esquematizado', autor:'André Santa Cruz', area:'Empresarial', url:'https://www.amazon.com.br/s?k=Direito+Empresarial+Esquematizado+Andre+Santa+Cruz', urlLabel:'Ver livro' },
-        { tipo:'livro', titulo:'Leviatã', autor:'Thomas Hobbes', area:'Filosofia do Direito', url:'http://www.dominiopublico.gov.br/pesquisa/DetalheObraForm.do?select_action=&co_obra=1099', urlLabel:'Acessar (Domínio Público)' },
-        { tipo:'livro', titulo:'O Contrato Social', autor:'Rousseau', area:'Filosofia do Direito', url:'http://www.dominiopublico.gov.br/pesquisa/DetalheObraForm.do?select_action=&co_obra=1090', urlLabel:'Acessar (Domínio Público)' },
-        { tipo:'artigo', titulo:'Princípios Constitucionais e sua Aplicação no STF', autor:'Consultor Jurídico', area:'Constitucional', url:'https://www.conjur.com.br/tag/direito-constitucional/', urlLabel:'Ler no ConJur' },
-        { tipo:'artigo', titulo:'O STF e o Controle de Constitucionalidade Concentrado', autor:'JOTA', area:'Constitucional', url:'https://www.jota.info/stf', urlLabel:'Ler no JOTA' },
-        { tipo:'artigo', titulo:'Responsabilidade Civil Extracontratual no CC/2002', autor:'JusBrasil', area:'Civil', url:'https://www.jusbrasil.com.br/artigos/responsabilidade-civil', urlLabel:'Ler no JusBrasil' },
-        { tipo:'artigo', titulo:'LGPD e Contratos Digitais: panorama atual', autor:'Migalhas', area:'Digital/Civil', url:'https://www.migalhas.uol.com.br/depeso?cat=19', urlLabel:'Ler nas Migalhas' },
-        { tipo:'artigo', titulo:'Inteligência Artificial no Judiciário Brasileiro', autor:'Consultor Jurídico', area:'Tecnologia', url:'https://www.conjur.com.br/tag/inteligencia-artificial/', urlLabel:'Ler no ConJur' },
-        { tipo:'artigo', titulo:'Reforma Tributária: impactos no Direito Fiscal', autor:'JOTA', area:'Tributário', url:'https://www.jota.info/tributos-e-empresas/', urlLabel:'Ler no JOTA' },
-        { tipo:'artigo', titulo:'Direito do Consumidor e Plataformas Digitais', autor:'Migalhas', area:'Consumidor', url:'https://www.migalhas.uol.com.br/depeso?cat=6', urlLabel:'Ler nas Migalhas' },
-    ];
-
-    const NOTICIAS_JURIDICAS = [
-        { titulo:'Últimas decisões do STF — Plenário e Turmas', fonte:'STF Notícias', url:'https://portal.stf.jus.br/noticias/', tag:'STF', cor:'#1a5276' },
-        { titulo:'Jurisprudência e súmulas recentes do STJ', fonte:'STJ Notícias', url:'https://www.stj.jus.br/sites/portalp/Pesquisa-de-jurisprudencia', tag:'STJ', cor:'#1e8449' },
-        { titulo:'Atualizações legislativas do Congresso Nacional', fonte:'Câmara dos Deputados', url:'https://www.camara.leg.br/noticias', tag:'Legislação', cor:'#7d3c98' },
-        { titulo:'Direito Digital e proteção de dados pessoais (LGPD)', fonte:'Migalhas', url:'https://www.migalhas.uol.com.br/', tag:'Digital', cor:'#2471a3' },
-        { titulo:'Decisões relevantes do TST em Direito do Trabalho', fonte:'TST', url:'https://www.tst.jus.br/web/guest/noticias', tag:'Trabalhista', cor:'#a04000' },
-        { titulo:'Reforma tributária: impactos práticos para o advogado', fonte:'JOTA', url:'https://www.jota.info/tributos-e-empresas/', tag:'Tributário', cor:'#b7950b' },
-        { titulo:'Súmulas e jurisprudência dos tribunais superiores', fonte:'STJ', url:'https://www.stj.jus.br/sites/portalp/Pesquisa-de-jurisprudencia', tag:'Súmulas', cor:'#1a5276' },
-        { titulo:'Jurisprudência do TJAL: consulta de acórdãos', fonte:'TJAL', url:'https://www2.tjal.jus.br/cjsg/consultaCompleta.do', tag:'TJAL', cor:'#7d3c98' },
-        { titulo:'OAB: atos normativos e comunicados importantes', fonte:'OAB-AL', url:'https://www.oab-al.org.br/', tag:'OAB', cor:'#b7950b' },
-        { titulo:'Direito Penal: teses aprovadas pelo STJ e STF', fonte:'Consultor Jurídico', url:'https://www.conjur.com.br/', tag:'Penal', cor:'#922b21' },
-        { titulo:'Contratos administrativos e licitações — Lei 14.133/21', fonte:'JOTA', url:'https://www.jota.info/', tag:'Administrativo', cor:'#1a6a3a' },
-        { titulo:'Novidades no Direito de Família e Sucessões', fonte:'Migalhas', url:'https://www.migalhas.uol.com.br/', tag:'Civil', cor:'#2471a3' },
-    ];
+    // ===== LEITURA DIÁRIA / NOTÍCIAS — conteúdo REAL via API Claude + web search =====
 
     const DIARIOS_OFICIAIS = [
         { nome:'Diário Oficial da União', sigla:'DOU', url:'https://www.in.gov.br/consulta/-/busca-oficial', cor:'#1a5276', icone:'fa-landmark', desc:'Atos federais, leis, decretos e portarias' },
@@ -7733,55 +7697,220 @@ document.addEventListener('DOMContentLoaded', function() {
         { nome:'Diário da Justiça do TJAL', sigla:'DJ-TJAL', url:'https://www2.tjal.jus.br/cdje', cor:'#a04000', icone:'fa-balance-scale', desc:'Publicações judiciais de Alagoas' },
     ];
 
-    let _shuffleOffset = 0;
+    // ---- Cache em sessionStorage para não recarregar a cada navegação ----
+    const _SS_KEY_LEITURA  = 'ap_leitura_cache';
+    const _SS_KEY_NOTICIAS = 'ap_noticias_cache';
 
-    function _getDayIdx(extra) {
-        return Math.floor((new Date() - new Date(new Date().getFullYear(),0,0)) / 864e5) + (_shuffleOffset||0) + (extra||0);
+    function _ssGet(key) {
+        try { const v = sessionStorage.getItem(key); return v ? JSON.parse(v) : null; } catch(e) { return null; }
+    }
+    function _ssSet(key, val) {
+        try { sessionStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
     }
 
-    function renderLeituraDiaria() {
+    // ---- Esqueleto de carregamento ----
+    function _skeletonLeitura(container) {
+        container.innerHTML = `
+        <div class="info-card-home h-100" style="--ic:#c9a84c;">
+          <div class="info-card-header">
+            <div class="info-card-badge" style="background:rgba(201,168,76,0.18);border-color:rgba(201,168,76,0.45);color:#c9a84c;">
+              <i class="fas fa-newspaper"></i> Artigo do Dia
+            </div>
+            <span style="font-size:0.65rem;color:rgba(255,255,255,0.3);animation:lpPulse 1.5s infinite;">Buscando...</span>
+          </div>
+          <div style="height:14px;border-radius:7px;background:rgba(255,255,255,0.08);margin-bottom:8px;width:90%;animation:lpPulse 1.5s infinite;"></div>
+          <div style="height:10px;border-radius:5px;background:rgba(255,255,255,0.05);margin-bottom:6px;width:60%;animation:lpPulse 1.5s infinite;"></div>
+          <div style="height:10px;border-radius:5px;background:rgba(255,255,255,0.05);margin-bottom:20px;width:40%;animation:lpPulse 1.5s infinite;"></div>
+          <div style="height:32px;border-radius:9px;background:rgba(201,168,76,0.15);width:100%;margin-top:auto;animation:lpPulse 1.5s infinite;"></div>
+        </div>`;
+    }
+
+    function _skeletonNoticias(container) {
+        container.innerHTML = `
+        <div class="info-card-home h-100" style="--ic:#3498db;">
+          <div class="info-card-header">
+            <div class="info-card-badge" style="background:rgba(52,152,219,0.18);border-color:rgba(52,152,219,0.45);color:#3498db;">
+              <i class="fas fa-rss"></i> Notícias Jurídicas
+            </div>
+            <span style="font-size:0.65rem;color:rgba(255,255,255,0.3);animation:lpPulse 1.5s infinite;">Buscando...</span>
+          </div>
+          ${Array(5).fill(0).map(()=>`
+          <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+            <div style="width:8px;height:8px;border-radius:50%;background:rgba(52,152,219,0.3);flex-shrink:0;margin-top:6px;"></div>
+            <div style="flex:1;">
+              <div style="height:11px;border-radius:5px;background:rgba(255,255,255,0.07);margin-bottom:5px;width:88%;animation:lpPulse 1.5s infinite;"></div>
+              <div style="height:9px;border-radius:4px;background:rgba(255,255,255,0.04);width:50%;animation:lpPulse 1.5s infinite;"></div>
+            </div>
+          </div>`).join('')}
+          <div style="height:32px;border-radius:9px;background:rgba(52,152,219,0.15);width:100%;margin-top:12px;animation:lpPulse 1.5s infinite;"></div>
+        </div>`;
+    }
+
+    // ---- Chamada à API Claude com web search ----
+    async function _fetchFromClaude(prompt) {
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 1000,
+                tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+                messages: [{ role: 'user', content: prompt }]
+            })
+        });
+        if (!resp.ok) throw new Error('API error ' + resp.status);
+        const data = await resp.json();
+        // Extrai bloco de texto final
+        const textBlock = data.content && data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+        return textBlock || '';
+    }
+
+    // ---- Artigo/Leitura do Dia ----
+    async function renderLeituraDiaria() {
         const container = document.getElementById('leitura-diaria-container');
         if (!container) return;
-        const idx = _getDayIdx(0);
-        const leitura = LEITURA_CURADORIA[idx % LEITURA_CURADORIA.length];
-        const tipoBadge = leitura.tipo === 'livro' ? '📚 Leitura do Dia' : '📰 Artigo do Dia';
+
+        const cached = _ssGet(_SS_KEY_LEITURA);
+        if (cached) { _renderLeituraCard(container, cached); return; }
+
+        _skeletonLeitura(container);
+
+        try {
+            const hoje = new Date().toLocaleDateString('pt-BR');
+            const prompt = `Você é um assistente jurídico especializado. Pesquise na web e encontre UM artigo jurídico real publicado recentemente (de preferência nos últimos 7 dias, até 30 dias) em portais brasileiros como Migalhas, JOTA, ConJur, JusBrasil ou similares.
+
+Retorne APENAS um objeto JSON válido, sem markdown, sem explicações, exatamente neste formato:
+{
+  "tipo": "artigo",
+  "titulo": "Título real e completo do artigo encontrado",
+  "autor": "Nome do autor ou nome do portal",
+  "area": "Área do Direito (ex: Constitucional, Civil, Penal, Trabalhista, Tributário, Administrativo)",
+  "url": "URL direta e real do artigo encontrado",
+  "urlLabel": "Ler no [nome do portal]",
+  "resumo": "Resumo em 1-2 frases do que o artigo trata"
+}
+
+IMPORTANTE: A URL deve ser a URL DIRETA do artigo, não a homepage do portal. O título deve ser o título real do artigo, não inventado.`;
+
+            const raw = await _fetchFromClaude(prompt);
+            const clean = raw.replace(/```json|```/g, '').trim();
+            const match = clean.match(/\{[\s\S]*\}/);
+            if (!match) throw new Error('no JSON');
+            const leitura = JSON.parse(match[0]);
+            _ssSet(_SS_KEY_LEITURA, leitura);
+            _renderLeituraCard(container, leitura);
+        } catch(e) {
+            // Fallback elegante em caso de erro
+            container.innerHTML = `
+            <div class="info-card-home h-100" style="--ic:#c9a84c;">
+              <div class="info-card-header">
+                <div class="info-card-badge" style="background:rgba(201,168,76,0.18);border-color:rgba(201,168,76,0.45);color:#c9a84c;">
+                  <i class="fas fa-newspaper"></i> Artigo do Dia
+                </div>
+                <button class="info-card-refresh" onclick="refreshLeitura()" title="Tentar novamente"><i class="fas fa-sync-alt"></i></button>
+              </div>
+              <div class="info-card-title" style="color:rgba(255,255,255,0.5);">Não foi possível carregar o artigo</div>
+              <div class="info-card-meta">Verifique sua conexão e tente novamente</div>
+              <div class="info-card-tag-row">
+                <span class="info-card-tag" style="background:rgba(231,76,60,0.15);border-color:rgba(231,76,60,0.35);color:#e74c3c;"><i class="fas fa-exclamation-triangle me-1"></i>Erro ao buscar</span>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:auto;flex-wrap:wrap;">
+                <a href="https://www.migalhas.uol.com.br" target="_blank" rel="noopener" class="info-card-btn" style="background:linear-gradient(135deg,#c9a84c,#a8862e);color:#1a1f2e;flex:1;">
+                  <i class="fas fa-external-link-alt"></i> Migalhas
+                </a>
+                <a href="https://www.conjur.com.br" target="_blank" rel="noopener" class="info-card-btn" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.15);flex:1;">
+                  <i class="fas fa-external-link-alt"></i> ConJur
+                </a>
+              </div>
+            </div>`;
+        }
+    }
+
+    function _renderLeituraCard(container, leitura) {
         const tipoIcone = leitura.tipo === 'livro' ? 'fa-book-open' : 'fa-newspaper';
+        const tipoBadge = leitura.tipo === 'livro' ? '📚 Leitura do Dia' : '📰 Artigo do Dia';
         container.innerHTML = `
         <div class="info-card-home h-100" style="--ic:#c9a84c;--ic-dark:#1a1f2e;">
           <div class="info-card-header">
             <div class="info-card-badge" style="background:rgba(201,168,76,0.18);border-color:rgba(201,168,76,0.45);color:#c9a84c;">
               <i class="fas ${tipoIcone}"></i> ${tipoBadge}
             </div>
-            <button class="info-card-refresh" onclick="shuffleLeitura()" title="Próxima sugestão"><i class="fas fa-sync-alt"></i></button>
+            <button class="info-card-refresh" onclick="refreshLeitura()" title="Buscar novo artigo"><i class="fas fa-sync-alt"></i></button>
           </div>
           <div class="info-card-title">${leitura.titulo}</div>
           <div class="info-card-meta"><i class="fas fa-user-edit me-1"></i>${leitura.autor}</div>
+          ${leitura.resumo ? `<div style="font-size:0.73rem;color:rgba(255,255,255,0.5);line-height:1.45;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${leitura.resumo}</div>` : ''}
           <div class="info-card-tag-row">
             <span class="info-card-tag" style="background:rgba(26,188,156,0.15);border-color:rgba(26,188,156,0.35);color:#1abc9c;"><i class="fas fa-balance-scale me-1"></i>${leitura.area}</span>
+            <span class="info-card-tag" style="background:rgba(201,168,76,0.12);border-color:rgba(201,168,76,0.3);color:#c9a84c;"><i class="fas fa-check-circle me-1"></i>Conteúdo Real</span>
           </div>
           <a href="${leitura.url}" target="_blank" rel="noopener" class="info-card-btn" style="background:linear-gradient(135deg,#c9a84c,#a8862e);color:#1a1f2e;margin-top:auto;">
-            <i class="fas fa-external-link-alt"></i> ${leitura.urlLabel || 'Acessar'}
+            <i class="fas fa-external-link-alt"></i> ${leitura.urlLabel || 'Ler artigo'}
           </a>
         </div>`;
     }
 
-    function renderNoticiasJuridicas() {
+    // ---- Notícias Jurídicas Reais ----
+    async function renderNoticiasJuridicas() {
         const container = document.getElementById('noticias-juridicas-container');
         if (!container) return;
-        const idx = _getDayIdx(0);
-        // Pega 5 notícias rotativas a partir do dia
-        const noticias = Array.from({length:5}, (_,i) => NOTICIAS_JURIDICAS[(idx+i) % NOTICIAS_JURIDICAS.length]);
+
+        const cached = _ssGet(_SS_KEY_NOTICIAS);
+        if (cached) { _renderNoticiasCard(container, cached); return; }
+
+        _skeletonNoticias(container);
+
+        try {
+            const prompt = `Você é um assistente jurídico. Pesquise na web e encontre 5 notícias jurídicas reais e recentes (últimos 7 dias, máximo 30 dias) publicadas em portais jurídicos brasileiros como STF, STJ, TST, ConJur, JOTA, Migalhas, Câmara dos Deputados ou similares.
+
+Retorne APENAS um array JSON válido, sem markdown, sem explicações, exatamente neste formato:
+[
+  {
+    "titulo": "Título real da notícia",
+    "fonte": "Nome do portal/tribunal",
+    "url": "URL direta da notícia",
+    "tag": "Área (STF, STJ, Civil, Penal, Trabalhista, Tributário, Legislação, etc)",
+    "cor": "cor hex correspondente à área (ex: #1a5276 para STF, #1e8449 para STJ, #7d3c98 para legislação, #a04000 para trabalhista, #b7950b para tributário)"
+  },
+  ...
+]
+
+IMPORTANTE: As URLs devem ser URLs DIRETAS e reais das notícias. Busque notícias variadas de diferentes áreas do Direito. Não invente notícias.`;
+
+            const raw = await _fetchFromClaude(prompt);
+            const clean = raw.replace(/```json|```/g, '').trim();
+            const match = clean.match(/\[[\s\S]*\]/);
+            if (!match) throw new Error('no JSON array');
+            const noticias = JSON.parse(match[0]);
+            if (!Array.isArray(noticias) || !noticias.length) throw new Error('empty');
+            _ssSet(_SS_KEY_NOTICIAS, noticias);
+            _renderNoticiasCard(container, noticias);
+        } catch(e) {
+            // Fallback com links reais para portais
+            const fallback = [
+                { titulo:'Últimas decisões do STF — acesse o portal', fonte:'STF', url:'https://portal.stf.jus.br/noticias/', tag:'STF', cor:'#1a5276' },
+                { titulo:'Jurisprudência e decisões recentes do STJ', fonte:'STJ', url:'https://www.stj.jus.br/sites/portalp/Pesquisa-de-jurisprudencia', tag:'STJ', cor:'#1e8449' },
+                { titulo:'Notícias jurídicas — ConJur', fonte:'Consultor Jurídico', url:'https://www.conjur.com.br/', tag:'Geral', cor:'#2471a3' },
+                { titulo:'Notícias e artigos jurídicos — Migalhas', fonte:'Migalhas', url:'https://www.migalhas.uol.com.br/', tag:'Geral', cor:'#b7950b' },
+                { titulo:'Cobertura jurídica diária — JOTA', fonte:'JOTA', url:'https://www.jota.info/', tag:'Geral', cor:'#1a6a3a' },
+            ];
+            _ssSet(_SS_KEY_NOTICIAS, fallback);
+            _renderNoticiasCard(container, fallback);
+        }
+    }
+
+    function _renderNoticiasCard(container, noticias) {
         container.innerHTML = `
         <div class="info-card-home h-100" style="--ic:#3498db;--ic-dark:#1a2332;">
           <div class="info-card-header">
             <div class="info-card-badge" style="background:rgba(52,152,219,0.18);border-color:rgba(52,152,219,0.45);color:#3498db;">
               <i class="fas fa-rss"></i> Notícias Jurídicas
             </div>
-            <button class="info-card-refresh" onclick="shuffleNoticias()" title="Atualizar"><i class="fas fa-sync-alt"></i></button>
+            <button class="info-card-refresh" onclick="refreshNoticias()" title="Buscar novas notícias"><i class="fas fa-sync-alt"></i></button>
           </div>
           <div style="flex:1;overflow:hidden;">
-            ${noticias.map(n=>`
-            <div class="noticia-card-item" onclick="window.open('${n.url}','_blank')">
+            ${noticias.slice(0,5).map(n=>`
+            <div class="noticia-card-item" onclick="window.open('${n.url}','_blank')" title="${n.titulo}">
               <div class="noticia-card-dot" style="background:${n.cor||'#3498db'};"></div>
               <div class="noticia-card-body">
                 <div class="noticia-card-title">${n.titulo}</div>
@@ -7832,14 +7961,18 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>`;
     }
 
-    window.shuffleLeitura = function() {
-        _shuffleOffset = (_shuffleOffset||0) + 1;
+    // ---- Refresh manual (limpa cache e recarrega) ----
+    window.refreshLeitura = function() {
+        sessionStorage.removeItem(_SS_KEY_LEITURA);
         renderLeituraDiaria();
     };
-    window.shuffleNoticias = function() {
-        _shuffleOffset = (_shuffleOffset||0) + 3;
+    window.refreshNoticias = function() {
+        sessionStorage.removeItem(_SS_KEY_NOTICIAS);
         renderNoticiasJuridicas();
     };
+    // Manter compatibilidade com nomes antigos
+    window.shuffleLeitura  = window.refreshLeitura;
+    window.shuffleNoticias = window.refreshNoticias;
 
     /* ===== CARD CONCURSOS ABERTOS ===== */
     /* ===== DADOS CONCURSOS PREVISTOS EM ALAGOAS ===== */
