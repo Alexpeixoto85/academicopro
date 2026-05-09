@@ -5240,15 +5240,28 @@
 
   <!-- ===== PAINEL CONCURSOS ===== -->
   <div class="content-panel" id="concursos-panel">
-    <div class="panel-header">
+    <div class="panel-header" style="flex-wrap:wrap;gap:10px;">
       <div class="panel-header-left">
         <h3><i class="fas fa-medal me-2" style="color:#e67e22;"></i>Concursos Públicos</h3>
         <p>Gerencie suas inscrições, matérias e cronograma de estudos</p>
       </div>
-      <button class="panel-btn panel-btn-primary" id="btnNovoConcurso" data-bs-toggle="modal" data-bs-target="#concursoModal">
-        <i class="fas fa-plus"></i> Novo Concurso
-      </button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <button class="panel-btn" id="btnPromptsConcurso" style="background:linear-gradient(135deg,#9b59b6,#8e44ad);color:white;border:none;" onclick="window.abrirPromptsConcursoModal()">
+          <i class="fas fa-robot me-1"></i> Gerar com IA
+        </button>
+        <button class="panel-btn" id="btnImportConcursoJson" style="background:linear-gradient(135deg,#3498db,#2980b9);color:white;border:none;" onclick="window.importarConcursoJson()">
+          <i class="fas fa-file-import me-1"></i> Importar JSON
+        </button>
+        <button class="panel-btn" id="btnBackupConcursos" style="background:rgba(26,188,156,0.12);color:#0e6655;border:1px solid rgba(26,188,156,0.3);" onclick="window.abrirBackupConcursosModal()">
+          <i class="fas fa-database me-1"></i> Backup
+        </button>
+        <button class="panel-btn panel-btn-primary" id="btnNovoConcurso" data-bs-toggle="modal" data-bs-target="#concursoModal">
+          <i class="fas fa-plus"></i> Novo Concurso
+        </button>
+      </div>
     </div>
+    <input type="file" id="inputImportConcursoJson" accept=".json" style="display:none;">
+    <input type="file" id="inputImportSimuladoJson" accept=".json" style="display:none;">
     <!-- Stats rápidas -->
     <div class="stats-grid mb-4" id="concurso-stats-grid" style="grid-template-columns:repeat(4,1fr);"></div>
     <!-- Filtros -->
@@ -7697,24 +7710,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== LEITURA DIÁRIA — 3 cards separados =====
     const LEITURA_CURADORIA = [
-        { tipo:'livro', titulo:'Curso de Direito Constitucional', autor:'Alexandre de Moraes', area:'Constitucional', url:'https://www.google.com/search?q=Curso+Direito+Constitucional+Alexandre+Moraes+PDF+gratuito' },
-        { tipo:'livro', titulo:'Manual de Direito Civil', autor:'Flávio Tartuce', area:'Civil', url:'https://www.google.com/search?q=Manual+Direito+Civil+Tartuce+PDF+gratuito' },
-        { tipo:'livro', titulo:'Direito Penal: Parte Geral', autor:'Rogério Greco', area:'Penal', url:'https://www.google.com/search?q=Direito+Penal+Parte+Geral+Rogerio+Greco+PDF' },
-        { tipo:'livro', titulo:'Processo Civil Brasileiro', autor:'Humberto Theodoro Jr.', area:'Processual Civil', url:'https://www.google.com/search?q=Processo+Civil+Brasileiro+Theodoro+PDF' },
-        { tipo:'livro', titulo:'Teoria Geral do Direito Tributário', autor:'Alfredo Becker', area:'Tributário', url:'https://www.google.com/search?q=Teoria+Geral+Direito+Tributario+Becker+PDF' },
-        { tipo:'livro', titulo:'Direito Administrativo Brasileiro', autor:'Hely Lopes Meirelles', area:'Administrativo', url:'https://www.google.com/search?q=Direito+Administrativo+Brasileiro+Meirelles+PDF' },
-        { tipo:'livro', titulo:'Direito do Trabalho', autor:'Maurício Godinho Delgado', area:'Trabalhista', url:'https://www.google.com/search?q=Direito+Trabalho+Godinho+Delgado+PDF' },
-        { tipo:'livro', titulo:'O Espírito das Leis', autor:'Montesquieu', area:'Filosofia do Direito', url:'http://www.dominiopublico.gov.br/pesquisa/DetalheObraForm.do?select_action=&co_obra=2555' },
-        { tipo:'livro', titulo:'Teoria Pura do Direito', autor:'Hans Kelsen', area:'Teoria Geral', url:'https://www.google.com/search?q=Teoria+Pura+Direito+Kelsen+PDF+gratuito' },
-        { tipo:'livro', titulo:'Direito Empresarial Esquematizado', autor:'André Santa Cruz', area:'Empresarial', url:'https://www.google.com/search?q=Direito+Empresarial+Esquematizado+Andre+Santa+Cruz+PDF' },
-        { tipo:'artigo', titulo:'Princípios Constitucionais e sua Aplicação no STF', autor:'Consultor Jurídico', area:'Constitucional', url:'https://www.conjur.com.br/' },
-        { tipo:'artigo', titulo:'O STF e o Controle de Constitucionalidade Concentrado', autor:'JOTA', area:'Constitucional', url:'https://www.jota.info/' },
-        { tipo:'artigo', titulo:'Responsabilidade Civil Extracontratual no CC/2002', autor:'JusBrasil', area:'Civil', url:'https://www.jusbrasil.com.br/' },
-        { tipo:'artigo', titulo:'Atualidades do Direito Penal Brasileiro', autor:'Empório do Direito', area:'Penal', url:'https://emporiododireito.com.br/' },
-        { tipo:'artigo', titulo:'LGPD e Contratos Digitais: panorama atual', autor:'Migalhas', area:'Digital/Civil', url:'https://www.migalhas.uol.com.br/' },
-        { tipo:'artigo', titulo:'Inteligência Artificial no Judiciário Brasileiro', autor:'Consultor Jurídico', area:'Tecnologia', url:'https://www.conjur.com.br/' },
-        { tipo:'artigo', titulo:'Reforma Tributária: impactos no Direito Fiscal', autor:'JOTA', area:'Tributário', url:'https://www.jota.info/tributos-e-empresas/' },
-        { tipo:'artigo', titulo:'Direito do Consumidor e Plataformas Digitais', autor:'Migalhas', area:'Consumidor', url:'https://www.migalhas.uol.com.br/' },
+        { tipo:'livro', titulo:'Curso de Direito Constitucional', autor:'Alexandre de Moraes', area:'Constitucional', url:'https://www.amazon.com.br/s?k=Curso+Direito+Constitucional+Alexandre+Moraes', urlLabel:'Ver livro' },
+        { tipo:'livro', titulo:'Manual de Direito Civil', autor:'Flávio Tartuce', area:'Civil', url:'https://www.amazon.com.br/s?k=Manual+Direito+Civil+Tartuce', urlLabel:'Ver livro' },
+        { tipo:'livro', titulo:'Direito Penal: Parte Geral', autor:'Rogério Greco', area:'Penal', url:'https://www.amazon.com.br/s?k=Direito+Penal+Parte+Geral+Rogerio+Greco', urlLabel:'Ver livro' },
+        { tipo:'livro', titulo:'Processo Civil Brasileiro', autor:'Humberto Theodoro Jr.', area:'Processual Civil', url:'https://www.amazon.com.br/s?k=Processo+Civil+Brasileiro+Theodoro', urlLabel:'Ver livro' },
+        { tipo:'livro', titulo:'Teoria Geral do Direito Tributário', autor:'Alfredo Becker', area:'Tributário', url:'https://www.amazon.com.br/s?k=Teoria+Geral+Direito+Tributario+Becker', urlLabel:'Ver livro' },
+        { tipo:'livro', titulo:'Direito Administrativo Brasileiro', autor:'Hely Lopes Meirelles', area:'Administrativo', url:'https://www.amazon.com.br/s?k=Direito+Administrativo+Brasileiro+Meirelles', urlLabel:'Ver livro' },
+        { tipo:'livro', titulo:'Direito do Trabalho', autor:'Maurício Godinho Delgado', area:'Trabalhista', url:'https://www.amazon.com.br/s?k=Direito+Trabalho+Godinho+Delgado', urlLabel:'Ver livro' },
+        { tipo:'livro', titulo:'O Espírito das Leis', autor:'Montesquieu', area:'Filosofia do Direito', url:'http://www.dominiopublico.gov.br/pesquisa/DetalheObraForm.do?select_action=&co_obra=2555', urlLabel:'Acessar (Domínio Público)' },
+        { tipo:'livro', titulo:'Teoria Pura do Direito', autor:'Hans Kelsen', area:'Teoria Geral', url:'https://edisciplinas.usp.br/pluginfile.php/297730/mod_resource/content/1/Kelsen%20-%20Teoria%20Pura%20do%20Direito.pdf', urlLabel:'Ler PDF (USP)' },
+        { tipo:'livro', titulo:'Direito Empresarial Esquematizado', autor:'André Santa Cruz', area:'Empresarial', url:'https://www.amazon.com.br/s?k=Direito+Empresarial+Esquematizado+Andre+Santa+Cruz', urlLabel:'Ver livro' },
+        { tipo:'livro', titulo:'Leviatã', autor:'Thomas Hobbes', area:'Filosofia do Direito', url:'http://www.dominiopublico.gov.br/pesquisa/DetalheObraForm.do?select_action=&co_obra=1099', urlLabel:'Acessar (Domínio Público)' },
+        { tipo:'livro', titulo:'O Contrato Social', autor:'Rousseau', area:'Filosofia do Direito', url:'http://www.dominiopublico.gov.br/pesquisa/DetalheObraForm.do?select_action=&co_obra=1090', urlLabel:'Acessar (Domínio Público)' },
+        { tipo:'artigo', titulo:'Princípios Constitucionais e sua Aplicação no STF', autor:'Consultor Jurídico', area:'Constitucional', url:'https://www.conjur.com.br/tag/direito-constitucional/', urlLabel:'Ler no ConJur' },
+        { tipo:'artigo', titulo:'O STF e o Controle de Constitucionalidade Concentrado', autor:'JOTA', area:'Constitucional', url:'https://www.jota.info/stf', urlLabel:'Ler no JOTA' },
+        { tipo:'artigo', titulo:'Responsabilidade Civil Extracontratual no CC/2002', autor:'JusBrasil', area:'Civil', url:'https://www.jusbrasil.com.br/artigos/responsabilidade-civil', urlLabel:'Ler no JusBrasil' },
+        { tipo:'artigo', titulo:'LGPD e Contratos Digitais: panorama atual', autor:'Migalhas', area:'Digital/Civil', url:'https://www.migalhas.uol.com.br/depeso?cat=19', urlLabel:'Ler nas Migalhas' },
+        { tipo:'artigo', titulo:'Inteligência Artificial no Judiciário Brasileiro', autor:'Consultor Jurídico', area:'Tecnologia', url:'https://www.conjur.com.br/tag/inteligencia-artificial/', urlLabel:'Ler no ConJur' },
+        { tipo:'artigo', titulo:'Reforma Tributária: impactos no Direito Fiscal', autor:'JOTA', area:'Tributário', url:'https://www.jota.info/tributos-e-empresas/', urlLabel:'Ler no JOTA' },
+        { tipo:'artigo', titulo:'Direito do Consumidor e Plataformas Digitais', autor:'Migalhas', area:'Consumidor', url:'https://www.migalhas.uol.com.br/depeso?cat=6', urlLabel:'Ler nas Migalhas' },
     ];
 
     const NOTICIAS_JURIDICAS = [
@@ -7766,7 +7780,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <span class="info-card-tag" style="background:rgba(26,188,156,0.15);border-color:rgba(26,188,156,0.35);color:#1abc9c;"><i class="fas fa-balance-scale me-1"></i>${leitura.area}</span>
           </div>
           <a href="${leitura.url}" target="_blank" rel="noopener" class="info-card-btn" style="background:linear-gradient(135deg,#c9a84c,#a8862e);color:#1a1f2e;margin-top:auto;">
-            <i class="fas fa-external-link-alt"></i> Acessar
+            <i class="fas fa-external-link-alt"></i> ${leitura.urlLabel || 'Acessar'}
           </a>
         </div>`;
     }
@@ -14449,15 +14463,17 @@ Atenciosamente,`;
         const matPct = materias.length ? Math.round((matsFeitas/materias.length)*100) : 0;
 
         const simulados = c.simulados || [];
-        let simHtml = simulados.length === 0 ? '<div class="pro-empty"><i class="fas fa-clipboard"></i><p>Nenhum simulado registrado.</p></div>' :
-            simulados.map(s => {
+        let simHtml = simulados.length === 0 ? '<div class="pro-empty"><i class="fas fa-clipboard"></i><p>Nenhum simulado registrado. Importe um JSON ou registre manualmente.</p></div>' :
+            simulados.map((s, sIdx) => {
                 const pct = s.total ? Math.round((s.acertos/s.total)*100) : 0;
-                return `<div class="simulado-item">
-                  <div class="simulado-score ${pct>=70?'score-alto':pct>=50?'score-medio':'score-baixo'}">${pct}%</div>
+                const hasQuestoes = s.questoes && s.questoes.length > 0;
+                return `<div class="simulado-item" style="cursor:${hasQuestoes?'pointer':'default'};" onclick="${hasQuestoes?`window.iniciarSimuladoJson(${c.id},${sIdx})`:''}">
+                  <div class="simulado-score ${pct>=70?'score-alto':pct>=50?'score-medio':'score-baixo'}">${hasQuestoes&&!s.acertos?'<i class="fas fa-play" style="font-size:0.7rem;"></i>':pct+'%'}</div>
                   <div class="flex-grow-1">
-                    <div style="font-size:0.85rem;font-weight:600;color:#2c3e50;">${s.materia||'Geral'} — ${s.acertos}/${s.total}</div>
-                    <div style="font-size:0.72rem;color:#95a5a6;">${s.data ? new Date(s.data+'T00:00').toLocaleDateString('pt-BR') : ''} ${s.obs ? '• '+s.obs : ''}</div>
+                    <div style="font-size:0.85rem;font-weight:600;color:#2c3e50;">${s.materia||s.titulo||'Geral'} — ${s.total||s.questoes?.length||0} questões</div>
+                    <div style="font-size:0.72rem;color:#95a5a6;">${s.data ? new Date(s.data+'T00:00').toLocaleDateString('pt-BR') : ''} ${s.obs ? '• '+s.obs : ''} ${hasQuestoes?'<span style="color:#1abc9c;font-weight:700;">• Clique para iniciar</span>':''}</div>
                   </div>
+                  ${hasQuestoes?`<span style="font-size:0.72rem;background:rgba(26,188,156,0.12);color:#0e6655;border:1px solid rgba(26,188,156,0.3);border-radius:8px;padding:3px 8px;flex-shrink:0;">▶ Fazer</span>`:''}
                 </div>`;
             }).join('');
 
@@ -14530,9 +14546,12 @@ Atenciosamente,`;
 
           <!-- Simulados -->
           <div class="concurso-detail-tab" id="ctab-simulados">
-            <div class="d-flex justify-content-end mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3" style="flex-wrap:wrap;gap:8px;">
+              <button class="panel-btn" style="font-size:0.75rem;padding:6px 14px;background:linear-gradient(135deg,#9b59b6,#8e44ad);color:white;border:none;" onclick="window.importarSimuladoConcurso(${c.id})">
+                <i class="fas fa-file-import me-1"></i> Importar Simulado JSON
+              </button>
               <button class="panel-btn panel-btn-primary" style="font-size:0.75rem;padding:6px 14px;" onclick="abrirSimuladoModal(${c.id})">
-                <i class="fas fa-plus me-1"></i> Novo Simulado
+                <i class="fas fa-plus me-1"></i> Registrar Manual
               </button>
             </div>
             ${simHtml}
@@ -15903,7 +15922,365 @@ Atenciosamente,`;
         renderNoticiasJuridicas();
     };
 
-});
+    // =====================================================================
+    // IMPORTAR CONCURSO VIA JSON
+    // =====================================================================
+    window.importarConcursoJson = function() {
+        const input = document.getElementById('inputImportConcursoJson');
+        if (!input) return;
+        input.value = '';
+        input.onchange = function() {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let data = JSON.parse(e.target.result);
+                    const concursos = Array.isArray(data) ? data : (data.concursos ? data.concursos : [data]);
+                    const arr = _getConcursos();
+                    let importados = 0;
+                    for (const c of concursos) {
+                        if (!c.nome) continue;
+                        const novo = {
+                            id: Date.now() + Math.random(),
+                            nome: c.nome || '',
+                            orgao: c.orgao || '',
+                            cargo: c.cargo || '',
+                            status: c.status || 'Estudando',
+                            vagas: c.vagas || 0,
+                            salario: c.salario || '',
+                            dataProva: c.dataProva || c.data_prova || '',
+                            horaProva: c.horaProva || c.hora_prova || '',
+                            inscricaoFim: c.inscricaoFim || c.inscricao_fim || c.inscricao_ate || '',
+                            resultado: c.resultado || '',
+                            local: c.local || '',
+                            edital: c.edital || '',
+                            obs: c.obs || c.observacoes || '',
+                            materias: (c.materias || []).map(m => typeof m === 'string' ? {nome: m, feita: false} : {nome: m.nome||m, feita: m.feita||false}),
+                            simulados: c.simulados || [],
+                            videoaulas: c.videoaulas || [],
+                            cronograma: c.cronograma || []
+                        };
+                        arr.push(novo);
+                        importados++;
+                    }
+                    if (!importados) { alert('Nenhum concurso válido encontrado no JSON.\nVerifique se o campo "nome" está presente.'); return; }
+                    _saveConcursos(arr);
+                    if (activePanel === 'concursos-panel') renderConcursosPanel();
+                    _toastSuccess('✅ ' + importados + ' concurso(s) importado(s) com sucesso!');
+                } catch(err) {
+                    alert('Erro ao ler JSON: ' + err.message + '\n\nVerifique o formato do arquivo.');
+                }
+            };
+            input.click();
+        };
+        input.click();
+    };
+
+    // =====================================================================
+    // IMPORTAR SIMULADO COM QUESTÕES VIA JSON
+    // =====================================================================
+    window.importarSimuladoConcurso = function(concId) {
+        const input = document.getElementById('inputImportSimuladoJson');
+        if (!input) return;
+        input.value = '';
+        input.onchange = function() {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    let titulo = data.titulo || data.nome || file.name.replace('.json','');
+                    let materia = data.materia || data.disciplina || 'Geral';
+                    let questoes = Array.isArray(data) ? data : (data.questoes || data.perguntas || []);
+                    if (!questoes.length) { alert('Nenhuma questão encontrada no JSON.\nVerifique o campo "questoes".'); return; }
+                    if (questoes.length > 40) questoes = questoes.slice(0, 40);
+                    questoes = questoes.map(function(q, i) {
+                        return {
+                            enunciado: q.enunciado || q.pergunta || q.questao || q.texto || ('Questão ' + (i+1)),
+                            opcoes: (q.opcoes || q.alternativas || q.alternatives || ['A','B','C','D']).map(function(o){ return typeof o === 'string' ? o : (o.texto || o.text || String(o)); }),
+                            gabarito: typeof q.gabarito === 'number' ? q.gabarito : (q.resposta_correta != null ? Number(q.resposta_correta) : 0),
+                            explicacao: q.explicacao || q.comentario || q.explanation || ''
+                        };
+                    });
+                    const arr = _getConcursos();
+                    const c = arr.find(function(x){ return x.id == concId; });
+                    if (!c) { alert('Concurso não encontrado.'); return; }
+                    if (!c.simulados) c.simulados = [];
+                    c.simulados.push({
+                        id: Date.now(),
+                        titulo: titulo,
+                        materia: materia,
+                        data: new Date().toISOString().split('T')[0],
+                        total: questoes.length,
+                        acertos: 0,
+                        obs: 'Importado de ' + file.name,
+                        questoes: questoes
+                    });
+                    _saveConcursos(arr);
+                    const detModal = bootstrap.Modal.getInstance(document.getElementById('concursoDetalheModal'));
+                    if (detModal) detModal.hide();
+                    setTimeout(function() {
+                        const updated = _getConcursos().find(function(x){ return x.id == concId; });
+                        if (updated) abrirConcursoDetalhe(updated);
+                    }, 300);
+                    setTimeout(function(){ if (window.switchConcursoTab) window.switchConcursoTab('simulados', null); }, 700);
+                    _toastSuccess('✅ Simulado "' + titulo + '" importado com ' + questoes.length + ' questões!');
+                } catch(err) {
+                    alert('Erro ao ler JSON: ' + err.message);
+                }
+            };
+            input.click();
+        };
+        input.click();
+    };
+
+    // =====================================================================
+    // INICIAR SIMULADO (quiz automático)
+    // =====================================================================
+    window.iniciarSimuladoJson = function(concId, simIdx) {
+        const arr = _getConcursos();
+        const c = arr.find(function(x){ return x.id == concId; });
+        if (!c || !c.simulados || !c.simulados[simIdx]) return;
+        const sim = c.simulados[simIdx];
+        if (!sim.questoes || !sim.questoes.length) { alert('Este simulado não possui questões para iniciar.'); return; }
+        const detModal = bootstrap.Modal.getInstance(document.getElementById('concursoDetalheModal'));
+        if (detModal) detModal.hide();
+        setTimeout(function() {
+            _runSimuladoQuiz(sim, function(acertos, total) {
+                sim.acertos = acertos;
+                sim.total = total;
+                sim.dataUltimoTreino = new Date().toISOString().split('T')[0];
+                _saveConcursos(arr);
+                if (activePanel === 'concursos-panel') renderConcursosPanel();
+            });
+        }, 400);
+    };
+
+    function _runSimuladoQuiz(sim, onFinish) {
+        const questoes = sim.questoes;
+        let qIdx = 0, acertos = 0;
+        const total = questoes.length;
+        const modalEl = document.getElementById('quizModal');
+        const bodyEl  = document.getElementById('quizModalBody');
+        const footerEl = document.getElementById('quizModalFooter');
+        const titleEl = modalEl ? modalEl.querySelector('.modal-title') : null;
+        if (!modalEl || !bodyEl) { alert('Modal de quiz não encontrado.'); return; }
+        if (titleEl) titleEl.innerHTML = '<i class="fas fa-clipboard-check me-2"></i>' + (sim.titulo||sim.materia||'Simulado');
+        const letters = ['A','B','C','D','E','F'];
+
+        function renderQ() {
+            const q = questoes[qIdx];
+            const pct = Math.round((qIdx/total)*100);
+            const opcsHtml = (q.opcoes||[]).map(function(op, i){
+                return '<button class="quiz-option-btn" data-idx="'+i+'"><span class="opt-letter">'+(letters[i]||i+1)+'</span><span>'+op+'</span></button>';
+            }).join('');
+            bodyEl.innerHTML = '<div class="quiz-container">'
+                + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+                + '<span style="font-size:.78rem;color:#95a5a6;">Questão '+(qIdx+1)+' de '+total+'</span>'
+                + '<span style="font-size:.78rem;font-weight:700;color:#1abc9c;">'+acertos+' acerto(s)</span></div>'
+                + '<div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width:'+pct+'%;"></div></div>'
+                + '<div class="quiz-question-text">'+q.enunciado+'</div>'
+                + opcsHtml
+                + '<div class="quiz-feedback" id="quiz-fb-inner"></div>'
+                + '</div>';
+            footerEl.style.display = 'none';
+            bodyEl.querySelectorAll('.quiz-option-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const chosen = parseInt(this.dataset.idx);
+                    const correct = q.gabarito;
+                    bodyEl.querySelectorAll('.quiz-option-btn').forEach(function(b){ b.disabled = true; });
+                    bodyEl.querySelectorAll('.quiz-option-btn').forEach(function(b, i){
+                        if (i === correct) b.classList.add('correct');
+                        else if (i === chosen) b.classList.add('wrong');
+                    });
+                    if (chosen === correct) acertos++;
+                    const fb = document.getElementById('quiz-fb-inner');
+                    if (fb) {
+                        fb.className = 'quiz-feedback show ' + (chosen===correct?'correct-fb':'wrong-fb');
+                        fb.innerHTML = '<strong>'+(chosen===correct?'✅ Correto!':'❌ Incorreto!')+'</strong>'+(q.explicacao?'<br><span style="font-size:.85rem;margin-top:6px;display:block;">'+q.explicacao+'</span>':'');
+                    }
+                    footerEl.style.display = 'flex';
+                    document.getElementById('_quiz-next-btn').textContent = (qIdx+1>=total) ? 'Ver Resultado' : 'Próxima →';
+                });
+            });
+        }
+
+        function showResult() {
+            const pct = Math.round(acertos/total*100);
+            const cor = pct>=70?'#1abc9c':pct>=50?'#f39c12':'#e74c3c';
+            bodyEl.innerHTML = '<div class="quiz-score-card">'
+                + '<div class="quiz-score-circle" style="border-color:'+cor+';color:'+cor+';">'+pct+'%</div>'
+                + '<h4 style="font-family:\'Playfair Display\',serif;color:#1a2332;margin-bottom:8px;">'+(pct>=70?'🏆 Parabéns!':pct>=50?'📚 Bom esforço!':'💪 Continue praticando!')+'</h4>'
+                + '<p style="color:#7f8c8d;font-size:.9rem;">'+acertos+' de '+total+' questões corretas</p>'
+                + '</div>';
+            footerEl.style.display = 'flex';
+            const nb = document.getElementById('_quiz-next-btn');
+            if (nb) { nb.textContent = 'Fechar'; nb.onclick = function(){ bootstrap.Modal.getInstance(modalEl)?.hide(); if(onFinish) onFinish(acertos, total); }; }
+        }
+
+        footerEl.innerHTML = '<button class="btn btn-primary" id="_quiz-next-btn" style="border-radius:8px;font-weight:700;padding:8px 24px;">Próxima →</button>';
+        footerEl.style.display = 'none';
+        document.getElementById('_quiz-next-btn').addEventListener('click', function() {
+            qIdx++;
+            if (qIdx >= total) showResult();
+            else renderQ();
+        });
+
+        renderQ();
+        new bootstrap.Modal(modalEl).show();
+    }
+
+    // =====================================================================
+    // BACKUP DE CONCURSOS
+    // =====================================================================
+    window.abrirBackupConcursosModal = function() {
+        if (!document.getElementById('backupConcursosModal')) _criarBackupConcursosModal();
+        const arr = _getConcursos();
+        const statsEl = document.getElementById('bkcRealStats');
+        if (statsEl) statsEl.textContent = arr.length + ' concurso(s) · ' + arr.reduce(function(a,c){ return a+(c.simulados||[]).length; },0) + ' simulado(s)';
+        new bootstrap.Modal(document.getElementById('backupConcursosModal')).show();
+    };
+
+    function _criarBackupConcursosModal() {
+        const div = document.createElement('div');
+        div.innerHTML = `<div class="modal fade" id="backupConcursosModal" tabindex="-1">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius:16px;overflow:hidden;">
+              <div class="modal-header" style="background:linear-gradient(135deg,#1a2a3a,#2c3e50);border:none;">
+                <div class="d-flex align-items-center gap-3">
+                  <div style="width:40px;height:40px;background:rgba(230,126,34,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-medal" style="color:#e67e22;"></i></div>
+                  <div><h5 class="modal-title text-white mb-0">Backup de Concursos</h5><small style="color:rgba(255,255,255,.5);font-size:.72rem;" id="bkcRealStats">...</small></div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body p-4">
+                <button class="btn btn-success w-100 mb-3" id="bkcExportBtn" style="border-radius:10px;padding:12px;font-weight:700;"><i class="fas fa-file-export me-2"></i>Exportar Backup (JSON)</button>
+                <hr>
+                <div class="bk-dropzone" id="bkcDropzone" style="border:2px dashed #e67e22;background:rgba(230,126,34,.03);">
+                  <i class="fas fa-file-import fa-2x mb-2" style="color:#e67e22;"></i>
+                  <p class="mb-1 fw-semibold">Clique ou arraste o backup (.json)</p>
+                  <p class="text-muted small mb-0">Mescla com dados existentes</p>
+                  <input type="file" id="bkcFileInput" class="d-none" accept=".json">
+                </div>
+                <div class="alert alert-warning mt-3 mb-0" style="border-radius:10px;font-size:.8rem;padding:10px 14px;"><i class="fas fa-info-circle me-1"></i>Importar <strong>mescla</strong> os dados sem substituir os existentes.</div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+        document.body.appendChild(div.firstElementChild);
+        document.getElementById('bkcExportBtn').addEventListener('click', function() {
+            const arr = _getConcursos();
+            const blob = new Blob([JSON.stringify({concursos:arr,exportadoEm:new Date().toISOString(),versao:'1.0'},null,2)],{type:'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'backup_concursos_' + new Date().toISOString().slice(0,10) + '.json'; a.click();
+            URL.revokeObjectURL(url);
+        });
+        const dropzone = document.getElementById('bkcDropzone');
+        const fileInput = document.getElementById('bkcFileInput');
+        dropzone.addEventListener('click', function(){ fileInput.click(); });
+        dropzone.addEventListener('dragover', function(e){ e.preventDefault(); dropzone.style.borderColor='#c0392b'; });
+        dropzone.addEventListener('dragleave', function(){ dropzone.style.borderColor='#e67e22'; });
+        dropzone.addEventListener('drop', function(e){ e.preventDefault(); dropzone.style.borderColor='#e67e22'; if(e.dataTransfer.files[0]) _processBackupConcursoFile(e.dataTransfer.files[0]); });
+        fileInput.addEventListener('change', function(){ if(this.files[0]) _processBackupConcursoFile(this.files[0]); });
+    }
+
+    function _processBackupConcursoFile(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                const importados = Array.isArray(data) ? data : (data.concursos || []);
+                if (!importados.length) { alert('Nenhum concurso encontrado no arquivo.'); return; }
+                const arr = _getConcursos();
+                let mesclados = 0;
+                importados.forEach(function(c) {
+                    if (!c.nome) return;
+                    const existe = arr.find(function(x){ return x.nome===c.nome && (x.orgao||'')===(c.orgao||''); });
+                    if (!existe) { c.id = c.id || (Date.now()+Math.random()); arr.push(c); mesclados++; }
+                });
+                _saveConcursos(arr);
+                const m = bootstrap.Modal.getInstance(document.getElementById('backupConcursosModal'));
+                if (m) m.hide();
+                if (activePanel === 'concursos-panel') renderConcursosPanel();
+                _toastSuccess('✅ ' + mesclados + ' concurso(s) importado(s) com sucesso!');
+            } catch(err) { alert('Erro ao ler backup: ' + err.message); }
+        };
+        reader.readAsText(file);
+    }
+
+    // =====================================================================
+    // MODAL DE PROMPTS IA
+    // =====================================================================
+    window.abrirPromptsConcursoModal = function() {
+        if (!document.getElementById('promptsModalConcurso')) _criarPromptsModal();
+        new bootstrap.Modal(document.getElementById('promptsModalConcurso')).show();
+    };
+
+    function _criarPromptsModal() {
+        const PROMPT_CONCURSO = `Você é um assistente especializado em concursos públicos brasileiros.\nPrepare as informações do concurso abaixo no formato JSON exato a seguir.\nResponda APENAS com o JSON, sem texto adicional, sem marcadores markdown.\n\nFormato esperado (array com um ou mais concursos):\n[\n  {\n    "nome": "Nome do concurso (ex: Concurso PC/AL 2026)",\n    "orgao": "Órgão ou entidade (ex: Polícia Civil de Alagoas)",\n    "cargo": "Cargo (ex: Agente de Polícia)",\n    "status": "Estudando",\n    "vagas": 150,\n    "salario": "3971.76",\n    "dataProva": "2026-08-15",\n    "horaProva": "09:00",\n    "inscricaoFim": "2026-06-30",\n    "resultado": "",\n    "local": "Maceió/AL",\n    "edital": "https://link-do-edital.gov.br",\n    "obs": "Observações importantes",\n    "materias": [\n      {"nome": "Direito Constitucional", "feita": false},\n      {"nome": "Direito Penal", "feita": false},\n      {"nome": "Direito Processual Penal", "feita": false},\n      {"nome": "Direito Administrativo", "feita": false},\n      {"nome": "Língua Portuguesa", "feita": false},\n      {"nome": "Raciocínio Lógico", "feita": false}\n    ]\n  }\n]\n\nPreencha com os dados do concurso: [DESCREVA AQUI O CONCURSO]`;
+        const PROMPT_SIMULADO = `Você é um professor especialista em concursos públicos brasileiros.\nPrepare um simulado com EXATAMENTE 40 questões de múltipla escolha.\nResponda APENAS com o JSON, sem texto adicional, sem marcadores markdown.\n\nFormato esperado:\n{\n  "titulo": "Simulado de Direito Constitucional — PC/AL",\n  "materia": "Direito Constitucional",\n  "questoes": [\n    {\n      "enunciado": "Texto completo da questão...",\n      "opcoes": [\n        "A) Primeira alternativa",\n        "B) Segunda alternativa",\n        "C) Terceira alternativa",\n        "D) Quarta alternativa",\n        "E) Quinta alternativa"\n      ],\n      "gabarito": 2,\n      "explicacao": "Explicação detalhada da resposta correta."\n    }\n  ]\n}\n\nIMPORTANTE:\n- "gabarito" é o ÍNDICE: 0=A, 1=B, 2=C, 3=D, 4=E\n- Inclua questões de nível médio a difícil\n- Base as questões em legislação, jurisprudência e doutrina atualizadas\n- Cada questão deve ter 5 alternativas\n- Gere EXATAMENTE 40 questões\n\nMatéria e Concurso: [INFORME A MATÉRIA E O CONCURSO]`;
+
+        const div = document.createElement('div');
+        div.innerHTML = `<div class="modal fade" id="promptsModalConcurso" tabindex="-1">
+          <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="border-radius:16px;overflow:hidden;">
+              <div class="modal-header" style="background:linear-gradient(135deg,#6c3483,#9b59b6);border:none;">
+                <div class="d-flex align-items-center gap-3">
+                  <div style="width:40px;height:40px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-robot" style="color:white;font-size:1.1rem;"></i></div>
+                  <div><h5 class="modal-title text-white mb-0">Gerar com IA</h5><small style="color:rgba(255,255,255,.6);font-size:.72rem;">Copie o prompt, cole no ChatGPT/Claude e importe o JSON gerado</small></div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body p-4">
+                <div style="display:flex;background:#f0f2f4;border-radius:10px;padding:3px;gap:3px;margin-bottom:20px;">
+                  <button class="concurso-tab-btn active" id="ptab-btn-c" onclick="document.getElementById('ptab-c').style.display='block';document.getElementById('ptab-s').style.display='none';this.classList.add('active');document.getElementById('ptab-btn-s').classList.remove('active')"><i class="fas fa-medal me-1"></i> Prompt para Concurso</button>
+                  <button class="concurso-tab-btn" id="ptab-btn-s" onclick="document.getElementById('ptab-s').style.display='block';document.getElementById('ptab-c').style.display='none';this.classList.add('active');document.getElementById('ptab-btn-c').classList.remove('active')"><i class="fas fa-clipboard-check me-1"></i> Prompt para Simulado</button>
+                </div>
+                <div id="ptab-c">
+                  <p class="text-muted small mb-2"><i class="fas fa-info-circle me-1"></i>Cole este prompt em uma IA e substitua a parte entre colchetes pelos dados do concurso.</p>
+                  <textarea id="promptTextC" class="form-control" rows="10" style="font-family:monospace;font-size:.78rem;border-radius:10px;" readonly></textarea>
+                  <div class="d-flex gap-2 mt-3 flex-wrap">
+                    <button class="btn btn-success" id="copyPromptC"><i class="fas fa-copy me-1"></i> Copiar Prompt</button>
+                    <button class="btn btn-outline-primary" onclick="window.open('https://chat.openai.com','_blank')"><i class="fas fa-external-link-alt me-1"></i> ChatGPT</button>
+                    <button class="btn btn-outline-secondary" onclick="window.open('https://claude.ai','_blank')"><i class="fas fa-external-link-alt me-1"></i> Claude</button>
+                  </div>
+                  <div class="alert alert-info mt-3 mb-0" style="border-radius:10px;font-size:.8rem;padding:10px 14px;"><strong>Como usar:</strong> Copie → cole na IA → preencha os dados → salve o JSON → use <strong>"Importar JSON"</strong> no painel Concursos.</div>
+                </div>
+                <div id="ptab-s" style="display:none;">
+                  <p class="text-muted small mb-2"><i class="fas fa-info-circle me-1"></i>Cole este prompt em uma IA para gerar um simulado com 40 questões prontas.</p>
+                  <textarea id="promptTextS" class="form-control" rows="14" style="font-family:monospace;font-size:.78rem;border-radius:10px;" readonly></textarea>
+                  <div class="d-flex gap-2 mt-3 flex-wrap">
+                    <button class="btn btn-success" id="copyPromptS"><i class="fas fa-copy me-1"></i> Copiar Prompt</button>
+                    <button class="btn btn-outline-primary" onclick="window.open('https://chat.openai.com','_blank')"><i class="fas fa-external-link-alt me-1"></i> ChatGPT</button>
+                    <button class="btn btn-outline-secondary" onclick="window.open('https://claude.ai','_blank')"><i class="fas fa-external-link-alt me-1"></i> Claude</button>
+                  </div>
+                  <div class="alert alert-info mt-3 mb-0" style="border-radius:10px;font-size:.8rem;padding:10px 14px;"><strong>Como usar:</strong> Copie → cole na IA → informe matéria e concurso → salve o JSON → abra o concurso → aba <strong>Simulados</strong> → <strong>Importar Simulado JSON</strong>.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+        document.body.appendChild(div.firstElementChild);
+        document.getElementById('promptTextC').value = PROMPT_CONCURSO;
+        document.getElementById('promptTextS').value = PROMPT_SIMULADO;
+        document.getElementById('copyPromptC').addEventListener('click', function(){ navigator.clipboard.writeText(document.getElementById('promptTextC').value).then(function(){ _toastSuccess('✅ Prompt de concurso copiado!'); }); });
+        document.getElementById('copyPromptS').addEventListener('click', function(){ navigator.clipboard.writeText(document.getElementById('promptTextS').value).then(function(){ _toastSuccess('✅ Prompt de simulado copiado!'); }); });
+    }
+
+    // Helper toast
+    function _toastSuccess(msg) {
+        let t = document.getElementById('_customToastAP');
+        if (!t) { t = document.createElement('div'); t.id = '_customToastAP'; t.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;transition:opacity .3s;'; document.body.appendChild(t); }
+        t.innerHTML = '<div class="alert alert-success shadow" style="border-radius:12px;padding:10px 16px;font-size:.88rem;font-weight:600;margin:0;">'+msg+'</div>';
+        t.style.opacity = '1'; clearTimeout(t._timer);
+        t._timer = setTimeout(function(){ t.style.opacity='0'; }, 3000);
+    }
+    window._toastSuccess = _toastSuccess;
+
+}); // end DOMContentLoaded
 </script>
 
 <!-- ===== MODAL BACKUP ===== -->
