@@ -6482,7 +6482,7 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
         <button type="button" class="btn btn-outline-primary d-none" id="btnReconfigurar"><i class="fas fa-cog me-1"></i>Reconfigurar</button>
-        <button type="button" class="btn btn-success d-none" id="btnExportarCronograma"><i class="fas fa-download me-1"></i>Exportar PDF</button>
+        <button type="button" class="btn btn-success d-none" id="btnExportarCronograma"><i class="fas fa-download me-1"></i>Exportar HTML</button>
       </div>
     </div>
   </div>
@@ -7731,12 +7731,20 @@ document.addEventListener('DOMContentLoaded', function() {
         })).filter(i => i.titulo && i.url);
     }
 
-    // Busca um feed com proxy e retorna itens
+    // Busca um feed com proxy e retorna itens (timeout agressivo)
     async function _fetchFeed(meta) {
         const proxyUrl = CORS_PROXY + encodeURIComponent(meta.url);
-        const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
-        const json = await resp.json();
-        return _parseRSS(json.contents || '', meta);
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 5000);
+        try {
+            const resp = await fetch(proxyUrl, { signal: ctrl.signal });
+            clearTimeout(timer);
+            const json = await resp.json();
+            return _parseRSS(json.contents || '', meta);
+        } catch(e) {
+            clearTimeout(timer);
+            throw e;
+        }
     }
 
     // Esqueleto de loading
@@ -14658,7 +14666,10 @@ Atenciosamente,`;
                     +     '<div style="font-size:.72rem;color:#95a5a6;">' + qtdReal + ' questões' + (metaStr ? ' · ' + metaStr : '') + '</div>'
                     +     cliqueHtml
                     +   '</div>'
-                    +   (hasQuestoes ? '<span style="font-size:.72rem;background:rgba(26,188,156,.12);color:#0e6655;border:1px solid rgba(26,188,156,.3);border-radius:8px;padding:4px 10px;flex-shrink:0;font-weight:700;">▶ Fazer</span>' : '')
+                    +   '<div style="display:flex;gap:6px;flex-shrink:0;align-items:center;">'
+                    +     (hasQuestoes ? '<span style="font-size:.72rem;background:rgba(26,188,156,.12);color:#0e6655;border:1px solid rgba(26,188,156,.3);border-radius:8px;padding:4px 10px;font-weight:700;">▶ Fazer</span>' : '')
+                    +     (hasQuestoes ? '<button onclick="window.exportarSimulado(' + c.id + ',' + sIdx + ',event)" title="Exportar JSON" style="background:rgba(52,152,219,.12);color:#2471a3;border:1px solid rgba(52,152,219,.3);border-radius:8px;padding:4px 9px;font-size:.7rem;font-weight:700;cursor:pointer;"><i class="fas fa-file-export"></i></button>' : '')
+                    +   '</div>'
                     + '</div>'
                     + distHtml
                     + '</div>';
@@ -15405,24 +15416,125 @@ Atenciosamente,`;
             if (!_cronData.length) return;
             const c = _getConcursos().find(x=>x.id===_cronConcursoId);
             const nome = c ? c.nome : 'Concurso';
-            let txt = `CRONOGRAMA DE ESTUDOS — ${nome}\n`;
-            txt += '='.repeat(50) + '\n\n';
-            const DOWS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-            _cronData.forEach(d => {
+            const cargo = c ? (c.cargo || '') : '';
+            const orgao = c ? (c.orgao || '') : '';
+            const dataProva = c && c.dataProva ? new Date(c.dataProva+'T00:00').toLocaleDateString('pt-BR') : '';
+            const geradoEm = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
+            const DOWS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+            const DOWS3 = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+            const diasEstudo = _cronData.filter(d=>d.tipo==='estudo').length;
+            const diasFolga = _cronData.filter(d=>d.tipo==='folga').length;
+            const totalSessoes = _cronData.reduce((a,d)=>a+(d.sessoes?d.sessoes.length:0),0);
+            const totalHoras = _cronData.reduce((a,d)=>a+(d.sessoes?d.sessoes.reduce((b,s)=>b+(s.blocos*0.5),0):0),0);
+
+            // Cores por tipo de sessão
+            const corTipo = {'Teoria':'#3498db','Revisão':'#9b59b6','Exercícios':'#27ae60','Prática':'#e67e22','Simulado':'#e74c3c'};
+
+            const diasHtml = _cronData.map(d => {
                 const dd = new Date(d.data+'T00:00');
-                if (d.tipo === 'prova') { txt += `\n🎯 DIA DA PROVA — ${dd.toLocaleDateString('pt-BR')}\n`; return; }
-                if (d.tipo === 'folga') { txt += `\n🏖️ ${DOWS[dd.getDay()]} ${dd.toLocaleDateString('pt-BR')} — FOLGA\n`; return; }
-                txt += `\n📅 ${DOWS[dd.getDay()]} ${dd.toLocaleDateString('pt-BR')}\n`;
-                (d.sessoes||[]).forEach(s => {
-                    const check = s.done ? '[✓]' : '[ ]';
-                    txt += `  ${check} ${s.materia} (${s.tipo}, ${s.blocos*30}min)\n`;
-                });
-            });
-            const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+                const dow = DOWS[dd.getDay()];
+                const dataFmt = dd.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+                if (d.tipo === 'prova') {
+                    return `<div class="dia-card dia-prova">
+                        <div class="dia-header"><span class="dia-dow">🎯 DIA DA PROVA</span><span class="dia-data">${dow}, ${dataFmt}</span></div>
+                        <div class="dia-badge-prova">BOA SORTE!</div>
+                    </div>`;
+                }
+                if (d.tipo === 'folga') {
+                    return `<div class="dia-card dia-folga">
+                        <div class="dia-header"><span class="dia-dow">🏖️ Folga</span><span class="dia-data">${dow}, ${dataFmt}</span></div>
+                        <div style="font-size:0.78rem;color:#95a5a6;margin-top:4px;">Descanso programado</div>
+                    </div>`;
+                }
+                const horas = d.sessoes ? d.sessoes.reduce((a,s)=>a+(s.blocos*0.5),0) : 0;
+                const sessoesHtml = (d.sessoes||[]).map(s => {
+                    const cor = corTipo[s.tipo] || '#34495e';
+                    return `<div class="sessao-item">
+                        <div class="sessao-check">${s.done?'✓':''}</div>
+                        <div class="sessao-body">
+                            <span class="sessao-materia">${s.materia}</span>
+                            <span class="sessao-meta"><span class="sessao-tipo" style="background:${cor}22;color:${cor};border:1px solid ${cor}44;">${s.tipo}</span> ${s.blocos*30} min</span>
+                        </div>
+                    </div>`;
+                }).join('');
+                return `<div class="dia-card">
+                    <div class="dia-header"><span class="dia-dow">${dow}</span><span class="dia-data">${dataFmt}</span><span class="dia-horas">${horas}h de estudo</span></div>
+                    <div class="dia-sessoes">${sessoesHtml}</div>
+                </div>`;
+            }).join('');
+
+            const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cronograma — ${nome}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Poppins',sans-serif;background:#ecf0f1;color:#2c3e50;padding:24px 16px 60px;}
+  .header{background:linear-gradient(135deg,#1a2332,#2c3e50);border-radius:20px;padding:28px 32px;margin-bottom:28px;color:white;position:relative;overflow:hidden;}
+  .header::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:rgba(26,188,156,.08);border-radius:50%;}
+  .header-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(26,188,156,.2);border:1px solid rgba(26,188,156,.4);color:#1abc9c;border-radius:20px;font-size:.65rem;font-weight:700;padding:3px 12px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;}
+  .header-title{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;margin-bottom:4px;}
+  .header-sub{font-size:.82rem;color:rgba(255,255,255,.55);margin-bottom:16px;}
+  .header-stats{display:flex;flex-wrap:wrap;gap:12px;}
+  .stat-pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:8px 14px;text-align:center;}
+  .stat-pill strong{display:block;font-size:1.1rem;font-weight:700;color:#1abc9c;}
+  .stat-pill span{font-size:.65rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.05em;}
+  .legenda{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
+  .legenda-item{display:flex;align-items:center;gap:5px;font-size:.72rem;color:#555;}
+  .legenda-dot{width:10px;height:10px;border-radius:50%;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+  .dia-card{background:white;border-radius:14px;padding:14px 16px;border:1px solid #e8ecef;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+  .dia-card.dia-prova{background:linear-gradient(135deg,#1a2332,#c0392b22);border:2px solid #e74c3c55;text-align:center;padding:20px;}
+  .dia-card.dia-folga{background:#f8f9fa;border:1px dashed #dee2e6;}
+  .dia-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #f0f2f4;}
+  .dia-dow{font-size:.75rem;font-weight:700;color:#1a2332;}
+  .dia-data{font-size:.7rem;color:#95a5a6;margin-left:auto;}
+  .dia-horas{font-size:.65rem;background:rgba(26,188,156,.12);color:#0e6655;border:1px solid rgba(26,188,156,.3);border-radius:10px;padding:1px 8px;font-weight:600;}
+  .dia-badge-prova{font-size:1.2rem;font-weight:800;color:#e74c3c;margin-top:4px;}
+  .dia-sessoes{display:flex;flex-direction:column;gap:5px;}
+  .sessao-item{display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:8px;background:#f8f9fa;}
+  .sessao-check{width:18px;height:18px;border-radius:5px;border:2px solid #dee2e6;display:flex;align-items:center;justify-content:center;font-size:.7rem;color:#27ae60;flex-shrink:0;margin-top:1px;background:white;}
+  .sessao-body{flex:1;min-width:0;}
+  .sessao-materia{display:block;font-size:.78rem;font-weight:600;color:#2c3e50;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .sessao-meta{display:flex;align-items:center;gap:5px;font-size:.65rem;color:#95a5a6;}
+  .sessao-tipo{border-radius:8px;padding:1px 7px;font-weight:700;font-size:.62rem;}
+  .footer{text-align:center;margin-top:32px;font-size:.72rem;color:#95a5a6;}
+  @media print{body{background:white;padding:8px}. header{margin-bottom:16px;}@page{margin:1.5cm}}
+  @media(max-width:600px){.grid{grid-template-columns:1fr}.header{padding:20px 18px}.header-title{font-size:1.2rem}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-badge">📅 Cronograma de Estudos</div>
+  <div class="header-title">${nome}</div>
+  <div class="header-sub">${[cargo,orgao,dataProva?'Prova: '+dataProva:''].filter(Boolean).join(' · ')}</div>
+  <div class="header-stats">
+    <div class="stat-pill"><strong>${diasEstudo}</strong><span>Dias de Estudo</span></div>
+    <div class="stat-pill"><strong>${diasFolga}</strong><span>Dias de Folga</span></div>
+    <div class="stat-pill"><strong>${totalSessoes}</strong><span>Sessões</span></div>
+    <div class="stat-pill"><strong>${totalHoras.toFixed(0)}h</strong><span>Total de Horas</span></div>
+  </div>
+</div>
+<div class="legenda">
+  ${Object.entries(corTipo).map(([tipo,cor])=>`<div class="legenda-item"><div class="legenda-dot" style="background:${cor};"></div>${tipo}</div>`).join('')}
+  <div class="legenda-item"><div class="legenda-dot" style="background:#dee2e6;border:1px dashed #bbb;"></div>Folga</div>
+  <div class="legenda-item"><div class="legenda-dot" style="background:#e74c3c;"></div>Dia da Prova</div>
+</div>
+<div class="grid">
+${diasHtml}
+</div>
+<div class="footer">Gerado em ${geradoEm} · Acadêmico Pro</div>
+</body>
+</html>`;
+            const blob = new Blob([html], {type:'text/html;charset=utf-8'});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = `cronograma_${nome.replace(/\s+/g,'_')}.txt`;
+            a.href = url; a.download = `cronograma_${nome.replace(/\s+/g,'_')}.html`;
             a.click(); URL.revokeObjectURL(url);
+            _toastSuccess('✅ Cronograma exportado em HTML!');
         });
     }
 
@@ -16349,22 +16461,88 @@ Atenciosamente,`;
         if (!sim.questoes || !sim.questoes.length) { alert('Este simulado não possui questões para iniciar.'); return; }
         const detModal = bootstrap.Modal.getInstance(document.getElementById('concursoDetalheModal'));
         if (detModal) detModal.hide();
-        setTimeout(function() {
-            _runSimuladoQuiz(sim, function(acertos, total) {
-                sim.acertos = acertos;
-                sim.total = total;
-                sim.dataUltimoTreino = new Date().toISOString().split('T')[0];
-                _saveConcursos(arr);
-                if (activePanel === 'concursos-panel') renderConcursosPanel();
-            });
-        }, 400);
+
+        // Chave de progresso no localStorage
+        const progressKey = 'sim_progress_' + concId + '_' + simIdx;
+        const saved = (() => { try { const v = localStorage.getItem(progressKey); return v ? JSON.parse(v) : null; } catch(e){ return null; } })();
+
+        if (saved && saved.qIdx > 0 && saved.qIdx < sim.questoes.length) {
+            // Pergunta se quer continuar
+            const retomar = confirm(
+                '🔖 Você tem progresso salvo neste simulado.\n\n' +
+                'Questão ' + (saved.qIdx + 1) + ' de ' + sim.questoes.length +
+                ' · ' + saved.acertos + ' certo(s)\n\n' +
+                'Deseja continuar de onde parou?\n\n' +
+                'OK = Continuar | Cancelar = Recomeçar'
+            );
+            if (!retomar) localStorage.removeItem(progressKey);
+            setTimeout(function() {
+                _runSimuladoQuiz(sim, retomar ? saved : null, progressKey, function(acertos, total) {
+                    localStorage.removeItem(progressKey);
+                    sim.acertos = acertos;
+                    sim.total = total;
+                    sim.dataUltimoTreino = new Date().toISOString().split('T')[0];
+                    _saveConcursos(arr);
+                    if (activePanel === 'concursos-panel') renderConcursosPanel();
+                });
+            }, 400);
+        } else {
+            localStorage.removeItem(progressKey);
+            setTimeout(function() {
+                _runSimuladoQuiz(sim, null, progressKey, function(acertos, total) {
+                    localStorage.removeItem(progressKey);
+                    sim.acertos = acertos;
+                    sim.total = total;
+                    sim.dataUltimoTreino = new Date().toISOString().split('T')[0];
+                    _saveConcursos(arr);
+                    if (activePanel === 'concursos-panel') renderConcursosPanel();
+                });
+            }, 400);
+        }
     };
 
-    function _runSimuladoQuiz(sim, onFinish) {
+    // Exportar simulado no formato de importação
+    window.exportarSimulado = function(concId, simIdx, event) {
+        if (event) event.stopPropagation();
+        const arr = _getConcursos();
+        const c = arr.find(function(x){ return x.id == concId; });
+        if (!c || !c.simulados || !c.simulados[simIdx]) return;
+        const s = c.simulados[simIdx];
+        const exportObj = {
+            titulo:       s.titulo || s.materia || 'Simulado',
+            concurso:     c.nome || '',
+            banca:        s.banca || '',
+            ano:          s.ano || '',
+            materia:      s.materia || 'Geral',
+            distribuicao: s.distribuicao || null,
+            questoes:     (s.questoes || []).map(function(q) {
+                return {
+                    numero:         q.numero,
+                    disciplina:     q.disciplina || '',
+                    enunciado:      q.enunciado,
+                    opcoes:         q.opcoes,
+                    gabarito:       q.gabarito,
+                    gabarito_letra: q.gabarito_letra,
+                    explicacao:     q.explicacao || ''
+                };
+            })
+        };
+        const blob = new Blob([JSON.stringify(exportObj, null, 2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const nomeSafe = (exportObj.titulo).replace(/[^a-zA-Z0-9À-ú ]/g,'').trim().replace(/\s+/g,'_');
+        a.href = url;
+        a.download = 'simulado_' + nomeSafe + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        _toastSuccess('✅ Simulado exportado como JSON!');
+    };
+
+    function _runSimuladoQuiz(sim, savedProgress, progressKey, onFinish) {
         var questoes  = sim.questoes;
-        var qIdx      = 0;
-        var acertos   = 0;
-        var erros     = [];   // {qIdx, disciplina, enunciado, gabarito_letra, escolha_letra}
+        var qIdx      = savedProgress ? (savedProgress.qIdx || 0) : 0;
+        var acertos   = savedProgress ? (savedProgress.acertos || 0) : 0;
+        var erros     = savedProgress ? (savedProgress.erros || []) : [];
         var total     = questoes.length;
         var modalEl   = document.getElementById('quizModal');
         var bodyEl    = document.getElementById('quizModalBody');
@@ -16372,6 +16550,22 @@ Atenciosamente,`;
         var titleEl   = modalEl ? modalEl.querySelector('.modal-title') : null;
         var letters   = ['A','B','C','D','E','F'];
         if (!modalEl || !bodyEl) { alert('Modal de quiz não encontrado.'); return; }
+        if (titleEl) titleEl.innerHTML =
+            '<i class="fas fa-clipboard-check me-2"></i>' + (sim.titulo || sim.materia || 'Simulado')
+            + (sim.banca ? '<span style="font-size:.65rem;font-weight:400;opacity:.6;margin-left:8px;">' + sim.banca + (sim.ano ? ' ' + sim.ano : '') + '</span>' : '');
+
+        // Salva progresso no localStorage
+        function _saveProgress() {
+            if (!progressKey) return;
+            try { localStorage.setItem(progressKey, JSON.stringify({ qIdx: qIdx, acertos: acertos, erros: erros })); } catch(e) {}
+        }
+
+        // Salva ao fechar o modal sem terminar
+        function _onModalHide() {
+            if (qIdx < total) _saveProgress();
+            modalEl.removeEventListener('hide.bs.modal', _onModalHide);
+        }
+        modalEl.addEventListener('hide.bs.modal', _onModalHide);
         if (titleEl) titleEl.innerHTML =
             '<i class="fas fa-clipboard-check me-2"></i>' + (sim.titulo || sim.materia || 'Simulado')
             + (sim.banca ? '<span style="font-size:.65rem;font-weight:400;opacity:.6;margin-left:8px;">' + sim.banca + (sim.ano ? ' ' + sim.ano : '') + '</span>' : '');
@@ -16433,12 +16627,14 @@ Atenciosamente,`;
                             + (q.explicacao ? '<br><span style="font-size:.84rem;margin-top:6px;display:block;line-height:1.55;">' + q.explicacao + '</span>' : '');
                     }
                     footerEl.style.display = 'flex';
+                    _saveProgress();
                     document.getElementById('_quiz-next-btn').textContent = (qIdx + 1 >= total) ? 'Ver Resultado' : 'Próxima →';
                 });
             });
         }
 
         function showResult() {
+            modalEl.removeEventListener('hide.bs.modal', _onModalHide);
             var pct = Math.round(acertos / total * 100);
             var cor = pct >= 70 ? '#1abc9c' : pct >= 50 ? '#f39c12' : '#e74c3c';
             var msg = pct >= 70 ? '🏆 Parabéns!' : pct >= 50 ? '📚 Bom esforço!' : '💪 Continue praticando!';
