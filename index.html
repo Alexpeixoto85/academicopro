@@ -4480,6 +4480,17 @@
     }
     #vaula-player-overlay.active { display: flex; }
 
+    /* Modo tela cheia — overlay ocupa 100% e esconde sidebars */
+    #vaula-player-overlay.vp-cinema-mode .vp-sidebar,
+    #vaula-player-overlay.vp-cinema-mode .vp-notes { display: none !important; }
+    #vaula-player-overlay.vp-cinema-mode .vp-topbar { background: rgba(0,0,0,0.7); position: absolute; top: 0; left: 0; right: 0; z-index: 10; opacity: 0; transition: opacity 0.3s; }
+    #vaula-player-overlay.vp-cinema-mode:hover .vp-topbar { opacity: 1; }
+    #vaula-player-overlay.vp-cinema-mode .vp-controls { position: absolute; bottom: 0; left: 0; right: 0; z-index: 10; background: rgba(0,0,0,0.7); opacity: 0; transition: opacity 0.3s; }
+    #vaula-player-overlay.vp-cinema-mode:hover .vp-controls { opacity: 1; }
+    #vaula-player-overlay.vp-cinema-mode .vp-main { flex: 1; }
+    #vaula-player-overlay.vp-cinema-mode .vp-body { position: relative; }
+    #vaula-player-overlay.vp-cinema-mode .vp-iframe-wrap { flex: 1; }
+
     /* Barra superior */
     .vp-topbar {
       display: flex; align-items: center; gap: 12px;
@@ -4509,6 +4520,12 @@
     .vp-btn.active { background: rgba(26,188,156,0.35); color: #1abc9c; }
     .vp-btn-close { background: rgba(231,76,60,0.25); color: #e74c3c; }
     .vp-btn-close:hover { background: rgba(231,76,60,0.5); }
+    /* Botão tela cheia destaque */
+    .vp-btn-fullscreen { background: rgba(52,152,219,0.2); color: #3498db; }
+    .vp-btn-fullscreen:hover { background: rgba(52,152,219,0.4); }
+    .vp-btn-cinema { background: rgba(155,89,182,0.2); color: #9b59b6; }
+    .vp-btn-cinema:hover { background: rgba(155,89,182,0.4); }
+    .vp-btn-cinema.active { background: rgba(155,89,182,0.4); color: #be7cf6; }
 
     /* Área principal: vídeo + sidebar */
     .vp-body {
@@ -4617,40 +4634,92 @@
     }
     .vp-pl-item.playing .vp-pl-num { color: #1abc9c; }
 
-    /* Notas rápidas no player */
+    /* ===== PAINEL DE ANOTAÇÕES MELHORADO ===== */
     .vp-notes {
-      width: 280px; flex-shrink: 0;
-      background: rgba(12,12,12,0.98);
+      width: 340px; flex-shrink: 0;
+      background: rgba(11,15,20,0.99);
       border-left: 1px solid rgba(255,255,255,0.07);
       display: flex; flex-direction: column; overflow: hidden;
-      transition: width 0.2s;
+      transition: width 0.25s ease;
     }
     .vp-notes.collapsed { width: 0; overflow: hidden; }
     .vp-notes-header {
       padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.08);
       font-size: 0.78rem; font-weight: 700; color: rgba(255,255,255,0.7);
-      flex-shrink: 0;
+      flex-shrink: 0; display: flex; align-items: center; gap: 6px;
     }
-    .vp-notes-area {
-      flex: 1; padding: 10px; min-height: 0;
+    .vp-notes-header-actions { margin-left: auto; display: flex; gap: 6px; }
+    .vp-notes-tab-bar {
+      display: flex; gap: 0; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0;
     }
+    .vp-notes-tab {
+      flex: 1; padding: 8px 10px; text-align: center; font-size: 0.72rem; font-weight: 600;
+      color: rgba(255,255,255,0.35); background: transparent; border: none; cursor: pointer;
+      border-bottom: 2px solid transparent; transition: all 0.15s;
+    }
+    .vp-notes-tab.active { color: #f39c12; border-bottom-color: #f39c12; background: rgba(243,156,18,0.05); }
+    .vp-notes-tab:hover:not(.active) { color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.03); }
+    .vp-notes-body { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+    .vp-notes-panel-tab { display: none; flex: 1; flex-direction: column; min-height: 0; }
+    .vp-notes-panel-tab.active { display: flex; }
+
+    /* Aba Escrever */
+    .vp-notes-write-area { flex: 1; padding: 10px 10px 4px; display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+    .vp-notes-meta-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .vp-notes-timestamp-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(52,152,219,0.15); border: 1px solid rgba(52,152,219,0.3);
+      color: #3498db; border-radius: 6px; padding: 3px 9px;
+      font-size: 0.68rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
+    }
+    .vp-notes-timestamp-btn:hover { background: rgba(52,152,219,0.3); }
+    .vp-notes-charcount { font-size: 0.65rem; color: rgba(255,255,255,0.25); margin-left: auto; }
     .vp-notes-textarea {
-      width: 100%; height: 100%; background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
-      color: rgba(255,255,255,0.85); padding: 10px; font-size: 0.8rem;
+      flex: 1; width: 100%; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+      color: rgba(255,255,255,0.88); padding: 12px; font-size: 0.8rem;
       font-family: 'Poppins', sans-serif; resize: none; outline: none;
-      line-height: 1.6;
+      line-height: 1.7; min-height: 0;
     }
-    .vp-notes-textarea:focus { border-color: rgba(26,188,156,0.4); }
+    .vp-notes-textarea:focus { border-color: rgba(243,156,18,0.4); background: rgba(255,255,255,0.06); }
+    .vp-notes-textarea::placeholder { color: rgba(255,255,255,0.2); }
+    .vp-notes-actions { display: flex; gap: 6px; padding: 8px 10px; flex-shrink: 0; }
     .vp-notes-save {
-      margin: 0 10px 10px;
-      padding: 7px; border: none; border-radius: 8px;
-      background: linear-gradient(135deg,#1abc9c,#16a085);
+      flex: 1; padding: 8px; border: none; border-radius: 9px;
+      background: linear-gradient(135deg,#f39c12,#e67e22);
       color: white; font-size: 0.75rem; font-weight: 700;
       cursor: pointer; display: flex; align-items: center;
-      justify-content: center; gap: 6px;
+      justify-content: center; gap: 6px; transition: filter 0.15s;
     }
-    .vp-notes-save:hover { filter: brightness(1.1); }
+    .vp-notes-save:hover { filter: brightness(1.12); }
+    .vp-notes-clear-btn {
+      padding: 8px 12px; border: 1px solid rgba(231,76,60,0.3);
+      border-radius: 9px; background: rgba(231,76,60,0.1);
+      color: rgba(231,76,60,0.7); font-size: 0.75rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .vp-notes-clear-btn:hover { background: rgba(231,76,60,0.25); color: #e74c3c; }
+
+    /* Aba Histórico */
+    .vp-notes-history { flex: 1; overflow-y: auto; padding: 8px; min-height: 0; }
+    .vp-notes-history::-webkit-scrollbar { width: 3px; }
+    .vp-notes-history::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius:2px; }
+    .vp-notes-history-item {
+      padding: 10px 12px; border-radius: 10px; margin-bottom: 8px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+      cursor: pointer; transition: background 0.15s;
+    }
+    .vp-notes-history-item:hover { background: rgba(243,156,18,0.08); border-color: rgba(243,156,18,0.2); }
+    .vp-notes-history-title {
+      font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.8);
+      margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .vp-notes-history-preview {
+      font-size: 0.7rem; color: rgba(255,255,255,0.35); line-height: 1.5;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .vp-notes-history-date { font-size: 0.62rem; color: rgba(255,255,255,0.2); margin-top: 4px; }
+    .vp-notes-empty { text-align: center; padding: 30px 16px; color: rgba(255,255,255,0.2); font-size: 0.78rem; }
 
     /* Fontes alternativas badge */
     .vp-src-switch {
@@ -14734,9 +14803,21 @@ Atenciosamente,`;
 
           <!-- Videoaulas -->
           <div class="concurso-detail-tab" id="ctab-videoaulas">
-            <div class="d-flex justify-content-end mb-3">
-              <button class="panel-btn panel-btn-primary" style="font-size:0.75rem;padding:6px 14px;background:linear-gradient(135deg,#e74c3c,#c0392b);" onclick="abrirVaulaModal(${c.id})">
-                <i class="fab fa-youtube me-1"></i> Adicionar Videoaula
+            <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+              <button class="panel-btn" style="font-size:0.73rem;padding:5px 12px;background:linear-gradient(135deg,#27ae60,#1e8449);color:white;border:none;" onclick="window.abrirGerarVaulasModal(${c.id})">
+                <i class="fas fa-magic me-1"></i> Gerar com IA
+              </button>
+              <button class="panel-btn" style="font-size:0.73rem;padding:5px 12px;background:linear-gradient(135deg,#3498db,#2980b9);color:white;border:none;" onclick="window.importarVaulasJson(${c.id})">
+                <i class="fas fa-file-import me-1"></i> Importar JSON
+              </button>
+              <button class="panel-btn" style="font-size:0.73rem;padding:5px 12px;background:rgba(52,152,219,0.12);color:#2980b9;border:1px solid rgba(52,152,219,0.3);" onclick="window.baixarModeloVaulasJson(${c.id})">
+                <i class="fas fa-download me-1"></i> Baixar Modelo JSON
+              </button>
+              <button class="panel-btn" style="font-size:0.73rem;padding:5px 12px;background:rgba(26,188,156,0.12);color:#16a085;border:1px solid rgba(26,188,156,0.3);" onclick="window.exportarVaulasJson(${c.id})">
+                <i class="fas fa-file-export me-1"></i> Exportar JSON
+              </button>
+              <button class="panel-btn panel-btn-primary ms-auto" style="font-size:0.73rem;padding:5px 12px;background:linear-gradient(135deg,#e74c3c,#c0392b);" onclick="abrirVaulaModal(${c.id})">
+                <i class="fab fa-youtube me-1"></i> Adicionar Manual
               </button>
             </div>
             <div id="ctab-vaulas-list">${_buildVaulasHtml(c)}</div>
@@ -14909,6 +14990,9 @@ Atenciosamente,`;
             });
         });
     }
+
+    window._buildVaulasHtml = _buildVaulasHtml;
+    window._bindVaulaListEvents = _bindVaulaListEvents;
 
     window.toggleVaulaAssistida = function(concId, vaulaId) {
         let arr = _getConcursos();
@@ -15946,10 +16030,86 @@ ${diasHtml}
         var v = (c.videoaulas||[]).find(function(x){ return x.id === vaulaId; });
         if (v) {
             v.obs = texto;
+            // Salvar também no histórico de anotações (com timestamp)
+            if (texto) {
+                v.notasHistorico = v.notasHistorico || [];
+                v.notasHistorico.unshift({
+                    texto: texto,
+                    data: new Date().toISOString(),
+                    titulo: v.titulo || 'Videoaula'
+                });
+                // Manter no máximo 20 entradas no histórico
+                if (v.notasHistorico.length > 20) v.notasHistorico = v.notasHistorico.slice(0, 20);
+            }
             vaulas[idx].obs = texto;
+            vaulas[idx].notasHistorico = v.notasHistorico;
             _saveConcursos(arr);
-            _showToast('success', 'Anotação salva!');
+            _showToast('success', '✅ Anotação salva!');
         }
+    }
+
+    function _vpExportarNota() {
+        var idx = _vpState.currentIdx;
+        var vaulas = _vpState.videoaulas;
+        var titulo = idx >= 0 && idx < vaulas.length ? (vaulas[idx].titulo || 'Videoaula') : 'Videoaulas';
+        var texto = document.getElementById('vp-notes-textarea').value.trim();
+        if (!texto) { _showToast('warning', 'Sem anotação para exportar.'); return; }
+        var conteudo = '=== ANOTAÇÕES: ' + titulo + ' ===\n' +
+            'Exportado em: ' + new Date().toLocaleString('pt-BR') + '\n\n' + texto;
+        var blob = new Blob([conteudo], { type: 'text/plain;charset=utf-8' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'anotacoes_' + titulo.replace(/[^a-z0-9]/gi,'_').toLowerCase().slice(0,40) + '.txt';
+        link.click();
+        _showToast('success', 'Anotação exportada!');
+    }
+
+    function _vpRenderNotesHistory() {
+        var container = document.getElementById('vp-notes-history-list');
+        if (!container) return;
+        var idx = _vpState.currentIdx;
+        var vaulas = _vpState.videoaulas;
+        // Coleta histórico de todas as videoaulas do concurso
+        var allNotes = [];
+        vaulas.forEach(function(v) {
+            if (v.notasHistorico && v.notasHistorico.length) {
+                v.notasHistorico.forEach(function(n) {
+                    allNotes.push({ nota: n, titulo: v.titulo || 'Videoaula', vaulaId: v.id });
+                });
+            } else if (v.obs) {
+                allNotes.push({ nota: { texto: v.obs, data: null }, titulo: v.titulo || 'Videoaula', vaulaId: v.id });
+            }
+        });
+        if (!allNotes.length) {
+            container.innerHTML = '<div class="vp-notes-empty"><i class="fas fa-sticky-note" style="font-size:2rem;display:block;margin-bottom:8px;opacity:0.3;"></i>Nenhuma anotação salva ainda.<br><small>Escreva e salve na aba Escrever.</small></div>';
+            return;
+        }
+        container.innerHTML = allNotes.map(function(item) {
+            var dataStr = item.nota.data ? new Date(item.nota.data).toLocaleString('pt-BR') : 'Data não registrada';
+            var preview = item.nota.texto.slice(0, 100) + (item.nota.texto.length > 100 ? '...' : '');
+            return '<div class="vp-notes-history-item" data-vaula-id="' + item.vaulaId + '" title="Clique para carregar esta anotação">' +
+                '<div class="vp-notes-history-title"><i class="fas fa-play-circle" style="color:#1abc9c;margin-right:5px;font-size:0.7rem;"></i>' + item.titulo + '</div>' +
+                '<div class="vp-notes-history-preview">' + preview + '</div>' +
+                '<div class="vp-notes-history-date"><i class="fas fa-clock" style="margin-right:3px;"></i>' + dataStr + '</div>' +
+            '</div>';
+        }).join('');
+        // Ao clicar, carrega a nota no textarea
+        container.querySelectorAll('.vp-notes-history-item').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var vid = this.dataset.vaulaId;
+                var v = vaulas.find(function(x){ return x.id === vid; });
+                if (v && v.obs) {
+                    document.getElementById('vp-notes-textarea').value = v.obs;
+                    document.getElementById('vp-notes-charcount').textContent = v.obs.length + ' chars';
+                    // Trocar para aba escrever
+                    document.querySelectorAll('.vp-notes-tab').forEach(function(t){ t.classList.remove('active'); });
+                    document.querySelectorAll('.vp-notes-panel-tab').forEach(function(p){ p.classList.remove('active'); });
+                    document.querySelector('.vp-notes-tab[data-ntab="write"]').classList.add('active');
+                    document.getElementById('vp-ntab-write').classList.add('active');
+                    _showToast('success', 'Anotação carregada para edição!');
+                }
+            });
+        });
     }
 
     // Atualizar _buildVaulasHtml para usar o player interno
@@ -15996,17 +16156,26 @@ ${diasHtml}
         // Fechar
         document.getElementById('vp-close').addEventListener('click', _vpFechar);
 
-        // Tela cheia
+        // ── Tela cheia nativa (F) ───────────────────────────────────
         document.getElementById('vp-fullscreen').addEventListener('click', _vpFullscreen);
         document.addEventListener('fullscreenchange', function() {
             var btn = document.getElementById('vp-fullscreen');
             if (document.fullscreenElement) {
                 btn.innerHTML = '<i class="fas fa-compress"></i>';
-                btn.title = 'Sair da tela cheia';
+                btn.title = 'Sair da tela cheia (F)';
             } else {
                 btn.innerHTML = '<i class="fas fa-expand"></i>';
-                btn.title = 'Tela cheia nativa';
+                btn.title = 'Tela cheia nativa (F)';
             }
+        });
+
+        // ── Modo cinema (esconde sidebars) ──────────────────────────
+        document.getElementById('vp-cinema-mode').addEventListener('click', function() {
+            var overlay = document.getElementById('vaula-player-overlay');
+            var isCinema = overlay.classList.toggle('vp-cinema-mode');
+            this.classList.toggle('active', isCinema);
+            this.title = isCinema ? 'Sair do modo cinema' : 'Modo cinema (esconde painéis laterais)';
+            _showToast('success', isCinema ? '🎬 Modo cinema ativado — mova o mouse para ver os controles' : 'Modo cinema desativado');
         });
 
         // Cobrir ads
@@ -16036,10 +16205,53 @@ ${diasHtml}
             var np = document.getElementById('vp-notes-panel');
             np.classList.toggle('collapsed', !_vpState.notesOpen);
             this.classList.toggle('active', _vpState.notesOpen);
+            if (_vpState.notesOpen) _vpRenderNotesHistory();
         });
 
         // Salvar notas
         document.getElementById('vp-notes-save').addEventListener('click', _vpSalvarNota);
+
+        // Limpar textarea
+        document.getElementById('vp-notes-clear').addEventListener('click', function() {
+            if (confirm('Limpar o texto da anotação? (O texto salvo não será apagado)')) {
+                document.getElementById('vp-notes-textarea').value = '';
+                document.getElementById('vp-notes-charcount').textContent = '0 chars';
+            }
+        });
+
+        // Contador de caracteres
+        document.getElementById('vp-notes-textarea').addEventListener('input', function() {
+            document.getElementById('vp-notes-charcount').textContent = this.value.length + ' chars';
+        });
+
+        // Inserir timestamp
+        document.getElementById('vp-insert-timestamp').addEventListener('click', function() {
+            var ta = document.getElementById('vp-notes-textarea');
+            var now = new Date();
+            var hh = String(now.getHours()).padStart(2,'0');
+            var mm = String(now.getMinutes()).padStart(2,'0');
+            var stamp = '[' + hh + ':' + mm + '] ';
+            var pos = ta.selectionStart;
+            ta.value = ta.value.slice(0,pos) + stamp + ta.value.slice(pos);
+            ta.selectionStart = ta.selectionEnd = pos + stamp.length;
+            ta.focus();
+            document.getElementById('vp-notes-charcount').textContent = ta.value.length + ' chars';
+        });
+
+        // Exportar anotações
+        document.getElementById('vp-notes-export-btn').addEventListener('click', _vpExportarNota);
+
+        // Abas de anotações
+        document.querySelectorAll('.vp-notes-tab').forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                var ntab = this.dataset.ntab;
+                document.querySelectorAll('.vp-notes-tab').forEach(function(t){ t.classList.remove('active'); });
+                document.querySelectorAll('.vp-notes-panel-tab').forEach(function(p){ p.classList.remove('active'); });
+                this.classList.add('active');
+                document.getElementById('vp-ntab-' + ntab).classList.add('active');
+                if (ntab === 'history') _vpRenderNotesHistory();
+            });
+        });
 
         // Troca de fonte (YT Privacy / Invidious / Piped)
         document.querySelectorAll('.vp-src-opt').forEach(function(btn) {
@@ -16048,11 +16260,21 @@ ${diasHtml}
 
         // Fecha com ESC (se não estiver em fullscreen nativo)
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                var overlay = document.getElementById('vaula-player-overlay');
-                if (overlay.classList.contains('active') && !document.fullscreenElement) {
+            var overlay = document.getElementById('vaula-player-overlay');
+            if (!overlay.classList.contains('active')) return;
+            if (e.key === 'Escape' && !document.fullscreenElement) {
+                // Se estiver em modo cinema, sai do cinema primeiro
+                if (overlay.classList.contains('vp-cinema-mode')) {
+                    overlay.classList.remove('vp-cinema-mode');
+                    document.getElementById('vp-cinema-mode').classList.remove('active');
+                } else {
                     _vpFechar();
                 }
+            }
+            // F = tela cheia
+            if (e.key === 'f' || e.key === 'F') {
+                if (document.activeElement && document.activeElement.tagName === 'TEXTAREA') return;
+                _vpFullscreen();
             }
         });
     }
@@ -21382,6 +21604,163 @@ function _renderScore() {
 
 
 <!-- ===================================================================
+     MODAL IMPORTAR / GERAR VIDEOAULAS JSON — Acadêmico Pro
+     =================================================================== -->
+<input type="file" id="inputImportVaulasJson" accept=".json" style="display:none;">
+
+<!-- MODAL: Importar JSON -->
+<div class="modal fade" id="importVaulasModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header" style="background:linear-gradient(135deg,#1a2332,#2c3e50);color:white;">
+        <h5 class="modal-title"><i class="fas fa-file-import me-2" style="color:#3498db;"></i>Importar Videoaulas via JSON</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="importVaulasResult"></div>
+        <div class="p-3 mb-3" style="background:#f8f9fa;border-radius:10px;border:1px solid #dee2e6;">
+          <div class="fw-bold mb-1" style="font-size:0.85rem;"><i class="fas fa-info-circle me-1 text-primary"></i>Como usar</div>
+          <ol style="font-size:0.8rem;color:#5a6a7a;margin:0;padding-left:18px;">
+            <li>Baixe o <strong>Modelo JSON</strong> no botão acima.</li>
+            <li>Preencha os dados das videoaulas (URL do YouTube obrigatória).</li>
+            <li>Clique em <strong>Selecionar Arquivo JSON</strong> e escolha seu arquivo.</li>
+            <li>Revise as videoaulas encontradas e clique em <strong>Importar Todas</strong>.</li>
+          </ol>
+        </div>
+        <div id="importVaulasPreview" style="display:none;">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="fw-bold" style="font-size:0.88rem;"><i class="fab fa-youtube me-1 text-danger"></i>Videoaulas encontradas: <span id="importVaulasCount" class="text-primary">0</span></div>
+            <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('importVaulasPreview').style.display='none';document.getElementById('importVaulasPreviewList').innerHTML='';">Limpar</button>
+          </div>
+          <div id="importVaulasPreviewList" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-primary" id="btnSelectJsonVaulas"><i class="fas fa-folder-open me-1"></i>Selecionar Arquivo JSON</button>
+        <button type="button" class="btn btn-success d-none" id="btnConfirmImportVaulas"><i class="fas fa-check me-1"></i>Importar Todas</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Buscar e Importar Videoaulas com IA (2026) -->
+<div class="modal fade" id="gerarVaulasModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content" style="border:none;border-radius:16px;overflow:hidden;">
+      <div class="modal-header" style="background:linear-gradient(135deg,#0f1923,#1a2332);color:white;border:none;padding:18px 24px;">
+        <div>
+          <h5 class="modal-title mb-0"><i class="fas fa-search me-2" style="color:#1abc9c;"></i>Buscar Videoaulas Atuais com IA</h5>
+          <small style="color:rgba(255,255,255,0.5);font-size:0.72rem;">Pesquisa automática no YouTube — vídeos e playlists de 2025/2026</small>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0">
+
+        <!-- STEP 0: Busca automática -->
+        <div id="gvStep0" style="padding:20px;">
+
+          <!-- Aviso se sem API key -->
+          <div id="gvSemApiKey" style="display:none;margin-bottom:16px;">
+            <div class="alert alert-warning d-flex align-items-center gap-2 mb-0" style="border-radius:10px;font-size:0.82rem;">
+              <i class="fas fa-key fa-lg"></i>
+              <div><strong>API Key não configurada.</strong> Vá em <strong>Configurações → Anthropic API Key</strong> para habilitar a busca automática. Ou use a aba Manual abaixo.</div>
+            </div>
+          </div>
+
+          <!-- Abas: Automático / Manual -->
+          <ul class="nav nav-pills mb-3 gap-2" id="gvTabNav">
+            <li class="nav-item">
+              <button class="nav-link active" id="gvTabAuto" style="font-size:0.82rem;border-radius:8px;" onclick="window._gvSwitchTab('auto')">
+                <i class="fas fa-magic me-1"></i>Busca Automática
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="gvTabManual" style="font-size:0.82rem;border-radius:8px;" onclick="window._gvSwitchTab('manual')">
+                <i class="fas fa-code me-1"></i>Colar JSON / Manual
+              </button>
+            </li>
+          </ul>
+
+          <!-- Tab: Automático -->
+          <div id="gvPanelAuto">
+            <div class="p-3 mb-3" style="background:linear-gradient(135deg,rgba(26,188,156,0.08),rgba(52,152,219,0.06));border:1px solid rgba(26,188,156,0.2);border-radius:12px;">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <i class="fas fa-robot" style="color:#1abc9c;"></i>
+                <span class="fw-bold" style="font-size:0.85rem;color:#1a2332;">Como funciona</span>
+              </div>
+              <p style="font-size:0.8rem;color:#5a6a7a;margin:0;">A IA pesquisa <strong>agora mesmo</strong> no YouTube videoaulas e playlists <strong>atualizadas de 2025/2026</strong> para cada matéria do seu concurso. Clique em <strong>Buscar Videoaulas</strong> e aguarde.</p>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold" style="font-size:0.83rem;">Matérias a buscar <span style="font-size:0.72rem;color:#95a5a6;">(deixe em branco para todas)</span></label>
+              <input type="text" id="gvMateriasExtra" class="form-control" style="font-size:0.83rem;" placeholder="Ex: Direito Constitucional, Português, Raciocínio Lógico">
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold" style="font-size:0.83rem;">Quantidade por matéria</label>
+              <select id="gvQtdPorMateria" class="form-select" style="font-size:0.83rem;">
+                <option value="3">3 videoaulas</option>
+                <option value="5" selected>5 videoaulas</option>
+                <option value="8">8 videoaulas</option>
+              </select>
+            </div>
+
+            <button class="btn btn-success w-100 fw-bold" id="gvBtnBuscar" onclick="window.buscarVaulasIA()" style="padding:12px;font-size:0.95rem;border-radius:10px;">
+              <i class="fas fa-search me-2"></i>Buscar Videoaulas Atuais (2026)
+            </button>
+
+            <!-- Loading -->
+            <div id="gvLoading" style="display:none;text-align:center;padding:32px 20px;">
+              <div class="spinner-border text-success mb-3" style="width:2.5rem;height:2.5rem;"></div>
+              <div class="fw-bold" style="color:#1a2332;font-size:0.9rem;">Pesquisando no YouTube...</div>
+              <div id="gvLoadingMsg" style="font-size:0.78rem;color:#95a5a6;margin-top:6px;">Buscando vídeos e playlists de 2025/2026</div>
+              <div id="gvLoadingProgress" style="margin-top:14px;"></div>
+            </div>
+
+            <!-- Erro -->
+            <div id="gvErro" style="display:none;margin-top:14px;"></div>
+          </div>
+
+          <!-- Tab: Manual -->
+          <div id="gvPanelManual" style="display:none;">
+            <div class="mb-2">
+              <label class="form-label fw-semibold" style="font-size:0.85rem;"><i class="fas fa-code me-1" style="color:#3498db;"></i>Cole o JSON gerado (ChatGPT / Gemini / Claude):</label>
+              <textarea class="form-control" id="gerarVaulasJsonInput" rows="9" style="font-family:monospace;font-size:0.78rem;" placeholder='[&#10;  {&#10;    "url": "https://www.youtube.com/watch?v=...",&#10;    "titulo": "Aula de Direito Constitucional",&#10;    "materia": "Direito Constitucional",&#10;    "canal": "Gran Cursos Online",&#10;    "duracao": 45&#10;  }&#10;]'></textarea>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-success flex-fill" onclick="window.processarJsonGerado()"><i class="fas fa-check me-1"></i>Validar e Pré-visualizar</button>
+              <button class="btn btn-outline-secondary" onclick="document.getElementById('gerarVaulasJsonInput').value=''"><i class="fas fa-eraser me-1"></i>Limpar</button>
+            </div>
+            <div style="margin-top:12px;padding:10px 14px;background:#f8f9fa;border-radius:10px;">
+              <div class="fw-bold mb-1" style="font-size:0.78rem;color:#5a6a7a;"><i class="fas fa-lightbulb me-1 text-warning"></i>Prompt sugerido — copie e use no ChatGPT:</div>
+              <button class="btn btn-sm btn-outline-secondary" onclick="window.copiarPromptVaulas()" style="font-size:0.72rem;"><i class="fas fa-copy me-1"></i>Copiar Prompt</button>
+              <pre id="gerarVaulasPromptText" style="font-size:0.72rem;color:#5a6a7a;margin:8px 0 0;white-space:pre-wrap;max-height:120px;overflow-y:auto;"></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 1: Preview resultados -->
+        <div id="gvStep1" style="display:none;padding:20px;">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="fas fa-check-circle" style="color:#27ae60;font-size:1.3rem;"></i>
+            <div>
+              <div class="fw-bold" style="color:#1e8449;font-size:0.95rem;"><span id="gerarVaulasQtd">0</span> videoaulas encontradas!</div>
+              <div style="font-size:0.72rem;color:#95a5a6;">Revise e clique em Importar Todas</div>
+            </div>
+            <button class="btn btn-sm btn-outline-secondary ms-auto" onclick="window._gvVoltarStep0()">← Voltar</button>
+          </div>
+          <div id="gerarVaulasPreviewList" style="display:flex;flex-direction:column;gap:8px;max-height:380px;overflow-y:auto;margin-bottom:16px;padding-right:4px;"></div>
+          <button class="btn btn-success w-100 fw-bold" id="btnConfirmGerarVaulas" style="padding:12px;font-size:0.95rem;border-radius:10px;">
+            <i class="fas fa-file-import me-1"></i>Importar Todas (<span id="gerarVaulasQtd2">0</span> videoaulas)
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================================
      PLAYER INTERNO DE VIDEOAULAS — Acadêmico Pro
      =================================================================== -->
 <div id="vaula-player-overlay">
@@ -21392,9 +21771,10 @@ function _renderScore() {
     <div class="vp-title" id="vp-title">Videoaula</div>
     <span class="vp-badge vp-badge-adblock"><i class="fas fa-shield-alt"></i> Ad-block ativo</span>
     <span class="vp-badge vp-badge-src" id="vp-src-badge">youtube-nocookie</span>
-    <button class="vp-btn" id="vp-toggle-notes" title="Anotações rápidas"><i class="fas fa-sticky-note"></i></button>
+    <button class="vp-btn" id="vp-toggle-notes" title="Anotações da aula"><i class="fas fa-sticky-note"></i></button>
     <button class="vp-btn" id="vp-toggle-playlist" title="Lista de videoaulas"><i class="fas fa-list"></i></button>
-    <button class="vp-btn" id="vp-fullscreen" title="Tela cheia nativa"><i class="fas fa-expand"></i></button>
+    <button class="vp-btn vp-btn-cinema" id="vp-cinema-mode" title="Modo cinema (esconde painéis laterais)"><i class="fas fa-film"></i></button>
+    <button class="vp-btn vp-btn-fullscreen" id="vp-fullscreen" title="Tela cheia nativa (F)"><i class="fas fa-expand"></i></button>
   </div>
 
   <!-- BODY -->
@@ -21438,13 +21818,53 @@ function _renderScore() {
       </div>
     </div>
 
-    <!-- ANOTAÇÕES RÁPIDAS -->
+    <!-- ===== PAINEL DE ANOTAÇÕES MELHORADO ===== -->
     <div class="vp-notes collapsed" id="vp-notes-panel">
-      <div class="vp-notes-header"><i class="fas fa-sticky-note me-2" style="color:#f39c12;"></i>Anotações da Aula</div>
-      <div class="vp-notes-area">
-        <textarea class="vp-notes-textarea" id="vp-notes-textarea" placeholder="Anote os pontos importantes desta aula...&#10;&#10;Dicas, conceitos, artigos de lei, súmulas..."></textarea>
+      <div class="vp-notes-header">
+        <i class="fas fa-sticky-note me-2" style="color:#f39c12;"></i>
+        Anotações
+        <div class="vp-notes-header-actions">
+          <button id="vp-notes-export-btn" title="Exportar anotações como .txt"
+            style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.4);border-radius:6px;padding:2px 8px;font-size:0.65rem;font-weight:700;cursor:pointer;">
+            <i class="fas fa-download"></i>
+          </button>
+        </div>
       </div>
-      <button class="vp-notes-save" id="vp-notes-save"><i class="fas fa-save"></i> Salvar Anotação</button>
+
+      <!-- Abas: Escrever / Histórico -->
+      <div class="vp-notes-tab-bar">
+        <button class="vp-notes-tab active" data-ntab="write"><i class="fas fa-pen me-1"></i>Escrever</button>
+        <button class="vp-notes-tab" data-ntab="history"><i class="fas fa-history me-1"></i>Histórico</button>
+      </div>
+
+      <div class="vp-notes-body">
+        <!-- Aba Escrever -->
+        <div class="vp-notes-panel-tab active" id="vp-ntab-write">
+          <div class="vp-notes-write-area">
+            <div class="vp-notes-meta-row">
+              <button class="vp-notes-timestamp-btn" id="vp-insert-timestamp" title="Inserir timestamp da aula">
+                <i class="fas fa-clock"></i> Inserir tempo
+              </button>
+              <span class="vp-notes-charcount" id="vp-notes-charcount">0 chars</span>
+            </div>
+            <textarea class="vp-notes-textarea" id="vp-notes-textarea"
+              placeholder="📝 Anote os pontos importantes desta aula...
+
+💡 Use [00:00] para marcar o tempo do vídeo
+⚖️ Artigos de lei, súmulas, conceitos...
+📌 Dicas para a prova"></textarea>
+          </div>
+          <div class="vp-notes-actions">
+            <button class="vp-notes-save" id="vp-notes-save"><i class="fas fa-save"></i> Salvar Anotação</button>
+            <button class="vp-notes-clear-btn" id="vp-notes-clear" title="Limpar texto"><i class="fas fa-eraser"></i></button>
+          </div>
+        </div>
+
+        <!-- Aba Histórico -->
+        <div class="vp-notes-panel-tab" id="vp-ntab-history">
+          <div class="vp-notes-history" id="vp-notes-history-list"></div>
+        </div>
+      </div>
     </div>
 
     <!-- PLAYLIST / LISTA DE VIDEOAULAS -->
@@ -21459,6 +21879,521 @@ function _renderScore() {
 
   </div><!-- /vp-body -->
 </div><!-- /vaula-player-overlay -->
+
+<script>
+// ===================================================================
+// VIDEOAULAS — BUSCA AUTOMÁTICA IA + IMPORTAR/EXPORTAR — Acadêmico Pro
+// ===================================================================
+(function() {
+  'use strict';
+
+  function _getConcursos() {
+    // CORREÇÃO: usa a mesma chave do sistema principal ('_concursos')
+    try { return JSON.parse(localStorage.getItem('_concursos') || '[]'); } catch(e) { return []; }
+  }
+  function _saveConcursos(arr) {
+    // CORREÇÃO: usa a mesma chave do sistema principal ('_concursos')
+    localStorage.setItem('_concursos', JSON.stringify(arr));
+  }
+  function _showToast(type, msg) {
+    if (window._showToast) { window._showToast(type, msg); return; }
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;top:16px;right:16px;z-index:99999;padding:10px 18px;border-radius:10px;color:white;font-size:0.85rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2);';
+    el.style.background = type === 'success' ? '#27ae60' : type === 'danger' ? '#e74c3c' : '#f39c12';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  // ── Detectores de URL YouTube ─────────────────────────────────────
+  function _ytId(url) {
+    if (!url) return null;
+    const pats = [
+      /(?:youtube\.com\/watch\?v=)([^&\s]+)/,
+      /(?:youtu\.be\/)([^?\s]+)/,
+      /(?:youtube\.com\/embed\/)([^?\s]+)/,
+      /(?:youtube\.com\/shorts\/)([^?\s]+)/
+    ];
+    for (const p of pats) { const m = url.match(p); if (m) return m[1]; }
+    return null;
+  }
+  function _ytPlaylistId(url) {
+    if (!url) return null;
+    const m = url.match(/[?&]list=([^&\s]+)/);
+    return m ? m[1] : null;
+  }
+  function _isYtValid(url) {
+    return !!(_ytId(url) || _ytPlaylistId(url));
+  }
+
+  // ── Variáveis de estado ───────────────────────────────────────────
+  let _importVaulasBuffer = [];
+  let _importVaulasConcId = null;
+  let _gerarVaulasConcId = null;
+  window._gerarVaulasBuffer = [];
+
+  // ── Render de preview (shared entre import e gerar) ───────────────
+  function _renderVaulasPreview(lista, container) {
+    if (!container) return;
+    container.innerHTML = lista.map(function(v) {
+      const ytId = _ytId(v.url);
+      const plId = _ytPlaylistId(v.url);
+      const isPlaylist = !ytId && !!plId;
+      const thumb = ytId ? 'https://img.youtube.com/vi/' + ytId + '/mqdefault.jpg' : '';
+      const valido = !!ytId || !!plId;
+      const badge = isPlaylist ? '<span style="font-size:0.6rem;font-weight:700;background:#3498db;color:white;border-radius:4px;padding:1px 6px;margin-left:4px;vertical-align:middle;">PLAYLIST</span>' : '';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:10px;background:' + (valido?'#f6fff9':'#fff6f6') + ';border:1px solid ' + (valido?'rgba(39,174,96,0.3)':'rgba(231,76,60,0.3)') + ';">' +
+        (thumb
+          ? '<img src="' + thumb + '" style="width:64px;height:44px;border-radius:7px;object-fit:cover;flex-shrink:0;" onerror="this.style.display=\'none\'">'
+          : '<div style="width:64px;height:44px;border-radius:7px;background:' + (isPlaylist?'#2980b9':'#dfe6e9') + ';flex-shrink:0;display:flex;align-items:center;justify-content:center;"><i class="' + (isPlaylist?'fas fa-list':'fab fa-youtube') + '" style="color:' + (isPlaylist?'white':'#b2bec3') + ';font-size:1.1rem;"></i></div>') +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="font-size:0.8rem;font-weight:700;color:#1a2332;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (v.titulo||'Sem título') + badge + '</div>' +
+          '<div style="font-size:0.68rem;color:#95a5a6;margin-top:2px;">' + (v.materia||'') + (v.canal?' · '+v.canal:'') + (v.duracao?' · '+v.duracao+'min':'') + '</div>' +
+          (v.obs ? '<div style="font-size:0.67rem;color:#7f8c8d;font-style:italic;margin-top:2px;">' + v.obs + '</div>' : '') +
+        '</div>' +
+        '<span style="font-size:0.72rem;font-weight:700;color:' + (valido?'#27ae60':'#e74c3c') + ';flex-shrink:0;">' + (valido?'✓ OK':'✗ Inválida') + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ── Salvar lista de videoaulas no concurso ────────────────────────
+  function _salvarVaulasNoConcurso(concId, lista) {
+    let arr = _getConcursos();
+    const _cid = +concId; // normaliza para number (evita type mismatch string vs number)
+    const c = arr.find(x => +x.id === _cid);
+    if (!c) return { added: 0, skipped: 0 };
+    c.videoaulas = c.videoaulas || [];
+    let added = 0, skipped = 0;
+    lista.forEach(v => {
+      if (!_isYtValid(v.url)) { skipped++; return; }
+      if (c.videoaulas.some(ex => ex.url === v.url)) { skipped++; return; }
+      const isPlaylist = !_ytId(v.url) && !!_ytPlaylistId(v.url);
+      c.videoaulas.push({
+        id: String(Date.now()) + '_' + Math.random().toString(36).slice(2,6),
+        url: v.url,
+        titulo: v.titulo || (isPlaylist ? 'Playlist' : 'Videoaula'),
+        materia: v.materia || '',
+        canal: v.canal || '',
+        duracao: v.duracao ? +v.duracao : null,
+        obs: v.obs || '',
+        assistida: false,
+        tipo: v.tipo || (isPlaylist ? 'playlist' : 'video'),
+        criadaEm: new Date().toISOString()
+      });
+      added++;
+    });
+    _saveConcursos(arr);
+    return { added, skipped };
+  }
+
+  function _refreshVaulaUI(concId) {
+    if (window.activePanel === 'concursos-panel' && window.renderConcursosPanel) window.renderConcursosPanel();
+    const vListEl = document.getElementById('ctab-vaulas-list');
+    if (vListEl && window._buildVaulasHtml && window._bindVaulaListEvents) {
+      const cUp = _getConcursos().find(x => +x.id === +concId);
+      if (cUp) { vListEl.innerHTML = window._buildVaulasHtml(cUp); window._bindVaulaListEvents(vListEl); }
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // MODAL: IMPORTAR JSON (arquivo)
+  // ════════════════════════════════════════════════════════════════
+  window.importarVaulasJson = function(concId) {
+    _importVaulasConcId = concId;
+    _importVaulasBuffer = [];
+    const pr = document.getElementById('importVaulasPreview');
+    const pl = document.getElementById('importVaulasPreviewList');
+    const rs = document.getElementById('importVaulasResult');
+    const cb = document.getElementById('btnConfirmImportVaulas');
+    if (pr) pr.style.display = 'none';
+    if (pl) pl.innerHTML = '';
+    if (rs) rs.innerHTML = '';
+    if (cb) cb.classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('importVaulasModal')).show();
+  };
+
+  document.getElementById('btnSelectJsonVaulas')?.addEventListener('click', () => {
+    const inp = document.getElementById('inputImportVaulasJson');
+    if (inp) { inp.value = ''; inp.click(); }
+  });
+
+  document.getElementById('inputImportVaulasJson')?.addEventListener('change', function() {
+    if (!this.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const rs = document.getElementById('importVaulasResult');
+      const pr = document.getElementById('importVaulasPreview');
+      const cb = document.getElementById('btnConfirmImportVaulas');
+      const ct = document.getElementById('importVaulasCount');
+      try {
+        let raw = JSON.parse(e.target.result);
+        const lista = Array.isArray(raw) ? raw : (raw.videoaulas || []);
+        if (!lista.length) throw new Error('Nenhuma videoaula encontrada no JSON.');
+        _importVaulasBuffer = lista;
+        _renderVaulasPreview(lista, document.getElementById('importVaulasPreviewList'));
+        if (rs) rs.innerHTML = '';
+        if (pr) pr.style.display = '';
+        if (cb) { cb.classList.remove('d-none'); }
+        if (ct) ct.textContent = lista.length;
+      } catch(err) {
+        if (rs) rs.innerHTML = '<div class="alert alert-danger"><i class="fas fa-times-circle me-1"></i>Erro ao ler JSON: ' + err.message + '</div>';
+        if (pr) pr.style.display = 'none';
+        if (cb) cb.classList.add('d-none');
+      }
+    };
+    reader.readAsText(this.files[0]);
+  });
+
+  // Usar event delegation para o botão Importar Todas (nunca perde o listener)
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('#btnConfirmImportVaulas')) return;
+    if (!_importVaulasConcId) { _showToast('warning', 'Nenhum concurso selecionado.'); return; }
+    if (!_importVaulasBuffer.length) { _showToast('warning', 'Nenhuma videoaula no buffer.'); return; }
+    const { added, skipped } = _salvarVaulasNoConcurso(_importVaulasConcId, _importVaulasBuffer);
+    const modalEl = document.getElementById('importVaulasModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+    _showToast('success', added + ' videoaulas importadas!' + (skipped ? ' ' + skipped + ' ignoradas.' : ''));
+    _refreshVaulaUI(_importVaulasConcId);
+  });
+
+  // ════════════════════════════════════════════════════════════════
+  // MODAL: GERAR / BUSCAR COM IA
+  // ════════════════════════════════════════════════════════════════
+
+  window._gvSwitchTab = function(tab) {
+    document.getElementById('gvPanelAuto').style.display = tab === 'auto' ? '' : 'none';
+    document.getElementById('gvPanelManual').style.display = tab === 'manual' ? '' : 'none';
+    document.getElementById('gvTabAuto').classList.toggle('active', tab === 'auto');
+    document.getElementById('gvTabManual').classList.toggle('active', tab === 'manual');
+  };
+
+  window._gvVoltarStep0 = function() {
+    document.getElementById('gvStep0').style.display = '';
+    document.getElementById('gvStep1').style.display = 'none';
+    document.getElementById('gvLoading').style.display = 'none';
+    document.getElementById('gvErro').style.display = 'none';
+  };
+
+  window.abrirGerarVaulasModal = function(concId) {
+    _gerarVaulasConcId = concId;
+    window._gerarVaulasBuffer = [];
+    const arr = _getConcursos();
+    const c = arr.find(x => x.id === concId);
+    const nomeConc = c ? c.nome : 'Concurso';
+    const materias = (c && c.materias) ? c.materias.map(m => m.nome || m) : [];
+    const materiasStr = materias.length ? materias.join(', ') : 'todas as matérias do edital';
+
+    // Preenche campo de matérias
+    const mEl = document.getElementById('gvMateriasExtra');
+    if (mEl && materias.length) mEl.value = materias.join(', ');
+    else if (mEl) mEl.value = '';
+
+    // Prompt manual
+    const prompt = 'Você é especialista em concursos públicos brasileiros.\n\n' +
+      'Gere uma lista de videoaulas e playlists ATUAIS do YouTube (publicadas em 2025 ou 2026) para o concurso: "' + nomeConc + '".\n' +
+      'Matérias: ' + materiasStr + '.\n\n' +
+      'Regras:\n' +
+      '- Priorize vídeos publicados em 2025 e 2026.\n' +
+      '- Para cada matéria, sugira 3-5 videoaulas ou playlists.\n' +
+      '- Canais: Gran Cursos Online, Estratégia Concursos, Alfacon, Direção Concursos, QConcursos, CERS, Carreiras Jurídicas, Tá Na Lei, Ciclos R3.\n' +
+      '- URLs reais do YouTube: https://www.youtube.com/watch?v=ID ou https://www.youtube.com/playlist?list=ID\n' +
+      '- "tipo": "video" ou "playlist"\n\n' +
+      'Responda APENAS com o array JSON puro (sem markdown, sem explicações):\n' +
+      '[{"url":"...","titulo":"...","materia":"...","canal":"...","duracao":45,"tipo":"video","obs":"..."}]';
+
+    const ptxt = document.getElementById('gerarVaulasPromptText');
+    if (ptxt) ptxt.textContent = prompt;
+
+    // Reset UI
+    document.getElementById('gvStep0').style.display = '';
+    document.getElementById('gvStep1').style.display = 'none';
+    document.getElementById('gvLoading').style.display = 'none';
+    document.getElementById('gvErro').style.display = 'none';
+    const jinp = document.getElementById('gerarVaulasJsonInput');
+    if (jinp) jinp.value = '';
+
+    // Verifica API key
+    const apiKey = (typeof window._getAnthropicKey === 'function') ? window._getAnthropicKey() : '';
+    const semKeyEl = document.getElementById('gvSemApiKey');
+    const btnBuscar = document.getElementById('gvBtnBuscar');
+    if (semKeyEl) semKeyEl.style.display = apiKey ? 'none' : '';
+    if (btnBuscar) btnBuscar.disabled = !apiKey;
+
+    window._gvSwitchTab('auto');
+    new bootstrap.Modal(document.getElementById('gerarVaulasModal')).show();
+  };
+
+  window.copiarPromptVaulas = function() {
+    const txt = document.getElementById('gerarVaulasPromptText')?.textContent;
+    if (!txt) return;
+    navigator.clipboard.writeText(txt).then(() => _showToast('success', 'Prompt copiado!'));
+  };
+
+  // ── BUSCA AUTOMÁTICA COM IA + WEB SEARCH ─────────────────────────
+  window.buscarVaulasIA = async function() {
+    const concId = _gerarVaulasConcId;
+    if (!concId) return;
+
+    const apiKey = (typeof window._getAnthropicKey === 'function') ? window._getAnthropicKey() : '';
+    if (!apiKey) { _showToast('warning', 'Configure sua Anthropic API Key nas Configurações.'); return; }
+
+    const arr = _getConcursos();
+    const c = arr.find(x => x.id === concId);
+    const nomeConc = c ? c.nome : 'Concurso';
+    let materiasInput = (document.getElementById('gvMateriasExtra')?.value || '').trim();
+    if (!materiasInput && c && c.materias && c.materias.length) {
+      materiasInput = c.materias.map(m => m.nome || m).join(', ');
+    }
+    if (!materiasInput) materiasInput = 'todas as matérias do edital';
+    const qtd = parseInt(document.getElementById('gvQtdPorMateria')?.value || '5');
+
+    // Mostrar loading
+    document.getElementById('gvLoading').style.display = '';
+    document.getElementById('gvErro').style.display = 'none';
+    document.getElementById('gvBtnBuscar').disabled = true;
+
+    const msgs = [
+      'Pesquisando videoaulas de 2025/2026...',
+      'Buscando playlists atualizadas no YouTube...',
+      'Filtrando conteúdo por matéria...',
+      'Quase pronto, organizando resultados...'
+    ];
+    let mi = 0;
+    const msgEl = document.getElementById('gvLoadingMsg');
+    const msgInterval = setInterval(() => {
+      if (msgEl) msgEl.textContent = msgs[mi % msgs.length];
+      mi++;
+    }, 2500);
+
+    try {
+      const prompt = `Você é um especialista em concursos públicos brasileiros. Sua tarefa é pesquisar e listar videoaulas REAIS e ATUAIS do YouTube para o concurso: "${nomeConc}".
+
+Matérias a cobrir: ${materiasInput}
+
+INSTRUÇÕES:
+1. Use a ferramenta de busca para pesquisar no YouTube videoaulas de 2025 e 2026 para cada matéria.
+2. Busque por: "[matéria] concurso público 2025 2026 site:youtube.com"
+3. Priorize vídeos e playlists publicados em 2025 ou 2026.
+4. Para cada matéria, encontre ${qtd} videoaulas ou playlists reais.
+5. Canais preferidos: Gran Cursos Online, Estratégia Concursos, Alfacon, Direção Concursos, QConcursos, CERS, Carreiras Jurídicas, Tá Na Lei, Ciclos R3, Curso Ênfase.
+6. Inclua playlists completas quando encontrar (URL com ?list=...).
+
+RESPOSTA FINAL:
+Após pesquisar, responda APENAS com um array JSON puro (sem markdown, sem explicações, sem blocos de código):
+[
+  {
+    "url": "https://www.youtube.com/watch?v=VIDEO_ID",
+    "titulo": "Título real do vídeo",
+    "materia": "Nome exato da matéria",
+    "canal": "Nome do canal",
+    "duracao": 45,
+    "tipo": "video",
+    "obs": "Breve descrição"
+  }
+]
+
+Para playlists: "url" = "https://www.youtube.com/playlist?list=PLAYLIST_ID", "tipo" = "playlist"
+IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente URLs.`;
+
+      // Ciclo de conversação: continua enquanto o modelo usar tools (web_search)
+      const messages = [{ role: 'user', content: prompt }];
+      let data = null;
+      let turnos = 0;
+      const MAX_TURNOS = 8;
+
+      while (turnos < MAX_TURNOS) {
+        turnos++;
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 4000,
+            tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+            messages: messages
+          }),
+          signal: AbortSignal.timeout(90000)
+        });
+
+        if (!resp.ok) {
+          const errData = await resp.json().catch(() => ({}));
+          throw new Error(errData.error?.message || 'Erro na API: ' + resp.status);
+        }
+
+        data = await resp.json();
+
+        // Se terminou (end_turn), sai do loop
+        if (data.stop_reason === 'end_turn') break;
+
+        // Se ainda há tool_use, coleta os resultados e continua
+        if (data.stop_reason === 'tool_use') {
+          // Adiciona a resposta do assistente ao histórico
+          messages.push({ role: 'assistant', content: data.content });
+
+          // Monta os tool_results para cada tool_use block
+          const toolResults = (data.content || [])
+            .filter(b => b.type === 'tool_use')
+            .map(b => ({
+              type: 'tool_result',
+              tool_use_id: b.id,
+              content: b.type === 'web_search' ? (b.content || '') : ''
+            }));
+
+          if (!toolResults.length) break; // segurança: sem tools pendentes, sai
+
+          messages.push({ role: 'user', content: toolResults });
+        } else {
+          // stop_reason desconhecido, sai do loop
+          break;
+        }
+      }
+
+      clearInterval(msgInterval);
+
+      // Extrair texto da resposta final (pode ter múltiplos blocos)
+      const textoCompleto = (data.content || [])
+        .filter(b => b.type === 'text')
+        .map(b => b.text)
+        .join('\n');
+
+      // Extrair JSON do texto
+      let lista = [];
+      const jsonMatch = textoCompleto.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        try {
+          lista = JSON.parse(jsonMatch[0]);
+        } catch(pe) {
+          // tenta limpar e re-parsear
+          const cleaned = jsonMatch[0].replace(/,(\s*[}\]])/g, '$1');
+          lista = JSON.parse(cleaned);
+        }
+      }
+
+      if (!Array.isArray(lista) || !lista.length) {
+        throw new Error('A IA não retornou videoaulas válidas. Tente novamente ou use a busca manual.');
+      }
+
+      // Filtrar apenas válidos
+      lista = lista.filter(v => v.url && _isYtValid(v.url));
+      if (!lista.length) throw new Error('Nenhuma URL de YouTube válida encontrada. Tente novamente.');
+
+      window._gerarVaulasBuffer = lista;
+      _mostrarPreviewGerar(lista);
+
+    } catch(err) {
+      clearInterval(msgInterval);
+      const erroEl = document.getElementById('gvErro');
+      if (erroEl) {
+        erroEl.style.display = '';
+        erroEl.innerHTML = '<div class="alert alert-danger d-flex align-items-start gap-2" style="border-radius:10px;">' +
+          '<i class="fas fa-exclamation-triangle mt-1"></i>' +
+          '<div><strong>Erro na busca:</strong> ' + err.message + '<br><small class="text-muted">Verifique sua API Key nas Configurações, ou use a aba "Colar JSON / Manual".</small></div>' +
+          '</div>';
+      }
+    } finally {
+      document.getElementById('gvLoading').style.display = 'none';
+      document.getElementById('gvBtnBuscar').disabled = false;
+    }
+  };
+
+  function _mostrarPreviewGerar(lista) {
+    const preview = document.getElementById('gerarVaulasPreviewList');
+    if (preview) _renderVaulasPreview(lista, preview);
+    const q1 = document.getElementById('gerarVaulasQtd');
+    const q2 = document.getElementById('gerarVaulasQtd2');
+    if (q1) q1.textContent = lista.length;
+    if (q2) q2.textContent = lista.length;
+    document.getElementById('gvStep0').style.display = 'none';
+    document.getElementById('gvStep1').style.display = '';
+  }
+
+  // ── Processar JSON colado manualmente ────────────────────────────
+  window.processarJsonGerado = function() {
+    const raw = (document.getElementById('gerarVaulasJsonInput')?.value || '').trim();
+    if (!raw) { _showToast('warning', 'Cole o JSON gerado pela IA primeiro.'); return; }
+    try {
+      const cleaned = raw.replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
+      let lista = JSON.parse(cleaned);
+      if (!Array.isArray(lista)) lista = lista.videoaulas || [];
+      if (!lista.length) throw new Error('Nenhum item encontrado.');
+      lista = lista.filter(v => v.url);
+      window._gerarVaulasBuffer = lista;
+      _mostrarPreviewGerar(lista);
+    } catch(err) {
+      _showToast('danger', 'JSON inválido: ' + err.message);
+    }
+  };
+
+  // ── Confirmar importação (Gerar modal) — event delegation ────────
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('#btnConfirmGerarVaulas')) return;
+    const concId = _gerarVaulasConcId;
+    const lista = window._gerarVaulasBuffer || [];
+    if (!concId) { _showToast('warning', 'Concurso não identificado.'); return; }
+    if (!lista.length) { _showToast('warning', 'Nenhuma videoaula para importar.'); return; }
+    const { added, skipped } = _salvarVaulasNoConcurso(concId, lista);
+    const modal = bootstrap.Modal.getInstance(document.getElementById('gerarVaulasModal'));
+    if (modal) modal.hide();
+    _showToast('success', '✅ ' + added + ' videoaulas importadas!' + (skipped ? ' ' + skipped + ' ignoradas.' : ''));
+    _refreshVaulaUI(concId);
+  });
+
+  // ════════════════════════════════════════════════════════════════
+  // EXPORTAR / MODELO JSON
+  // ════════════════════════════════════════════════════════════════
+  window.baixarModeloVaulasJson = function(concId) {
+    const arr = _getConcursos();
+    const c = arr.find(x => x.id === concId);
+    const nomeConc = c ? c.nome : 'MeuConcurso';
+    const materias = (c && c.materias) ? c.materias.map(m => m.nome || m) : ['Direito Constitucional', 'Português', 'Raciocínio Lógico'];
+    const modelo = {
+      _instrucoes: "Preencha o array 'videoaulas'. Campos obrigatórios: url, titulo. Remova as chaves que começam com _ antes de importar.",
+      _concurso: nomeConc,
+      _materias_disponiveis: materias,
+      videoaulas: materias.slice(0,2).map((mat, i) => ({
+        url: 'https://www.youtube.com/watch?v=EXEMPLO' + (i+1),
+        titulo: 'Aula de ' + mat + ' para Concursos',
+        materia: mat,
+        canal: 'Gran Cursos Online',
+        duracao: 45,
+        tipo: 'video',
+        obs: 'Exemplo — substitua pela URL real'
+      }))
+    };
+    const blob = new Blob([JSON.stringify(modelo, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'modelo_videoaulas_' + nomeConc.replace(/\s+/g,'_').toLowerCase() + '.json';
+    link.click();
+    _showToast('success', 'Modelo JSON baixado!');
+  };
+
+  window.exportarVaulasJson = function(concId) {
+    const arr = _getConcursos();
+    const c = arr.find(x => x.id === concId);
+    if (!c) return;
+    const vaulas = (c.videoaulas || []).map(v => ({
+      url: v.url, titulo: v.titulo, materia: v.materia || '',
+      canal: v.canal || '', duracao: v.duracao || null, tipo: v.tipo || 'video', obs: v.obs || ''
+    }));
+    if (!vaulas.length) { _showToast('warning', 'Nenhuma videoaula para exportar.'); return; }
+    const blob = new Blob([JSON.stringify(vaulas, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'videoaulas_' + (c.nome||'concurso').replace(/\s+/g,'_').toLowerCase() + '.json';
+    link.click();
+    _showToast('success', vaulas.length + ' videoaulas exportadas!');
+  };
+
+})();
+</script>
+
 
 </body>
 </html>
