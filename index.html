@@ -7688,7 +7688,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCountdown(); nextEventInterval = setInterval(updateCountdown, 1000);
     }
 
-    // ===== LEITURA DIÁRIA / NOTÍCIAS — conteúdo REAL via API Claude + web search =====
+    // ===== LEITURA DIÁRIA / NOTÍCIAS — conteúdo REAL via RSS público =====
 
     const DIARIOS_OFICIAIS = [
         { nome:'Diário Oficial da União', sigla:'DOU', url:'https://www.in.gov.br/consulta/-/busca-oficial', cor:'#1a5276', icone:'fa-landmark', desc:'Atos federais, leis, decretos e portarias' },
@@ -7697,225 +7697,240 @@ document.addEventListener('DOMContentLoaded', function() {
         { nome:'Diário da Justiça do TJAL', sigla:'DJ-TJAL', url:'https://www2.tjal.jus.br/cdje', cor:'#a04000', icone:'fa-balance-scale', desc:'Publicações judiciais de Alagoas' },
     ];
 
-    // ---- Cache em sessionStorage para não recarregar a cada navegação ----
-    const _SS_KEY_LEITURA  = 'ap_leitura_cache';
-    const _SS_KEY_NOTICIAS = 'ap_noticias_cache';
+    // Feeds RSS dos portais jurídicos — acessados via proxy CORS público
+    const RSS_FEEDS = [
+        { url:'https://www.conjur.com.br/rss.xml',       fonte:'ConJur',   tag:'Geral',       cor:'#2471a3' },
+        { url:'https://www.migalhas.uol.com.br/rss',     fonte:'Migalhas', tag:'Geral',       cor:'#b7950b' },
+        { url:'https://www.jota.info/feed',              fonte:'JOTA',     tag:'Tributário',  cor:'#1a6a3a' },
+        { url:'https://portal.stf.jus.br/rss/noticias.asp', fonte:'STF',  tag:'STF',         cor:'#1a5276' },
+        { url:'https://www.stj.jus.br/sites/portalp/rss/noticias', fonte:'STJ', tag:'STJ',   cor:'#1e8449' },
+    ];
 
-    function _ssGet(key) {
-        try { const v = sessionStorage.getItem(key); return v ? JSON.parse(v) : null; } catch(e) { return null; }
-    }
-    function _ssSet(key, val) {
-        try { sessionStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+    // Proxy CORS público (gratuito, sem chave)
+    const CORS_PROXY = 'https://api.allorigins.win/get?url=';
+
+    // Cache sessionStorage
+    const _SS_LEITURA  = 'ap_leitura_v2';
+    const _SS_NOTICIAS = 'ap_noticias_v2';
+
+    function _ssGet(k) { try { const v = sessionStorage.getItem(k); return v ? JSON.parse(v) : null; } catch(e) { return null; } }
+    function _ssSet(k, v) { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
+
+    // Parseia RSS XML e retorna array de {titulo, url, fonte, tag, cor, data}
+    function _parseRSS(xmlStr, meta) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xmlStr, 'text/xml');
+        const items = Array.from(doc.querySelectorAll('item')).slice(0, 20);
+        return items.map(item => ({
+            titulo: item.querySelector('title')?.textContent?.trim() || '',
+            url:    item.querySelector('link')?.textContent?.trim()  || '',
+            data:   item.querySelector('pubDate')?.textContent?.trim() || '',
+            fonte:  meta.fonte,
+            tag:    meta.tag,
+            cor:    meta.cor,
+        })).filter(i => i.titulo && i.url);
     }
 
-    // ---- Esqueleto de carregamento ----
-    function _skeletonLeitura(container) {
+    // Busca um feed com proxy e retorna itens
+    async function _fetchFeed(meta) {
+        const proxyUrl = CORS_PROXY + encodeURIComponent(meta.url);
+        const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+        const json = await resp.json();
+        return _parseRSS(json.contents || '', meta);
+    }
+
+    // Esqueleto de loading
+    function _skelLeitura(container) {
         container.innerHTML = `
         <div class="info-card-home h-100" style="--ic:#c9a84c;">
           <div class="info-card-header">
             <div class="info-card-badge" style="background:rgba(201,168,76,0.18);border-color:rgba(201,168,76,0.45);color:#c9a84c;">
               <i class="fas fa-newspaper"></i> Artigo do Dia
             </div>
-            <span style="font-size:0.65rem;color:rgba(255,255,255,0.3);animation:lpPulse 1.5s infinite;">Buscando...</span>
+            <span style="font-size:0.63rem;color:rgba(255,255,255,0.3);">Carregando...</span>
           </div>
           <div style="height:14px;border-radius:7px;background:rgba(255,255,255,0.08);margin-bottom:8px;width:90%;animation:lpPulse 1.5s infinite;"></div>
           <div style="height:10px;border-radius:5px;background:rgba(255,255,255,0.05);margin-bottom:6px;width:60%;animation:lpPulse 1.5s infinite;"></div>
-          <div style="height:10px;border-radius:5px;background:rgba(255,255,255,0.05);margin-bottom:20px;width:40%;animation:lpPulse 1.5s infinite;"></div>
-          <div style="height:32px;border-radius:9px;background:rgba(201,168,76,0.15);width:100%;margin-top:auto;animation:lpPulse 1.5s infinite;"></div>
+          <div style="height:32px;border-radius:9px;background:rgba(201,168,76,0.12);width:100%;margin-top:auto;animation:lpPulse 1.5s infinite;"></div>
         </div>`;
     }
 
-    function _skeletonNoticias(container) {
+    function _skelNoticias(container) {
         container.innerHTML = `
         <div class="info-card-home h-100" style="--ic:#3498db;">
           <div class="info-card-header">
             <div class="info-card-badge" style="background:rgba(52,152,219,0.18);border-color:rgba(52,152,219,0.45);color:#3498db;">
               <i class="fas fa-rss"></i> Notícias Jurídicas
             </div>
-            <span style="font-size:0.65rem;color:rgba(255,255,255,0.3);animation:lpPulse 1.5s infinite;">Buscando...</span>
+            <span style="font-size:0.63rem;color:rgba(255,255,255,0.3);">Carregando...</span>
           </div>
           ${Array(5).fill(0).map(()=>`
           <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-            <div style="width:8px;height:8px;border-radius:50%;background:rgba(52,152,219,0.3);flex-shrink:0;margin-top:6px;"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:rgba(52,152,219,0.25);flex-shrink:0;margin-top:6px;"></div>
             <div style="flex:1;">
               <div style="height:11px;border-radius:5px;background:rgba(255,255,255,0.07);margin-bottom:5px;width:88%;animation:lpPulse 1.5s infinite;"></div>
-              <div style="height:9px;border-radius:4px;background:rgba(255,255,255,0.04);width:50%;animation:lpPulse 1.5s infinite;"></div>
+              <div style="height:9px;border-radius:4px;background:rgba(255,255,255,0.04);width:45%;animation:lpPulse 1.5s infinite;"></div>
             </div>
           </div>`).join('')}
-          <div style="height:32px;border-radius:9px;background:rgba(52,152,219,0.15);width:100%;margin-top:12px;animation:lpPulse 1.5s infinite;"></div>
         </div>`;
     }
 
-    // ---- Chamada à API Claude com web search ----
-    async function _fetchFromClaude(prompt) {
-        const resp = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
-                max_tokens: 1000,
-                tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-                messages: [{ role: 'user', content: prompt }]
-            })
-        });
-        if (!resp.ok) throw new Error('API error ' + resp.status);
-        const data = await resp.json();
-        // Extrai bloco de texto final
-        const textBlock = data.content && data.content.filter(b => b.type === 'text').map(b => b.text).join('');
-        return textBlock || '';
-    }
-
-    // ---- Artigo/Leitura do Dia ----
+    // ---- Artigo do Dia ----
     async function renderLeituraDiaria() {
         const container = document.getElementById('leitura-diaria-container');
         if (!container) return;
 
-        const cached = _ssGet(_SS_KEY_LEITURA);
-        if (cached) { _renderLeituraCard(container, cached); return; }
+        const cached = _ssGet(_SS_LEITURA);
+        if (cached) { _drawLeitura(container, cached); return; }
 
-        _skeletonLeitura(container);
+        _skelLeitura(container);
 
-        try {
-            const hoje = new Date().toLocaleDateString('pt-BR');
-            const prompt = `Você é um assistente jurídico especializado. Pesquise na web e encontre UM artigo jurídico real publicado recentemente (de preferência nos últimos 7 dias, até 30 dias) em portais brasileiros como Migalhas, JOTA, ConJur, JusBrasil ou similares.
+        // Tenta feeds em ordem até conseguir itens
+        const feedsToTry = [RSS_FEEDS[0], RSS_FEEDS[1], RSS_FEEDS[2]]; // ConJur, Migalhas, JOTA
+        let artigo = null;
 
-Retorne APENAS um objeto JSON válido, sem markdown, sem explicações, exatamente neste formato:
-{
-  "tipo": "artigo",
-  "titulo": "Título real e completo do artigo encontrado",
-  "autor": "Nome do autor ou nome do portal",
-  "area": "Área do Direito (ex: Constitucional, Civil, Penal, Trabalhista, Tributário, Administrativo)",
-  "url": "URL direta e real do artigo encontrado",
-  "urlLabel": "Ler no [nome do portal]",
-  "resumo": "Resumo em 1-2 frases do que o artigo trata"
-}
+        for (const feed of feedsToTry) {
+            try {
+                const items = await _fetchFeed(feed);
+                if (items.length) {
+                    // Pega item com índice baseado no dia (rotativo)
+                    const dayIdx = Math.floor((Date.now() / 86400000)) % items.length;
+                    const item = items[dayIdx];
+                    artigo = {
+                        tipo: 'artigo',
+                        titulo: item.titulo,
+                        autor: item.fonte,
+                        area: _detectArea(item.titulo),
+                        url: item.url,
+                        urlLabel: 'Ler no ' + item.fonte,
+                        data: item.data,
+                    };
+                    break;
+                }
+            } catch(e) { /* tenta próximo */ }
+        }
 
-IMPORTANTE: A URL deve ser a URL DIRETA do artigo, não a homepage do portal. O título deve ser o título real do artigo, não inventado.`;
-
-            const raw = await _fetchFromClaude(prompt);
-            const clean = raw.replace(/```json|```/g, '').trim();
-            const match = clean.match(/\{[\s\S]*\}/);
-            if (!match) throw new Error('no JSON');
-            const leitura = JSON.parse(match[0]);
-            _ssSet(_SS_KEY_LEITURA, leitura);
-            _renderLeituraCard(container, leitura);
-        } catch(e) {
-            // Fallback elegante em caso de erro
-            container.innerHTML = `
-            <div class="info-card-home h-100" style="--ic:#c9a84c;">
-              <div class="info-card-header">
-                <div class="info-card-badge" style="background:rgba(201,168,76,0.18);border-color:rgba(201,168,76,0.45);color:#c9a84c;">
-                  <i class="fas fa-newspaper"></i> Artigo do Dia
-                </div>
-                <button class="info-card-refresh" onclick="refreshLeitura()" title="Tentar novamente"><i class="fas fa-sync-alt"></i></button>
-              </div>
-              <div class="info-card-title" style="color:rgba(255,255,255,0.5);">Não foi possível carregar o artigo</div>
-              <div class="info-card-meta">Verifique sua conexão e tente novamente</div>
-              <div class="info-card-tag-row">
-                <span class="info-card-tag" style="background:rgba(231,76,60,0.15);border-color:rgba(231,76,60,0.35);color:#e74c3c;"><i class="fas fa-exclamation-triangle me-1"></i>Erro ao buscar</span>
-              </div>
-              <div style="display:flex;gap:8px;margin-top:auto;flex-wrap:wrap;">
-                <a href="https://www.migalhas.uol.com.br" target="_blank" rel="noopener" class="info-card-btn" style="background:linear-gradient(135deg,#c9a84c,#a8862e);color:#1a1f2e;flex:1;">
-                  <i class="fas fa-external-link-alt"></i> Migalhas
-                </a>
-                <a href="https://www.conjur.com.br" target="_blank" rel="noopener" class="info-card-btn" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.15);flex:1;">
-                  <i class="fas fa-external-link-alt"></i> ConJur
-                </a>
-              </div>
-            </div>`;
+        if (artigo) {
+            _ssSet(_SS_LEITURA, artigo);
+            _drawLeitura(container, artigo);
+        } else {
+            _drawLeituraFallback(container);
         }
     }
 
-    function _renderLeituraCard(container, leitura) {
-        const tipoIcone = leitura.tipo === 'livro' ? 'fa-book-open' : 'fa-newspaper';
-        const tipoBadge = leitura.tipo === 'livro' ? '📚 Leitura do Dia' : '📰 Artigo do Dia';
+    function _drawLeitura(container, a) {
+        const dataStr = a.data ? _formatDate(a.data) : '';
         container.innerHTML = `
         <div class="info-card-home h-100" style="--ic:#c9a84c;--ic-dark:#1a1f2e;">
           <div class="info-card-header">
             <div class="info-card-badge" style="background:rgba(201,168,76,0.18);border-color:rgba(201,168,76,0.45);color:#c9a84c;">
-              <i class="fas ${tipoIcone}"></i> ${tipoBadge}
+              <i class="fas fa-newspaper"></i> 📰 Artigo do Dia
             </div>
-            <button class="info-card-refresh" onclick="refreshLeitura()" title="Buscar novo artigo"><i class="fas fa-sync-alt"></i></button>
+            <button class="info-card-refresh" onclick="refreshLeitura()" title="Próximo artigo"><i class="fas fa-sync-alt"></i></button>
           </div>
-          <div class="info-card-title">${leitura.titulo}</div>
-          <div class="info-card-meta"><i class="fas fa-user-edit me-1"></i>${leitura.autor}</div>
-          ${leitura.resumo ? `<div style="font-size:0.73rem;color:rgba(255,255,255,0.5);line-height:1.45;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${leitura.resumo}</div>` : ''}
+          <div class="info-card-title">${_esc(a.titulo)}</div>
+          <div class="info-card-meta">
+            <i class="fas fa-user-edit me-1"></i>${_esc(a.autor)}${dataStr ? ' · ' + dataStr : ''}
+          </div>
           <div class="info-card-tag-row">
-            <span class="info-card-tag" style="background:rgba(26,188,156,0.15);border-color:rgba(26,188,156,0.35);color:#1abc9c;"><i class="fas fa-balance-scale me-1"></i>${leitura.area}</span>
-            <span class="info-card-tag" style="background:rgba(201,168,76,0.12);border-color:rgba(201,168,76,0.3);color:#c9a84c;"><i class="fas fa-check-circle me-1"></i>Conteúdo Real</span>
+            <span class="info-card-tag" style="background:rgba(26,188,156,0.15);border-color:rgba(26,188,156,0.35);color:#1abc9c;"><i class="fas fa-balance-scale me-1"></i>${a.area}</span>
+            <span class="info-card-tag" style="background:rgba(201,168,76,0.12);border-color:rgba(201,168,76,0.3);color:#c9a84c;"><i class="fas fa-check-circle me-1"></i>Real</span>
           </div>
-          <a href="${leitura.url}" target="_blank" rel="noopener" class="info-card-btn" style="background:linear-gradient(135deg,#c9a84c,#a8862e);color:#1a1f2e;margin-top:auto;">
-            <i class="fas fa-external-link-alt"></i> ${leitura.urlLabel || 'Ler artigo'}
+          <a href="${_esc(a.url)}" target="_blank" rel="noopener" class="info-card-btn" style="background:linear-gradient(135deg,#c9a84c,#a8862e);color:#1a1f2e;margin-top:auto;">
+            <i class="fas fa-external-link-alt"></i> ${a.urlLabel}
           </a>
         </div>`;
     }
 
-    // ---- Notícias Jurídicas Reais ----
+    function _drawLeituraFallback(container) {
+        container.innerHTML = `
+        <div class="info-card-home h-100" style="--ic:#c9a84c;">
+          <div class="info-card-header">
+            <div class="info-card-badge" style="background:rgba(201,168,76,0.18);border-color:rgba(201,168,76,0.45);color:#c9a84c;">
+              <i class="fas fa-newspaper"></i> Artigo do Dia
+            </div>
+            <button class="info-card-refresh" onclick="refreshLeitura()" title="Tentar novamente"><i class="fas fa-sync-alt"></i></button>
+          </div>
+          <div class="info-card-title" style="font-size:0.85rem;">Acesse os portais jurídicos</div>
+          <div class="info-card-meta">Escolha um portal para ler artigos recentes</div>
+          <div style="display:flex;flex-direction:column;gap:7px;margin-top:8px;flex:1;">
+            <a href="https://www.migalhas.uol.com.br/depeso" target="_blank" rel="noopener" class="diario-item-card">
+              <div class="diario-item-icon" style="background:#b7950b22;color:#b7950b;"><i class="fas fa-newspaper"></i></div>
+              <div class="diario-item-body"><div class="diario-item-sigla">Migalhas</div><div class="diario-item-desc">Artigos de Opinião Jurídica</div></div>
+              <i class="fas fa-external-link-alt" style="color:rgba(255,255,255,0.25);font-size:0.7rem;"></i>
+            </a>
+            <a href="https://www.conjur.com.br/consultor-juridico/artigos" target="_blank" rel="noopener" class="diario-item-card">
+              <div class="diario-item-icon" style="background:#2471a322;color:#2471a3;"><i class="fas fa-balance-scale"></i></div>
+              <div class="diario-item-body"><div class="diario-item-sigla">ConJur</div><div class="diario-item-desc">Artigos e Colunas Jurídicas</div></div>
+              <i class="fas fa-external-link-alt" style="color:rgba(255,255,255,0.25);font-size:0.7rem;"></i>
+            </a>
+            <a href="https://www.jota.info/opiniao-e-analise" target="_blank" rel="noopener" class="diario-item-card">
+              <div class="diario-item-icon" style="background:#1a6a3a22;color:#1a6a3a;"><i class="fas fa-pen-alt"></i></div>
+              <div class="diario-item-body"><div class="diario-item-sigla">JOTA</div><div class="diario-item-desc">Opinião e Análise Jurídica</div></div>
+              <i class="fas fa-external-link-alt" style="color:rgba(255,255,255,0.25);font-size:0.7rem;"></i>
+            </a>
+          </div>
+        </div>`;
+    }
+
+    // ---- Notícias Jurídicas ----
     async function renderNoticiasJuridicas() {
         const container = document.getElementById('noticias-juridicas-container');
         if (!container) return;
 
-        const cached = _ssGet(_SS_KEY_NOTICIAS);
-        if (cached) { _renderNoticiasCard(container, cached); return; }
+        const cached = _ssGet(_SS_NOTICIAS);
+        if (cached) { _drawNoticias(container, cached); return; }
 
-        _skeletonNoticias(container);
+        _skelNoticias(container);
 
-        try {
-            const prompt = `Você é um assistente jurídico. Pesquise na web e encontre 5 notícias jurídicas reais e recentes (últimos 7 dias, máximo 30 dias) publicadas em portais jurídicos brasileiros como STF, STJ, TST, ConJur, JOTA, Migalhas, Câmara dos Deputados ou similares.
+        let allItems = [];
+        // Tenta todos os feeds em paralelo, pega o que vier
+        const results = await Promise.allSettled(RSS_FEEDS.map(f => _fetchFeed(f)));
+        results.forEach((r, i) => {
+            if (r.status === 'fulfilled' && r.value.length) {
+                // Pega as 3 mais recentes de cada fonte
+                allItems.push(...r.value.slice(0, 3));
+            }
+        });
 
-Retorne APENAS um array JSON válido, sem markdown, sem explicações, exatamente neste formato:
-[
-  {
-    "titulo": "Título real da notícia",
-    "fonte": "Nome do portal/tribunal",
-    "url": "URL direta da notícia",
-    "tag": "Área (STF, STJ, Civil, Penal, Trabalhista, Tributário, Legislação, etc)",
-    "cor": "cor hex correspondente à área (ex: #1a5276 para STF, #1e8449 para STJ, #7d3c98 para legislação, #a04000 para trabalhista, #b7950b para tributário)"
-  },
-  ...
-]
-
-IMPORTANTE: As URLs devem ser URLs DIRETAS e reais das notícias. Busque notícias variadas de diferentes áreas do Direito. Não invente notícias.`;
-
-            const raw = await _fetchFromClaude(prompt);
-            const clean = raw.replace(/```json|```/g, '').trim();
-            const match = clean.match(/\[[\s\S]*\]/);
-            if (!match) throw new Error('no JSON array');
-            const noticias = JSON.parse(match[0]);
-            if (!Array.isArray(noticias) || !noticias.length) throw new Error('empty');
-            _ssSet(_SS_KEY_NOTICIAS, noticias);
-            _renderNoticiasCard(container, noticias);
-        } catch(e) {
-            // Fallback com links reais para portais
+        if (allItems.length >= 3) {
+            // Embaralha levemente com seed do dia para variedade
+            const seed = Math.floor(Date.now() / 86400000);
+            allItems.sort((a, b) => ((a.titulo.charCodeAt(0) + seed) % 7) - ((b.titulo.charCodeAt(0) + seed) % 7));
+            const noticias = allItems.slice(0, 5);
+            _ssSet(_SS_NOTICIAS, noticias);
+            _drawNoticias(container, noticias);
+        } else {
+            // Fallback: links diretos para portais
             const fallback = [
-                { titulo:'Últimas decisões do STF — acesse o portal', fonte:'STF', url:'https://portal.stf.jus.br/noticias/', tag:'STF', cor:'#1a5276' },
-                { titulo:'Jurisprudência e decisões recentes do STJ', fonte:'STJ', url:'https://www.stj.jus.br/sites/portalp/Pesquisa-de-jurisprudencia', tag:'STJ', cor:'#1e8449' },
-                { titulo:'Notícias jurídicas — ConJur', fonte:'Consultor Jurídico', url:'https://www.conjur.com.br/', tag:'Geral', cor:'#2471a3' },
-                { titulo:'Notícias e artigos jurídicos — Migalhas', fonte:'Migalhas', url:'https://www.migalhas.uol.com.br/', tag:'Geral', cor:'#b7950b' },
-                { titulo:'Cobertura jurídica diária — JOTA', fonte:'JOTA', url:'https://www.jota.info/', tag:'Geral', cor:'#1a6a3a' },
+                { titulo:'Últimas notícias do STF', fonte:'STF', url:'https://portal.stf.jus.br/noticias/', tag:'STF', cor:'#1a5276' },
+                { titulo:'Notícias jurídicas do STJ', fonte:'STJ', url:'https://www.stj.jus.br/sites/portalp/Noticias', tag:'STJ', cor:'#1e8449' },
+                { titulo:'Notícias e artigos — ConJur', fonte:'ConJur', url:'https://www.conjur.com.br/', tag:'Geral', cor:'#2471a3' },
+                { titulo:'Notícias jurídicas — Migalhas', fonte:'Migalhas', url:'https://www.migalhas.uol.com.br/', tag:'Geral', cor:'#b7950b' },
+                { titulo:'Cobertura jurídica — JOTA', fonte:'JOTA', url:'https://www.jota.info/', tag:'Geral', cor:'#1a6a3a' },
             ];
-            _ssSet(_SS_KEY_NOTICIAS, fallback);
-            _renderNoticiasCard(container, fallback);
+            _ssSet(_SS_NOTICIAS, fallback);
+            _drawNoticias(container, fallback);
         }
     }
 
-    function _renderNoticiasCard(container, noticias) {
+    function _drawNoticias(container, noticias) {
         container.innerHTML = `
         <div class="info-card-home h-100" style="--ic:#3498db;--ic-dark:#1a2332;">
           <div class="info-card-header">
             <div class="info-card-badge" style="background:rgba(52,152,219,0.18);border-color:rgba(52,152,219,0.45);color:#3498db;">
               <i class="fas fa-rss"></i> Notícias Jurídicas
             </div>
-            <button class="info-card-refresh" onclick="refreshNoticias()" title="Buscar novas notícias"><i class="fas fa-sync-alt"></i></button>
+            <button class="info-card-refresh" onclick="refreshNoticias()" title="Atualizar notícias"><i class="fas fa-sync-alt"></i></button>
           </div>
           <div style="flex:1;overflow:hidden;">
             ${noticias.slice(0,5).map(n=>`
-            <div class="noticia-card-item" onclick="window.open('${n.url}','_blank')" title="${n.titulo}">
+            <div class="noticia-card-item" onclick="window.open('${_esc(n.url)}','_blank')" title="${_esc(n.titulo)}">
               <div class="noticia-card-dot" style="background:${n.cor||'#3498db'};"></div>
               <div class="noticia-card-body">
-                <div class="noticia-card-title">${n.titulo}</div>
+                <div class="noticia-card-title">${_esc(n.titulo)}</div>
                 <div class="noticia-card-meta">
-                  <span class="noticia-card-fonte">${n.fonte}</span>
+                  <span class="noticia-card-fonte">${_esc(n.fonte)}</span>
                   <span class="noticia-card-tag" style="background:${n.cor||'#3498db'}22;color:${n.cor||'#3498db'};border:1px solid ${n.cor||'#3498db'}55;">${n.tag}</span>
                 </div>
               </div>
@@ -7961,18 +7976,43 @@ IMPORTANTE: As URLs devem ser URLs DIRETAS e reais das notícias. Busque notíci
         </div>`;
     }
 
-    // ---- Refresh manual (limpa cache e recarrega) ----
-    window.refreshLeitura = function() {
-        sessionStorage.removeItem(_SS_KEY_LEITURA);
-        renderLeituraDiaria();
-    };
-    window.refreshNoticias = function() {
-        sessionStorage.removeItem(_SS_KEY_NOTICIAS);
-        renderNoticiasJuridicas();
-    };
-    // Manter compatibilidade com nomes antigos
+    // ---- Refresh manual ----
+    window.refreshLeitura = function() { sessionStorage.removeItem(_SS_LEITURA); renderLeituraDiaria(); };
+    window.refreshNoticias = function() { sessionStorage.removeItem(_SS_NOTICIAS); renderNoticiasJuridicas(); };
     window.shuffleLeitura  = window.refreshLeitura;
     window.shuffleNoticias = window.refreshNoticias;
+
+    // ---- Helpers ----
+    function _esc(s) {
+        return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function _formatDate(dateStr) {
+        try {
+            const d = new Date(dateStr);
+            if (isNaN(d)) return '';
+            const now = new Date();
+            const diffDays = Math.floor((now - d) / 86400000);
+            if (diffDays === 0) return 'hoje';
+            if (diffDays === 1) return 'ontem';
+            if (diffDays < 7) return `há ${diffDays} dias`;
+            return d.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
+        } catch(e) { return ''; }
+    }
+
+    function _detectArea(titulo) {
+        const t = (titulo||'').toLowerCase();
+        if (/constitui[çc]|stf|supremo/.test(t)) return 'Constitucional';
+        if (/trabalhist|tst|emprego|clt|rescis/.test(t)) return 'Trabalhista';
+        if (/tribut|imposto|receita|fiscal|iss|icms|irpj/.test(t)) return 'Tributário';
+        if (/penal|crime|pris[ãa]o|réu|acusad/.test(t)) return 'Penal';
+        if (/civil|contrat|família|sucessão|herdeiro/.test(t)) return 'Civil';
+        if (/admin|licita|concurso|servidor|tcu/.test(t)) return 'Administrativo';
+        if (/digital|lgpd|privacidade|dado/.test(t)) return 'Digital';
+        if (/consumidor|procon|cdc/.test(t)) return 'Consumidor';
+        if (/empresarial|societário|falência/.test(t)) return 'Empresarial';
+        return 'Jurídico';
+    }
 
     /* ===== CARD CONCURSOS ABERTOS ===== */
     /* ===== DADOS CONCURSOS PREVISTOS EM ALAGOAS ===== */
