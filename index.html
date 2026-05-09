@@ -4409,6 +4409,65 @@
     }
     .vaula-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
+    /* ===== SELEÇÃO MÚLTIPLA DE VIDEOAULAS ===== */
+    .vaula-card.vaula-selected {
+      background: rgba(231,76,60,0.07);
+      border-color: rgba(231,76,60,0.4);
+    }
+    .vaula-card.vaula-invalid-link {
+      border-left: 3px solid #e74c3c;
+    }
+    .vaula-checkbox-wrap {
+      display: none; align-items: center; justify-content: center;
+      width: 22px; min-width: 22px; margin-right: 2px; flex-shrink: 0;
+      align-self: center;
+    }
+    .vaula-checkbox-wrap input[type="checkbox"] {
+      width: 18px; height: 18px; accent-color: #e74c3c;
+      cursor: pointer; border-radius: 4px;
+    }
+    .vaulas-select-mode .vaula-checkbox-wrap { display: flex; }
+    .vaulas-select-mode .vaula-card { cursor: default; }
+    .vaulas-select-mode .vaula-play-btn { cursor: pointer; }
+    .vaula-invalid-badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      background: rgba(231,76,60,0.12); color: #c0392b;
+      border: 1px solid rgba(231,76,60,0.3); border-radius: 10px;
+      font-size: 0.62rem; font-weight: 700; padding: 1px 6px;
+    }
+    .vaulas-bulk-toolbar {
+      display: none; align-items: center; gap: 8px; flex-wrap: wrap;
+      background: rgba(231,76,60,0.07); border: 1px solid rgba(231,76,60,0.25);
+      border-radius: 10px; padding: 8px 12px; margin-bottom: 10px;
+      animation: fadeInDown 0.2s ease;
+    }
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .vaulas-bulk-toolbar.active { display: flex; }
+    .vaulas-bulk-info { font-size: 0.78rem; font-weight: 700; color: #c0392b; flex: 1; min-width: 80px; }
+    .vaulas-btn-selall {
+      font-size: 0.72rem; padding: 4px 10px; border-radius: 7px;
+      background: rgba(231,76,60,0.12); color: #c0392b;
+      border: 1px solid rgba(231,76,60,0.3); cursor: pointer;
+      font-weight: 600; transition: all 0.15s;
+    }
+    .vaulas-btn-selall:hover { background: rgba(231,76,60,0.2); }
+    .vaulas-btn-del-sel {
+      font-size: 0.72rem; padding: 4px 12px; border-radius: 7px;
+      background: linear-gradient(135deg,#e74c3c,#c0392b); color: white;
+      border: none; cursor: pointer; font-weight: 700; transition: all 0.15s;
+    }
+    .vaulas-btn-del-sel:hover { filter: brightness(1.1); }
+    .vaulas-btn-cancel-sel {
+      font-size: 0.72rem; padding: 4px 10px; border-radius: 7px;
+      background: rgba(44,62,80,0.08); color: #2c3e50;
+      border: 1px solid rgba(44,62,80,0.15); cursor: pointer;
+      font-weight: 600; transition: all 0.15s;
+    }
+    .vaulas-btn-cancel-sel:hover { background: rgba(44,62,80,0.15); }
+
     /* ===== CRONOGRAMA AUTOMÁTICO ===== */
     .cron-day-block {
       background: white; border-radius: 12px;
@@ -14895,7 +14954,7 @@ Atenciosamente,`;
 
           <!-- Videoaulas -->
           <div class="concurso-detail-tab" id="ctab-videoaulas">
-            <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+            <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
               <button class="panel-btn" style="font-size:0.73rem;padding:5px 12px;background:linear-gradient(135deg,#27ae60,#1e8449);color:white;border:none;" onclick="window.abrirGerarVaulasModal(${c.id})">
                 <i class="fas fa-magic me-1"></i> Gerar com IA
               </button>
@@ -14911,6 +14970,22 @@ Atenciosamente,`;
               <button class="panel-btn panel-btn-primary ms-auto" style="font-size:0.73rem;padding:5px 12px;background:linear-gradient(135deg,#e74c3c,#c0392b);" onclick="abrirVaulaModal(${c.id})">
                 <i class="fab fa-youtube me-1"></i> Adicionar Manual
               </button>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+              <button class="panel-btn" id="btnVaulaSelectMode" style="font-size:0.72rem;padding:4px 11px;background:rgba(231,76,60,0.08);color:#c0392b;border:1px solid rgba(231,76,60,0.3);" onclick="window.toggleVaulaSelectMode(${c.id})">
+                <i class="fas fa-check-square me-1"></i> Selecionar para excluir
+              </button>
+              <button class="panel-btn" id="btnVaulaDeleteInvalid" style="font-size:0.72rem;padding:4px 11px;background:rgba(231,76,60,0.08);color:#c0392b;border:1px solid rgba(231,76,60,0.3);" onclick="window.deleteVaulasInvalidas(${c.id})">
+                <i class="fas fa-unlink me-1"></i> Excluir links inválidos
+              </button>
+            </div>
+            <!-- Barra de seleção múltipla -->
+            <div class="vaulas-bulk-toolbar" id="vaulasBulkToolbar">
+              <span class="vaulas-bulk-info" id="vaulasBulkInfo">0 selecionadas</span>
+              <button class="vaulas-btn-selall" id="vaulasBtnSelAll" onclick="window.vaulasSelectAll(${c.id}, true)">Selecionar todas</button>
+              <button class="vaulas-btn-selall" onclick="window.vaulasSelectAll(${c.id}, false)">Desmarcar todas</button>
+              <button class="vaulas-btn-del-sel" onclick="window.deleteVaulasSelecionadas(${c.id})"><i class="fas fa-trash me-1"></i> Excluir selecionadas</button>
+              <button class="vaulas-btn-cancel-sel" onclick="window.toggleVaulaSelectMode(${c.id}, true)"><i class="fas fa-times me-1"></i> Cancelar</button>
             </div>
             <div id="ctab-vaulas-list">${_buildVaulasHtml(c)}</div>
           </div>
@@ -15058,8 +15133,13 @@ Atenciosamente,`;
             const assistidaStyle = v.assistida ? 'color:#27ae60;border-color:#27ae60;' : '';
             const assistidaTitle = v.assistida ? 'Marcar como não assistida' : 'Marcar como assistida';
             const assistidaCls = v.assistida ? 'attach' : 'outline';
+            const isInvalid = !_ytId(v.url);
+            const invalidCls = isInvalid ? ' vaula-invalid-link' : '';
             return `
-          <div class="vaula-card" id="vc-${v.id}">
+          <div class="vaula-card${invalidCls}" id="vc-${v.id}" data-vid="${v.id}">
+            <div class="vaula-checkbox-wrap">
+              <input type="checkbox" class="vaula-sel-cb" data-vid="${v.id}" onchange="window._vaulaCheckChange()">
+            </div>
             <div class="vaula-thumb vaula-play-btn" data-url="${safeUrl}" data-card="vc-${v.id}" style="cursor:pointer;">
               <img src="${_ytThumb(v.url)}" alt="" loading="lazy" onerror="this.style.display='none'">
               <div class="vaula-thumb-play"><i class="fas fa-play-circle"></i></div>
@@ -15071,6 +15151,7 @@ Atenciosamente,`;
                 ${v.canal ? `<span><i class="fas fa-user-tie" style="color:#95a5a6;"></i> ${v.canal}</span>` : ''}
                 ${v.duracao ? `<span><i class="fas fa-clock" style="color:#95a5a6;"></i> ${v.duracao}min</span>` : ''}
                 ${v.assistida ? '<span class="vaula-assistida-badge"><i class="fas fa-check"></i> Assistida</span>' : ''}
+                ${isInvalid ? '<span class="vaula-invalid-badge"><i class="fas fa-unlink"></i> Link inválido</span>' : ''}
               </div>
             </div>
             <div class="vaula-actions">
@@ -15144,6 +15225,100 @@ Atenciosamente,`;
         _saveConcursos(arr);
         const listEl = document.getElementById('ctab-vaulas-list');
         if (listEl) { listEl.innerHTML = _buildVaulasHtml(c); _bindVaulaListEvents(listEl); }
+        if (activePanel==='concursos-panel') renderConcursosPanel();
+    };
+
+    // ── Modo de seleção múltipla ─────────────────────────────────────
+    let _vaulaSelectActive = false;
+    let _vaulaSelectConcId = null;
+
+    window.toggleVaulaSelectMode = function(concId, forceOff) {
+        _vaulaSelectActive = forceOff ? false : !_vaulaSelectActive;
+        _vaulaSelectConcId = _vaulaSelectActive ? concId : null;
+        const listEl = document.getElementById('ctab-vaulas-list');
+        const toolbar = document.getElementById('vaulasBulkToolbar');
+        const btn = document.getElementById('btnVaulaSelectMode');
+        if (!listEl) return;
+        if (_vaulaSelectActive) {
+            listEl.classList.add('vaulas-select-mode');
+            if (toolbar) toolbar.classList.add('active');
+            if (btn) { btn.style.background = 'rgba(231,76,60,0.2)'; btn.style.fontWeight = '700'; }
+            // Uncheck all
+            listEl.querySelectorAll('.vaula-sel-cb').forEach(cb => { cb.checked = false; });
+            window._vaulaCheckChange();
+            // Click on card toggles checkbox
+            listEl.querySelectorAll('.vaula-card').forEach(card => {
+                card.addEventListener('click', _vaulaCardClickHandler);
+            });
+        } else {
+            listEl.classList.remove('vaulas-select-mode');
+            if (toolbar) toolbar.classList.remove('active');
+            if (btn) { btn.style.background = 'rgba(231,76,60,0.08)'; btn.style.fontWeight = ''; }
+            listEl.querySelectorAll('.vaula-card').forEach(card => {
+                card.classList.remove('vaula-selected');
+                card.removeEventListener('click', _vaulaCardClickHandler);
+            });
+        }
+    };
+
+    function _vaulaCardClickHandler(e) {
+        // Don't toggle when clicking action buttons or the checkbox itself
+        if (e.target.closest('.vaula-actions') || e.target.closest('.vaula-checkbox-wrap') || e.target.closest('.vaula-play-btn')) return;
+        const cb = this.querySelector('.vaula-sel-cb');
+        if (cb) { cb.checked = !cb.checked; window._vaulaCheckChange(); }
+    }
+
+    window._vaulaCheckChange = function() {
+        const listEl = document.getElementById('ctab-vaulas-list');
+        const info = document.getElementById('vaulasBulkInfo');
+        if (!listEl) return;
+        let count = 0;
+        listEl.querySelectorAll('.vaula-sel-cb').forEach(cb => {
+            const card = cb.closest('.vaula-card');
+            if (cb.checked) { count++; if (card) card.classList.add('vaula-selected'); }
+            else { if (card) card.classList.remove('vaula-selected'); }
+        });
+        if (info) info.textContent = count === 0 ? 'Nenhuma selecionada' : count + (count === 1 ? ' selecionada' : ' selecionadas');
+    };
+
+    window.vaulasSelectAll = function(concId, select) {
+        const listEl = document.getElementById('ctab-vaulas-list');
+        if (!listEl) return;
+        listEl.querySelectorAll('.vaula-sel-cb').forEach(cb => { cb.checked = select; });
+        window._vaulaCheckChange();
+    };
+
+    window.deleteVaulasSelecionadas = function(concId) {
+        const listEl = document.getElementById('ctab-vaulas-list');
+        if (!listEl) return;
+        const ids = [];
+        listEl.querySelectorAll('.vaula-sel-cb:checked').forEach(cb => ids.push(cb.dataset.vid));
+        if (!ids.length) { _showToast('warning', 'Nenhuma videoaula selecionada.'); return; }
+        if (!confirm(`Excluir ${ids.length} videoaula(s) selecionada(s)?`)) return;
+        let arr = _getConcursos();
+        const c = arr.find(x=>x.id===concId);
+        if (!c) return;
+        c.videoaulas = (c.videoaulas||[]).filter(x=>!ids.includes(x.id));
+        _saveConcursos(arr);
+        window.toggleVaulaSelectMode(concId, true);
+        listEl.innerHTML = _buildVaulasHtml(c);
+        _bindVaulaListEvents(listEl);
+        _showToast('success', `✅ ${ids.length} videoaula(s) excluída(s)!`);
+        if (activePanel==='concursos-panel') renderConcursosPanel();
+    };
+
+    window.deleteVaulasInvalidas = function(concId) {
+        let arr = _getConcursos();
+        const c = arr.find(x=>x.id===concId);
+        if (!c) return;
+        const invalidas = (c.videoaulas||[]).filter(v=>!_ytId(v.url));
+        if (!invalidas.length) { _showToast('info', 'Nenhuma videoaula com link inválido encontrada.'); return; }
+        if (!confirm(`Excluir ${invalidas.length} videoaula(s) com link inválido?`)) return;
+        c.videoaulas = (c.videoaulas||[]).filter(v=>!!_ytId(v.url));
+        _saveConcursos(arr);
+        const listEl = document.getElementById('ctab-vaulas-list');
+        if (listEl) { listEl.innerHTML = _buildVaulasHtml(c); _bindVaulaListEvents(listEl); }
+        _showToast('success', `✅ ${invalidas.length} videoaula(s) com link inválido excluída(s)!`);
         if (activePanel==='concursos-panel') renderConcursosPanel();
     };
 
