@@ -4138,6 +4138,14 @@
       -moz-user-select: text !important;
       user-select: text !important;
     }
+    /* Garante seleção/edição no painel de anotações do player (z-index alto) */
+    #vaula-player-overlay textarea,
+    #vaula-player-overlay input {
+      -webkit-user-select: text !important;
+      -moz-user-select: text !important;
+      user-select: text !important;
+      pointer-events: all !important;
+    }
 
     /* ===== TELA DE LOGIN ===== */
     #loginScreen {
@@ -4659,12 +4667,12 @@
     }
     .vp-notes-tab.active { color: #f39c12; border-bottom-color: #f39c12; background: rgba(243,156,18,0.05); }
     .vp-notes-tab:hover:not(.active) { color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.03); }
-    .vp-notes-body { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
-    .vp-notes-panel-tab { display: none; flex: 1; flex-direction: column; min-height: 0; }
+    .vp-notes-body { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: auto; }
+    .vp-notes-panel-tab { display: none; flex: 1; flex-direction: column; min-height: 0; overflow: auto; }
     .vp-notes-panel-tab.active { display: flex; }
 
     /* Aba Escrever */
-    .vp-notes-write-area { flex: 1; padding: 10px 10px 4px; display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+    .vp-notes-write-area { flex: 1; padding: 10px 10px 4px; display: flex; flex-direction: column; gap: 6px; min-height: 0; overflow: visible; }
     .vp-notes-meta-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .vp-notes-timestamp-btn {
       display: inline-flex; align-items: center; gap: 4px;
@@ -4679,7 +4687,13 @@
       border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
       color: rgba(255,255,255,0.88); padding: 12px; font-size: 0.8rem;
       font-family: 'Poppins', sans-serif; resize: none; outline: none;
-      line-height: 1.7; min-height: 0;
+      line-height: 1.7; min-height: 180px;
+      /* Garante recebimento de foco/input em qualquer contexto */
+      position: relative; z-index: 1;
+      pointer-events: all !important;
+      -webkit-user-select: text !important;
+      user-select: text !important;
+      cursor: text;
     }
     .vp-notes-textarea:focus { border-color: rgba(243,156,18,0.4); background: rgba(255,255,255,0.06); }
     .vp-notes-textarea::placeholder { color: rgba(255,255,255,0.2); }
@@ -6375,42 +6389,108 @@
 
 <!-- ===== MODAL SIMULADO CONCURSO ===== -->
 <div class="modal fade" id="simuladoModal" tabindex="-1">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title"><i class="fas fa-clipboard-check me-2" style="color:#1abc9c;"></i>Registrar Simulado</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      <div class="modal-header" style="background:linear-gradient(135deg,#1a2332,#2c3e50);color:white;border:none;">
+        <h5 class="modal-title"><i class="fas fa-clipboard-check me-2" style="color:#1abc9c;"></i>Simulado</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" style="padding:0;">
         <input type="hidden" id="simuladoConcursoId">
         <input type="hidden" id="simuladoId">
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Data do Simulado</label>
-          <input type="date" class="form-control" id="simuladoData">
+
+        <!-- Seletor de modo -->
+        <div style="display:flex;border-bottom:1px solid #dee2e6;">
+          <button class="sim-mode-tab active" id="simTabRegistrar" data-simtab="registrar"
+            style="flex:1;padding:14px;background:none;border:none;border-bottom:3px solid #1abc9c;font-size:0.85rem;font-weight:700;color:#1abc9c;cursor:pointer;transition:all 0.15s;">
+            <i class="fas fa-save me-2"></i>Registrar Resultado
+          </button>
+          <button class="sim-mode-tab" id="simTabAgendar" data-simtab="agendar"
+            style="flex:1;padding:14px;background:none;border:none;border-bottom:3px solid transparent;font-size:0.85rem;font-weight:700;color:#95a5a6;cursor:pointer;transition:all 0.15s;">
+            <i class="fas fa-calendar-plus me-2"></i>Agendar Simulado
+          </button>
         </div>
-        <div class="row g-2 mb-3">
-          <div class="col-6">
-            <label class="form-label fw-semibold">Acertos</label>
-            <input type="number" class="form-control" id="simuladoAcertos" min="0" placeholder="0">
+
+        <!-- Painel: Registrar Resultado -->
+        <div id="simPanelRegistrar" style="padding:20px;">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Data do Simulado</label>
+              <input type="date" class="form-control" id="simuladoData">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Acertos</label>
+              <input type="number" class="form-control" id="simuladoAcertos" min="0" placeholder="0">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Total de Questões</label>
+              <input type="number" class="form-control" id="simuladoTotal" min="1" placeholder="100">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Matéria / Área</label>
+              <input type="text" class="form-control" id="simuladoMateria" placeholder="Ex: Geral, Português, Direito Constitucional...">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Observações</label>
+              <textarea class="form-control" id="simuladoObs" rows="2" placeholder="Dificuldades, pontos de melhoria..."></textarea>
+            </div>
+            <div class="col-12">
+              <div id="simuladoResultPreview" style="display:none;" class="alert alert-info text-center fw-bold rounded-3"></div>
+            </div>
           </div>
-          <div class="col-6">
-            <label class="form-label fw-semibold">Total de Questões</label>
-            <input type="number" class="form-control" id="simuladoTotal" min="1" placeholder="100">
+        </div>
+
+        <!-- Painel: Agendar Simulado -->
+        <div id="simPanelAgendar" style="display:none;padding:20px;">
+          <div class="p-3 mb-3 rounded-3" style="background:linear-gradient(135deg,rgba(26,188,156,0.08),rgba(52,152,219,0.06));border:1px solid rgba(26,188,156,0.2);">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <i class="fas fa-calendar-check" style="color:#1abc9c;"></i>
+              <span class="fw-bold" style="font-size:0.85rem;">Agenda um lembrete de simulado</span>
+            </div>
+            <p style="font-size:0.78rem;color:#5a6a7a;margin:0;">O simulado agendado aparece na sua <strong>Agenda</strong> como evento e no calendário. Quando realizar, volte aqui para registrar o resultado.</p>
+          </div>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Título do Simulado <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="simAgendaTitulo" placeholder="Ex: Simulado Geral — Guarda Civil Municipal">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Data <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="simAgendaData">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Horário</label>
+              <input type="time" class="form-control" id="simAgendaHora" value="08:00">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Matéria / Foco</label>
+              <input type="text" class="form-control" id="simAgendaMateria" placeholder="Ex: Geral, Conhecimentos Específicos...">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Total de Questões Planejado</label>
+              <input type="number" class="form-control" id="simAgendaTotal" min="1" placeholder="Ex: 100">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Observações</label>
+              <textarea class="form-control" id="simAgendaObs" rows="2" placeholder="Material de apoio, local, etc."></textarea>
+            </div>
+          </div>
+          <!-- Preview do agendamento -->
+          <div id="simAgendaPreview" style="display:none;margin-top:12px;" class="alert alert-success rounded-3">
+            <i class="fas fa-calendar-check me-2"></i>
+            <strong id="simAgendaPreviewText"></strong>
           </div>
         </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Matéria / Área</label>
-          <input type="text" class="form-control" id="simuladoMateria" placeholder="Ex: Geral, Português, Direito Constitucional...">
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Observações</label>
-          <textarea class="form-control" id="simuladoObs" rows="2" placeholder="Dificuldades, pontos de melhoria..."></textarea>
-        </div>
-        <div id="simuladoResultPreview" style="display:none;" class="alert alert-info text-center fw-bold"></div>
+
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-primary" id="saveSimulado"><i class="fas fa-save me-1"></i>Salvar</button>
+        <button type="button" class="btn btn-primary" id="saveSimulado" style="display:;">
+          <i class="fas fa-save me-1"></i>Salvar Resultado
+        </button>
+        <button type="button" class="btn btn-success d-none" id="btnAgendarSimulado">
+          <i class="fas fa-calendar-plus me-1"></i>Confirmar Agendamento
+        </button>
       </div>
     </div>
   </div>
@@ -14898,6 +14978,39 @@ Atenciosamente,`;
         document.getElementById('simuladoMateria').value = 'Geral';
         document.getElementById('simuladoObs').value = '';
         document.getElementById('simuladoResultPreview').style.display = 'none';
+
+        // Pré-preencher título do agendamento com nome do concurso
+        const concs = _getConcursos();
+        const conc = concs.find(x => +x.id === +concId);
+        const nomeConc = conc ? conc.nome : 'Concurso';
+        const inpTitulo = document.getElementById('simAgendaTitulo');
+        if (inpTitulo) inpTitulo.value = 'Simulado — ' + nomeConc;
+        const inpData = document.getElementById('simAgendaData');
+        if (inpData) inpData.value = '';
+        const inpHora = document.getElementById('simAgendaHora');
+        if (inpHora) inpHora.value = '08:00';
+        const inpMat = document.getElementById('simAgendaMateria');
+        if (inpMat) inpMat.value = '';
+        const inpTotal = document.getElementById('simAgendaTotal');
+        if (inpTotal) inpTotal.value = '';
+        const inpObs2 = document.getElementById('simAgendaObs');
+        if (inpObs2) inpObs2.value = '';
+        const prev = document.getElementById('simAgendaPreview');
+        if (prev) prev.style.display = 'none';
+
+        // Resetar para aba "Registrar"
+        document.querySelectorAll('.sim-mode-tab').forEach(function(t) {
+            t.style.borderBottomColor = 'transparent';
+            t.style.color = '#95a5a6';
+            t.classList.remove('active');
+        });
+        const tabReg = document.getElementById('simTabRegistrar');
+        if (tabReg) { tabReg.style.borderBottomColor = '#1abc9c'; tabReg.style.color = '#1abc9c'; tabReg.classList.add('active'); }
+        document.getElementById('simPanelRegistrar').style.display = '';
+        document.getElementById('simPanelAgendar').style.display = 'none';
+        document.getElementById('saveSimulado').style.display = '';
+        document.getElementById('btnAgendarSimulado').classList.add('d-none');
+
         new bootstrap.Modal(document.getElementById('simuladoModal')).show();
     };
 
@@ -15734,6 +15847,95 @@ ${diasHtml}
             }
         });
 
+        // ── Abas do modal de Simulado ──────────────────────────────
+        document.querySelectorAll('.sim-mode-tab').forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                var mode = this.dataset.simtab;
+                document.querySelectorAll('.sim-mode-tab').forEach(function(t) {
+                    t.style.borderBottomColor = 'transparent';
+                    t.style.color = '#95a5a6';
+                    t.classList.remove('active');
+                });
+                this.style.borderBottomColor = mode === 'registrar' ? '#1abc9c' : '#3498db';
+                this.style.color = mode === 'registrar' ? '#1abc9c' : '#3498db';
+                this.classList.add('active');
+                document.getElementById('simPanelRegistrar').style.display = mode === 'registrar' ? '' : 'none';
+                document.getElementById('simPanelAgendar').style.display = mode === 'agendar' ? '' : 'none';
+                document.getElementById('saveSimulado').style.display = mode === 'registrar' ? '' : 'none';
+                document.getElementById('btnAgendarSimulado').classList.toggle('d-none', mode !== 'agendar');
+            });
+        });
+
+        // Preview agendamento ao mudar data/título
+        ['simAgendaData','simAgendaTitulo','simAgendaHora'].forEach(function(id) {
+            document.getElementById(id)?.addEventListener('input', function() {
+                var titulo = document.getElementById('simAgendaTitulo').value.trim();
+                var data = document.getElementById('simAgendaData').value;
+                var hora = document.getElementById('simAgendaHora').value;
+                var prev = document.getElementById('simAgendaPreview');
+                var prevTxt = document.getElementById('simAgendaPreviewText');
+                if (titulo && data) {
+                    var d = new Date(data + 'T00:00:00');
+                    var dataFmt = d.toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+                    prevTxt.textContent = titulo + ' — ' + dataFmt + (hora ? ' às ' + hora : '');
+                    prev.style.display = '';
+                } else { prev.style.display = 'none'; }
+            });
+        });
+
+        // ── Confirmar Agendamento ──────────────────────────────────
+        document.getElementById('btnAgendarSimulado')?.addEventListener('click', async function() {
+            var titulo = document.getElementById('simAgendaTitulo').value.trim();
+            var data = document.getElementById('simAgendaData').value;
+            var hora = document.getElementById('simAgendaHora').value || '08:00';
+            var materia = document.getElementById('simAgendaMateria').value.trim();
+            var totalQ = document.getElementById('simAgendaTotal').value;
+            var obs = document.getElementById('simAgendaObs').value.trim();
+            var concId = document.getElementById('simuladoConcursoId').value;
+
+            if (!titulo) { alert('Informe o título do simulado.'); return; }
+            if (!data) { alert('Informe a data do simulado.'); return; }
+
+            // Busca nome do concurso
+            var concs = _getConcursos();
+            var conc = concs.find(function(x){ return +x.id === +concId; });
+            var nomeConc = conc ? conc.nome : 'Concurso';
+
+            var descricao = '📋 Simulado agendado — ' + nomeConc +
+                (materia ? '\n📚 Matéria: ' + materia : '') +
+                (totalQ ? '\n❓ Questões planejadas: ' + totalQ : '') +
+                (obs ? '\n📝 ' + obs : '');
+
+            var evento = {
+                id: Date.now(),
+                title: titulo,
+                type: 'exam',
+                date: data,
+                time: hora,
+                description: descricao,
+                status: 'Agendada',
+                concursoId: +concId,
+                isSimuladoAgendado: true,
+                anexos: []
+            };
+
+            try {
+                await saveData('eventos', evento);
+                profileDataCache = null;
+                await loadProfileData();
+                bootstrap.Modal.getInstance(document.getElementById('simuladoModal')).hide();
+                _showToast('success', '✅ Simulado agendado! Aparece na sua Agenda.');
+                // Navegar para a agenda no mês correto
+                if (typeof renderCurrentPanel === 'function') {
+                    var parts = data.split('-');
+                    if (parts.length === 3) currentCalendarDate = new Date(+parts[0], +parts[1]-1, 1);
+                    if (activePanel === 'agenda-panel' || activePanel === 'concursos-panel') renderCurrentPanel();
+                }
+            } catch(err) {
+                alert('Erro ao agendar: ' + (err.message || err));
+            }
+        });
+
         // Preview resultado simulado
         ['simuladoAcertos','simuladoTotal'].forEach(id => {
             document.getElementById(id)?.addEventListener('input', () => {
@@ -16207,6 +16409,22 @@ ${diasHtml}
             this.classList.toggle('active', _vpState.notesOpen);
             if (_vpState.notesOpen) _vpRenderNotesHistory();
         });
+
+        // Garante que clique no textarea sempre dá foco (contorna bugs de stacking context)
+        var notesTA = document.getElementById('vp-notes-textarea');
+        if (notesTA) {
+            notesTA.addEventListener('mousedown', function(e) {
+                e.stopPropagation();
+            });
+            notesTA.addEventListener('click', function(e) {
+                e.stopPropagation();
+                this.focus();
+            });
+            notesTA.addEventListener('touchstart', function(e) {
+                e.stopPropagation();
+                this.focus();
+            }, { passive: true });
+        }
 
         // Salvar notas
         document.getElementById('vp-notes-save').addEventListener('click', _vpSalvarNota);
@@ -21442,9 +21660,18 @@ function _renderScore() {
   }
 
   // ── PROTEÇÃO ANTI-CÓPIA ────────────────────────────────────────
+  function _isInPlayerOrEditable(target) {
+    if (!target) return false;
+    const tag = (target.tagName || '').toUpperCase();
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return true;
+    if (target.isContentEditable) return true;
+    // Verifica se está dentro do overlay do player
+    if (target.closest && target.closest('#vaula-player-overlay')) return true;
+    return false;
+  }
+
   document.addEventListener('contextmenu', function(e) {
-    const tag = e.target.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (_isInPlayerOrEditable(e.target)) return;
     e.preventDefault(); return false;
   });
   document.addEventListener('keydown', function(e) {
@@ -21452,14 +21679,12 @@ function _renderScore() {
     if (e.ctrlKey && e.key === 'u') { e.preventDefault(); return false; }
     if (e.ctrlKey && e.shiftKey && ['i','j','c','I','J','C'].includes(e.key)) { e.preventDefault(); return false; }
     if (e.ctrlKey && ['a','c','x'].includes(e.key.toLowerCase())) {
-      const tag = document.activeElement ? document.activeElement.tagName : '';
-      const isEd = tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement && document.activeElement.isContentEditable);
-      if (!isEd) { e.preventDefault(); return false; }
+      if (_isInPlayerOrEditable(document.activeElement)) return;
+      e.preventDefault(); return false;
     }
   });
   document.addEventListener('selectstart', function(e) {
-    const tag = e.target.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
+    if (_isInPlayerOrEditable(e.target)) return;
     e.preventDefault();
   });
   document.addEventListener('dragstart', function(e) { e.preventDefault(); });
