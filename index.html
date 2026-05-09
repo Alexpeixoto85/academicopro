@@ -4544,13 +4544,25 @@
     .vp-main {
       flex: 1; display: flex; flex-direction: column;
       background: #000; position: relative; min-width: 0;
+      overflow: hidden;
     }
     .vp-iframe-wrap {
       flex: 1; position: relative; min-height: 0;
+      overflow: hidden;
     }
     .vp-iframe-wrap iframe {
       position: absolute; inset: 0; width: 100%; height: 100%; border: none;
     }
+    /* Overlay transparente sobre o iframe — ativado quando notas estão abertas,
+       impede o iframe de roubar o foco do documento ao clicar no painel lateral */
+    .vp-iframe-focus-guard {
+      display: none;
+      position: absolute; inset: 0; z-index: 6;
+      background: transparent;
+      cursor: default;
+    }
+    #vp-notes-panel:not(.collapsed) ~ .vp-main .vp-iframe-focus-guard,
+    .vp-notes-open .vp-iframe-focus-guard { display: block; }
     /* Blocker overlay — cobre o banner de anúncio que aparece na parte inferior do iframe */
     .vp-ad-blocker-bar {
       position: absolute; bottom: 0; left: 0; right: 0;
@@ -16407,7 +16419,17 @@ ${diasHtml}
             var np = document.getElementById('vp-notes-panel');
             np.classList.toggle('collapsed', !_vpState.notesOpen);
             this.classList.toggle('active', _vpState.notesOpen);
-            if (_vpState.notesOpen) _vpRenderNotesHistory();
+            // Ativa guard sobre o iframe para impedir roubo de foco
+            var guard = document.getElementById('vp-iframe-focus-guard');
+            if (guard) guard.style.display = _vpState.notesOpen ? 'block' : 'none';
+            if (_vpState.notesOpen) {
+                _vpRenderNotesHistory();
+                // Foca o textarea automaticamente ao abrir
+                setTimeout(function() {
+                    var ta = document.getElementById('vp-notes-textarea');
+                    if (ta) ta.focus();
+                }, 300);
+            }
         });
 
         // Garante que clique no textarea sempre dá foco (contorna bugs de stacking context)
@@ -22014,6 +22036,8 @@ function _renderScore() {
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
           allowfullscreen
         ></iframe>
+        <!-- Guard: bloqueia o iframe de roubar foco quando painel de notas está aberto -->
+        <div class="vp-iframe-focus-guard" id="vp-iframe-focus-guard"></div>
         <!-- Cobre área de banner de anúncio inferior do YouTube -->
         <div class="vp-ad-blocker-bar" id="vp-ad-bar" style="display:none;"></div>
       </div>
