@@ -8356,14 +8356,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="pro-card-footer">
                   <span class="pill pill-info"><i class="fas fa-tasks"></i> ${nTrab} trabalho${nTrab!==1?'s':''}</span>
                   <span class="pill pill-warning"><i class="fas fa-file-alt"></i> ${nProv} prova${nProv!==1?'s':''}</span>
+                  ${(() => { const ns = d.simulados && d.simulados.length; return ns ? `<span class="pill" style="background:rgba(155,89,182,.12);color:#6c3483;border:1px solid rgba(155,89,182,.3);font-size:.68rem;font-weight:700;"><i class="fas fa-clipboard-check me-1"></i>${ns} sim.</span>` : ''; })()}
                   ${freq<75?`<span class="pill pill-danger" title="Frequência abaixo de 75%"><i class="fas fa-exclamation-triangle"></i> Freq. baixa</span>`:''}
-                  <button onclick="abrirQuizProva('${encodeURIComponent(d.nome)}','${encodeURIComponent(d.ementa||d.nome)}','disc_${d.id}','${d.id}')"
-                    style="margin-left:auto;background:linear-gradient(135deg,${cor},${cor}cc);color:white;border:none;
-                    border-radius:8px;padding:4px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;
-                    display:flex;align-items:center;gap:5px;transition:all 0.2s;"
-                    title="Gerar questões de revisão para ${d.nome}">
-                    <i class="fas fa-brain"></i> Revisar
-                  </button>
+                  <div style="display:flex;gap:5px;margin-left:auto;">
+                    <button onclick="abrirSimuladosDisciplina(${d.id})"
+                      style="background:rgba(155,89,182,.15);color:#8e44ad;border:1px solid rgba(155,89,182,.3);
+                      border-radius:8px;padding:4px 10px;font-size:0.72rem;font-weight:700;cursor:pointer;
+                      display:flex;align-items:center;gap:4px;"
+                      title="Simulados desta disciplina">
+                      <i class="fas fa-clipboard-check"></i> Simulados
+                    </button>
+                    <button onclick="abrirQuizProva('${encodeURIComponent(d.nome)}','${encodeURIComponent(d.ementa||d.nome)}','disc_${d.id}','${d.id}')"
+                      style="background:linear-gradient(135deg,${cor},${cor}cc);color:white;border:none;
+                      border-radius:8px;padding:4px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;
+                      display:flex;align-items:center;gap:5px;transition:all 0.2s;"
+                      title="Gerar questões de revisão para ${d.nome}">
+                      <i class="fas fa-brain"></i> Revisar
+                    </button>
+                  </div>
                 </div>
               </div>`;
             container.appendChild(card);
@@ -14669,6 +14679,7 @@ Atenciosamente,`;
                     +   '<div style="display:flex;gap:6px;flex-shrink:0;align-items:center;">'
                     +     (hasQuestoes ? '<span style="font-size:.72rem;background:rgba(26,188,156,.12);color:#0e6655;border:1px solid rgba(26,188,156,.3);border-radius:8px;padding:4px 10px;font-weight:700;">▶ Fazer</span>' : '')
                     +     (hasQuestoes ? '<button onclick="window.exportarSimulado(' + c.id + ',' + sIdx + ',event)" title="Exportar JSON" style="background:rgba(52,152,219,.12);color:#2471a3;border:1px solid rgba(52,152,219,.3);border-radius:8px;padding:4px 9px;font-size:.7rem;font-weight:700;cursor:pointer;"><i class="fas fa-file-export"></i></button>' : '')
+                    +     '<button onclick="window.excluirSimuladoConcurso(' + c.id + ',' + sIdx + ',event)" title="Excluir simulado" style="background:rgba(231,76,60,.1);color:#c0392b;border:1px solid rgba(231,76,60,.25);border-radius:8px;padding:4px 9px;font-size:.7rem;font-weight:700;cursor:pointer;"><i class="fas fa-trash"></i></button>'
                     +   '</div>'
                     + '</div>'
                     + distHtml
@@ -16703,9 +16714,364 @@ ${diasHtml}
         new bootstrap.Modal(modalEl).show();
     }
 
+    // Excluir simulado de concurso
+    window.excluirSimuladoConcurso = function(concId, simIdx, event) {
+        if (event) event.stopPropagation();
+        if (!confirm('Excluir este simulado? Esta ação não pode ser desfeita.')) return;
+        const arr = _getConcursos();
+        const c = arr.find(x => x.id == concId);
+        if (!c || !c.simulados) return;
+        c.simulados.splice(simIdx, 1);
+        _saveConcursos(arr);
+        // Limpa progresso salvo se existir
+        for (let k in localStorage) { if (k.startsWith('sim_progress_' + concId + '_')) localStorage.removeItem(k); }
+        _showToast('success', 'Simulado excluído.');
+        // Reabre o modal atualizado
+        const detModal = bootstrap.Modal.getInstance(document.getElementById('concursoDetalheModal'));
+        if (detModal) detModal.hide();
+        setTimeout(() => {
+            const cUp = _getConcursos().find(x => x.id == concId);
+            if (cUp) { abrirConcursoDetalhe(cUp); setTimeout(() => { if (window.switchConcursoTab) window.switchConcursoTab('simulados', null); }, 350); }
+        }, 300);
+    };
+
     // =====================================================================
-    // BACKUP DE CONCURSOS
+    // SIMULADOS DE DISCIPLINAS (semestres / matérias acadêmicas)
     // =====================================================================
+    window.abrirSimuladosDisciplina = async function(discId) {
+        const data = await getProfileData();
+        const disc = data.disciplinas.find(d => d.id === discId);
+        if (!disc) return;
+
+        // Cria/reutiliza modal
+        let modalEl = document.getElementById('discSimuladosModal');
+        if (!modalEl) {
+            modalEl = document.createElement('div');
+            modalEl.id = 'discSimuladosModal';
+            modalEl.className = 'modal fade';
+            modalEl.tabIndex = -1;
+            modalEl.innerHTML = `
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+              <div class="modal-content" style="border-radius:16px;overflow:hidden;">
+                <div class="modal-header" style="background:linear-gradient(135deg,#1a2332,#2c3e50);color:white;border:none;">
+                  <div>
+                    <h5 class="modal-title text-white mb-0" id="discSimModalTitle"><i class="fas fa-clipboard-check me-2" style="color:#9b59b6;"></i>Simulados</h5>
+                    <small style="color:rgba(255,255,255,.5);" id="discSimModalSub"></small>
+                  </div>
+                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-3" id="discSimModalBody"></div>
+                <div class="modal-footer" style="flex-wrap:wrap;gap:8px;">
+                  <button class="btn btn-outline-secondary btn-sm" id="discSimBtnModelo" style="border-radius:8px;font-size:.8rem;">
+                    <i class="fas fa-file-download me-1"></i>Baixar Modelo JSON
+                  </button>
+                  <button class="btn btn-sm" id="discSimBtnImport" style="background:linear-gradient(135deg,#9b59b6,#8e44ad);color:white;border:none;border-radius:8px;font-size:.8rem;">
+                    <i class="fas fa-file-import me-1"></i>Importar Simulado JSON
+                  </button>
+                  <button class="btn btn-sm" id="discSimBtnManual" style="background:linear-gradient(135deg,#1abc9c,#16a085);color:white;border:none;border-radius:8px;font-size:.8rem;">
+                    <i class="fas fa-plus me-1"></i>Registrar Manual
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm ms-auto" data-bs-dismiss="modal" style="border-radius:8px;font-size:.8rem;">Fechar</button>
+                </div>
+              </div>
+            </div>`;
+            document.body.appendChild(modalEl);
+        }
+
+        // Popula cabeçalho
+        document.getElementById('discSimModalTitle').innerHTML = `<i class="fas fa-clipboard-check me-2" style="color:#9b59b6;"></i>Simulados — ${disc.nome}`;
+        document.getElementById('discSimModalSub').textContent = `${(disc.simulados||[]).length} simulado(s) registrado(s)`;
+
+        _renderDiscSimulados(disc);
+
+        // Botão modelo JSON
+        document.getElementById('discSimBtnModelo').onclick = () => _baixarModeloSimulado(disc.nome);
+
+        // Botão importar
+        document.getElementById('discSimBtnImport').onclick = () => _importarSimuladoDisc(discId);
+
+        // Botão manual
+        document.getElementById('discSimBtnManual').onclick = () => _abrirRegistroManualDisc(discId, disc.nome);
+
+        new bootstrap.Modal(modalEl).show();
+    };
+
+    function _renderDiscSimulados(disc) {
+        const body = document.getElementById('discSimModalBody');
+        const simulados = disc.simulados || [];
+        if (!simulados.length) {
+            body.innerHTML = `<div class="pro-empty py-4"><i class="fas fa-clipboard" style="font-size:2rem;color:#dee2e6;"></i><p class="mt-2 text-muted">Nenhum simulado cadastrado.<br>Importe um JSON ou registre manualmente.</p></div>`;
+            return;
+        }
+        body.innerHTML = simulados.map((s, idx) => {
+            const pct = s.total ? Math.round((s.acertos/s.total)*100) : 0;
+            const hasQ = s.questoes && s.questoes.length > 0;
+            const corScore = pct >= 70 ? '#27ae60' : pct >= 50 ? '#f39c12' : '#e74c3c';
+            const bgScore  = pct >= 70 ? '#d5f5e3' : pct >= 50 ? '#fef9e7' : '#fdecea';
+            const dataFmt = s.data ? new Date(s.data+'T00:00').toLocaleDateString('pt-BR') : '';
+            const metaParts = [dataFmt, s.banca, s.ano ? String(s.ano) : ''].filter(Boolean);
+            return `<div class="simulado-item mb-2" style="flex-direction:column;align-items:flex-start;cursor:${hasQ?'pointer':'default'};"
+                onclick="${hasQ ? `window.iniciarSimuladoDiscJson(${disc.id},${idx})` : ''}">
+              <div style="display:flex;align-items:center;gap:10px;width:100%;">
+                <div class="simulado-score" style="background:${bgScore};color:${corScore};">${hasQ&&!s.acertos?'<i class="fas fa-play" style="font-size:.7rem;"></i>':pct+'%'}</div>
+                <div class="flex-grow-1" style="min-width:0;">
+                  <div style="font-size:.85rem;font-weight:700;color:#2c3e50;">${s.titulo||s.materia||'Simulado'}</div>
+                  <div style="font-size:.72rem;color:#95a5a6;">${(s.total||0)} questões${metaParts.length?' · '+metaParts.join(' · '):''}</div>
+                  ${hasQ ? '<span style="color:#1abc9c;font-weight:700;font-size:.7rem;">▶ Clique para iniciar</span>' : ''}
+                </div>
+                <div style="display:flex;gap:5px;flex-shrink:0;">
+                  ${hasQ ? `<button onclick="window.exportarSimuladoDisc(${disc.id},${idx},event)" title="Exportar JSON"
+                    style="background:rgba(52,152,219,.12);color:#2471a3;border:1px solid rgba(52,152,219,.3);border-radius:8px;padding:4px 9px;font-size:.7rem;font-weight:700;cursor:pointer;">
+                    <i class="fas fa-file-export"></i></button>` : ''}
+                  <button onclick="window.excluirSimuladoDisc(${disc.id},${idx},event)" title="Excluir simulado"
+                    style="background:rgba(231,76,60,.1);color:#c0392b;border:1px solid rgba(231,76,60,.25);border-radius:8px;padding:4px 9px;font-size:.7rem;font-weight:700;cursor:pointer;">
+                    <i class="fas fa-trash"></i></button>
+                </div>
+              </div>
+            </div>`;
+        }).join('');
+    }
+
+    async function _getDiscById(discId) {
+        const data = await getProfileData(true);
+        return data.disciplinas.find(d => d.id === discId);
+    }
+
+    async function _saveDiscSimulados(discId, simulados) {
+        const data = await getProfileData(true);
+        const disc = data.disciplinas.find(d => d.id === discId);
+        if (!disc) return;
+        disc.simulados = simulados;
+        await saveData('disciplinas', disc);
+        profileDataCache = null;
+        await loadProfileData();
+    }
+
+    // Iniciar simulado de disciplina
+    window.iniciarSimuladoDiscJson = async function(discId, simIdx) {
+        const disc = await _getDiscById(discId);
+        if (!disc || !disc.simulados || !disc.simulados[simIdx]) return;
+        const sim = disc.simulados[simIdx];
+        if (!sim.questoes || !sim.questoes.length) { alert('Este simulado não possui questões.'); return; }
+
+        const modalEl = document.getElementById('discSimuladosModal');
+        if (modalEl) { bootstrap.Modal.getInstance(modalEl)?.hide(); }
+
+        const progressKey = 'sim_progress_disc_' + discId + '_' + simIdx;
+        const saved = (() => { try { const v = localStorage.getItem(progressKey); return v ? JSON.parse(v) : null; } catch(e){ return null; } })();
+
+        const startFn = (resumeData) => {
+            setTimeout(() => {
+                _runSimuladoQuiz(sim, resumeData || null, progressKey, async (acertos, total) => {
+                    localStorage.removeItem(progressKey);
+                    const d2 = await _getDiscById(discId);
+                    if (d2 && d2.simulados && d2.simulados[simIdx]) {
+                        d2.simulados[simIdx].acertos = acertos;
+                        d2.simulados[simIdx].total = total;
+                        d2.simulados[simIdx].dataUltimoTreino = new Date().toISOString().split('T')[0];
+                        await saveData('disciplinas', d2);
+                        profileDataCache = null;
+                        await loadProfileData();
+                        if (activePanel === 'disciplinas') renderCurrentPanel();
+                    }
+                });
+            }, 400);
+        };
+
+        if (saved && saved.qIdx > 0 && saved.qIdx < sim.questoes.length) {
+            const retomar = confirm(
+                '🔖 Progresso salvo neste simulado.\n\nQuestão ' + (saved.qIdx+1) + ' de ' + sim.questoes.length +
+                ' · ' + saved.acertos + ' certo(s)\n\nOK = Continuar | Cancelar = Recomeçar'
+            );
+            if (!retomar) localStorage.removeItem(progressKey);
+            startFn(retomar ? saved : null);
+        } else {
+            localStorage.removeItem(progressKey);
+            startFn(null);
+        }
+    };
+
+    // Excluir simulado de disciplina
+    window.excluirSimuladoDisc = async function(discId, simIdx, event) {
+        if (event) event.stopPropagation();
+        if (!confirm('Excluir este simulado? Esta ação não pode ser desfeita.')) return;
+        const disc = await _getDiscById(discId);
+        if (!disc) return;
+        const sims = [...(disc.simulados || [])];
+        sims.splice(simIdx, 1);
+        await _saveDiscSimulados(discId, sims);
+        _showToast('success', 'Simulado excluído.');
+        const discUp = await _getDiscById(discId);
+        if (discUp) { _renderDiscSimulados(discUp); document.getElementById('discSimModalSub').textContent = `${(discUp.simulados||[]).length} simulado(s) registrado(s)`; }
+        if (activePanel === 'disciplinas') renderCurrentPanel();
+    };
+
+    // Exportar simulado de disciplina
+    window.exportarSimuladoDisc = async function(discId, simIdx, event) {
+        if (event) event.stopPropagation();
+        const disc = await _getDiscById(discId);
+        if (!disc || !disc.simulados || !disc.simulados[simIdx]) return;
+        const s = disc.simulados[simIdx];
+        const obj = {
+            titulo: s.titulo || s.materia || 'Simulado',
+            concurso: '', banca: s.banca || '', ano: s.ano || '', materia: s.materia || disc.nome,
+            distribuicao: s.distribuicao || null,
+            questoes: (s.questoes||[]).map(q => ({ numero:q.numero, disciplina:q.disciplina||'', enunciado:q.enunciado, opcoes:q.opcoes, gabarito:q.gabarito, gabarito_letra:q.gabarito_letra, explicacao:q.explicacao||'' }))
+        };
+        const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'simulado_' + (s.titulo||'disc').replace(/[^a-zA-Z0-9À-ú]/g,'_') + '.json'; a.click();
+        URL.revokeObjectURL(url);
+        _showToast('success', '✅ Simulado exportado!');
+    };
+
+    // Importar simulado JSON para disciplina
+    function _importarSimuladoDisc(discId) {
+        const input = document.createElement('input');
+        input.type = 'file'; input.accept = '.json,application/json';
+        input.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+        document.body.appendChild(input);
+        input.addEventListener('change', function() {
+            const file = this.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                input.remove();
+                try {
+                    const data = JSON.parse(e.target.result);
+                    const titulo = data.titulo || data.nome || file.name.replace(/\.json$/i,'');
+                    const questoesRaw = Array.isArray(data) ? data : (data.questoes || data.perguntas || []);
+                    if (!questoesRaw.length) { alert('Nenhuma questão encontrada no JSON.'); return; }
+                    const letters = ['A','B','C','D','E','F'];
+                    const questoes = questoesRaw.slice(0,40).map((q,i) => {
+                        let gab = 0;
+                        if (typeof q.gabarito === 'number') gab = q.gabarito;
+                        else if (typeof q.gabarito === 'string') gab = letters.indexOf(q.gabarito.toUpperCase());
+                        else if (typeof q.resposta_correta !== 'undefined') gab = Number(q.resposta_correta);
+                        const opcoes = (q.opcoes||q.alternativas||q.alternatives||[]).map(o => typeof o==='string'?o:(o.texto||o.text||String(o)));
+                        return { numero:q.numero||(i+1), disciplina:q.disciplina||q.materia||q.area||'', enunciado:q.enunciado||q.pergunta||q.questao||q.texto||('Questão '+(i+1)), opcoes, gabarito:gab, gabarito_letra:q.gabarito_letra||(letters[gab]||String(gab)), explicacao:q.explicacao||q.comentario||'' };
+                    });
+                    const disc = await _getDiscById(discId);
+                    if (!disc) { alert('Disciplina não encontrada.'); return; }
+                    const sims = [...(disc.simulados||[])];
+                    sims.push({ id:Date.now(), titulo, materia:data.materia||disc.nome, banca:data.banca||'', ano:data.ano||'', data:new Date().toISOString().split('T')[0], total:questoes.length, acertos:0, obs:data.banca?'Banca: '+data.banca:'', questoes, distribuicao:data.distribuicao||null });
+                    await _saveDiscSimulados(discId, sims);
+                    _showToast('success', `✅ "${titulo}" importado — ${questoes.length} questões!`);
+                    const discUp = await _getDiscById(discId);
+                    if (discUp) { _renderDiscSimulados(discUp); document.getElementById('discSimModalSub').textContent = `${(discUp.simulados||[]).length} simulado(s) registrado(s)`; }
+                    if (activePanel === 'disciplinas') renderCurrentPanel();
+                } catch(err) { alert('Erro ao processar o JSON:\n' + err.message); }
+            };
+            reader.readAsText(file, 'UTF-8');
+        });
+        input.click();
+    }
+
+    // Registrar simulado manual para disciplina
+    function _abrirRegistroManualDisc(discId, discNome) {
+        let mEl = document.getElementById('discSimManualModal');
+        if (!mEl) {
+            mEl = document.createElement('div');
+            mEl.id = 'discSimManualModal';
+            mEl.className = 'modal fade';
+            mEl.tabIndex = -1;
+            mEl.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content" style="border-radius:14px;overflow:hidden;">
+                <div class="modal-header" style="background:linear-gradient(135deg,#1a2332,#2c3e50);color:white;border:none;">
+                  <h5 class="modal-title text-white" id="discSimManualTitle"><i class="fas fa-plus me-2" style="color:#9b59b6;"></i>Registrar Simulado</h5>
+                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                  <input type="hidden" id="dsmDiscId">
+                  <div class="mb-3"><label class="form-label fw-semibold">Título / Descrição</label>
+                    <input type="text" class="form-control" id="dsmTitulo" placeholder="Ex: Simulado 1 - Semana 3"></div>
+                  <div class="row g-2 mb-3">
+                    <div class="col-6"><label class="form-label fw-semibold">Data</label>
+                      <input type="date" class="form-control" id="dsmData"></div>
+                    <div class="col-6"><label class="form-label fw-semibold">Banca</label>
+                      <input type="text" class="form-control" id="dsmBanca" placeholder="Ex: FCC, CESPE"></div>
+                  </div>
+                  <div class="row g-2 mb-3">
+                    <div class="col-6"><label class="form-label fw-semibold">Acertos</label>
+                      <input type="number" class="form-control" id="dsmAcertos" min="0" placeholder="0"></div>
+                    <div class="col-6"><label class="form-label fw-semibold">Total de Questões</label>
+                      <input type="number" class="form-control" id="dsmTotal" min="1" placeholder="20"></div>
+                  </div>
+                  <div class="mb-3"><label class="form-label fw-semibold">Observações</label>
+                    <textarea class="form-control" id="dsmObs" rows="2" placeholder="Dificuldades, pontos de melhoria..."></textarea></div>
+                  <div id="dsmPreview" style="display:none;" class="alert alert-info text-center fw-bold mt-2"></div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                  <button type="button" class="btn btn-primary" id="dsmSaveBtn" style="background:linear-gradient(135deg,#9b59b6,#8e44ad);border:none;border-radius:8px;"><i class="fas fa-save me-1"></i>Salvar</button>
+                </div>
+              </div>
+            </div>`;
+            document.body.appendChild(mEl);
+
+            // Preview acertos/total
+            ['dsmAcertos','dsmTotal'].forEach(id => {
+                document.getElementById(id)?.addEventListener('input', () => {
+                    const a = parseInt(document.getElementById('dsmAcertos').value)||0;
+                    const t = parseInt(document.getElementById('dsmTotal').value)||0;
+                    const prev = document.getElementById('dsmPreview');
+                    if (a && t && prev) { const p = Math.round(a/t*100); prev.style.display=''; prev.textContent = `${a}/${t} corretas = ${p}%`; prev.className = 'alert '+(p>=70?'alert-success':p>=50?'alert-warning':'alert-danger')+' text-center fw-bold mt-2'; }
+                });
+            });
+
+            document.getElementById('dsmSaveBtn').addEventListener('click', async () => {
+                const dId = parseInt(document.getElementById('dsmDiscId').value);
+                const titulo = document.getElementById('dsmTitulo').value.trim() || 'Simulado';
+                const acertos = parseInt(document.getElementById('dsmAcertos').value)||0;
+                const total = parseInt(document.getElementById('dsmTotal').value)||0;
+                if (!total) { alert('Informe o total de questões.'); return; }
+                const disc = await _getDiscById(dId);
+                if (!disc) return;
+                const sims = [...(disc.simulados||[])];
+                sims.push({ id:Date.now(), titulo, materia:disc.nome, banca:document.getElementById('dsmBanca').value.trim()||'', data:document.getElementById('dsmData').value||new Date().toISOString().split('T')[0], acertos, total, obs:document.getElementById('dsmObs').value.trim(), questoes:[] });
+                await _saveDiscSimulados(dId, sims);
+                _showToast('success', '✅ Simulado registrado!');
+                bootstrap.Modal.getInstance(mEl).hide();
+                const discUp = await _getDiscById(dId);
+                if (discUp) { _renderDiscSimulados(discUp); document.getElementById('discSimModalSub').textContent = `${(discUp.simulados||[]).length} simulado(s) registrado(s)`; }
+                if (activePanel === 'disciplinas') renderCurrentPanel();
+            });
+        }
+
+        document.getElementById('dsmDiscId').value = discId;
+        document.getElementById('discSimManualTitle').innerHTML = `<i class="fas fa-plus me-2" style="color:#9b59b6;"></i>Registrar Simulado — ${discNome}`;
+        document.getElementById('dsmTitulo').value = '';
+        document.getElementById('dsmData').value = new Date().toISOString().split('T')[0];
+        document.getElementById('dsmBanca').value = '';
+        document.getElementById('dsmAcertos').value = '';
+        document.getElementById('dsmTotal').value = '';
+        document.getElementById('dsmObs').value = '';
+        document.getElementById('dsmPreview').style.display = 'none';
+        new bootstrap.Modal(mEl).show();
+    }
+
+    // Baixar modelo de importação JSON
+    function _baixarModeloSimulado(nomeDisc) {
+        const modelo = {
+            titulo: "Simulado 01 — " + (nomeDisc || "Disciplina"),
+            materia: nomeDisc || "Nome da Matéria",
+            banca: "CESPE",
+            ano: new Date().getFullYear(),
+            distribuicao: { "Tópico A": 5, "Tópico B": 5 },
+            questoes: [
+                { numero: 1, disciplina: nomeDisc || "Matéria", enunciado: "Texto completo da questão 1 aqui.", opcoes: ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D", "Alternativa E"], gabarito: 0, gabarito_letra: "A", explicacao: "Explicação do gabarito (opcional)." },
+                { numero: 2, disciplina: nomeDisc || "Matéria", enunciado: "Texto completo da questão 2 aqui.", opcoes: ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D", "Alternativa E"], gabarito: 2, gabarito_letra: "C", explicacao: "" },
+                { numero: 3, disciplina: nomeDisc || "Matéria", enunciado: "Texto completo da questão 3 aqui.", opcoes: ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D"], gabarito: 1, gabarito_letra: "B", explicacao: "Explicação opcional." }
+            ]
+        };
+        const blob = new Blob([JSON.stringify(modelo, null, 2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'modelo_simulado.json'; a.click();
+        URL.revokeObjectURL(url);
+        _showToast('success', '📄 Modelo baixado! Edite e importe de volta.');
+    }
     window.abrirBackupConcursosModal = function() {
         if (!document.getElementById('backupConcursosModal')) _criarBackupConcursosModal();
         const arr = _getConcursos();
