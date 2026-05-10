@@ -19829,7 +19829,7 @@ document.addEventListener('keydown', (e) => {
   }
   @keyframes ptcorrDonePulse { 0%,60%{outline-color:#1abc9c;} 100%{outline-color:transparent;} }
   #ptcorr-toggle-btn {
-    position: fixed; bottom: 80px; right: 18px; z-index: 9990;
+    position: fixed; bottom: 24px; right: 18px; z-index: 9990;
     background: linear-gradient(135deg,#1abc9c,#16a085);
     color: white; border: none; border-radius: 50px; padding: 9px 16px;
     font-size: 0.75rem; font-weight: 600; font-family: 'Poppins',sans-serif;
@@ -19837,6 +19837,15 @@ document.addEventListener('keydown', (e) => {
     display: flex; align-items: center; gap: 7px; transition: all 0.25s; white-space: nowrap;
   }
   #ptcorr-toggle-btn:hover { transform: translateY(-2px); }
+  /* Em mobile, sobe o botão acima da nav bar fixa (~60px) + folga */
+  @media (max-width: 768px) {
+    #ptcorr-toggle-btn {
+      bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+      right: 12px;
+      padding: 8px 13px;
+      font-size: 0.72rem;
+    }
+  }
   #ptcorr-toggle-btn.off { background: linear-gradient(135deg,#7f8c8d,#95a5a6); box-shadow: 0 4px 14px rgba(0,0,0,0.2); }
   .ptcorr-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.9); flex-shrink:0; }
   #ptcorr-toggle-btn.off .ptcorr-dot { background: rgba(255,255,255,0.4); }
@@ -22301,6 +22310,7 @@ function _renderScore() {
   <div class="vp-topbar">
     <button class="vp-btn vp-btn-close" id="vp-close" title="Fechar player"><i class="fas fa-times"></i></button>
     <div class="vp-title" id="vp-title">Videoaula</div>
+    <span class="vp-badge vp-badge-adblock"><i class="fas fa-shield-alt"></i> Ad-block ativo</span>
     <span class="vp-badge vp-badge-src" id="vp-src-badge">youtube-nocookie</span>
     <button class="vp-btn" id="vp-toggle-notes" title="Anotações da aula"><i class="fas fa-sticky-note"></i></button>
     <button class="vp-btn" id="vp-toggle-playlist" title="Lista de videoaulas"><i class="fas fa-list"></i></button>
@@ -22330,7 +22340,14 @@ function _renderScore() {
 
       <!-- BARRA DE CONTROLES -->
       <div class="vp-controls">
-
+        <!-- Fonte do vídeo -->
+        <div class="vp-src-switch">
+          <span class="vp-src-label"><i class="fas fa-satellite-dish me-1"></i>Fonte:</span>
+          <button class="vp-src-opt active" data-src="nocookie" title="youtube-nocookie.com — menos rastreamento, sem anúncios personalizados">YT Privacy</button>
+          <button class="vp-src-opt" data-src="invidious" title="Invidious — instância sem anúncios (requer internet)">Invidious</button>
+          <button class="vp-src-opt" data-src="piped" title="Piped — instância alternativa sem anúncios">Piped</button>
+        </div>
+        <div class="vp-ctrl-sep"></div>
         <!-- Bloquear overlay de ads -->
         <button class="vp-ctrl-btn" id="vp-toggle-adbar" title="Cobrir banner de anúncio inferior">
           <i class="fas fa-ban"></i> Cobrir ads inferior
