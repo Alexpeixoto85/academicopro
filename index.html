@@ -22301,7 +22301,6 @@ function _renderScore() {
   <div class="vp-topbar">
     <button class="vp-btn vp-btn-close" id="vp-close" title="Fechar player"><i class="fas fa-times"></i></button>
     <div class="vp-title" id="vp-title">Videoaula</div>
-    <span class="vp-badge vp-badge-adblock"><i class="fas fa-shield-alt"></i> Ad-block ativo</span>
     <span class="vp-badge vp-badge-src" id="vp-src-badge">youtube-nocookie</span>
     <button class="vp-btn" id="vp-toggle-notes" title="Anotações da aula"><i class="fas fa-sticky-note"></i></button>
     <button class="vp-btn" id="vp-toggle-playlist" title="Lista de videoaulas"><i class="fas fa-list"></i></button>
@@ -22331,14 +22330,7 @@ function _renderScore() {
 
       <!-- BARRA DE CONTROLES -->
       <div class="vp-controls">
-        <!-- Fonte do vídeo -->
-        <div class="vp-src-switch">
-          <span class="vp-src-label"><i class="fas fa-satellite-dish me-1"></i>Fonte:</span>
-          <button class="vp-src-opt active" data-src="nocookie" title="youtube-nocookie.com — menos rastreamento, sem anúncios personalizados">YT Privacy</button>
-          <button class="vp-src-opt" data-src="invidious" title="Invidious — instância sem anúncios (requer internet)">Invidious</button>
-          <button class="vp-src-opt" data-src="piped" title="Piped — instância alternativa sem anúncios">Piped</button>
-        </div>
-        <div class="vp-ctrl-sep"></div>
+
         <!-- Bloquear overlay de ads -->
         <button class="vp-ctrl-btn" id="vp-toggle-adbar" title="Cobrir banner de anúncio inferior">
           <i class="fas fa-ban"></i> Cobrir ads inferior
