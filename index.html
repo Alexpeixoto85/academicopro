@@ -4622,15 +4622,25 @@
     }
     #vp-notes-panel:not(.collapsed) ~ .vp-main .vp-iframe-focus-guard,
     .vp-notes-open .vp-iframe-focus-guard { display: block; }
-    /* Blocker overlay — cobre o banner de anúncio que aparece na parte inferior do iframe */
+    /* Blocker overlay duplo — cobre banners no topo e na base do iframe */
     .vp-ad-blocker-bar {
       position: absolute; bottom: 0; left: 0; right: 0;
-      height: 62px; /* altura típica do banner ads do YouTube */
+      height: 66px; /* altura típica do banner ads do YouTube */
       background: #000;
       pointer-events: none; z-index: 5;
     }
-    /* Quando está em PiP/tela cheia nativa não mostra o blocker */
-    .vp-iframe-wrap.hide-adbar .vp-ad-blocker-bar { display: none; }
+    /* Overlay superior — cobre cards/popups que o YT injeta no topo */
+    .vp-ad-blocker-top {
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 0;
+      background: #000;
+      pointer-events: none; z-index: 5;
+      transition: height 0.2s;
+    }
+    .vp-iframe-wrap.ads-overlay-active .vp-ad-blocker-top { height: 54px; }
+    /* Quando está em PiP/tela cheia nativa não mostra os blockers */
+    .vp-iframe-wrap.hide-adbar .vp-ad-blocker-bar,
+    .vp-iframe-wrap.hide-adbar .vp-ad-blocker-top { display: none; }
 
     /* Barra de controles inferior */
     .vp-controls {
@@ -16201,18 +16211,102 @@ ${diasHtml}
       currentIdx:  0,
       src:         'nocookie',  // 'nocookie' | 'invidious' | 'piped'
       adbarActive: false,
+      adtopActive: false,
       notesOpen:   false,
       sidebarOpen: false,
       currentVideoId: null
     };
 
+    // ── Instâncias alternativas para fallback automático ──────────────
+    var _invidiousInstances = [
+      'https://invidious.nerdvpn.de',
+      'https://invidious.privacyredirect.com',
+      'https://yt.cdaut.de',
+      'https://invidious.incogniweb.net',
+      'https://inv.tux.pizza'
+    ];
+    var _pipedInstances = [
+      'https://pipedembeds.kavin.rocks',
+      'https://piped-embed.privacy.com.de',
+      'https://piped.video',
+      'https://piped.adminforge.de'
+    ];
+    // índices da instância atual (fallback automático)
+    var _invIdx = 0, _pipIdx = 0;
+
     // Instâncias públicas para cada fonte (sem anúncio)
+    // Parâmetros nocookie maximizados contra anúncios:
+    //   rel=0          → não mostra vídeos relacionados de outros canais
+    //   modestbranding=1 → remove branding YT da barra de controles
+    //   iv_load_policy=3 → desativa anotações/cards (onde ads aparecem)
+    //   disablekb=0    → mantém atalhos de teclado
+    //   cc_load_policy=0 → não força legendas
+    //   enablejsapi=0  → bloqueia postMessage do YT (reduz rastreamento)
+    //   color=white    → remove barra vermelha de progresso (visual clean)
+    //   playsinline=1  → evita fullscreen automático em mobile
     var _vpSources = {
-      nocookie: function(id) { return 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&fs=1&color=white'; },
-      invidious: function(id) { return 'https://invidious.io.lol/embed/' + id + '?autoplay=1'; },
-      piped:    function(id) { return 'https://pipedapi.kavin.rocks/embed/' + id + '?autoplay=1'; }
+      nocookie: function(id) {
+        return 'https://www.youtube-nocookie.com/embed/' + id
+          + '?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3'
+          + '&fs=1&color=white&playsinline=1&cc_load_policy=0'
+          + '&disablekb=0&hl=pt-BR';
+      },
+      invidious: function(id) {
+        var base = _invidiousInstances[_invIdx % _invidiousInstances.length];
+        return base + '/embed/' + id + '?autoplay=1&listen=0&quality=hd720';
+      },
+      piped: function(id) {
+        var base = _pipedInstances[_pipIdx % _pipedInstances.length];
+        return base + '/embed/' + id + '?autoplay=1';
+      }
     };
     var _vpSrcLabels = { nocookie: 'YT Privacy', invidious: 'Invidious', piped: 'Piped' };
+
+    // ── Fallback automático se iframe falhar ao carregar ──────────────
+    (function() {
+      var _vpFallbackTimer = null;
+      function _attachIframeFallback() {
+        var iframe = document.getElementById('vp-iframe');
+        if (!iframe) return;
+        iframe.addEventListener('error', _handleIframeFail);
+        // Invidious/Piped podem travar sem disparar "error" — usa timeout
+        iframe.addEventListener('load', function() {
+          clearTimeout(_vpFallbackTimer);
+        });
+      }
+      function _handleIframeFail() {
+        if (_vpState.src === 'invidious') {
+          _invIdx++;
+          if (_invIdx < _invidiousInstances.length) {
+            // tenta próxima instância Invidious
+            var iframe = document.getElementById('vp-iframe');
+            if (iframe && _vpState.currentVideoId) iframe.src = _vpSources.invidious(_vpState.currentVideoId);
+          } else {
+            // esgotou instâncias — cai para nocookie
+            _invIdx = 0;
+            _vpState.src = 'nocookie';
+            document.querySelectorAll('.vp-src-opt').forEach(function(b){ b.classList.toggle('active', b.dataset.src==='nocookie'); });
+            document.getElementById('vp-src-badge').textContent = 'YT Privacy (fallback)';
+            var iframe = document.getElementById('vp-iframe');
+            if (iframe && _vpState.currentVideoId) iframe.src = _vpSources.nocookie(_vpState.currentVideoId);
+          }
+        } else if (_vpState.src === 'piped') {
+          _pipIdx++;
+          if (_pipIdx < _pipedInstances.length) {
+            var iframe = document.getElementById('vp-iframe');
+            if (iframe && _vpState.currentVideoId) iframe.src = _vpSources.piped(_vpState.currentVideoId);
+          } else {
+            _pipIdx = 0;
+            _vpState.src = 'nocookie';
+            document.querySelectorAll('.vp-src-opt').forEach(function(b){ b.classList.toggle('active', b.dataset.src==='nocookie'); });
+            document.getElementById('vp-src-badge').textContent = 'YT Privacy (fallback)';
+            var iframe = document.getElementById('vp-iframe');
+            if (iframe && _vpState.currentVideoId) iframe.src = _vpSources.nocookie(_vpState.currentVideoId);
+          }
+        }
+      }
+      document.addEventListener('DOMContentLoaded', _attachIframeFallback);
+    })();
 
     function _vpBuildUrl(videoId) {
         var fn = _vpSources[_vpState.src] || _vpSources.nocookie;
@@ -16363,6 +16457,19 @@ ${diasHtml}
             bar.style.display = 'none';
             btn.classList.remove('active');
             wrap.classList.add('hide-adbar');
+        }
+    }
+
+    function _vpToggleAdTop() {
+        _vpState.adtopActive = !_vpState.adtopActive;
+        var wrap = document.getElementById('vp-iframe-wrap');
+        var btn  = document.getElementById('vp-toggle-adtop');
+        if (_vpState.adtopActive) {
+            wrap.classList.add('ads-overlay-active');
+            btn.classList.add('active');
+        } else {
+            wrap.classList.remove('ads-overlay-active');
+            btn.classList.remove('active');
         }
     }
 
@@ -16567,8 +16674,11 @@ ${diasHtml}
             _showToast('success', isCinema ? '🎬 Modo cinema ativado — mova o mouse para ver os controles' : 'Modo cinema desativado');
         });
 
-        // Cobrir ads
+        // Cobrir ads inferior
         document.getElementById('vp-toggle-adbar').addEventListener('click', _vpToggleAdBar);
+
+        // Cobrir ads superior (cards/popups)
+        document.getElementById('vp-toggle-adtop').addEventListener('click', _vpToggleAdTop);
 
         // Marcar assistida
         document.getElementById('vp-mark-done').addEventListener('click', _vpMarcarAssistida);
@@ -22213,8 +22323,10 @@ function _renderScore() {
         ></iframe>
         <!-- Guard: bloqueia o iframe de roubar foco quando painel de notas está aberto -->
         <div class="vp-iframe-focus-guard" id="vp-iframe-focus-guard"></div>
-        <!-- Cobre área de banner de anúncio inferior do YouTube -->
+        <!-- Cobre área de banner de anúncio INFERIOR do YouTube -->
         <div class="vp-ad-blocker-bar" id="vp-ad-bar" style="display:none;"></div>
+        <!-- Cobre cards/popups de anúncio SUPERIOR do YouTube -->
+        <div class="vp-ad-blocker-top" id="vp-ad-top"></div>
       </div>
 
       <!-- BARRA DE CONTROLES -->
@@ -22228,8 +22340,11 @@ function _renderScore() {
         </div>
         <div class="vp-ctrl-sep"></div>
         <!-- Bloquear overlay de ads -->
-        <button class="vp-ctrl-btn" id="vp-toggle-adbar" title="Cobrir área de banner de anúncios inferior">
-          <i class="fas fa-ban"></i> Cobrir ads
+        <button class="vp-ctrl-btn" id="vp-toggle-adbar" title="Cobrir banner de anúncio inferior">
+          <i class="fas fa-ban"></i> Cobrir ads inferior
+        </button>
+        <button class="vp-ctrl-btn" id="vp-toggle-adtop" title="Cobrir cards/popups de anúncio no topo do vídeo">
+          <i class="fas fa-shield-alt"></i> Cobrir ads topo
         </button>
         <!-- Marcar assistida -->
         <button class="vp-ctrl-btn" id="vp-mark-done" title="Marcar como assistida">
@@ -22333,21 +22448,42 @@ function _renderScore() {
   function _ytId(url) {
     if (!url) return null;
     const pats = [
-      /(?:youtube\.com\/watch\?v=)([^&\s]+)/,
-      /(?:youtu\.be\/)([^?\s]+)/,
-      /(?:youtube\.com\/embed\/)([^?\s]+)/,
-      /(?:youtube\.com\/shorts\/)([^?\s]+)/
+      /(?:youtube\.com\/watch\?v=)([^&\s#]+)/,
+      /(?:youtu\.be\/)([^?\s#]+)/,
+      /(?:youtube\.com\/embed\/)([^?\s#]+)/,
+      /(?:youtube\.com\/shorts\/)([^?\s#]+)/,
+      /(?:youtube\.com\/v\/)([^?\s#]+)/,
+      /(?:youtube\.com\/live\/)([^?\s#]+)/
     ];
     for (const p of pats) { const m = url.match(p); if (m) return m[1]; }
     return null;
   }
   function _ytPlaylistId(url) {
     if (!url) return null;
-    const m = url.match(/[?&]list=([^&\s]+)/);
+    const m = url.match(/[?&]list=([^&\s#]+)/);
     return m ? m[1] : null;
   }
   function _isYtValid(url) {
     return !!(_ytId(url) || _ytPlaylistId(url));
+  }
+
+  // ── Verifica se um videoId/playlistId já existe no concurso ─────
+  function _vaulaJaCadastrada(concId, url) {
+    const arr = _getConcursos();
+    const _cid = +concId;
+    const c = arr.find(x => +x.id === _cid);
+    if (!c || !c.videoaulas) return false;
+    const newVid = _ytId(url);
+    const newPid = _ytPlaylistId(url);
+    return c.videoaulas.some(ex => {
+      // compara por URL exata
+      if (ex.url === url) return true;
+      // compara por videoId normalizado (ignora parâmetros extras como ?si=, ?t=, &feature=)
+      if (newVid && _ytId(ex.url) === newVid) return true;
+      // compara por playlistId
+      if (newPid && _ytPlaylistId(ex.url) === newPid) return true;
+      return false;
+    });
   }
 
   // ── Variáveis de estado ───────────────────────────────────────────
@@ -22357,7 +22493,8 @@ function _renderScore() {
   window._gerarVaulasBuffer = [];
 
   // ── Render de preview (shared entre import e gerar) ───────────────
-  function _renderVaulasPreview(lista, container) {
+  // Recebe opcionalmente concId para marcar duplicatas já cadastradas
+  function _renderVaulasPreview(lista, container, concId) {
     if (!container) return;
     container.innerHTML = lista.map(function(v) {
       const ytId = _ytId(v.url);
@@ -22365,34 +22502,75 @@ function _renderScore() {
       const isPlaylist = !ytId && !!plId;
       const thumb = ytId ? 'https://img.youtube.com/vi/' + ytId + '/mqdefault.jpg' : '';
       const valido = !!ytId || !!plId;
-      const badge = isPlaylist ? '<span style="font-size:0.6rem;font-weight:700;background:#3498db;color:white;border-radius:4px;padding:1px 6px;margin-left:4px;vertical-align:middle;">PLAYLIST</span>' : '';
-      return '<div style="display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:10px;background:' + (valido?'#f6fff9':'#fff6f6') + ';border:1px solid ' + (valido?'rgba(39,174,96,0.3)':'rgba(231,76,60,0.3)') + ';">' +
+      // Verifica duplicidade se concId fornecido
+      const jaCadastrada = concId ? _vaulaJaCadastrada(concId, v.url) : false;
+
+      const badgePlaylist = isPlaylist
+        ? '<span style="font-size:0.6rem;font-weight:700;background:#3498db;color:white;border-radius:4px;padding:1px 6px;margin-left:4px;vertical-align:middle;">PLAYLIST</span>'
+        : '';
+      const badgeDup = jaCadastrada
+        ? '<span style="font-size:0.6rem;font-weight:700;background:#e67e22;color:white;border-radius:4px;padding:1px 6px;margin-left:4px;vertical-align:middle;"><i class="fas fa-copy" style="margin-right:2px;"></i>JÁ CADASTRADA</span>'
+        : '';
+
+      const bgColor  = jaCadastrada ? '#fffaf0' : (valido ? '#f6fff9' : '#fff6f6');
+      const bdColor  = jaCadastrada ? 'rgba(230,126,34,0.4)' : (valido ? 'rgba(39,174,96,0.3)' : 'rgba(231,76,60,0.3)');
+      const statusColor = jaCadastrada ? '#e67e22' : (valido ? '#27ae60' : '#e74c3c');
+      const statusText  = jaCadastrada ? '↩ Duplicada' : (valido ? '✓ OK' : '✗ Inválida');
+
+      return '<div style="display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:10px;background:' + bgColor + ';border:1px solid ' + bdColor + ';margin-bottom:4px;">' +
         (thumb
           ? '<img src="' + thumb + '" style="width:64px;height:44px;border-radius:7px;object-fit:cover;flex-shrink:0;" onerror="this.style.display=\'none\'">'
           : '<div style="width:64px;height:44px;border-radius:7px;background:' + (isPlaylist?'#2980b9':'#dfe6e9') + ';flex-shrink:0;display:flex;align-items:center;justify-content:center;"><i class="' + (isPlaylist?'fas fa-list':'fab fa-youtube') + '" style="color:' + (isPlaylist?'white':'#b2bec3') + ';font-size:1.1rem;"></i></div>') +
         '<div style="flex:1;min-width:0;">' +
-          '<div style="font-size:0.8rem;font-weight:700;color:#1a2332;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (v.titulo||'Sem título') + badge + '</div>' +
+          '<div style="font-size:0.8rem;font-weight:700;color:#1a2332;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (v.titulo||'Sem título') + badgePlaylist + badgeDup + '</div>' +
           '<div style="font-size:0.68rem;color:#95a5a6;margin-top:2px;">' + (v.materia||'') + (v.canal?' · '+v.canal:'') + (v.duracao?' · '+v.duracao+'min':'') + '</div>' +
           (v.obs ? '<div style="font-size:0.67rem;color:#7f8c8d;font-style:italic;margin-top:2px;">' + v.obs + '</div>' : '') +
         '</div>' +
-        '<span style="font-size:0.72rem;font-weight:700;color:' + (valido?'#27ae60':'#e74c3c') + ';flex-shrink:0;">' + (valido?'✓ OK':'✗ Inválida') + '</span>' +
+        '<span style="font-size:0.72rem;font-weight:700;color:' + statusColor + ';flex-shrink:0;">' + statusText + '</span>' +
       '</div>';
     }).join('');
+
+    // Exibe resumo de duplicatas
+    if (concId) {
+      const dups = lista.filter(v => _vaulaJaCadastrada(concId, v.url)).length;
+      if (dups > 0) {
+        container.insertAdjacentHTML('beforebegin',
+          '<div style="background:#fef3e2;border:1px solid rgba(230,126,34,0.4);border-radius:8px;padding:7px 12px;margin-bottom:8px;font-size:0.78rem;color:#c0712a;">' +
+          '<i class="fas fa-exclamation-triangle me-2"></i><strong>' + dups + ' videoaula(s) já cadastrada(s)</strong> serão ignoradas automaticamente na importação.' +
+          '</div>'
+        );
+      }
+    }
   }
 
   // ── Salvar lista de videoaulas no concurso ────────────────────────
   function _salvarVaulasNoConcurso(concId, lista) {
     let arr = _getConcursos();
-    const _cid = +concId; // normaliza para number (evita type mismatch string vs number)
+    const _cid = +concId;
     const c = arr.find(x => +x.id === _cid);
     if (!c) return { added: 0, skipped: 0 };
     c.videoaulas = c.videoaulas || [];
+
+    // Monta set de videoIds e playlistIds já existentes para comparação rápida
+    const existingVids = new Set(c.videoaulas.map(ex => _ytId(ex.url)).filter(Boolean));
+    const existingPids = new Set(c.videoaulas.map(ex => _ytPlaylistId(ex.url)).filter(Boolean));
+
     let added = 0, skipped = 0;
     lista.forEach(v => {
       if (!_isYtValid(v.url)) { skipped++; return; }
-      if (c.videoaulas.some(ex => ex.url === v.url)) { skipped++; return; }
-      const isPlaylist = !_ytId(v.url) && !!_ytPlaylistId(v.url);
-      c.videoaulas.push({
+
+      const newVid = _ytId(v.url);
+      const newPid = _ytPlaylistId(v.url);
+
+      // Verifica duplicidade por URL exata, videoId ou playlistId
+      const isDup = c.videoaulas.some(ex => ex.url === v.url)
+        || (newVid && existingVids.has(newVid))
+        || (newPid && existingPids.has(newPid));
+
+      if (isDup) { skipped++; return; }
+
+      const isPlaylist = !newVid && !!newPid;
+      const record = {
         id: String(Date.now()) + '_' + Math.random().toString(36).slice(2,6),
         url: v.url,
         titulo: v.titulo || (isPlaylist ? 'Playlist' : 'Videoaula'),
@@ -22403,7 +22581,11 @@ function _renderScore() {
         assistida: false,
         tipo: v.tipo || (isPlaylist ? 'playlist' : 'video'),
         criadaEm: new Date().toISOString()
-      });
+      };
+      c.videoaulas.push(record);
+      // Atualiza os sets para evitar duplicidade dentro do próprio lote
+      if (newVid) existingVids.add(newVid);
+      if (newPid) existingPids.add(newPid);
       added++;
     });
     _saveConcursos(arr);
@@ -22454,7 +22636,7 @@ function _renderScore() {
         const lista = Array.isArray(raw) ? raw : (raw.videoaulas || []);
         if (!lista.length) throw new Error('Nenhuma videoaula encontrada no JSON.');
         _importVaulasBuffer = lista;
-        _renderVaulasPreview(lista, document.getElementById('importVaulasPreviewList'));
+        _renderVaulasPreview(lista, document.getElementById('importVaulasPreviewList'), _importVaulasConcId);
         if (rs) rs.innerHTML = '';
         if (pr) pr.style.display = '';
         if (cb) { cb.classList.remove('d-none'); }
@@ -22477,7 +22659,9 @@ function _renderScore() {
     const modalEl = document.getElementById('importVaulasModal');
     const modal = bootstrap.Modal.getInstance(modalEl);
     if (modal) modal.hide();
-    _showToast('success', added + ' videoaulas importadas!' + (skipped ? ' ' + skipped + ' ignoradas.' : ''));
+    const skipMsg = skipped ? ' (' + skipped + ' duplicada(s)/inválida(s) ignorada(s))' : '';
+    _showToast(added ? 'success' : 'warning',
+      added ? '✅ ' + added + ' videoaula(s) importada(s)!' + skipMsg : '⚠️ Nenhuma nova videoaula — todas já estavam cadastradas.');
     _refreshVaulaUI(_importVaulasConcId);
   });
 
@@ -22728,7 +22912,7 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
 
   function _mostrarPreviewGerar(lista) {
     const preview = document.getElementById('gerarVaulasPreviewList');
-    if (preview) _renderVaulasPreview(lista, preview);
+    if (preview) _renderVaulasPreview(lista, preview, _gerarVaulasConcId);
     const q1 = document.getElementById('gerarVaulasQtd');
     const q2 = document.getElementById('gerarVaulasQtd2');
     if (q1) q1.textContent = lista.length;
@@ -22764,7 +22948,9 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
     const { added, skipped } = _salvarVaulasNoConcurso(concId, lista);
     const modal = bootstrap.Modal.getInstance(document.getElementById('gerarVaulasModal'));
     if (modal) modal.hide();
-    _showToast('success', '✅ ' + added + ' videoaulas importadas!' + (skipped ? ' ' + skipped + ' ignoradas.' : ''));
+    const skipMsg = skipped ? ' (' + skipped + ' duplicada(s)/inválida(s) ignorada(s))' : '';
+    _showToast(added ? 'success' : 'warning',
+      added ? '✅ ' + added + ' videoaula(s) importada(s)!' + skipMsg : '⚠️ Nenhuma nova videoaula — todas já estavam cadastradas.');
     _refreshVaulaUI(concId);
   });
 
