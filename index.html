@@ -4848,27 +4848,8 @@
       <div class="login-sub">Sistema Universitário de Gestão</div>
     </div>
 
-    <!-- PASSO 1: CONFIGURAR JSONBIN — apenas Bin ID -->
-    <div id="stepConfig">
-      <div style="background:rgba(26,188,156,0.10);border:1px solid rgba(26,188,156,0.28);border-radius:12px;padding:14px 16px;margin-bottom:22px;">
-        <div style="font-size:0.78rem;font-weight:700;color:#1abc9c;margin-bottom:5px;"><i class="fas fa-database me-1"></i> Configuração Inicial</div>
-        <div style="font-size:0.73rem;color:rgba(255,255,255,0.55);line-height:1.6;">
-          Para usar o sistema em um novo dispositivo, insira o seu <strong style="color:rgba(255,255,255,0.85);">Bin ID</strong> abaixo. Essa configuração é feita <strong style="color:rgba(255,255,255,0.85);">uma única vez</strong> por dispositivo.
-        </div>
-      </div>
-
-      <!-- Campo oculto — master key embutida internamente -->
-      <input type="hidden" id="cfgMasterKey" value="">
-
-      <div class="login-form-group">
-        <label class="login-label"><i class="fas fa-database me-1"></i> Bin ID <span style="color:#e74c3c;">*</span></label>
-        <input class="login-input" type="text" id="cfgBinId" placeholder="Ex: 6642f3a1acd3cb34a836..." autocomplete="off">
-        <div style="font-size:0.68rem;color:rgba(255,255,255,0.3);margin-top:5px;"><i class="fas fa-info-circle me-1"></i>Código de identificação do banco de dados do sistema</div>
-      </div>
-
-      <button class="login-btn" id="cfgBtn" onclick="salvarConfig()">
-        <i class="fas fa-plug me-2"></i> Conectar
-      </button>
+    <!-- PASSO 1: oculto — sistema usa apenas localStorage, sem configuração externa -->
+    <div id="stepConfig" style="display:none;">
       <div class="login-msg" id="cfgMsg"></div>
     </div>
 
@@ -21663,65 +21644,30 @@ function _renderScore() {
 (function() {
   'use strict';
 
-  // ── MIGRAÇÃO: configs antigas tinham masterKey no localStorage ──
-  // Remove o campo masterKey do storage se existir (não é mais necessário)
-  (function migrateOldCfg() {
-    try {
-      const raw = localStorage.getItem('acpro_jsonbin_cfg_v1');
-      if (!raw) return;
-      const obj = JSON.parse(raw);
-      if (obj && obj.masterKey) {
-        delete obj.masterKey;
-        localStorage.setItem('acpro_jsonbin_cfg_v1', JSON.stringify(obj));
-      }
-    } catch(e) {}
-  })();
+  // ── CHAVES DE ARMAZENAMENTO ────────────────────────────────────
+  const CFG_KEY     = 'acpro_cfg_v2';       // guarda anthropicKey
+  const SESSION_KEY = 'acpro_session_v1';
+  const USERS_KEY   = 'acpro_users_v1';     // banco de usuários local
 
-  // ── CHAVES DE CONFIGURAÇÃO ─────────────────────────────────────
-  const CFG_KEY      = 'acpro_jsonbin_cfg_v1';
-  const SESSION_KEY  = 'acpro_session_v1';
-  const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b/';
+  // ── HELPERS DE USUÁRIOS (localStorage) ────────────────────────
+  function getUsers() {
+    try { return JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); } catch { return []; }
+  }
+  function saveUsers(users) {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  }
 
-  // Master key embutida — não exposta ao usuário
-  const _MK = '$2a$10$xxIvXXIjG7A86QLIGEifv.jhyYGb3oxNTy37NWXJwY4/PDwozFjvK';
-
-  // Lê config salva no localStorage
+  // ── CONFIG (apenas anthropicKey) ──────────────────────────────
   function getCfg() {
     try { return JSON.parse(localStorage.getItem(CFG_KEY) || 'null'); } catch { return null; }
   }
-  function saveCfg(binId, anthropicKey) {
-    localStorage.setItem(CFG_KEY, JSON.stringify({ binId, anthropicKey: anthropicKey || '' }));
+  function saveCfg(anthropicKey) {
+    localStorage.setItem(CFG_KEY, JSON.stringify({ anthropicKey: anthropicKey || '' }));
   }
   function clearCfg() { localStorage.removeItem(CFG_KEY); }
 
-  // Expõe para uso nos forms de login
-  function getMasterKey()    { return _MK; }
-  function getBinId()        { const c = getCfg(); return c ? c.binId : ''; }
   function getAnthropicKey() { const c = getCfg(); return c ? (c.anthropicKey || '') : ''; }
   window._getAnthropicKey = getAnthropicKey;
-
-  // ── HELPERS JSONBin ────────────────────────────────────────────
-  async function getBin() {
-    const r = await fetch(JSONBIN_BASE + getBinId() + '/latest', {
-      headers: { 'X-Master-Key': getMasterKey() }
-    });
-    if (!r.ok) {
-      const txt = await r.text().catch(()=>'');
-      throw new Error('Erro ' + r.status + (txt ? ': ' + txt.substring(0,80) : ''));
-    }
-    const j = await r.json();
-    return j.record;
-  }
-
-  async function setBin(data) {
-    const r = await fetch(JSONBIN_BASE + getBinId(), {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-Master-Key': getMasterKey() },
-      body: JSON.stringify(data)
-    });
-    if (!r.ok) throw new Error('Erro ao salvar: ' + r.status);
-    return r.json();
-  }
 
   // ── SESSÃO ─────────────────────────────────────────────────────
   function salvarSessao(user) {
@@ -21746,6 +21692,7 @@ function _renderScore() {
   // ── UI HELPERS ─────────────────────────────────────────────────
   function showMsg(id, tipo, txt) {
     const el = document.getElementById(id);
+    if (!el) return;
     el.className = 'login-msg ' + tipo;
     el.innerHTML = txt;
     el.style.display = 'block';
@@ -21761,68 +21708,19 @@ function _renderScore() {
     b.innerHTML = loading ? '<span class="login-spinner"></span> Aguarde...' : label;
   }
 
-  // ── PASSO 1: SALVAR CONFIG ─────────────────────────────────────
-  window.salvarConfig = async function() {
-    const binId        = document.getElementById('cfgBinId').value.trim();
-    const anthropicKey = (document.getElementById('cfgAnthropicKey') ? document.getElementById('cfgAnthropicKey').value.trim() : '');
-
-    if (!binId) {
-      showMsg('cfgMsg','error','<i class="fas fa-exclamation-circle me-1"></i> Insira o Bin ID para continuar.');
-      return;
-    }
-
-    setLoading('cfgBtn', true, '');
-    showMsg('cfgMsg','info','<i class="fas fa-spinner fa-spin me-1"></i> Validando conexão...');
-
-    try {
-      // Testa conexão lendo o bin com a master key embutida
-      const testR = await fetch(JSONBIN_BASE + binId + '/latest', {
-        headers: { 'X-Master-Key': _MK }
-      });
-
-      if (testR.status === 401) { showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Sem permissão de acesso ao banco. Verifique o Bin ID.'); return; }
-      if (testR.status === 404) { showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Bin ID não encontrado. Verifique o código digitado.'); return; }
-      if (!testR.ok) { showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Erro ' + testR.status + '. Verifique o Bin ID.'); return; }
-
-      const j = await testR.json();
-      // Garante que o bin tem a estrutura correta
-      if (!j.record || typeof j.record !== 'object') {
-        showMsg('cfgMsg','error','<i class="fas fa-times-circle me-1"></i> Banco de dados com formato inválido.');
-        return;
-      }
-      if (!Array.isArray(j.record.users)) {
-        // Corrige automaticamente a estrutura do bin
-        await fetch(JSONBIN_BASE + binId, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'X-Master-Key': _MK },
-          body: JSON.stringify({ users: [] })
-        });
-      }
-
-      // Tudo OK — salva apenas binId e avança
-      saveCfg(binId, anthropicKey);
-      showMsg('cfgMsg','success','<i class="fas fa-check-circle me-1"></i> Conexão validada com sucesso!');
-      setTimeout(() => {
-        document.getElementById('stepConfig').style.display = 'none';
-        document.getElementById('stepAuth').style.display   = 'block';
-        hideMsg('cfgMsg');
-      }, 900);
-
-    } catch(e) {
-      showMsg('cfgMsg','error','<i class="fas fa-wifi me-1"></i> Sem conexão ou erro de rede: ' + e.message);
-    } finally {
-      setLoading('cfgBtn', false, '<i class="fas fa-plug me-2"></i> Conectar');
-    }
+  // ── SALVAR CONFIG (sem JSONBIN) ────────────────────────────────
+  window.salvarConfig = function() {
+    // Não há mais configuração obrigatória — vai direto ao login
+    document.getElementById('stepConfig').style.display = 'none';
+    document.getElementById('stepAuth').style.display   = 'block';
   };
 
-  // ── VOLTAR PARA CONFIG ─────────────────────────────────────────
+  // ── VOLTAR PARA LOGIN ──────────────────────────────────────────
   window.voltarConfig = function() {
-    clearCfg();
     document.getElementById('stepAuth').style.display   = 'none';
-    document.getElementById('stepConfig').style.display = 'block';
-    document.getElementById('cfgBinId').value = '';
-    const akEl = document.getElementById('cfgAnthropicKey'); if (akEl) akEl.value = '';
-    hideMsg('cfgMsg');
+    document.getElementById('stepConfig').style.display = 'none';
+    document.getElementById('stepAuth').style.display   = 'block';
+    hideMsg('loginMsg');
   };
 
   // ── SALVAR API KEY ANTHROPIC pelo painel interno ───────────────
@@ -21920,8 +21818,7 @@ function _renderScore() {
 
     setLoading('loginBtn', true, '');
     try {
-      const db    = await getBin();
-      const users = db.users || [];
+      const users = getUsers();
       const hash  = hashSenha(senha);
       const user  = users.find(u => u.email === email && u.senha === hash);
       if (!user) { showMsg('loginMsg','error','<i class="fas fa-times-circle me-1"></i> E-mail ou senha incorretos.'); return; }
@@ -21929,7 +21826,7 @@ function _renderScore() {
       salvarSessao(user);
       setTimeout(() => entrarNoSistema(user), 900);
     } catch(e) {
-      showMsg('loginMsg','error','<i class="fas fa-wifi me-1"></i> ' + e.message);
+      showMsg('loginMsg','error','<i class="fas fa-exclamation-circle me-1"></i> ' + e.message);
     } finally {
       setLoading('loginBtn', false, '<i class="fas fa-sign-in-alt me-2"></i> Entrar');
     }
@@ -21949,17 +21846,16 @@ function _renderScore() {
 
     setLoading('cadBtn', true, '');
     try {
-      const db    = await getBin();
-      const users = db.users || [];
+      const users = getUsers();
       if (users.find(u => u.email === email)) { showMsg('cadMsg','error','<i class="fas fa-times-circle me-1"></i> Este e-mail já está cadastrado.'); return; }
       const novoUser = { nome, email, senha: hashSenha(senha), criadoEm: new Date().toISOString() };
       users.push(novoUser);
-      await setBin({ ...db, users });
+      saveUsers(users);
       showMsg('cadMsg','success','<i class="fas fa-check-circle me-1"></i> Conta criada! Entrando...');
       salvarSessao(novoUser);
       setTimeout(() => entrarNoSistema(novoUser), 1000);
     } catch(e) {
-      showMsg('cadMsg','error','<i class="fas fa-wifi me-1"></i> ' + e.message);
+      showMsg('cadMsg','error','<i class="fas fa-exclamation-circle me-1"></i> ' + e.message);
     } finally {
       setLoading('cadBtn', false, '<i class="fas fa-user-plus me-2"></i> Criar Conta');
     }
@@ -22016,10 +21912,9 @@ function _renderScore() {
   // ── INICIALIZAÇÃO ──────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function() {
     const sessao = getSessao();
-    const cfg    = getCfg();
 
-    if (sessao && cfg) {
-      // Sessão válida + config existente → entra direto
+    if (sessao) {
+      // Sessão válida → entra direto, sem necessidade de cfg/binId
       const ls = document.getElementById('loginScreen');
       if (ls) ls.style.display = 'none';
       const snEl = document.getElementById('sidebarProfileName');
@@ -22027,23 +21922,18 @@ function _renderScore() {
       return;
     }
 
-    if (cfg) {
-      // Config existe mas sem sessão → vai para login
-      document.getElementById('stepConfig').style.display = 'none';
-      document.getElementById('stepAuth').style.display   = 'block';
-    }
-    // Se não há config → mostra stepConfig (já é o padrão)
+    // Sem sessão → mostra tela de login/cadastro direto
+    document.getElementById('stepConfig').style.display = 'none';
+    document.getElementById('stepAuth').style.display   = 'block';
 
     // Enter nos campos
-    const loginSenha = document.getElementById('loginSenha');
-    const loginEmail = document.getElementById('loginEmail');
+    const loginSenha  = document.getElementById('loginSenha');
+    const loginEmail  = document.getElementById('loginEmail');
     const cadSenhaConf = document.getElementById('cadSenhaConf');
-    const cfgBinId     = document.getElementById('cfgBinId');
 
-    if (loginSenha)   loginSenha.addEventListener('keydown',   e => { if (e.key==='Enter') fazerLogin(); });
-    if (loginEmail)   loginEmail.addEventListener('keydown',   e => { if (e.key==='Enter') loginSenha && loginSenha.focus(); });
-    if (cadSenhaConf) cadSenhaConf.addEventListener('keydown', e => { if (e.key==='Enter') fazerCadastro(); });
-    if (cfgBinId)     cfgBinId.addEventListener('keydown',     e => { if (e.key==='Enter') salvarConfig(); });
+    if (loginSenha)    loginSenha.addEventListener('keydown',    e => { if (e.key==='Enter') fazerLogin(); });
+    if (loginEmail)    loginEmail.addEventListener('keydown',    e => { if (e.key==='Enter') loginSenha && loginSenha.focus(); });
+    if (cadSenhaConf)  cadSenhaConf.addEventListener('keydown',  e => { if (e.key==='Enter') fazerCadastro(); });
   });
 
   // ===== INIT: LEITURAS PENDENTES HOME + MODAL EVENTS =====
