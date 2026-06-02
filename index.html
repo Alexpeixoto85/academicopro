@@ -733,11 +733,12 @@
       content: '';
       position: fixed;
       inset: 0;
-      background: rgba(15, 20, 35, 0.62);
+      background: var(--bg-overlay, rgba(15, 20, 35, 0.62));
       backdrop-filter: blur(1px);
       -webkit-backdrop-filter: blur(1px);
       z-index: 0;
       pointer-events: none;
+      transition: background 0.3s ease;
     }
     body.bg-custom .app-container,
     body.bg-custom .main-content-area {
@@ -826,6 +827,63 @@
     body.bg-dark .stat-card-new .stat-number { color: #ecf0f1; }
     body.bg-dark .stat-card-new .stat-label { color: #7f8c8d; }
     body.bg-dark .home-section-title { color: #ecf0f1; }
+
+    /* ===================================================================
+       COR DE FONTE ADAPTATIVA AO PLANO DE FUNDO
+       O JS detecta o brilho médio do fundo (imagem/tema) e marca o <body>
+       com .bg-adaptive-dark (fundo escuro -> fonte clara) ou
+       .bg-adaptive-light (fundo claro -> fonte escura). Apenas os textos
+       que ficam DIRETO sobre o plano de fundo recebem a cor adaptativa;
+       os cards brancos preservam suas próprias cores.
+       =================================================================== */
+    :root {
+      --bg-fg: #1a2332;          /* cor de texto sobre o fundo  */
+      --bg-fg-muted: #5a6573;    /* texto secundário sobre o fundo */
+      --bg-fg-shadow: none;      /* sombra de legibilidade */
+      --bg-overlay: rgba(15,20,35,0.62);
+    }
+    body.bg-adaptive-dark {
+      --bg-fg: #f4f7fb;
+      --bg-fg-muted: rgba(255,255,255,0.78);
+      --bg-fg-shadow: 0 1px 4px rgba(0,0,0,0.55);
+      --bg-overlay: rgba(11,16,28,0.46);
+    }
+    body.bg-adaptive-light {
+      --bg-fg: #131a26;
+      --bg-fg-muted: #444f5e;
+      --bg-fg-shadow: 0 1px 2px rgba(255,255,255,0.55);
+      --bg-overlay: rgba(255,255,255,0.30);
+    }
+
+    /* Aplica a cor adaptativa aos elementos que ficam sobre o fundo */
+    body.bg-adaptive-dark .panel-header-left h3,
+    body.bg-adaptive-light .panel-header-left h3,
+    body.bg-adaptive-dark .home-section-title,
+    body.bg-adaptive-light .home-section-title,
+    body.bg-adaptive-dark .content-header h2,
+    body.bg-adaptive-light .content-header h2,
+    body.bg-adaptive-dark #main-header-title,
+    body.bg-adaptive-light #main-header-title {
+      color: var(--bg-fg) !important;
+      text-shadow: var(--bg-fg-shadow);
+    }
+    body.bg-adaptive-dark .panel-header-left h3 i {
+      filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4));
+    }
+    body.bg-adaptive-dark .panel-header-left p,
+    body.bg-adaptive-light .panel-header-left p {
+      color: var(--bg-fg-muted) !important;
+      text-shadow: var(--bg-fg-shadow);
+    }
+    /* A barra de topo sobre fundo personalizado fica translúcida para mostrar a imagem */
+    body.bg-custom .top-header {
+      background: var(--bg-overlay) !important;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-color: rgba(255,255,255,0.12) !important;
+    }
+    body.bg-custom.bg-adaptive-dark #sidebar-toggle-btn { color: rgba(255,255,255,0.8); }
+    body.bg-custom.bg-adaptive-dark .panel-btn-outline { background: rgba(255,255,255,0.12); color: var(--bg-fg); border-color: rgba(255,255,255,0.25); }
 
     .app-wrapper {
       display: flex;
@@ -1447,6 +1505,96 @@
     .list-row-body { flex: 1; min-width: 0; }
     .list-row-title { font-size: 0.85rem; font-weight: 600; color: #2c3e50; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .list-row-sub { font-size: 0.72rem; color: #95a5a6; }
+
+    /* ===================================================================
+       PAINEL DE LINKS — cards reformulados, em duas colunas
+       =================================================================== */
+    .links-cat-section { margin-bottom: 22px; }
+    .links-cat-header {
+      display: flex; align-items: center; gap: 9px;
+      margin-bottom: 12px; padding-left: 2px;
+    }
+    .links-cat-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 4px rgba(0,0,0,0.04); }
+    .links-cat-name {
+      font-weight: 700; font-size: 0.95rem; color: var(--bg-fg, #1a2332);
+      text-shadow: var(--bg-fg-shadow, none); letter-spacing: 0.01em;
+    }
+    .links-cat-count {
+      font-size: 0.66rem; font-weight: 700; padding: 2px 9px; border-radius: 20px;
+      background: rgba(127,140,141,0.16); color: #5a6573;
+    }
+
+    .link-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    @media (max-width: 640px) { .link-grid { grid-template-columns: 1fr; } }
+
+    .link-card-pro {
+      position: relative;
+      background: #fff;
+      border: 1px solid #eceff3;
+      border-left: 4px solid var(--lc-color, #16a085);
+      border-radius: 14px;
+      padding: 14px 15px 13px;
+      display: flex; flex-direction: column; gap: 9px;
+      box-shadow: 0 2px 10px rgba(20,30,50,0.05);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      overflow: hidden;
+    }
+    .link-card-pro::after {
+      content: ''; position: absolute; top: -28px; right: -28px;
+      width: 90px; height: 90px; border-radius: 50%;
+      background: radial-gradient(circle, var(--lc-color, #16a085) 0%, transparent 70%);
+      opacity: 0.07; pointer-events: none;
+    }
+    .link-card-pro:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 26px rgba(20,30,50,0.13);
+    }
+    .link-card-top { display: flex; align-items: center; gap: 11px; }
+    .link-card-favicon {
+      width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--lc-soft, rgba(22,160,133,0.12));
+      color: var(--lc-color, #16a085); font-size: 1rem; overflow: hidden;
+    }
+    .link-card-favicon img { width: 22px; height: 22px; object-fit: contain; border-radius: 4px; }
+    .link-card-headings { flex: 1; min-width: 0; }
+    .link-card-title {
+      font-size: 0.92rem; font-weight: 700; color: #1d2733; line-height: 1.25;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .link-card-host {
+      font-size: 0.72rem; color: var(--lc-color, #16a085); font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;
+    }
+    .link-card-desc {
+      font-size: 0.76rem; color: #6b7682; line-height: 1.45;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .link-card-actions {
+      display: flex; align-items: center; gap: 7px;
+      padding-top: 9px; margin-top: auto;
+      border-top: 1px solid #f1f3f6;
+    }
+    .link-card-open {
+      flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      text-decoration: none; font-size: 0.76rem; font-weight: 600;
+      padding: 7px 10px; border-radius: 9px;
+      color: #fff; background: var(--lc-color, #16a085);
+      transition: filter 0.15s, transform 0.15s;
+    }
+    .link-card-open:hover { filter: brightness(1.07); transform: translateY(-1px); color: #fff; }
+    .link-card-btn {
+      width: 32px; height: 32px; flex-shrink: 0; border: none; cursor: pointer;
+      border-radius: 9px; display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.78rem; transition: background 0.15s, color 0.15s;
+    }
+    .link-card-btn.edit { background: rgba(52,152,219,0.12); color: #2980b9; }
+    .link-card-btn.edit:hover { background: #2980b9; color: #fff; }
+    .link-card-btn.delete { background: rgba(231,76,60,0.12); color: #c0392b; }
+    .link-card-btn.delete:hover { background: #c0392b; color: #fff; }
+
+    /* Cards de link sobre fundo personalizado escuro: leve elevação extra */
+    body.bg-adaptive-dark .link-card-pro { box-shadow: 0 6px 22px rgba(0,0,0,0.28); }
 
     /* Urgente highlight */
     .card-urgent {
@@ -7297,13 +7445,55 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function _applyCustomBg(dataUrl) {
         document.body.className = 'bg-custom';
+        // Assume fundo escuro de imediato (overlay padrão é escuro) p/ evitar texto ilegível
+        document.body.classList.add('bg-adaptive-dark');
         document.body.style.setProperty('--custom-bg-url', `url('${dataUrl}')`);
+        // Detecta o brilho real da imagem e ajusta a cor da fonte do sistema
+        _detectBgLuminance(dataUrl);
+    }
+
+    // Define se o texto sobre o fundo deve ser claro ou escuro
+    function _setAdaptiveText(isDark) {
+        document.body.classList.remove('bg-adaptive-dark', 'bg-adaptive-light');
+        document.body.classList.add(isDark ? 'bg-adaptive-dark' : 'bg-adaptive-light');
+    }
+
+    // Calcula o brilho médio (luminância percebida) de uma imagem em dataURL
+    function _detectBgLuminance(dataUrl) {
+        const img = new Image();
+        img.onload = () => {
+            try {
+                const S = 40; // miniatura para amostragem rápida
+                const c = document.createElement('canvas');
+                c.width = S; c.height = S;
+                const ctx = c.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(img, 0, 0, S, S);
+                const px = ctx.getImageData(0, 0, S, S).data;
+                let total = 0, count = 0;
+                for (let i = 0; i < px.length; i += 4) {
+                    // luminância percebida (Rec. 709)
+                    total += 0.2126 * px[i] + 0.7152 * px[i+1] + 0.0722 * px[i+2];
+                    count++;
+                }
+                const avg = total / count; // 0..255
+                // O overlay escurece a imagem; consideramos o resultado efetivo.
+                // avg < 140 => fundo tende a escuro => fonte clara
+                _setAdaptiveText(avg < 140);
+            } catch (e) {
+                // Falha de leitura (ex.: CORS) -> assume fundo escuro (overlay padrão é escuro)
+                _setAdaptiveText(true);
+            }
+        };
+        img.onerror = () => _setAdaptiveText(true);
+        img.src = dataUrl;
     }
 
     function applyTheme(theme) {
         document.body.className = '';
         document.body.classList.add(`bg-${theme}`);
         document.body.style.removeProperty('--custom-bg-url');
+        // Temas predefinidos: 'dark' é escuro; os demais são claros
+        _setAdaptiveText(theme === 'dark');
         localStorage.setItem('academicoTheme', theme);
         localStorage.removeItem('academicoCustomBg');
         _updateBgStatus(false);
@@ -9557,41 +9747,55 @@ Atenciosamente,`;
             return;
         }
         const catColors = { 'Estudo':'#3498db','Pesquisa':'#9b59b6','Institucional':'#1abc9c','Notícias':'#e67e22','Outros':'#7f8c8d' };
-        // Group by category
+        const esc = (s='') => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./,''); } catch(e){ return ''; } };
+
+        // Agrupa por categoria
         const grouped = {};
         data.links.forEach(l => {
             const cat = l.categoria || 'Outros';
             if (!grouped[cat]) grouped[cat] = [];
             grouped[cat].push(l);
         });
+
         Object.entries(grouped).forEach(([cat, links]) => {
             const col = document.createElement('div');
             col.className = 'col-12';
             const cor = catColors[cat] || '#7f8c8d';
-            let rowsHtml = links.map(l => `
-              <div class="list-row">
-                <div class="list-row-icon" style="background:${cor}18;color:${cor};"><i class="fas fa-link"></i></div>
-                <div class="list-row-body">
-                  <div class="list-row-title">${l.titulo}</div>
-                  <div class="list-row-sub" style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.url}</div>
-                  ${l.descricao?`<div style="font-size:0.72rem;color:#aab;">${l.descricao.substring(0,80)}</div>`:''}
-                </div>
-                <div class="d-flex gap-2 align-items-center ms-auto flex-shrink-0">
-                  <a href="${l.url}" target="_blank" class="btn-icon" title="Abrir link" style="text-decoration:none;color:${cor};border-color:${cor}18;background:${cor}10;"><i class="fas fa-external-link-alt"></i></a>
-                  <button class="btn-icon edit edit-link" data-id="${l.id}" title="Editar"><i class="fas fa-edit"></i></button>
-                  <button class="btn-icon delete delete-link" data-id="${l.id}" title="Excluir"><i class="fas fa-trash"></i></button>
-                </div>
-              </div>`).join('');
+
+            const cardsHtml = links.map(l => {
+                const host = hostOf(l.url);
+                const titulo = esc(l.titulo || host || 'Link');
+                const urlSafe = esc(l.url || '#');
+                const favicon = host
+                    ? `<img src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(host)}" alt="" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='block';"><i class="fas fa-link" style="display:none;"></i>`
+                    : `<i class="fas fa-link"></i>`;
+                return `
+                  <div class="link-card-pro" style="--lc-color:${cor};--lc-soft:${cor}1f;">
+                    <div class="link-card-top">
+                      <div class="link-card-favicon">${favicon}</div>
+                      <div class="link-card-headings">
+                        <div class="link-card-title" title="${titulo}">${titulo}</div>
+                        ${host?`<div class="link-card-host" title="${urlSafe}">${esc(host)}</div>`:''}
+                      </div>
+                    </div>
+                    ${l.descricao?`<div class="link-card-desc">${esc(l.descricao)}</div>`:''}
+                    <div class="link-card-actions">
+                      <a href="${urlSafe}" target="_blank" rel="noopener" class="link-card-open"><i class="fas fa-external-link-alt"></i> Abrir</a>
+                      <button class="link-card-btn edit edit-link" data-id="${l.id}" title="Editar"><i class="fas fa-edit"></i></button>
+                      <button class="link-card-btn delete delete-link" data-id="${l.id}" title="Excluir"><i class="fas fa-trash"></i></button>
+                    </div>
+                  </div>`;
+            }).join('');
+
             col.innerHTML = `
-              <div class="pro-card mb-3">
-                <div class="pro-card-header">
-                  <div style="display:flex;align-items:center;gap:8px;">
-                    <div style="width:10px;height:10px;border-radius:50%;background:${cor};flex-shrink:0;"></div>
-                    <span style="font-weight:700;font-size:0.85rem;color:#1a2332;">${cat}</span>
-                    <span class="pill pill-neutral" style="font-size:0.65rem;">${links.length}</span>
-                  </div>
+              <div class="links-cat-section">
+                <div class="links-cat-header">
+                  <span class="links-cat-dot" style="background:${cor};"></span>
+                  <span class="links-cat-name">${esc(cat)}</span>
+                  <span class="links-cat-count">${links.length}</span>
                 </div>
-                ${rowsHtml}
+                <div class="link-grid">${cardsHtml}</div>
               </div>`;
             container.appendChild(col);
         });
