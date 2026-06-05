@@ -4384,6 +4384,25 @@
     .login-strength { height:4px; border-radius:2px; margin-top:6px; background:rgba(255,255,255,0.08); overflow:hidden; }
     .login-strength-bar { height:100%; border-radius:2px; transition: width 0.3s, background 0.3s; width:0; }
 
+    /* ===== CÓDIGO DE LIBERAÇÃO ===== */
+    .release-icon {
+      text-align:center; margin-bottom:20px;
+    }
+    .release-icon i {
+      font-size:2rem; color:#1abc9c;
+      background:rgba(26,188,156,0.12); border-radius:50%;
+      width:64px; height:64px; line-height:64px; display:inline-block;
+    }
+    .release-hint {
+      font-size:0.72rem; color:rgba(255,255,255,0.35); text-align:center;
+      margin-top:14px; line-height:1.5;
+    }
+    .release-input {
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 600;
+    }
+
     /* ===== INSTITUIÇÕES ===== */
     .inst-badge {
       display: inline-flex; align-items: center; gap: 6px;
@@ -4996,7 +5015,28 @@
       <div class="login-sub">Sistema Universitário de Gestão</div>
     </div>
 
-    <!-- PASSO 1: oculto — sistema usa apenas localStorage, sem configuração externa -->
+    <!-- PASSO 1: CÓDIGO DE LIBERAÇÃO (exibido apenas quando o dispositivo não está autorizado) -->
+    <div id="stepCode" style="display:none;">
+      <div class="release-icon">
+        <i class="fas fa-key"></i>
+      </div>
+      <div class="login-form-group">
+        <label class="login-label"><i class="fas fa-key me-1"></i> Código de Liberação</label>
+        <input class="login-input release-input" type="text" id="releaseCodeInput"
+          placeholder="Ex: ACPRO-XXXX-XXXX"
+          autocomplete="off" spellcheck="false" maxlength="32">
+      </div>
+      <button class="login-btn" id="releaseCodeBtn" onclick="liberarAcesso()">
+        <i class="fas fa-unlock me-2"></i> Liberar Acesso
+      </button>
+      <div class="login-msg" id="codeMsg"></div>
+      <div class="release-hint">
+        <i class="fas fa-shield-alt me-1"></i>
+        Acesso vinculado a este dispositivo após primeira validação.
+      </div>
+    </div>
+
+    <!-- PASSO 1 (oculto legado) -->
     <div id="stepConfig" style="display:none;">
       <div class="login-msg" id="cfgMsg"></div>
     </div>
@@ -21849,9 +21889,10 @@ function _renderScore() {
   'use strict';
 
   // ── CHAVES DE ARMAZENAMENTO ────────────────────────────────────
-  const CFG_KEY     = 'acpro_cfg_v2';       // guarda anthropicKey
-  const SESSION_KEY = 'acpro_session_v1';
-  const USERS_KEY   = 'acpro_users_v1';     // banco de usuários local
+  const CFG_KEY         = 'acpro_cfg_v2';
+  const SESSION_KEY     = 'acpro_session_v1';
+  const USERS_KEY       = 'acpro_users_v1';
+  const DEVICE_AUTH_KEY = 'acpro_device_auth_v1'; // código de liberação vinculado ao dispositivo
 
   // ── HELPERS DE USUÁRIOS (localStorage) ────────────────────────
   function getUsers() {
@@ -21892,6 +21933,90 @@ function _renderScore() {
     for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
     return (h >>> 0).toString(16).padStart(8,'0') + btoa(s.split('').reverse().join('')).replace(/=/g,'');
   }
+
+  // ── DEVICE FINGERPRINT ─────────────────────────────────────────
+  // Gera um identificador estável para este computador/navegador.
+  function gerarDeviceId() {
+    const parts = [
+      navigator.userAgent,
+      navigator.language || '',
+      (screen.width || 0) + 'x' + (screen.height || 0) + 'x' + (screen.colorDepth || 0),
+      Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+      String(navigator.hardwareConcurrency || ''),
+      navigator.platform || ''
+    ];
+    // Impressão de canvas para maior precisão
+    try {
+      const c = document.createElement('canvas');
+      const g = c.getContext('2d');
+      g.textBaseline = 'top';
+      g.font = '14px Arial';
+      g.fillStyle = '#1abc9c';
+      g.fillText('AcademicoPro-fp', 2, 2);
+      parts.push(c.toDataURL().slice(-40));
+    } catch (_) {}
+    const str = parts.join('||');
+    let h = 5381;
+    for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
+    return (h >>> 0).toString(16).padStart(8, '0') + '-' + (str.length).toString(16);
+  }
+
+  // ── AUTORIZAÇÃO DE DISPOSITIVO ─────────────────────────────────
+  function getDeviceAuth() {
+    try { return JSON.parse(localStorage.getItem(DEVICE_AUTH_KEY) || 'null'); } catch { return null; }
+  }
+  function saveDeviceAuth(code) {
+    const id = gerarDeviceId();
+    localStorage.setItem(DEVICE_AUTH_KEY, JSON.stringify({ code, device: id, grantedAt: Date.now() }));
+  }
+  function isDeviceAuthorized() {
+    const a = getDeviceAuth();
+    if (!a) return false;
+    return a.device === gerarDeviceId();
+  }
+
+  // ── LIBERAR ACESSO (handler do botão) ──────────────────────────
+  window.liberarAcesso = async function() {
+    const input = document.getElementById('releaseCodeInput');
+    const code = (input ? input.value : '').trim().toUpperCase();
+    if (!code) { showMsg('codeMsg', 'error', '<i class="fas fa-exclamation-circle me-1"></i> Informe o código de liberação.'); return; }
+
+    setLoading('releaseCodeBtn', true, '');
+    hideMsg('codeMsg');
+
+    try {
+      const device = gerarDeviceId();
+      const res = await fetch('/.netlify/functions/validate-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, device })
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.valid) {
+        const msgs = {
+          not_found:      'Código não encontrado. Verifique e tente novamente.',
+          inactive:       'Este código foi desativado. Entre em contato com o administrador.',
+          device_mismatch:'Este código já está vinculado a outro dispositivo.',
+        };
+        const txt = msgs[data.reason] || (data.error || 'Código inválido.');
+        showMsg('codeMsg', 'error', '<i class="fas fa-times-circle me-1"></i> ' + txt);
+        return;
+      }
+
+      // Código válido — salvar autorização e avançar
+      saveDeviceAuth(code);
+      showMsg('codeMsg', 'success', '<i class="fas fa-check-circle me-1"></i> Acesso liberado! Bem-vindo.');
+      setTimeout(() => {
+        document.getElementById('stepCode').style.display = 'none';
+        document.getElementById('stepAuth').style.display = 'block';
+      }, 800);
+    } catch (err) {
+      showMsg('codeMsg', 'error', '<i class="fas fa-exclamation-triangle me-1"></i> Erro de conexão. Tente novamente.');
+    } finally {
+      setLoading('releaseCodeBtn', false, '<i class="fas fa-unlock me-2"></i> Liberar Acesso');
+    }
+  };
 
   // ── UI HELPERS ─────────────────────────────────────────────────
   function showMsg(id, tipo, txt) {
@@ -22118,7 +22243,7 @@ function _renderScore() {
     const sessao = getSessao();
 
     if (sessao) {
-      // Sessão válida → entra direto, sem necessidade de cfg/binId
+      // Sessão válida → entra direto
       const ls = document.getElementById('loginScreen');
       if (ls) ls.style.display = 'none';
       const snEl = document.getElementById('sidebarProfileName');
@@ -22126,18 +22251,28 @@ function _renderScore() {
       return;
     }
 
-    // Sem sessão → mostra tela de login/cadastro direto
-    document.getElementById('stepConfig').style.display = 'none';
-    document.getElementById('stepAuth').style.display   = 'block';
+    if (isDeviceAuthorized()) {
+      // Dispositivo já autorizado → pula etapa do código, vai para login/cadastro
+      document.getElementById('stepCode').style.display  = 'none';
+      document.getElementById('stepAuth').style.display  = 'block';
+    } else {
+      // Dispositivo ainda não autorizado → exibe tela de código de liberação
+      document.getElementById('stepCode').style.display  = 'block';
+      document.getElementById('stepAuth').style.display  = 'none';
+      const releaseInput = document.getElementById('releaseCodeInput');
+      if (releaseInput) {
+        releaseInput.addEventListener('keydown', e => { if (e.key === 'Enter') liberarAcesso(); });
+      }
+    }
 
-    // Enter nos campos
-    const loginSenha  = document.getElementById('loginSenha');
-    const loginEmail  = document.getElementById('loginEmail');
+    // Enter nos campos de login/cadastro
+    const loginSenha   = document.getElementById('loginSenha');
+    const loginEmail   = document.getElementById('loginEmail');
     const cadSenhaConf = document.getElementById('cadSenhaConf');
 
-    if (loginSenha)    loginSenha.addEventListener('keydown',    e => { if (e.key==='Enter') fazerLogin(); });
-    if (loginEmail)    loginEmail.addEventListener('keydown',    e => { if (e.key==='Enter') loginSenha && loginSenha.focus(); });
-    if (cadSenhaConf)  cadSenhaConf.addEventListener('keydown',  e => { if (e.key==='Enter') fazerCadastro(); });
+    if (loginSenha)   loginSenha.addEventListener('keydown',   e => { if (e.key==='Enter') fazerLogin(); });
+    if (loginEmail)   loginEmail.addEventListener('keydown',   e => { if (e.key==='Enter') loginSenha && loginSenha.focus(); });
+    if (cadSenhaConf) cadSenhaConf.addEventListener('keydown', e => { if (e.key==='Enter') fazerCadastro(); });
   });
 
   // ===== INIT: LEITURAS PENDENTES HOME + MODAL EVENTS =====
