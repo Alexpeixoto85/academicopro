@@ -22989,5 +22989,320 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
 </script>
 
 
+<!-- ============================================================
+     Acadêmico Pro — Sincronização automática na nuvem (GitHub Gist)
+     Sincroniza todas as stores do IndexedDB (academicoProDB) + configurações
+     do localStorage entre dispositivos. Baixa ao entrar e envia a cada alteração.
+     Usa a API window._acadApp (conexão única já aberta — sem 2ª conexão ao IDB).
+============================================================ -->
+<script>
+(function () {
+  'use strict';
+
+  const DB_NAME = 'academicoProDB';
+  const FILE = 'academico-sync.json';
+  const DESC = 'Acadêmico Pro — sincronização (não editar manualmente)';
+  const PUSH_DELAY = 700;
+  // Chaves de localStorage que NÃO devem ser sincronizadas (login/sessão/config do dispositivo)
+  function isBlockedLS(k) { return !k || k.indexOf('acpro_') === 0 || k.indexOf('__sync_') === 0; }
+  function isSyncCfgKey(k) { return !k || k.indexOf('__sync_') === 0; }
+
+  let applying = false, booted = false;
+  let TOKEN = null, gistId = null, enabled = false, DEVICE = null;
+  let lastPulledAt = null, lastPushedAt = null;
+  let dirty = false, busy = false, conflict = false, pendingPush = false, pushTimer = null;
+  let statusText = 'Não configurado';
+
+  /* ---------- Detecção de alterações: intercepta escritas no IndexedDB ---------- */
+  function hookIDB(proto, method) {
+    if (!proto || !proto[method] || proto['__sync_wrapped_' + method]) return;
+    const orig = proto[method];
+    proto[method] = function () {
+      try {
+        const tx = this.transaction || (this.source && this.source.transaction);
+        if (!applying && tx && tx.db && tx.db.name === DB_NAME) markDirty();
+      } catch (e) {}
+      return orig.apply(this, arguments);
+    };
+    proto['__sync_wrapped_' + method] = true;
+  }
+  try {
+    hookIDB(window.IDBObjectStore && IDBObjectStore.prototype, 'put');
+    hookIDB(window.IDBObjectStore && IDBObjectStore.prototype, 'add');
+    hookIDB(window.IDBObjectStore && IDBObjectStore.prototype, 'delete');
+    hookIDB(window.IDBObjectStore && IDBObjectStore.prototype, 'clear');
+    hookIDB(window.IDBCursor && IDBCursor.prototype, 'update');
+    hookIDB(window.IDBCursor && IDBCursor.prototype, 'delete');
+  } catch (e) {}
+
+  // Configurações em localStorage também disparam sincronização
+  const _lsSet = localStorage.setItem.bind(localStorage);
+  const _lsRemove = localStorage.removeItem.bind(localStorage);
+  localStorage.setItem = function (k, v) { _lsSet(k, v); if (!applying && !isBlockedLS(k)) markDirty(); };
+  localStorage.removeItem = function (k) { _lsRemove(k); if (!applying && !isBlockedLS(k)) markDirty(); };
+
+  /* ---------- Acesso ao IndexedDB pela API do app ---------- */
+  function acad() { return window._acadApp || null; }
+  function dbReady() { try { const a = acad(); return !!(a && a.getDb && a.getDb() && a.getDb().objectStoreNames && a.getDb().objectStoreNames.length); } catch (e) { return false; } }
+  function loginDone() { const ls = document.getElementById('loginScreen'); return !ls || ls.style.display === 'none' || getComputedStyle(ls).display === 'none'; }
+  function storeNames() { try { return Array.from(acad().getDb().objectStoreNames); } catch (e) { return []; } }
+
+  async function buildSnapshot() {
+    const a = acad(); const stores = {};
+    for (const s of storeNames()) { try { stores[s] = await a.readAllFromStore(s); } catch (e) { stores[s] = []; } }
+    const ls = {};
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!isBlockedLS(k)) ls[k] = localStorage.getItem(k); }
+    return { v: 1, app: 'academicopro', updatedAt: new Date().toISOString(), device: DEVICE, stores, ls };
+  }
+
+  async function applySnapshot(snap) {
+    applying = true;
+    try {
+      const a = acad();
+      const stores = snap.stores || {};
+      const existing = storeNames();
+      for (const s of Object.keys(stores)) {
+        if (existing.indexOf(s) < 0) continue;
+        try { await a.clearStore(s); } catch (e) {}
+        const recs = stores[s] || [];
+        if (recs.length) { try { await a.putRecordsBatch(s, recs); } catch (e) {} }
+      }
+      // localStorage (configurações), sem mexer nas chaves de login
+      const ls = snap.ls || {};
+      const current = [];
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!isBlockedLS(k)) current.push(k); }
+      for (const k of current) { if (!(k in ls)) _lsRemove(k); }
+      for (const k in ls) { try { _lsSet(k, ls[k]); } catch (e) {} }
+    } finally { applying = false; }
+  }
+
+  async function refreshApp() {
+    try {
+      const a = acad();
+      if (a && typeof a.reloadAfterImport === 'function') { await a.reloadAfterImport(); return; }
+      if (a && typeof a.reloadData === 'function') { await a.reloadData(); if (typeof a.renderPanel === 'function') a.renderPanel(); return; }
+    } catch (e) { console.warn('refreshApp', e); }
+    try { location.reload(); } catch (e) {}
+  }
+
+  /* ---------- Config (persistida no localStorage, prefixo __sync_) ---------- */
+  function cfgGet(k) { try { return localStorage.getItem('__sync_' + k); } catch (e) { return null; } }
+  function cfgSet(k, v) { try { _lsSet('__sync_' + k, v); } catch (e) {} }
+  function cfgDel(k) { try { _lsRemove('__sync_' + k); } catch (e) {} }
+  function loadCfg() {
+    TOKEN = cfgGet('token'); gistId = cfgGet('gistId');
+    enabled = cfgGet('enabled') === '1';
+    lastPulledAt = cfgGet('lastPulledAt'); lastPushedAt = cfgGet('lastPushedAt');
+    DEVICE = cfgGet('device');
+    if (!DEVICE) { DEVICE = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36); cfgSet('device', DEVICE); }
+  }
+
+  /* ---------- Toast simples ---------- */
+  function toast(msg, type) {
+    try {
+      let host = document.getElementById('__sync_toast');
+      if (!host) { host = document.createElement('div'); host.id = '__sync_toast'; host.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;'; document.body.appendChild(host); }
+      const el = document.createElement('div');
+      const bg = type === 'error' ? '#e74c3c' : (type === 'success' ? '#1abc9c' : '#34495e');
+      el.style.cssText = 'background:' + bg + ';color:#fff;padding:10px 16px;border-radius:10px;font:600 13px system-ui;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:88vw;text-align:center;';
+      el.textContent = msg; host.appendChild(el);
+      setTimeout(() => { el.style.transition = 'opacity .4s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 400); }, 3000);
+    } catch (e) {}
+  }
+
+  /* ---------- GitHub Gist ---------- */
+  function ghHeaders() { return { 'Authorization': 'Bearer ' + TOKEN, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json' }; }
+  async function ghFind() {
+    const r = await fetch('https://api.github.com/gists?per_page=100', { headers: ghHeaders() });
+    if (!r.ok) throw new Error('GitHub ' + r.status + (r.status === 401 ? ' (token inválido)' : ''));
+    const arr = await r.json(); const g = arr.find(x => x.files && x.files[FILE]); return g ? g.id : null;
+  }
+  async function ghCreate(content) {
+    const r = await fetch('https://api.github.com/gists', { method: 'POST', headers: ghHeaders(), body: JSON.stringify({ description: DESC, public: false, files: { [FILE]: { content } } }) });
+    if (!r.ok) throw new Error('GitHub ' + r.status); return (await r.json()).id;
+  }
+  async function ghRead(id) {
+    const r = await fetch('https://api.github.com/gists/' + id, { headers: ghHeaders() });
+    if (!r.ok) throw new Error('GitHub ' + r.status);
+    const g = await r.json(); const f = g.files && g.files[FILE]; if (!f) return null;
+    if (f.truncated && f.raw_url) { const rr = await fetch(f.raw_url); return await rr.text(); }
+    return f.content;
+  }
+  async function ghWrite(id, content) {
+    const r = await fetch('https://api.github.com/gists/' + id, { method: 'PATCH', headers: ghHeaders(), body: JSON.stringify({ files: { [FILE]: { content } } }) });
+    if (!r.ok) throw new Error('GitHub ' + r.status); return true;
+  }
+
+  function setStatus(s) { statusText = s; const e = document.getElementById('sync-status'); if (e) e.textContent = s; }
+
+  async function doPull(force) {
+    if (!enabled || !TOKEN || !gistId || applying || busy || !dbReady()) return false;
+    busy = true; setStatus('Verificando nuvem…'); renderPanel();
+    let ok = false, changed = false;
+    try {
+      const txt = await ghRead(gistId);
+      if (txt) {
+        const snap = JSON.parse(txt);
+        const isNewer = force || !lastPulledAt || (snap.updatedAt && snap.updatedAt > lastPulledAt);
+        const isOurs = snap.device === DEVICE && snap.updatedAt === lastPushedAt;
+        if (isNewer && !isOurs) { await applySnapshot(snap); changed = true; }
+        lastPulledAt = snap.updatedAt; cfgSet('lastPulledAt', snap.updatedAt);
+        conflict = false; setStatus('Sincronizado');
+      } else { setStatus('Sincronizado'); }
+      ok = true;
+    } catch (e) { console.warn(e); setStatus('Erro: ' + e.message); toast('Sincronização: ' + e.message, 'error'); }
+    finally { busy = false; renderPanel(); }
+    if (changed) { toast('Dados atualizados da nuvem ✅', 'success'); await refreshApp(); }
+    return ok;
+  }
+
+  async function doPush(forceOverwrite) {
+    if (!enabled || !TOKEN || !gistId || applying || busy || !dbReady()) return;
+    busy = true; pendingPush = false; setStatus('Enviando…'); renderPanel();
+    try {
+      if (!forceOverwrite) {
+        const remoteTxt = await ghRead(gistId);
+        if (remoteTxt) {
+          const r = JSON.parse(remoteTxt);
+          if (r.updatedAt && lastPulledAt && r.updatedAt > lastPulledAt && r.device !== DEVICE) {
+            conflict = true; setStatus('Conflito detectado');
+            toast('A nuvem tem alterações de outro aparelho. Resolva o conflito.', 'error'); return;
+          }
+        }
+      }
+      const snap = await buildSnapshot();
+      await ghWrite(gistId, JSON.stringify(snap));
+      lastPushedAt = snap.updatedAt; lastPulledAt = snap.updatedAt;
+      cfgSet('lastPushedAt', snap.updatedAt); cfgSet('lastPulledAt', snap.updatedAt);
+      dirty = false; conflict = false; setStatus('Sincronizado');
+    } catch (e) {
+      console.warn(e); setStatus('Erro: ' + e.message); toast('Falha ao enviar: ' + e.message, 'error'); pendingPush = true;
+    } finally {
+      busy = false; renderPanel();
+      if (pendingPush && enabled && !conflict) { pendingPush = false; clearTimeout(pushTimer); pushTimer = setTimeout(() => doPush(false), PUSH_DELAY); }
+    }
+  }
+
+  async function syncNow() { await doPull(false); if (!conflict) await doPush(false); }
+
+  function markDirty() {
+    if (!enabled || applying || !booted) return;
+    dirty = true; setStatus('Alterações pendentes…');
+    if (busy) { pendingPush = true; return; }
+    clearTimeout(pushTimer); pushTimer = setTimeout(() => doPush(false), PUSH_DELAY);
+  }
+
+  async function connect(token) {
+    if (!token) { toast('Cole o token', 'error'); return; }
+    if (!dbReady()) { toast('Aguarde o app carregar e tente de novo', 'error'); return; }
+    busy = true; setStatus('Conectando…'); renderPanel();
+    try {
+      TOKEN = token.trim(); cfgSet('token', TOKEN);
+      let id = gistId || cfgGet('gistId'); let created = false;
+      if (!id) id = await ghFind();
+      if (!id) { const snap = await buildSnapshot(); id = await ghCreate(JSON.stringify(snap)); lastPushedAt = snap.updatedAt; lastPulledAt = snap.updatedAt; cfgSet('lastPushedAt', snap.updatedAt); cfgSet('lastPulledAt', snap.updatedAt); created = true; }
+      gistId = id; cfgSet('gistId', id);
+      enabled = true; cfgSet('enabled', '1');
+      busy = false;
+      if (!created) { await doPull(true); }   // entrou numa sincronização existente: nuvem manda
+      setStatus('Sincronizado'); toast('Sincronização ativada ✅', 'success'); renderPanel();
+    } catch (e) { busy = false; console.warn(e); setStatus('Erro: ' + e.message); toast('Falha: ' + e.message, 'error'); renderPanel(); }
+  }
+  function disconnect() { enabled = false; cfgSet('enabled', '0'); setStatus('Pausada'); toast('Sincronização pausada'); renderPanel(); }
+  function forget() {
+    enabled = false;
+    ['token', 'gistId', 'enabled', 'lastPulledAt', 'lastPushedAt'].forEach(cfgDel);
+    TOKEN = null; gistId = null; lastPulledAt = null; lastPushedAt = null;
+    setStatus('Não configurado'); toast('Credenciais removidas deste aparelho'); renderPanel();
+  }
+
+  /* ---------- Interface (Bootstrap, painel Configurações) ---------- */
+  function fmtWhen(iso) { if (!iso) return '—'; try { return new Date(iso).toLocaleString('pt-BR'); } catch (e) { return iso; } }
+
+  function renderPanel() {
+    const host = document.getElementById('sync-panel');
+    if (!host) return;
+    const on = (id, fn) => { const e = document.getElementById(id); if (e) e.onclick = fn; };
+    if (!enabled) {
+      host.innerHTML =
+        '<div class="card card-dashboard mb-4"><div class="card-body">'
+        + '<h4 class="card-title"><i class="fas fa-cloud me-2 text-info"></i>Sincronização na nuvem</h4>'
+        + '<p class="text-muted mb-3" style="font-size:0.85rem;">Mantém todos os seus dados iguais em todos os aparelhos usando um <strong>Gist privado do GitHub</strong> (grátis). Baixa ao abrir e envia automaticamente a cada alteração.</p>'
+        + '<ol style="font-size:0.82rem;color:#6c757d;padding-left:18px;line-height:1.7;">'
+        + '<li>Tenha uma conta no <strong>github.com</strong>.</li>'
+        + '<li>Abra <a href="https://github.com/settings/tokens/new?scopes=gist&description=AcademicoPro" target="_blank" rel="noopener">este link</a> para gerar um <strong>token</strong> (escopo <em>gist</em> já marcado) e clique em <em>Generate token</em>.</li>'
+        + '<li>Copie o token (começa com <code>ghp_</code>) e cole abaixo.</li>'
+        + '<li>Nos <strong>outros aparelhos</strong>, cole o <strong>mesmo token</strong>.</li>'
+        + '</ol>'
+        + '<div class="input-group mt-2">'
+        + '<input type="password" class="form-control" id="sync-token" placeholder="ghp_..." autocomplete="off" style="font-family:monospace;font-size:0.82rem;">'
+        + '<button class="btn btn-outline-secondary" type="button" id="sync-token-eye"><i class="fas fa-eye"></i></button>'
+        + '</div>'
+        + '<button class="btn btn-info w-100 mt-3 text-white" id="sync-connect-btn"><i class="fas fa-plug me-1"></i> Conectar e sincronizar</button>'
+        + '<div class="alert alert-warning mt-3 mb-0" style="font-size:0.78rem;"><i class="fas fa-triangle-exclamation me-1"></i> Ao conectar a uma sincronização que já existe, os dados da nuvem <strong>substituem</strong> os locais. Conecte primeiro o aparelho com os dados certos.</div>'
+        + '</div></div>';
+      on('sync-connect-btn', () => connect((document.getElementById('sync-token') || {}).value || ''));
+      on('sync-token-eye', () => { const i = document.getElementById('sync-token'); if (i) i.type = i.type === 'password' ? 'text' : 'password'; });
+      return;
+    }
+    host.innerHTML =
+      '<div class="card card-dashboard mb-4"><div class="card-body">'
+      + '<h4 class="card-title"><i class="fas fa-cloud me-2 text-info"></i>Sincronização na nuvem</h4>'
+      + (conflict
+        ? '<div class="alert alert-danger" style="font-size:0.85rem;"><strong><i class="fas fa-triangle-exclamation me-1"></i>Conflito.</strong> A nuvem foi alterada por outro aparelho depois da sua última sincronização. Escolha qual versão vale:'
+          + '<div class="d-flex gap-2 mt-2"><button class="btn btn-sm btn-primary" id="sync-resolve-pull">Usar a da nuvem</button><button class="btn btn-sm btn-outline-danger" id="sync-resolve-push">Usar a deste aparelho</button></div></div>'
+        : '')
+      + '<div class="d-flex justify-content-between align-items-center p-2 rounded mb-3" style="background:rgba(0,0,0,0.04);">'
+      + '<div><div style="font-size:0.7rem;color:#95a5a6;text-transform:uppercase;letter-spacing:.05em;">Status</div><div id="sync-status" style="font-weight:700;">' + statusText + '</div></div>'
+      + '<div class="text-end"><div style="font-size:0.7rem;color:#95a5a6;text-transform:uppercase;letter-spacing:.05em;">Último envio</div><div style="font-weight:600;font-size:0.85rem;">' + fmtWhen(lastPushedAt) + '</div></div>'
+      + '</div>'
+      + '<button class="btn btn-info w-100 text-white" id="sync-now-btn"' + (busy ? ' disabled' : '') + '><i class="fas fa-arrows-rotate me-1"></i> Sincronizar agora</button>'
+      + '<p class="text-muted mt-3 mb-0" style="font-size:0.78rem;">Envio automático e imediato a cada alteração, e baixa automática ao abrir o app ou voltar para ele. Resolução por “último a salvar vence”.</p>'
+      + '<div class="d-flex gap-2 mt-3">'
+      + '<button class="btn btn-sm btn-outline-secondary flex-fill" id="sync-pause-btn"><i class="fas fa-pause me-1"></i>Pausar</button>'
+      + '<button class="btn btn-sm btn-outline-danger flex-fill" id="sync-forget-btn"><i class="fas fa-trash me-1"></i>Remover token</button>'
+      + '</div>'
+      + '</div></div>';
+    on('sync-now-btn', syncNow);
+    on('sync-pause-btn', disconnect);
+    on('sync-forget-btn', forget);
+    on('sync-resolve-pull', async () => { conflict = false; await doPull(true); });
+    on('sync-resolve-push', async () => { conflict = false; await doPush(true); });
+  }
+
+  function injectUI() {
+    const panel = document.getElementById('configuracoes');
+    if (!panel || document.getElementById('sync-panel')) return;
+    const wrap = document.createElement('div'); wrap.id = 'sync-panel';
+    panel.appendChild(wrap);
+    renderPanel();
+  }
+
+  /* ---------- Boot ---------- */
+  let _booting = false;
+  async function tryBoot() {
+    if (booted || _booting) return;
+    if (!dbReady() || !loginDone()) return;   // espera o app abrir o banco e o login concluir
+    _booting = true;
+    loadCfg();
+    injectUI();
+    setStatus(enabled ? 'Sincronizado' : (TOKEN ? 'Pausada' : 'Não configurado'));
+    renderPanel();
+    booted = true;
+    if (enabled && TOKEN && gistId) { await doPull(false); }   // baixa automática ao entrar
+  }
+
+  const _bootTimer = setInterval(() => { tryBoot().catch(e => console.warn('sync boot', e)); if (booted) clearInterval(_bootTimer); }, 800);
+
+  document.addEventListener('visibilitychange', () => {
+    if (!enabled || !booted) return;
+    if (document.hidden) { if (dirty && !busy) doPush(false); }
+    else if (!busy) doPull(false);
+  });
+  setInterval(() => { if (enabled && booted && !document.hidden && !busy && !dirty) doPull(false); }, 180000);
+
+})();
+</script>
+
 </body>
 </html>
