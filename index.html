@@ -23239,8 +23239,18 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
     log('Banco de dados pronto: ' + (dbReady() ? 'sim' : 'NÃO'));
     log('Login concluído: ' + (loginDone() ? 'sim' : 'não'));
     log('Token informado: ' + (TOKEN ? 'sim' : 'NÃO'));
+    log('Testando alcance do GitHub (sem token)…');
+    try {
+      const r0 = await fetch('https://api.github.com/zen', { cache: 'no-store' });
+      log('GitHub alcançável: sim (' + r0.status + ')');
+    } catch (e0) {
+      log('GitHub BLOQUEADO pelo navegador/rede: ' + e0.message);
+      log('→ Causa provável: extensão do Chrome (bloqueador/privacidade) ou rede filtrando api.github.com.');
+      log('→ Teste numa janela anônima (sem extensões) ou em outra rede / dados móveis.');
+      return;
+    }
     if (!TOKEN) { log('→ Cole o token e conecte primeiro.'); return; }
-    log('Testando GitHub…');
+    log('Testando com seu token…');
     try {
       const r = await fetch('https://api.github.com/gists?per_page=1', { headers: ghHeaders() });
       log('Resposta do GitHub: ' + r.status + (r.status === 200 ? ' (OK)' : r.status === 401 ? ' (token inválido/expirado)' : r.status === 403 ? ' (sem permissão de gist)' : ''));
