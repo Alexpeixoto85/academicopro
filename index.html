@@ -23003,6 +23003,8 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
   const FILE = 'academico-sync.json';
   const DESC = 'Acadêmico Pro — sincronização (não editar manualmente)';
   const PUSH_DELAY = 700;
+  const LIGHT_STORE_LIMIT = 3 * 1024 * 1024;   // stores acima disso (arquivos pesados) não sincronizam
+  const LIGHT_LS_LIMIT = 200 * 1024;           // valores grandes do localStorage (ex.: imagem de fundo) ficam locais
   // Chaves de localStorage que NÃO devem ser sincronizadas (login/sessão/config do dispositivo)
   function isBlockedLS(k) { return !k || k.indexOf('acpro_') === 0 || k.indexOf('__sync_') === 0; }
   function isSyncCfgKey(k) { return !k || k.indexOf('__sync_') === 0; }
@@ -23011,7 +23013,7 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
   let TOKEN = null, gistId = null, enabled = false, DEVICE = null;
   let lastPulledAt = null, lastPushedAt = null;
   let dirty = false, busy = false, conflict = false, pendingPush = false, pushTimer = null;
-  let lastError = '', lastSize = 0;
+  let lastError = '', lastSize = 0, lastExcluded = [];
   let statusText = 'Não configurado';
 
   /* ---------- Detecção de alterações: intercepta escritas no IndexedDB ---------- */
@@ -23049,11 +23051,24 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
   function storeNames() { try { return Array.from(acad().getDb().objectStoreNames); } catch (e) { return []; } }
 
   async function buildSnapshot() {
-    const a = acad(); const stores = {};
-    for (const s of storeNames()) { try { stores[s] = await a.readAllFromStore(s); } catch (e) { stores[s] = []; } }
+    const a = acad(); const stores = {}; const excluded = [];
+    for (const s of storeNames()) {
+      let recs = [];
+      try { recs = await a.readAllFromStore(s); } catch (e) { recs = []; }
+      // Stores pesadas (PDFs, vídeos, imagens, certificados) ficam só no aparelho
+      let big = false;
+      try { big = JSON.stringify(recs || []).length > LIGHT_STORE_LIMIT; } catch (e) { big = true; }
+      if (big) { excluded.push(s); continue; }
+      stores[s] = recs;
+    }
     const ls = {};
-    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!isBlockedLS(k)) ls[k] = localStorage.getItem(k); }
-    return { v: 1, app: 'academicopro', updatedAt: new Date().toISOString(), device: DEVICE, stores, ls };
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i); if (isBlockedLS(k)) continue;
+      const val = localStorage.getItem(k);
+      if (val != null && val.length <= LIGHT_LS_LIMIT) ls[k] = val;   // ignora valores grandes (ex.: imagem de fundo)
+    }
+    lastExcluded = excluded;
+    return { v: 1, app: 'academicopro', updatedAt: new Date().toISOString(), device: DEVICE, mode: 'light', excluded, stores, ls };
   }
 
   async function applySnapshot(snap) {
@@ -23068,11 +23083,12 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
         const recs = stores[s] || [];
         if (recs.length) { try { await a.putRecordsBatch(s, recs); } catch (e) {} }
       }
-      // localStorage (configurações), sem mexer nas chaves de login
+      // localStorage (configurações), sem mexer nas chaves de login nem nos valores grandes locais
       const ls = snap.ls || {};
-      const current = [];
-      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!isBlockedLS(k)) current.push(k); }
-      for (const k of current) { if (!(k in ls)) _lsRemove(k); }
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i); if (isBlockedLS(k)) continue;
+        if (!(k in ls)) { const v = localStorage.getItem(k); if (v != null && v.length <= LIGHT_LS_LIMIT) _lsRemove(k); }
+      }
       for (const k in ls) { try { _lsSet(k, ls[k]); } catch (e) {} }
     } finally { applying = false; }
   }
@@ -23257,9 +23273,16 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
     } catch (e) { log('Falha de rede ao falar com o GitHub: ' + e.message); }
     try {
       if (dbReady()) {
-        const snap = await buildSnapshot();
-        const mb = (JSON.stringify(snap).length / 1048576);
-        log('Tamanho dos seus dados: ' + mb.toFixed(2) + ' MB' + (mb > 9 ? ' ⚠️ grande demais para o Gist' : ''));
+        const a = acad();
+        const sizes = [];
+        let total = 0;
+        for (const s of storeNames()) {
+          try { const recs = await a.readAllFromStore(s); const sz = JSON.stringify(recs || []).length; sizes.push([s, sz]); total += sz; } catch (e) {}
+        }
+        sizes.sort((x, y) => y[1] - x[1]);
+        log('Tamanho total: ' + (total / 1048576).toFixed(2) + ' MB' + (total > 9000000 ? ' ⚠️ grande demais para o Gist' : ''));
+        log('Por categoria (maiores):');
+        sizes.slice(0, 6).forEach(([s, sz]) => { if (sz > 1024) log('  • ' + s + ': ' + (sz / 1048576).toFixed(2) + ' MB'); });
       }
     } catch (e) { log('Erro ao medir dados: ' + e.message); }
     log('Gist conectado: ' + (gistId ? gistId : 'nenhum ainda'));
@@ -23306,6 +23329,7 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
       + '</div>'
       + '<button class="btn btn-info w-100 text-white" id="sync-now-btn"' + (busy ? ' disabled' : '') + '><i class="fas fa-arrows-rotate me-1"></i> Sincronizar agora</button>'
       + '<p class="text-muted mt-3 mb-0" style="font-size:0.78rem;">Envio automático e imediato a cada alteração, e baixa automática ao abrir o app ou voltar para ele. Resolução por “último a salvar vence”.</p>'
+      + (lastExcluded && lastExcluded.length ? '<div class="alert alert-info mt-2 mb-0" style="font-size:0.76rem;"><i class="fas fa-hard-drive me-1"></i> Arquivos grandes (' + lastExcluded.join(', ') + ') ficam só neste aparelho e não são sincronizados.</div>' : '')
       + '<div class="d-flex gap-2 mt-3">'
       + '<button class="btn btn-sm btn-outline-secondary flex-fill" id="sync-pause-btn"><i class="fas fa-pause me-1"></i>Pausar</button>'
       + '<button class="btn btn-sm btn-outline-danger flex-fill" id="sync-forget-btn"><i class="fas fa-trash me-1"></i>Remover token</button>'
