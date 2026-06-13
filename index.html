@@ -23009,8 +23009,8 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
   const MANIFEST = 'academico-sync.json';       // dados leves + índice das stores pesadas
   const STORE_DIR = 'stores/';                  // arquivos das stores pesadas (PDFs, imagens, documentos...)
   const PUSH_DELAY = 900;
-  const LIGHT_STORE_LIMIT = 1.5 * 1024 * 1024;  // stores acima disso viram arquivo(s) próprio(s) no repo
-  const CHUNK_LIMIT = 30 * 1024 * 1024;         // tamanho máx. (texto) por arquivo de store; acima disso divide em partes
+  const LIGHT_STORE_LIMIT = 512 * 1024;         // stores acima disso viram arquivo(s) próprio(s) no repo (mantém o manifesto pequeno)
+  const CHUNK_LIMIT = 7 * 1024 * 1024;          // bytes por arquivo de store — abaixo do limite do endpoint de blob do GitHub
   const LIGHT_LS_LIMIT = 200 * 1024;            // valores enormes do localStorage (ex.: imagem de fundo) ficam locais
 
   // Chaves de localStorage que NÃO devem ser sincronizadas (login/sessão/config interna)
@@ -23102,15 +23102,14 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
     }
     return ls;
   }
-  // Divide os registros de uma store pesada em partes-texto abaixo de CHUNK_LIMIT
-  function chunkRecords(recs) {
-    const parts = []; let cur = []; let curLen = 2;
-    for (const r of (recs || [])) {
-      let rl = 0; try { rl = JSON.stringify(r).length + 1; } catch (e) { rl = 0; }
-      if (cur.length && curLen + rl > CHUNK_LIMIT) { parts.push(cur); cur = []; curLen = 2; }
-      cur.push(r); curLen += rl;
-    }
-    if (cur.length || !parts.length) parts.push(cur);
+  // Serializa os registros de uma store e divide em fatias de BYTES abaixo de CHUNK_LIMIT.
+  // Fatiar por bytes (e não por registro) garante que até um único registro enorme
+  // (ex.: um PDF de 40 MB) seja dividido em vários arquivos e remontado na leitura.
+  function chunkStoreBytes(recs) {
+    const full = strToBytes(JSON.stringify(recs || []));
+    const parts = [];
+    if (full.length === 0) { parts.push(strToBytes('[]')); return parts; }
+    for (let off = 0; off < full.length; off += CHUNK_LIMIT) parts.push(full.subarray(off, Math.min(off + CHUNK_LIMIT, full.length)));
     return parts;
   }
 
@@ -23229,6 +23228,12 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
     if (b.encoding === 'base64') return bytesToStr(b64ToBytes(b.content));
     return b.content || '';
   }
+  async function ghReadBlobBytes(sha) {
+    const b = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/blobs/' + sha, { headers: ghHeaders() });
+    if (b.__404) return new Uint8Array();
+    if (b.encoding === 'base64') return b64ToBytes(b.content);
+    return strToBytes(b.content || '');
+  }
   async function ghCreateBlob(bytes) {
     const res = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/blobs', {
       method: 'POST', headers: ghHeaders({ 'Content-Type': 'application/json' }),
@@ -23292,14 +23297,22 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
             const stores = Object.assign({}, man.stores || {});
             const heavy = man.heavy || [];
             for (const h of heavy) {
-              let recs = [];
               const parts = h.parts || 1;
+              const chunks = [];
               for (let p = 0; p < parts; p++) {
                 const path = STORE_DIR + h.name + '.part' + p + '.json';
                 const sha = map.files[path];
                 if (!sha) continue;
-                try { const arr = JSON.parse(await ghReadBlobText(sha)); if (Array.isArray(arr)) recs = recs.concat(arr); } catch (e) {}
+                try { chunks.push(await ghReadBlobBytes(sha)); } catch (e) {}
               }
+              let recs = [];
+              try {
+                let totalLen = 0; chunks.forEach(c => totalLen += c.length);
+                const merged = new Uint8Array(totalLen); let off = 0;
+                chunks.forEach(c => { merged.set(c, off); off += c.length; });
+                const arr = JSON.parse(bytesToStr(merged));
+                if (Array.isArray(arr)) recs = arr;
+              } catch (e) {}
               stores[h.name] = recs;
             }
             await applyData(stores, man.ls || {});
@@ -23341,10 +23354,10 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
       const updatedAt = new Date().toISOString();
       const heavyMeta = []; const files = []; let total = 0;
       for (const name in collected.heavy) {
-        const parts = chunkRecords(collected.heavy[name]);
+        const parts = chunkStoreBytes(collected.heavy[name]);
         heavyMeta.push({ name: name, parts: parts.length });
-        parts.forEach((arr, idx) => {
-          const bytes = strToBytes(JSON.stringify(arr)); total += bytes.length;
+        parts.forEach((bytes, idx) => {
+          total += bytes.length;
           files.push({ path: STORE_DIR + name + '.part' + idx + '.json', bytes: bytes });
         });
       }
