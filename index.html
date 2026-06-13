@@ -22990,9 +22990,12 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
 
 
 <!-- ============================================================
-     Acadêmico Pro — Sincronização automática na nuvem (GitHub Gist)
+     Acadêmico Pro — Sincronização automática na nuvem (Repositório GitHub)
      Sincroniza todas as stores do IndexedDB (academicoProDB) + configurações
-     do localStorage entre dispositivos. Baixa ao entrar e envia a cada alteração.
+     do localStorage entre dispositivos usando um REPOSITÓRIO PRIVADO do GitHub
+     (via Git Data API). Diferente do Gist, SUPORTA ARQUIVOS GRANDES: PDFs,
+     imagens e documentos passam a sincronizar — cada arquivo de store pesada
+     pode ter dezenas de MB e é dividido automaticamente em partes quando preciso.
      Usa a API window._acadApp (conexão única já aberta — sem 2ª conexão ao IDB).
 ============================================================ -->
 <script>
@@ -23000,20 +23003,24 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
   'use strict';
 
   const DB_NAME = 'academicoProDB';
-  const FILE = 'academico-sync.json';
-  const DESC = 'Acadêmico Pro — sincronização (não editar manualmente)';
-  const PUSH_DELAY = 700;
-  const LIGHT_STORE_LIMIT = 3 * 1024 * 1024;   // stores acima disso (arquivos pesados) não sincronizam
-  const LIGHT_LS_LIMIT = 200 * 1024;           // valores grandes do localStorage (ex.: imagem de fundo) ficam locais
-  // Chaves de localStorage que NÃO devem ser sincronizadas (login/sessão/config do dispositivo)
+  const REPO_DEFAULT = 'academico-pro-sync';   // repositório privado criado automaticamente
+  let BRANCH = 'main';                           // ajustado para o branch padrão real do repositório
+  let branchResolved = false;
+  const MANIFEST = 'academico-sync.json';       // dados leves + índice das stores pesadas
+  const STORE_DIR = 'stores/';                  // arquivos das stores pesadas (PDFs, imagens, documentos...)
+  const PUSH_DELAY = 900;
+  const LIGHT_STORE_LIMIT = 1.5 * 1024 * 1024;  // stores acima disso viram arquivo(s) próprio(s) no repo
+  const CHUNK_LIMIT = 30 * 1024 * 1024;         // tamanho máx. (texto) por arquivo de store; acima disso divide em partes
+  const LIGHT_LS_LIMIT = 200 * 1024;            // valores enormes do localStorage (ex.: imagem de fundo) ficam locais
+
+  // Chaves de localStorage que NÃO devem ser sincronizadas (login/sessão/config interna)
   function isBlockedLS(k) { return !k || k.indexOf('acpro_') === 0 || k.indexOf('__sync_') === 0; }
-  function isSyncCfgKey(k) { return !k || k.indexOf('__sync_') === 0; }
 
   let applying = false, booted = false;
-  let TOKEN = null, gistId = null, enabled = false, DEVICE = null;
+  let TOKEN = null, OWNER = null, REPO = null, enabled = false, DEVICE = null;
   let lastPulledAt = null, lastPushedAt = null;
   let dirty = false, busy = false, conflict = false, pendingPush = false, pushTimer = null;
-  let lastError = '', lastSize = 0, lastExcluded = [];
+  let lastError = '', lastSize = 0, syncedHeavy = [];
   let statusText = 'Não configurado';
 
   /* ---------- Detecção de alterações: intercepta escritas no IndexedDB ---------- */
@@ -23050,46 +23057,80 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
   function loginDone() { const ls = document.getElementById('loginScreen'); return !ls || ls.style.display === 'none' || getComputedStyle(ls).display === 'none'; }
   function storeNames() { try { return Array.from(acad().getDb().objectStoreNames); } catch (e) { return []; } }
 
-  async function buildSnapshot() {
-    const a = acad(); const stores = {}; const excluded = [];
+  /* ---------- Utilidades: bytes / base64 / git sha ---------- */
+  function strToBytes(s) { return new TextEncoder().encode(s); }
+  function bytesToStr(b) { return new TextDecoder().decode(b); }
+  function bytesToB64(bytes) {
+    let bin = ''; const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    return btoa(bin);
+  }
+  function b64ToBytes(b64) {
+    const bin = atob((b64 || '').replace(/\s/g, '')); const len = bin.length;
+    const out = new Uint8Array(len); for (let i = 0; i < len; i++) out[i] = bin.charCodeAt(i); return out;
+  }
+  // SHA-1 no formato de blob do Git ("blob <len>\0<conteúdo>"): permite reaproveitar
+  // arquivos que não mudaram e evitar reenviar PDFs/imagens a cada alteração.
+  async function gitBlobSha(bytes) {
+    try {
+      if (!(window.crypto && crypto.subtle)) return null;
+      const header = strToBytes('blob ' + bytes.length + '\u0000');
+      const full = new Uint8Array(header.length + bytes.length);
+      full.set(header, 0); full.set(bytes, header.length);
+      const d = await crypto.subtle.digest('SHA-1', full);
+      return Array.from(new Uint8Array(d)).map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (e) { return null; }
+  }
+
+  /* ---------- Montagem dos dados ---------- */
+  // Lê todas as stores e separa em leves (vão no manifesto) e pesadas (arquivos próprios)
+  async function collectStores() {
+    const a = acad(); const light = {}; const heavy = {};
     for (const s of storeNames()) {
-      let recs = [];
-      try { recs = await a.readAllFromStore(s); } catch (e) { recs = []; }
-      // Stores pesadas (PDFs, vídeos, imagens, certificados) ficam só no aparelho
-      let big = false;
-      try { big = JSON.stringify(recs || []).length > LIGHT_STORE_LIMIT; } catch (e) { big = true; }
-      if (big) { excluded.push(s); continue; }
-      stores[s] = recs;
+      let recs = []; try { recs = await a.readAllFromStore(s); } catch (e) { recs = []; }
+      let size = 0; try { size = JSON.stringify(recs || []).length; } catch (e) { size = Infinity; }
+      if (size > LIGHT_STORE_LIMIT) heavy[s] = recs || []; else light[s] = recs || [];
     }
+    return { light, heavy };
+  }
+  function collectLS() {
     const ls = {};
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i); if (isBlockedLS(k)) continue;
       const val = localStorage.getItem(k);
-      if (val != null && val.length <= LIGHT_LS_LIMIT) ls[k] = val;   // ignora valores grandes (ex.: imagem de fundo)
+      if (val != null && val.length <= LIGHT_LS_LIMIT) ls[k] = val;   // ignora valores enormes (ex.: imagem de fundo)
     }
-    lastExcluded = excluded;
-    return { v: 1, app: 'academicopro', updatedAt: new Date().toISOString(), device: DEVICE, mode: 'light', excluded, stores, ls };
+    return ls;
+  }
+  // Divide os registros de uma store pesada em partes-texto abaixo de CHUNK_LIMIT
+  function chunkRecords(recs) {
+    const parts = []; let cur = []; let curLen = 2;
+    for (const r of (recs || [])) {
+      let rl = 0; try { rl = JSON.stringify(r).length + 1; } catch (e) { rl = 0; }
+      if (cur.length && curLen + rl > CHUNK_LIMIT) { parts.push(cur); cur = []; curLen = 2; }
+      cur.push(r); curLen += rl;
+    }
+    if (cur.length || !parts.length) parts.push(cur);
+    return parts;
   }
 
-  async function applySnapshot(snap) {
+  async function applyData(stores, ls) {
     applying = true;
     try {
-      const a = acad();
-      const stores = snap.stores || {};
-      const existing = storeNames();
+      const a = acad(); const existing = storeNames();
       for (const s of Object.keys(stores)) {
         if (existing.indexOf(s) < 0) continue;
         try { await a.clearStore(s); } catch (e) {}
         const recs = stores[s] || [];
         if (recs.length) { try { await a.putRecordsBatch(s, recs); } catch (e) {} }
       }
-      // localStorage (configurações), sem mexer nas chaves de login nem nos valores grandes locais
-      const ls = snap.ls || {};
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i); if (isBlockedLS(k)) continue;
-        if (!(k in ls)) { const v = localStorage.getItem(k); if (v != null && v.length <= LIGHT_LS_LIMIT) _lsRemove(k); }
+      if (ls) {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i); if (isBlockedLS(k)) continue;
+          if (!(k in ls)) { const v = localStorage.getItem(k); if (v != null && v.length <= LIGHT_LS_LIMIT) _lsRemove(k); }
+        }
+        for (const k in ls) { try { _lsSet(k, ls[k]); } catch (e) {} }
       }
-      for (const k in ls) { try { _lsSet(k, ls[k]); } catch (e) {} }
     } finally { applying = false; }
   }
 
@@ -23107,8 +23148,8 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
   function cfgSet(k, v) { try { _lsSet('__sync_' + k, v); } catch (e) {} }
   function cfgDel(k) { try { _lsRemove('__sync_' + k); } catch (e) {} }
   function loadCfg() {
-    TOKEN = cfgGet('token'); gistId = cfgGet('gistId');
-    enabled = cfgGet('enabled') === '1';
+    TOKEN = cfgGet('token'); OWNER = cfgGet('owner'); REPO = cfgGet('repo') || REPO_DEFAULT;
+    enabled = cfgGet('enabled') === '1' && !!TOKEN && !!OWNER && !!REPO;
     lastPulledAt = cfgGet('lastPulledAt'); lastPushedAt = cfgGet('lastPushedAt');
     DEVICE = cfgGet('device');
     if (!DEVICE) { DEVICE = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36); cfgSet('device', DEVICE); }
@@ -23127,78 +23168,201 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
     } catch (e) {}
   }
 
-  /* ---------- GitHub Gist ---------- */
-  function ghHeaders() { return { 'Authorization': 'Bearer ' + TOKEN, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json' }; }
-  async function ghFind() {
-    const r = await fetch('https://api.github.com/gists?per_page=100', { headers: ghHeaders() });
-    if (!r.ok) throw new Error('GitHub ' + r.status + (r.status === 401 ? ' (token inválido)' : ''));
-    const arr = await r.json(); const g = arr.find(x => x.files && x.files[FILE]); return g ? g.id : null;
+  /* ---------- GitHub: repositório privado via Git Data API ---------- */
+  function ghHeaders(extra) {
+    return Object.assign({ 'Authorization': 'Bearer ' + TOKEN, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' }, extra || {});
   }
-  async function ghCreate(content) {
-    const r = await fetch('https://api.github.com/gists', { method: 'POST', headers: ghHeaders(), body: JSON.stringify({ description: DESC, public: false, files: { [FILE]: { content } } }) });
-    if (!r.ok) throw new Error('GitHub ' + r.status); return (await r.json()).id;
+  async function ghJSON(url, opts) {
+    const r = await fetch(url, opts || { headers: ghHeaders() });
+    if (r.status === 404) return { __404: true };
+    if (!r.ok) {
+      let detail = ''; try { detail = (await r.json()).message || ''; } catch (e) {}
+      throw new Error('GitHub ' + r.status + (r.status === 401 ? ' (token inválido/expirado)' : r.status === 403 ? ' (sem permissão — o token precisa do escopo "repo")' : (detail ? ' — ' + detail : '')));
+    }
+    if (r.status === 204) return {};
+    try { return await r.json(); } catch (e) { return {}; }
   }
-  async function ghRead(id) {
-    const r = await fetch('https://api.github.com/gists/' + id, { headers: ghHeaders() });
-    if (!r.ok) throw new Error('GitHub ' + r.status);
-    const g = await r.json(); const f = g.files && g.files[FILE]; if (!f) return null;
-    if (f.truncated && f.raw_url) { const rr = await fetch(f.raw_url); return await rr.text(); }
-    return f.content;
+  async function ghWhoAmI() {
+    const u = await ghJSON('https://api.github.com/user', { headers: ghHeaders() });
+    if (u.__404 || !u.login) throw new Error('Não foi possível identificar a conta do GitHub');
+    return u.login;
   }
-  async function ghWrite(id, content) {
-    const r = await fetch('https://api.github.com/gists/' + id, { method: 'PATCH', headers: ghHeaders(), body: JSON.stringify({ files: { [FILE]: { content } } }) });
-    if (!r.ok) throw new Error('GitHub ' + r.status); return true;
+  async function ghGetRef() {
+    const ref = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/ref/heads/' + BRANCH, { headers: ghHeaders() });
+    if (ref.__404 || !ref.object) return null;
+    return ref.object.sha;   // sha do commit mais recente
+  }
+  // Descobre o branch padrão real do repositório (pode não ser "main")
+  async function ensureBranch() {
+    if (branchResolved) return;
+    try {
+      const got = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO, { headers: ghHeaders() });
+      if (!got.__404 && got.default_branch) BRANCH = got.default_branch;
+      branchResolved = true;
+    } catch (e) {}
+  }
+  async function ghEnsureRepo() {
+    let got = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO, { headers: ghHeaders() });
+    if (got.__404) {
+      await ghJSON('https://api.github.com/user/repos', {
+        method: 'POST', headers: ghHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ name: REPO, private: true, auto_init: true, description: 'Acadêmico Pro — sincronização (não editar manualmente)' })
+      });
+      for (let i = 0; i < 10; i++) { await new Promise(res => setTimeout(res, 800)); got = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO, { headers: ghHeaders() }); if (!got.__404) break; }
+    }
+    if (got && !got.__404 && got.default_branch) BRANCH = got.default_branch;
+    branchResolved = true;
+    for (let i = 0; i < 10; i++) { if (await ghGetRef()) return true; await new Promise(res => setTimeout(res, 800)); }
+    return true;
+  }
+  async function ghGetTreeMap(commitSha) {
+    const commit = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/commits/' + commitSha, { headers: ghHeaders() });
+    const treeSha = commit.tree && commit.tree.sha;
+    const tree = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/trees/' + treeSha + '?recursive=1', { headers: ghHeaders() });
+    const files = {};
+    (tree.tree || []).forEach(e => { if (e.type === 'blob') files[e.path] = e.sha; });
+    return { headCommit: commitSha, treeSha: treeSha, files: files, baseTree: commit.tree.sha };
+  }
+  async function ghReadBlobText(sha) {
+    const b = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/blobs/' + sha, { headers: ghHeaders() });
+    if (b.__404) return null;
+    if (b.encoding === 'base64') return bytesToStr(b64ToBytes(b.content));
+    return b.content || '';
+  }
+  async function ghCreateBlob(bytes) {
+    const res = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/blobs', {
+      method: 'POST', headers: ghHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ content: bytesToB64(bytes), encoding: 'base64' })
+    });
+    return res.sha;
+  }
+  // UM commit com todos os arquivos desejados. Reaproveita blobs idênticos e
+  // remove arquivos gerenciados (manifesto + stores/*) que não fazem mais parte.
+  async function ghCommitFiles(desired, baseCommitSha, baseFiles) {
+    const treeEntries = []; const desiredPaths = {};
+    for (const f of desired) {
+      desiredPaths[f.path] = true;
+      let sha = null;
+      const local = await gitBlobSha(f.bytes);
+      if (local && baseFiles[f.path] === local) sha = baseFiles[f.path];   // inalterado: reaproveita o blob remoto
+      if (!sha) sha = await ghCreateBlob(f.bytes);
+      treeEntries.push({ path: f.path, mode: '100644', type: 'blob', sha: sha });
+    }
+    for (const path in baseFiles) {
+      if (desiredPaths[path]) continue;
+      if (path === MANIFEST || path.indexOf(STORE_DIR) === 0) treeEntries.push({ path: path, mode: '100644', type: 'blob', sha: null });
+    }
+    const baseCommit = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/commits/' + baseCommitSha, { headers: ghHeaders() });
+    const newTree = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/trees', {
+      method: 'POST', headers: ghHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ base_tree: baseCommit.tree.sha, tree: treeEntries })
+    });
+    const newCommit = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/commits', {
+      method: 'POST', headers: ghHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ message: 'sync ' + new Date().toISOString(), tree: newTree.sha, parents: [baseCommitSha] })
+    });
+    await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/refs/heads/' + BRANCH, {
+      method: 'PATCH', headers: ghHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ sha: newCommit.sha, force: false })
+    });
+    return newCommit.sha;
   }
 
   function setStatus(s) { statusText = s; const e = document.getElementById('sync-status'); if (e) e.textContent = s; }
 
+  /* ---------- Baixar (pull) ---------- */
   async function doPull(force) {
-    if (!enabled || !TOKEN || !gistId || applying || busy || !dbReady()) return false;
+    if (!enabled || !TOKEN || !OWNER || !REPO || applying || busy || !dbReady()) return false;
     busy = true; setStatus('Verificando nuvem…'); renderPanel();
     let ok = false, changed = false;
     try {
-      const txt = await ghRead(gistId);
-      if (txt) {
-        const snap = JSON.parse(txt);
-        const isNewer = force || !lastPulledAt || (snap.updatedAt && snap.updatedAt > lastPulledAt);
-        const isOurs = snap.device === DEVICE && snap.updatedAt === lastPushedAt;
-        if (isNewer && !isOurs) { await applySnapshot(snap); changed = true; }
-        lastPulledAt = snap.updatedAt; cfgSet('lastPulledAt', snap.updatedAt);
-        conflict = false; setStatus('Sincronizado');
-      } else { setStatus('Sincronizado'); }
-      ok = true; lastError = '';
+      await ensureBranch();
+      const head = await ghGetRef();
+      if (!head) { setStatus('Sincronizado'); ok = true; lastError = ''; }
+      else {
+        const map = await ghGetTreeMap(head);
+        const manSha = map.files[MANIFEST];
+        if (!manSha) { setStatus('Sincronizado'); ok = true; lastError = ''; }
+        else {
+          const man = JSON.parse(await ghReadBlobText(manSha));
+          const isNewer = force || !lastPulledAt || (man.updatedAt && man.updatedAt > lastPulledAt);
+          const isOurs = man.device === DEVICE && man.updatedAt === lastPushedAt;
+          if (isNewer && !isOurs) {
+            setStatus('Baixando…'); renderPanel();
+            const stores = Object.assign({}, man.stores || {});
+            const heavy = man.heavy || [];
+            for (const h of heavy) {
+              let recs = [];
+              const parts = h.parts || 1;
+              for (let p = 0; p < parts; p++) {
+                const path = STORE_DIR + h.name + '.part' + p + '.json';
+                const sha = map.files[path];
+                if (!sha) continue;
+                try { const arr = JSON.parse(await ghReadBlobText(sha)); if (Array.isArray(arr)) recs = recs.concat(arr); } catch (e) {}
+              }
+              stores[h.name] = recs;
+            }
+            await applyData(stores, man.ls || {});
+            changed = true; syncedHeavy = heavy.map(h => h.name);
+          }
+          lastPulledAt = man.updatedAt; cfgSet('lastPulledAt', man.updatedAt);
+          conflict = false; setStatus('Sincronizado'); ok = true; lastError = '';
+        }
+      }
     } catch (e) { console.warn(e); lastError = e.message; setStatus('Erro: ' + e.message); toast('Sincronização: ' + e.message, 'error'); }
     finally { busy = false; renderPanel(); }
     if (changed) { toast('Dados atualizados da nuvem ✅', 'success'); await refreshApp(); }
     return ok;
   }
 
+  /* ---------- Enviar (push) ---------- */
   async function doPush(forceOverwrite) {
-    if (!enabled || !TOKEN || !gistId || applying || busy || !dbReady()) return;
+    if (!enabled || !TOKEN || !OWNER || !REPO || applying || busy || !dbReady()) return;
     busy = true; pendingPush = false; setStatus('Enviando…'); renderPanel();
     try {
-      if (!forceOverwrite) {
-        const remoteTxt = await ghRead(gistId);
-        if (remoteTxt) {
-          const r = JSON.parse(remoteTxt);
+      await ensureBranch();
+      let head = await ghGetRef();
+      if (!head) { await ghEnsureRepo(); head = await ghGetRef(); }
+      if (!head) throw new Error('Repositório sem branch principal');
+      const map = await ghGetTreeMap(head);
+
+      if (!forceOverwrite && map.files[MANIFEST]) {
+        try {
+          const r = JSON.parse(await ghReadBlobText(map.files[MANIFEST]));
           if (r.updatedAt && lastPulledAt && r.updatedAt > lastPulledAt && r.device !== DEVICE) {
             conflict = true; setStatus('Conflito detectado');
             toast('A nuvem tem alterações de outro aparelho. Resolva o conflito.', 'error'); return;
           }
-        }
+        } catch (e) {}
       }
-      const snap = await buildSnapshot();
-      const payload = JSON.stringify(snap);
-      lastSize = payload.length;
-      console.log('[sync] enviando ' + (lastSize / 1048576).toFixed(2) + ' MB');
-      await ghWrite(gistId, payload);
-      lastPushedAt = snap.updatedAt; lastPulledAt = snap.updatedAt;
-      cfgSet('lastPushedAt', snap.updatedAt); cfgSet('lastPulledAt', snap.updatedAt);
+
+      const collected = await collectStores();
+      const ls = collectLS();
+      const updatedAt = new Date().toISOString();
+      const heavyMeta = []; const files = []; let total = 0;
+      for (const name in collected.heavy) {
+        const parts = chunkRecords(collected.heavy[name]);
+        heavyMeta.push({ name: name, parts: parts.length });
+        parts.forEach((arr, idx) => {
+          const bytes = strToBytes(JSON.stringify(arr)); total += bytes.length;
+          files.push({ path: STORE_DIR + name + '.part' + idx + '.json', bytes: bytes });
+        });
+      }
+      const manifest = { v: 2, app: 'academicopro', updatedAt: updatedAt, device: DEVICE, stores: collected.light, ls: ls, heavy: heavyMeta };
+      const manBytes = strToBytes(JSON.stringify(manifest)); total += manBytes.length;
+      files.push({ path: MANIFEST, bytes: manBytes });
+      lastSize = total;
+      console.log('[sync] enviando ' + (total / 1048576).toFixed(2) + ' MB em ' + files.length + ' arquivo(s)');
+
+      await ghCommitFiles(files, head, map.files || {});
+
+      lastPushedAt = updatedAt; lastPulledAt = updatedAt;
+      cfgSet('lastPushedAt', updatedAt); cfgSet('lastPulledAt', updatedAt);
+      syncedHeavy = heavyMeta.map(h => h.name);
       dirty = false; conflict = false; lastError = ''; setStatus('Sincronizado');
     } catch (e) {
       console.warn(e); lastError = e.message; setStatus('Erro: ' + e.message);
-      toast('Falha ao enviar: ' + e.message + (lastSize > 9000000 ? ' (dados muito grandes para o Gist)' : ''), 'error');
-      pendingPush = true;
+      toast('Falha ao enviar: ' + e.message, 'error'); pendingPush = true;
     } finally {
       busy = false; renderPanel();
       if (pendingPush && enabled && !conflict) { pendingPush = false; clearTimeout(pushTimer); pushTimer = setTimeout(() => doPush(false), PUSH_DELAY); }
@@ -23214,27 +23378,33 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
     clearTimeout(pushTimer); pushTimer = setTimeout(() => doPush(false), PUSH_DELAY);
   }
 
+  /* ---------- Conectar / pausar / esquecer ---------- */
   async function connect(token) {
     if (!token) { toast('Cole o token', 'error'); return; }
     if (!dbReady()) { toast('Aguarde o app carregar e tente de novo', 'error'); return; }
     busy = true; setStatus('Conectando…'); renderPanel();
     try {
       TOKEN = token.trim(); cfgSet('token', TOKEN);
-      let id = gistId || cfgGet('gistId'); let created = false;
-      if (!id) id = await ghFind();
-      if (!id) { const snap = await buildSnapshot(); id = await ghCreate(JSON.stringify(snap)); lastPushedAt = snap.updatedAt; lastPulledAt = snap.updatedAt; cfgSet('lastPushedAt', snap.updatedAt); cfgSet('lastPulledAt', snap.updatedAt); created = true; }
-      gistId = id; cfgSet('gistId', id);
-      enabled = true; cfgSet('enabled', '1');
-      busy = false;
-      if (!created) { await doPull(true); }   // entrou numa sincronização existente: nuvem manda
+      setStatus('Identificando conta…'); renderPanel();
+      OWNER = await ghWhoAmI(); cfgSet('owner', OWNER);
+      REPO = cfgGet('repo') || REPO_DEFAULT; cfgSet('repo', REPO);
+      setStatus('Preparando repositório…'); renderPanel();
+      await ghEnsureRepo();
+      const head = await ghGetRef();
+      let hasRemote = false;
+      if (head) { const map = await ghGetTreeMap(head); hasRemote = !!map.files[MANIFEST]; }
+      enabled = true; cfgSet('enabled', '1'); busy = false;
+      if (hasRemote) { await doPull(true); }   // entra numa sincronização existente: a nuvem manda
+      else { await doPush(true); }              // primeiro aparelho: envia o que já existe local
       setStatus('Sincronizado'); toast('Sincronização ativada ✅', 'success'); renderPanel();
     } catch (e) { busy = false; console.warn(e); setStatus('Erro: ' + e.message); toast('Falha: ' + e.message, 'error'); renderPanel(); }
   }
   function disconnect() { enabled = false; cfgSet('enabled', '0'); setStatus('Pausada'); toast('Sincronização pausada'); renderPanel(); }
   function forget() {
     enabled = false;
-    ['token', 'gistId', 'enabled', 'lastPulledAt', 'lastPushedAt'].forEach(cfgDel);
-    TOKEN = null; gistId = null; lastPulledAt = null; lastPushedAt = null;
+    ['token', 'owner', 'repo', 'enabled', 'lastPulledAt', 'lastPushedAt'].forEach(cfgDel);
+    TOKEN = null; OWNER = null; REPO = null; lastPulledAt = null; lastPushedAt = null;
+    branchResolved = false;
     setStatus('Não configurado'); toast('Credenciais removidas deste aparelho'); renderPanel();
   }
 
@@ -23261,31 +23431,28 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
       log('GitHub alcançável: sim (' + r0.status + ')');
     } catch (e0) {
       log('GitHub BLOQUEADO pelo navegador/rede: ' + e0.message);
-      log('→ Causa provável: extensão do Chrome (bloqueador/privacidade) ou rede filtrando api.github.com.');
+      log('→ Causa provável: extensão do navegador (bloqueador/privacidade) ou rede filtrando api.github.com.');
       log('→ Teste numa janela anônima (sem extensões) ou em outra rede / dados móveis.');
       return;
     }
     if (!TOKEN) { log('→ Cole o token e conecte primeiro.'); return; }
-    log('Testando com seu token…');
-    try {
-      const r = await fetch('https://api.github.com/gists?per_page=1', { headers: ghHeaders() });
-      log('Resposta do GitHub: ' + r.status + (r.status === 200 ? ' (OK)' : r.status === 401 ? ' (token inválido/expirado)' : r.status === 403 ? ' (sem permissão de gist)' : ''));
-    } catch (e) { log('Falha de rede ao falar com o GitHub: ' + e.message); }
+    log('Testando conta e permissão (escopo repo)…');
+    try { const who = await ghWhoAmI(); OWNER = OWNER || who; log('Conta: ' + who + ' ✓'); }
+    catch (e) { log('Falha: ' + e.message); return; }
+    REPO = REPO || cfgGet('repo') || REPO_DEFAULT;
+    try { const head = await ghGetRef(); log('Repositório "' + REPO + '": ' + (head ? 'pronto ✓' : 'ainda não criado (será criado ao conectar)')); }
+    catch (e) { log('Repositório: ' + e.message); }
     try {
       if (dbReady()) {
-        const a = acad();
-        const sizes = [];
-        let total = 0;
-        for (const s of storeNames()) {
-          try { const recs = await a.readAllFromStore(s); const sz = JSON.stringify(recs || []).length; sizes.push([s, sz]); total += sz; } catch (e) {}
-        }
+        const a = acad(); const sizes = []; let total = 0;
+        for (const s of storeNames()) { try { const recs = await a.readAllFromStore(s); const sz = JSON.stringify(recs || []).length; sizes.push([s, sz]); total += sz; } catch (e) {} }
         sizes.sort((x, y) => y[1] - x[1]);
-        log('Tamanho total: ' + (total / 1048576).toFixed(2) + ' MB' + (total > 9000000 ? ' ⚠️ grande demais para o Gist' : ''));
-        log('Por categoria (maiores):');
-        sizes.slice(0, 6).forEach(([s, sz]) => { if (sz > 1024) log('  • ' + s + ': ' + (sz / 1048576).toFixed(2) + ' MB'); });
+        log('Tamanho total: ' + (total / 1048576).toFixed(2) + ' MB (o repositório suporta arquivos grandes)');
+        log('Maiores categorias:');
+        sizes.slice(0, 6).forEach(([s, sz]) => { if (sz > 1024) log('  • ' + s + ': ' + (sz / 1048576).toFixed(2) + ' MB' + (sz > LIGHT_STORE_LIMIT ? ' → vai como arquivo próprio' : '')); });
       }
     } catch (e) { log('Erro ao medir dados: ' + e.message); }
-    log('Gist conectado: ' + (gistId ? gistId : 'nenhum ainda'));
+    log('Otimização de envio (SHA local): ' + ((window.crypto && crypto.subtle) ? 'disponível (não reenvia arquivos que não mudaram)' : 'indisponível neste contexto'));
   }
 
   function renderPanel() {
@@ -23296,10 +23463,10 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
       host.innerHTML =
         '<div class="card card-dashboard mb-4"><div class="card-body">'
         + '<h4 class="card-title"><i class="fas fa-cloud me-2 text-info"></i>Sincronização na nuvem</h4>'
-        + '<p class="text-muted mb-3" style="font-size:0.85rem;">Mantém todos os seus dados iguais em todos os aparelhos usando um <strong>Gist privado do GitHub</strong> (grátis). Baixa ao abrir e envia automaticamente a cada alteração.</p>'
+        + '<p class="text-muted mb-3" style="font-size:0.85rem;">Mantém todos os seus dados iguais em todos os aparelhos usando um <strong>repositório privado do GitHub</strong> (grátis). Agora <strong>inclusive PDFs, imagens e documentos</strong> são sincronizados. Baixa ao abrir e envia automaticamente a cada alteração.</p>'
         + '<ol style="font-size:0.82rem;color:#6c757d;padding-left:18px;line-height:1.7;">'
         + '<li>Tenha uma conta no <strong>github.com</strong>.</li>'
-        + '<li>Abra <a href="https://github.com/settings/tokens/new?scopes=gist&description=AcademicoPro" target="_blank" rel="noopener">este link</a> para gerar um <strong>token</strong> (escopo <em>gist</em> já marcado) e clique em <em>Generate token</em>.</li>'
+        + '<li>Abra <a href="https://github.com/settings/tokens/new?scopes=repo&description=AcademicoPro" target="_blank" rel="noopener">este link</a> para gerar um <strong>token</strong> (escopo <em>repo</em> já marcado) e clique em <em>Generate token</em>.</li>'
         + '<li>Copie o token (começa com <code>ghp_</code>) e cole abaixo.</li>'
         + '<li>Nos <strong>outros aparelhos</strong>, cole o <strong>mesmo token</strong>.</li>'
         + '</ol>'
@@ -23308,7 +23475,7 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
         + '<button class="btn btn-outline-secondary" type="button" id="sync-token-eye"><i class="fas fa-eye"></i></button>'
         + '</div>'
         + '<button class="btn btn-info w-100 mt-3 text-white" id="sync-connect-btn"><i class="fas fa-plug me-1"></i> Conectar e sincronizar</button>'
-        + '<div class="alert alert-warning mt-3 mb-0" style="font-size:0.78rem;"><i class="fas fa-triangle-exclamation me-1"></i> Ao conectar a uma sincronização que já existe, os dados da nuvem <strong>substituem</strong> os locais. Conecte primeiro o aparelho com os dados certos.</div>'
+        + '<div class="alert alert-warning mt-3 mb-0" style="font-size:0.78rem;"><i class="fas fa-triangle-exclamation me-1"></i> Ao conectar a uma sincronização que já existe, os dados da nuvem <strong>substituem</strong> os locais. Conecte primeiro o aparelho com os dados certos. Um repositório privado <code>' + REPO_DEFAULT + '</code> será criado automaticamente na sua conta.</div>'
         + errHtml()
         + '</div></div>';
       on('sync-connect-btn', () => connect((document.getElementById('sync-token') || {}).value || ''));
@@ -23327,9 +23494,10 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
       + '<div><div style="font-size:0.7rem;color:#95a5a6;text-transform:uppercase;letter-spacing:.05em;">Status</div><div id="sync-status" style="font-weight:700;">' + statusText + '</div></div>'
       + '<div class="text-end"><div style="font-size:0.7rem;color:#95a5a6;text-transform:uppercase;letter-spacing:.05em;">Último envio</div><div style="font-weight:600;font-size:0.85rem;">' + fmtWhen(lastPushedAt) + '</div></div>'
       + '</div>'
+      + ((OWNER && REPO) ? '<p class="text-muted mb-2" style="font-size:0.74rem;"><i class="fas fa-database me-1"></i>Repositório: <code>' + OWNER + '/' + REPO + '</code> (privado)</p>' : '')
       + '<button class="btn btn-info w-100 text-white" id="sync-now-btn"' + (busy ? ' disabled' : '') + '><i class="fas fa-arrows-rotate me-1"></i> Sincronizar agora</button>'
-      + '<p class="text-muted mt-3 mb-0" style="font-size:0.78rem;">Envio automático e imediato a cada alteração, e baixa automática ao abrir o app ou voltar para ele. Resolução por “último a salvar vence”.</p>'
-      + (lastExcluded && lastExcluded.length ? '<div class="alert alert-info mt-2 mb-0" style="font-size:0.76rem;"><i class="fas fa-hard-drive me-1"></i> Arquivos grandes (' + lastExcluded.join(', ') + ') ficam só neste aparelho e não são sincronizados.</div>' : '')
+      + '<p class="text-muted mt-3 mb-0" style="font-size:0.78rem;">Envio automático e imediato a cada alteração, e baixa automática ao abrir o app ou voltar para ele. Resolução por "último a salvar vence".</p>'
+      + (syncedHeavy && syncedHeavy.length ? '<div class="alert alert-success mt-2 mb-0" style="font-size:0.76rem;"><i class="fas fa-file-arrow-up me-1"></i> Arquivos grandes sincronizando (' + syncedHeavy.join(', ') + ') — agora vão para a nuvem junto com o resto.</div>' : '')
       + '<div class="d-flex gap-2 mt-3">'
       + '<button class="btn btn-sm btn-outline-secondary flex-fill" id="sync-pause-btn"><i class="fas fa-pause me-1"></i>Pausar</button>'
       + '<button class="btn btn-sm btn-outline-danger flex-fill" id="sync-forget-btn"><i class="fas fa-trash me-1"></i>Remover token</button>'
@@ -23363,7 +23531,7 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
     setStatus(enabled ? 'Sincronizado' : (TOKEN ? 'Pausada' : 'Não configurado'));
     renderPanel();
     booted = true;
-    if (enabled && TOKEN && gistId) { await doPull(false); }   // baixa automática ao entrar
+    if (enabled && TOKEN && OWNER && REPO) { await doPull(false); }   // baixa automática ao entrar
   }
 
   const _bootTimer = setInterval(() => { tryBoot().catch(e => console.warn('sync boot', e)); if (booted) clearInterval(_bootTimer); }, 800);
