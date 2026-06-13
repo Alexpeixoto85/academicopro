@@ -23011,6 +23011,7 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
   let TOKEN = null, gistId = null, enabled = false, DEVICE = null;
   let lastPulledAt = null, lastPushedAt = null;
   let dirty = false, busy = false, conflict = false, pendingPush = false, pushTimer = null;
+  let lastError = '', lastSize = 0;
   let statusText = 'Não configurado';
 
   /* ---------- Detecção de alterações: intercepta escritas no IndexedDB ---------- */
@@ -23149,8 +23150,8 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
         lastPulledAt = snap.updatedAt; cfgSet('lastPulledAt', snap.updatedAt);
         conflict = false; setStatus('Sincronizado');
       } else { setStatus('Sincronizado'); }
-      ok = true;
-    } catch (e) { console.warn(e); setStatus('Erro: ' + e.message); toast('Sincronização: ' + e.message, 'error'); }
+      ok = true; lastError = '';
+    } catch (e) { console.warn(e); lastError = e.message; setStatus('Erro: ' + e.message); toast('Sincronização: ' + e.message, 'error'); }
     finally { busy = false; renderPanel(); }
     if (changed) { toast('Dados atualizados da nuvem ✅', 'success'); await refreshApp(); }
     return ok;
@@ -23171,12 +23172,17 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
         }
       }
       const snap = await buildSnapshot();
-      await ghWrite(gistId, JSON.stringify(snap));
+      const payload = JSON.stringify(snap);
+      lastSize = payload.length;
+      console.log('[sync] enviando ' + (lastSize / 1048576).toFixed(2) + ' MB');
+      await ghWrite(gistId, payload);
       lastPushedAt = snap.updatedAt; lastPulledAt = snap.updatedAt;
       cfgSet('lastPushedAt', snap.updatedAt); cfgSet('lastPulledAt', snap.updatedAt);
-      dirty = false; conflict = false; setStatus('Sincronizado');
+      dirty = false; conflict = false; lastError = ''; setStatus('Sincronizado');
     } catch (e) {
-      console.warn(e); setStatus('Erro: ' + e.message); toast('Falha ao enviar: ' + e.message, 'error'); pendingPush = true;
+      console.warn(e); lastError = e.message; setStatus('Erro: ' + e.message);
+      toast('Falha ao enviar: ' + e.message + (lastSize > 9000000 ? ' (dados muito grandes para o Gist)' : ''), 'error');
+      pendingPush = true;
     } finally {
       busy = false; renderPanel();
       if (pendingPush && enabled && !conflict) { pendingPush = false; clearTimeout(pushTimer); pushTimer = setTimeout(() => doPush(false), PUSH_DELAY); }
@@ -23219,6 +23225,36 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
   /* ---------- Interface (Bootstrap, painel Configurações) ---------- */
   function fmtWhen(iso) { if (!iso) return '—'; try { return new Date(iso).toLocaleString('pt-BR'); } catch (e) { return iso; } }
 
+  function errHtml() {
+    let h = '';
+    if (lastError) h += '<div class="alert alert-danger mt-3 mb-0" style="font-size:0.78rem;"><strong>Último erro:</strong> ' + String(lastError).replace(/</g, '&lt;') + '</div>';
+    h += '<div id="sync-diag-out" style="font-size:0.76rem;color:#6c757d;margin-top:8px;white-space:pre-line;"></div>';
+    h += '<button class="btn btn-sm btn-link p-0 mt-1" id="sync-diag-btn" style="font-size:0.76rem;"><i class="fas fa-stethoscope me-1"></i>Testar conexão / diagnóstico</button>';
+    return h;
+  }
+  async function runDiag() {
+    const out = document.getElementById('sync-diag-out');
+    const log = (m) => { if (out) out.textContent += m + '\n'; };
+    if (out) out.textContent = '';
+    log('Banco de dados pronto: ' + (dbReady() ? 'sim' : 'NÃO'));
+    log('Login concluído: ' + (loginDone() ? 'sim' : 'não'));
+    log('Token informado: ' + (TOKEN ? 'sim' : 'NÃO'));
+    if (!TOKEN) { log('→ Cole o token e conecte primeiro.'); return; }
+    log('Testando GitHub…');
+    try {
+      const r = await fetch('https://api.github.com/gists?per_page=1', { headers: ghHeaders() });
+      log('Resposta do GitHub: ' + r.status + (r.status === 200 ? ' (OK)' : r.status === 401 ? ' (token inválido/expirado)' : r.status === 403 ? ' (sem permissão de gist)' : ''));
+    } catch (e) { log('Falha de rede ao falar com o GitHub: ' + e.message); }
+    try {
+      if (dbReady()) {
+        const snap = await buildSnapshot();
+        const mb = (JSON.stringify(snap).length / 1048576);
+        log('Tamanho dos seus dados: ' + mb.toFixed(2) + ' MB' + (mb > 9 ? ' ⚠️ grande demais para o Gist' : ''));
+      }
+    } catch (e) { log('Erro ao medir dados: ' + e.message); }
+    log('Gist conectado: ' + (gistId ? gistId : 'nenhum ainda'));
+  }
+
   function renderPanel() {
     const host = document.getElementById('sync-panel');
     if (!host) return;
@@ -23240,9 +23276,11 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
         + '</div>'
         + '<button class="btn btn-info w-100 mt-3 text-white" id="sync-connect-btn"><i class="fas fa-plug me-1"></i> Conectar e sincronizar</button>'
         + '<div class="alert alert-warning mt-3 mb-0" style="font-size:0.78rem;"><i class="fas fa-triangle-exclamation me-1"></i> Ao conectar a uma sincronização que já existe, os dados da nuvem <strong>substituem</strong> os locais. Conecte primeiro o aparelho com os dados certos.</div>'
+        + errHtml()
         + '</div></div>';
       on('sync-connect-btn', () => connect((document.getElementById('sync-token') || {}).value || ''));
       on('sync-token-eye', () => { const i = document.getElementById('sync-token'); if (i) i.type = i.type === 'password' ? 'text' : 'password'; });
+      on('sync-diag-btn', runDiag);
       return;
     }
     host.innerHTML =
@@ -23262,10 +23300,12 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
       + '<button class="btn btn-sm btn-outline-secondary flex-fill" id="sync-pause-btn"><i class="fas fa-pause me-1"></i>Pausar</button>'
       + '<button class="btn btn-sm btn-outline-danger flex-fill" id="sync-forget-btn"><i class="fas fa-trash me-1"></i>Remover token</button>'
       + '</div>'
+      + errHtml()
       + '</div></div>';
     on('sync-now-btn', syncNow);
     on('sync-pause-btn', disconnect);
     on('sync-forget-btn', forget);
+    on('sync-diag-btn', runDiag);
     on('sync-resolve-pull', async () => { conflict = false; await doPull(true); });
     on('sync-resolve-push', async () => { conflict = false; await doPush(true); });
   }
