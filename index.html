@@ -18331,6 +18331,10 @@ ${diasHtml}
       for (var i = 0; i < localStorage.length; i++) {
         var k = localStorage.key(i);
         if (k) {
+          // CORREÇÃO: não inclui no backup a configuração de sincronização
+          // (chaves __sync_) nem login/sessão (acpro_) — evita que um backup
+          // antigo reative/sobrescreva a conexão com a nuvem ao ser restaurado.
+          if (k.indexOf('__sync_') === 0 || k.indexOf('acpro_') === 0) continue;
           if (light && k === 'academicoCustomBg') continue; // exclui fundo base64 no leve
           lsObj[k] = localStorage.getItem(k);
         }
@@ -18561,6 +18565,10 @@ ${diasHtml}
 
     // Grava flag de importação ANTES de qualquer operação
     try { sessionStorage.setItem('_academico_import_done', '1'); } catch(e) {}
+    // CORREÇÃO: avisa o módulo de sincronização que houve restauração. No próximo
+    // boot ele ENVIA os dados restaurados para a nuvem em vez de baixar (o que
+    // sobrescrevia a restauração). Prefixo '__sync_' não é sincronizado.
+    try { localStorage.setItem('__sync_restore_pending', '1'); } catch(e) {}
 
     showPanel('progress');
     var logEl = document.getElementById('bk-log');
@@ -18575,6 +18583,10 @@ ${diasHtml}
       // Restaura localStorage
       var lsData = parsed.localStorage || {};
       Object.keys(lsData).forEach(function(k) {
+        // CORREÇÃO: nunca sobrescreve a configuração de sincronização deste
+        // aparelho (chaves __sync_) nem dados de login/sessão (acpro_) — assim
+        // a conexão com o Firebase continua válida após a restauração.
+        if (k.indexOf('__sync_') === 0 || k.indexOf('acpro_') === 0) return;
         var v = lsData[k];
         if (v !== null && v !== undefined) {
           try { localStorage.setItem(k, v); } catch(e) { log('LS skip ' + k + ': ' + e.message); }
@@ -22990,37 +23002,42 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
 
 
 <!-- ============================================================
-     Acadêmico Pro — Sincronização automática na nuvem (Repositório GitHub)
-     Sincroniza todas as stores do IndexedDB (academicoProDB) + configurações
-     do localStorage entre dispositivos usando um REPOSITÓRIO PRIVADO do GitHub
-     (via Git Data API). Diferente do Gist, SUPORTA ARQUIVOS GRANDES: PDFs,
-     imagens e documentos passam a sincronizar — cada arquivo de store pesada
-     pode ter dezenas de MB e é dividido automaticamente em partes quando preciso.
+     Acadêmico Pro — Sincronização automática na nuvem (Firebase)
+     Sincroniza todas as stores do IndexedDB (academicoProDB) + as
+     configurações leves do localStorage entre dispositivos usando
+     Cloud Firestore + Firebase Authentication (e-mail/senha).
+     Cada dispositivo que entrar com a MESMA conta passa a compartilhar
+     os dados. Arquivos grandes (PDFs, imagens, documentos) são
+     divididos automaticamente em partes para respeitar o limite de
+     1 MB por documento do Firestore.
      Usa a API window._acadApp (conexão única já aberta — sem 2ª conexão ao IDB).
+
+     CORREÇÃO IMPORTANTE: ao restaurar um backup, o app grava a flag
+     '__sync_restore_pending'. No próximo boot, em vez de BAIXAR da nuvem
+     (que sobrescrevia os dados importados), o sync ENVIA os dados
+     restaurados para a nuvem — a restauração passa a "vencer".
 ============================================================ -->
 <script>
 (function () {
   'use strict';
 
-  const DB_NAME = 'academicoProDB';
-  const REPO_DEFAULT = 'academico-pro-sync';   // repositório privado criado automaticamente
-  let BRANCH = 'main';                           // ajustado para o branch padrão real do repositório
-  let branchResolved = false;
-  const MANIFEST = 'academico-sync.json';       // dados leves + índice das stores pesadas
-  const STORE_DIR = 'stores/';                  // arquivos das stores pesadas (PDFs, imagens, documentos...)
+  const DB_NAME    = 'academicoProDB';
+  const SDK_VER    = '10.12.2';
   const PUSH_DELAY = 900;
-  const LIGHT_STORE_LIMIT = 512 * 1024;         // stores acima disso viram arquivo(s) próprio(s) no repo (mantém o manifesto pequeno)
-  const CHUNK_LIMIT = 7 * 1024 * 1024;          // bytes por arquivo de store — abaixo do limite do endpoint de blob do GitHub
-  const LIGHT_LS_LIMIT = 200 * 1024;            // valores enormes do localStorage (ex.: imagem de fundo) ficam locais
+  const CHUNK_B64  = 700 * 1024;          // tamanho de cada parte (base64) — bem abaixo do limite de 1 MB/doc do Firestore
+  const LIGHT_LS_LIMIT = 200 * 1024;      // valores enormes do localStorage (ex.: imagem de fundo) ficam locais
+  const BATCH_OPS  = 450;                 // operações por batch do Firestore (limite real é 500)
 
-  // Chaves de localStorage que NÃO devem ser sincronizadas (login/sessão/config interna)
+  // Chaves de localStorage que NÃO devem ser sincronizadas (login/sessão/config interna do próprio sync)
   function isBlockedLS(k) { return !k || k.indexOf('acpro_') === 0 || k.indexOf('__sync_') === 0; }
 
   let applying = false, booted = false;
-  let TOKEN = null, OWNER = null, REPO = null, enabled = false, DEVICE = null;
+  let enabled = false, DEVICE = null;
+  let FBCONFIG = null, EMAIL = null;
+  let fbApp = null, fbAuth = null, fbDb = null, fbUser = null, fbReady = false, fbLoading = false;
   let lastPulledAt = null, lastPushedAt = null;
-  let dirty = false, busy = false, conflict = false, pendingPush = false, pushTimer = null;
-  let lastError = '', lastSize = 0, syncedHeavy = [];
+  let dirty = false, busy = false, pendingPush = false, pushTimer = null;
+  let lastError = '';
   let statusText = 'Não configurado';
 
   /* ---------- Detecção de alterações: intercepta escritas no IndexedDB ---------- */
@@ -23057,7 +23074,7 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
   function loginDone() { const ls = document.getElementById('loginScreen'); return !ls || ls.style.display === 'none' || getComputedStyle(ls).display === 'none'; }
   function storeNames() { try { return Array.from(acad().getDb().objectStoreNames); } catch (e) { return []; } }
 
-  /* ---------- Utilidades: bytes / base64 / git sha ---------- */
+  /* ---------- Utilidades: bytes / base64 ---------- */
   function strToBytes(s) { return new TextEncoder().encode(s); }
   function bytesToStr(b) { return new TextDecoder().decode(b); }
   function bytesToB64(bytes) {
@@ -23069,29 +23086,27 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
     const bin = atob((b64 || '').replace(/\s/g, '')); const len = bin.length;
     const out = new Uint8Array(len); for (let i = 0; i < len; i++) out[i] = bin.charCodeAt(i); return out;
   }
-  // SHA-1 no formato de blob do Git ("blob <len>\0<conteúdo>"): permite reaproveitar
-  // arquivos que não mudaram e evitar reenviar PDFs/imagens a cada alteração.
-  async function gitBlobSha(bytes) {
-    try {
-      if (!(window.crypto && crypto.subtle)) return null;
-      const header = strToBytes('blob ' + bytes.length + '\u0000');
-      const full = new Uint8Array(header.length + bytes.length);
-      full.set(header, 0); full.set(bytes, header.length);
-      const d = await crypto.subtle.digest('SHA-1', full);
-      return Array.from(new Uint8Array(d)).map(b => b.toString(16).padStart(2, '0')).join('');
-    } catch (e) { return null; }
+  // Serializa registros -> base64 -> partes seguras para o Firestore (ASCII, sem surrogates)
+  function recsToChunks(recs) {
+    const b64 = bytesToB64(strToBytes(JSON.stringify(recs || [])));
+    const parts = [];
+    for (let off = 0; off < b64.length; off += CHUNK_B64) parts.push(b64.slice(off, off + CHUNK_B64));
+    if (parts.length === 0) parts.push(bytesToB64(strToBytes('[]')));
+    return parts;
+  }
+  function chunksToRecs(parts) {
+    try { const arr = JSON.parse(bytesToStr(b64ToBytes((parts || []).join('')))); return Array.isArray(arr) ? arr : (arr || []); }
+    catch (e) { return []; }
   }
 
-  /* ---------- Montagem dos dados ---------- */
-  // Lê todas as stores e separa em leves (vão no manifesto) e pesadas (arquivos próprios)
+  /* ---------- Montagem dos dados locais ---------- */
   async function collectStores() {
-    const a = acad(); const light = {}; const heavy = {};
+    const a = acad(); const out = {};
     for (const s of storeNames()) {
       let recs = []; try { recs = await a.readAllFromStore(s); } catch (e) { recs = []; }
-      let size = 0; try { size = JSON.stringify(recs || []).length; } catch (e) { size = Infinity; }
-      if (size > LIGHT_STORE_LIMIT) heavy[s] = recs || []; else light[s] = recs || [];
+      out[s] = recs || [];
     }
-    return { light, heavy };
+    return out;
   }
   function collectLS() {
     const ls = {};
@@ -23102,17 +23117,8 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
     }
     return ls;
   }
-  // Serializa os registros de uma store e divide em fatias de BYTES abaixo de CHUNK_LIMIT.
-  // Fatiar por bytes (e não por registro) garante que até um único registro enorme
-  // (ex.: um PDF de 40 MB) seja dividido em vários arquivos e remontado na leitura.
-  function chunkStoreBytes(recs) {
-    const full = strToBytes(JSON.stringify(recs || []));
-    const parts = [];
-    if (full.length === 0) { parts.push(strToBytes('[]')); return parts; }
-    for (let off = 0; off < full.length; off += CHUNK_LIMIT) parts.push(full.subarray(off, Math.min(off + CHUNK_LIMIT, full.length)));
-    return parts;
-  }
 
+  // Aplica os dados baixados da nuvem ao IndexedDB + localStorage (sem disparar push)
   async function applyData(stores, ls) {
     applying = true;
     try {
@@ -23128,7 +23134,7 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
           const k = localStorage.key(i); if (isBlockedLS(k)) continue;
           if (!(k in ls)) { const v = localStorage.getItem(k); if (v != null && v.length <= LIGHT_LS_LIMIT) _lsRemove(k); }
         }
-        for (const k in ls) { try { _lsSet(k, ls[k]); } catch (e) {} }
+        for (const k in ls) { if (isBlockedLS(k)) continue; try { _lsSet(k, ls[k]); } catch (e) {} }
       }
     } finally { applying = false; }
   }
@@ -23147,8 +23153,9 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
   function cfgSet(k, v) { try { _lsSet('__sync_' + k, v); } catch (e) {} }
   function cfgDel(k) { try { _lsRemove('__sync_' + k); } catch (e) {} }
   function loadCfg() {
-    TOKEN = cfgGet('token'); OWNER = cfgGet('owner'); REPO = cfgGet('repo') || REPO_DEFAULT;
-    enabled = cfgGet('enabled') === '1' && !!TOKEN && !!OWNER && !!REPO;
+    try { FBCONFIG = JSON.parse(cfgGet('fbconfig') || 'null'); } catch (e) { FBCONFIG = null; }
+    EMAIL = cfgGet('email');
+    enabled = cfgGet('enabled') === '1' && !!FBCONFIG;
     lastPulledAt = cfgGet('lastPulledAt'); lastPushedAt = cfgGet('lastPushedAt');
     DEVICE = cfgGet('device');
     if (!DEVICE) { DEVICE = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36); cfgSet('device', DEVICE); }
@@ -23166,363 +23173,336 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
       setTimeout(() => { el.style.transition = 'opacity .4s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 400); }, 3000);
     } catch (e) {}
   }
+  function setStatus(s) { statusText = s; const e = document.getElementById('sync-status'); if (e) e.textContent = s; }
 
-  /* ---------- GitHub: repositório privado via Git Data API ---------- */
-  function ghHeaders(extra) {
-    return Object.assign({ 'Authorization': 'Bearer ' + TOKEN, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' }, extra || {});
+  /* ---------- Firebase: carregamento do SDK + módulos ---------- */
+  let _fb = null;
+  async function loadSDK() {
+    if (_fb) return _fb;
+    const base = 'https://www.gstatic.com/firebasejs/' + SDK_VER + '/';
+    const [appMod, authMod, fsMod] = await Promise.all([
+      import(base + 'firebase-app.js'),
+      import(base + 'firebase-auth.js'),
+      import(base + 'firebase-firestore.js')
+    ]);
+    _fb = { app: appMod, auth: authMod, fs: fsMod };
+    return _fb;
   }
-  async function ghJSON(url, opts) {
-    const r = await fetch(url, opts || { headers: ghHeaders() });
-    if (r.status === 404) return { __404: true };
-    if (!r.ok) {
-      let detail = ''; try { detail = (await r.json()).message || ''; } catch (e) {}
-      throw new Error('GitHub ' + r.status + (r.status === 401 ? ' (token inválido/expirado)' : r.status === 403 ? ' (sem permissão — o token precisa do escopo "repo")' : (detail ? ' — ' + detail : '')));
+
+  // Inicializa o app Firebase e tenta restaurar a sessão persistida.
+  // Resolve quando o estado de autenticação inicial é conhecido.
+  async function initFirebase() {
+    if (fbReady && fbApp) return true;
+    if (!FBCONFIG) return false;
+    fbLoading = true;
+    const fb = await loadSDK();
+    if (!fbApp) {
+      fbApp = fb.app.getApps && fb.app.getApps().length ? fb.app.getApp() : fb.app.initializeApp(FBCONFIG);
+      fbAuth = fb.auth.getAuth(fbApp);
+      try { await fb.auth.setPersistence(fbAuth, fb.auth.browserLocalPersistence); } catch (e) {}
+      fbDb = fb.fs.getFirestore(fbApp);
     }
-    if (r.status === 204) return {};
-    try { return await r.json(); } catch (e) { return {}; }
-  }
-  async function ghWhoAmI() {
-    const u = await ghJSON('https://api.github.com/user', { headers: ghHeaders() });
-    if (u.__404 || !u.login) throw new Error('Não foi possível identificar a conta do GitHub');
-    return u.login;
-  }
-  async function ghGetRef() {
-    const ref = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/ref/heads/' + BRANCH, { headers: ghHeaders() });
-    if (ref.__404 || !ref.object) return null;
-    return ref.object.sha;   // sha do commit mais recente
-  }
-  // Descobre o branch padrão real do repositório (pode não ser "main")
-  async function ensureBranch() {
-    if (branchResolved) return;
-    try {
-      const got = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO, { headers: ghHeaders() });
-      if (!got.__404 && got.default_branch) BRANCH = got.default_branch;
-      branchResolved = true;
-    } catch (e) {}
-  }
-  async function ghEnsureRepo() {
-    let got = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO, { headers: ghHeaders() });
-    if (got.__404) {
-      await ghJSON('https://api.github.com/user/repos', {
-        method: 'POST', headers: ghHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ name: REPO, private: true, auto_init: true, description: 'Acadêmico Pro — sincronização (não editar manualmente)' })
+    // Espera o primeiro disparo de onAuthStateChanged
+    await new Promise((resolve) => {
+      let done = false;
+      const unsub = fb.auth.onAuthStateChanged(fbAuth, (u) => {
+        fbUser = u || null;
+        if (fbUser && !EMAIL) { EMAIL = fbUser.email; cfgSet('email', EMAIL || ''); }
+        if (!done) { done = true; resolve(); }
+        renderPanel();
       });
-      for (let i = 0; i < 10; i++) { await new Promise(res => setTimeout(res, 800)); got = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO, { headers: ghHeaders() }); if (!got.__404) break; }
-    }
-    if (got && !got.__404 && got.default_branch) BRANCH = got.default_branch;
-    branchResolved = true;
-    for (let i = 0; i < 10; i++) { if (await ghGetRef()) return true; await new Promise(res => setTimeout(res, 800)); }
+      // segurança: não trava se algo der errado
+      setTimeout(() => { if (!done) { done = true; resolve(); } }, 6000);
+      void unsub;
+    });
+    fbReady = true; fbLoading = false;
     return true;
   }
-  async function ghGetTreeMap(commitSha) {
-    const commit = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/commits/' + commitSha, { headers: ghHeaders() });
-    const treeSha = commit.tree && commit.tree.sha;
-    const tree = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/trees/' + treeSha + '?recursive=1', { headers: ghHeaders() });
-    const files = {};
-    (tree.tree || []).forEach(e => { if (e.type === 'blob') files[e.path] = e.sha; });
-    return { headCommit: commitSha, treeSha: treeSha, files: files, baseTree: commit.tree.sha };
+
+  function userRoot() { return fbUser ? ('academico_sync/' + fbUser.uid) : null; }
+
+  /* ---------- Firestore: leitura ---------- */
+  async function fsGetManifest() {
+    const fb = _fb;
+    const ref = fb.fs.doc(fbDb, 'academico_sync', fbUser.uid, 'data', 'manifest');
+    const snap = await fb.fs.getDoc(ref);
+    return snap.exists() ? snap.data() : null;
   }
-  async function ghReadBlobText(sha) {
-    const b = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/blobs/' + sha, { headers: ghHeaders() });
-    if (b.__404) return null;
-    if (b.encoding === 'base64') return bytesToStr(b64ToBytes(b.content));
-    return b.content || '';
-  }
-  async function ghReadBlobBytes(sha) {
-    const b = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/blobs/' + sha, { headers: ghHeaders() });
-    if (b.__404) return new Uint8Array();
-    if (b.encoding === 'base64') return b64ToBytes(b.content);
-    return strToBytes(b.content || '');
-  }
-  async function ghCreateBlob(bytes) {
-    const res = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/blobs', {
-      method: 'POST', headers: ghHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ content: bytesToB64(bytes), encoding: 'base64' })
-    });
-    return res.sha;
-  }
-  // UM commit com todos os arquivos desejados. Reaproveita blobs idênticos e
-  // remove arquivos gerenciados (manifesto + stores/*) que não fazem mais parte.
-  async function ghCommitFiles(desired, baseCommitSha, baseFiles) {
-    const treeEntries = []; const desiredPaths = {};
-    for (const f of desired) {
-      desiredPaths[f.path] = true;
-      let sha = null;
-      const local = await gitBlobSha(f.bytes);
-      if (local && baseFiles[f.path] === local) sha = baseFiles[f.path];   // inalterado: reaproveita o blob remoto
-      if (!sha) sha = await ghCreateBlob(f.bytes);
-      treeEntries.push({ path: f.path, mode: '100644', type: 'blob', sha: sha });
+  async function fsReadChunks(name, parts) {
+    const fb = _fb; const out = [];
+    for (let p = 0; p < parts; p++) {
+      try {
+        const ref = fb.fs.doc(fbDb, 'academico_sync', fbUser.uid, 'chunks', name + '__' + p);
+        const snap = await fb.fs.getDoc(ref);
+        out.push(snap.exists() ? (snap.data().d || '') : '');
+      } catch (e) { out.push(''); }
     }
-    for (const path in baseFiles) {
-      if (desiredPaths[path]) continue;
-      if (path === MANIFEST || path.indexOf(STORE_DIR) === 0) treeEntries.push({ path: path, mode: '100644', type: 'blob', sha: null });
-    }
-    const baseCommit = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/commits/' + baseCommitSha, { headers: ghHeaders() });
-    const newTree = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/trees', {
-      method: 'POST', headers: ghHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ base_tree: baseCommit.tree.sha, tree: treeEntries })
-    });
-    const newCommit = await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/commits', {
-      method: 'POST', headers: ghHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ message: 'sync ' + new Date().toISOString(), tree: newTree.sha, parents: [baseCommitSha] })
-    });
-    await ghJSON('https://api.github.com/repos/' + OWNER + '/' + REPO + '/git/refs/heads/' + BRANCH, {
-      method: 'PATCH', headers: ghHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ sha: newCommit.sha, force: false })
-    });
-    return newCommit.sha;
+    return out;
   }
 
-  function setStatus(s) { statusText = s; const e = document.getElementById('sync-status'); if (e) e.textContent = s; }
+  /* ---------- Firestore: escrita (manifesto + chunks, com limpeza dos antigos) ---------- */
+  async function fsWriteAll(stores, ls) {
+    const fb = _fb;
+    const uid = fbUser.uid;
+    const chunkCol = fb.fs.collection(fbDb, 'academico_sync', uid, 'chunks');
+
+    // ids dos chunks que já existem na nuvem (para apagar os que sobrarem)
+    const existing = {};
+    try {
+      const snap = await fb.fs.getDocs(chunkCol);
+      snap.forEach(d => { existing[d.id] = true; });
+    } catch (e) {}
+
+    // monta o conjunto desejado de chunks
+    const desired = {};   // id -> string base64
+    const meta = {};      // storeName -> parts
+    let total = 0;
+    const allStores = Object.assign({}, stores);
+    allStores['__ls__'] = [ls || {}];   // localStorage entra como uma "store" especial
+    for (const name in allStores) {
+      const parts = recsToChunks(allStores[name]);
+      meta[name] = parts.length;
+      parts.forEach((str, idx) => { desired[name + '__' + idx] = str; total += str.length; });
+    }
+
+    const updatedAt = new Date().toISOString();
+    const manifest = { v: 3, app: 'academicopro', updatedAt: updatedAt, device: DEVICE, stores: meta };
+
+    // operações: escreve chunks desejados, apaga chunks órfãos, grava manifesto
+    const ops = [];
+    for (const id in desired) ops.push({ type: 'set', id: id, data: { d: desired[id] } });
+    for (const id in existing) { if (!(id in desired)) ops.push({ type: 'del', id: id }); }
+
+    // executa em lotes (batches) respeitando o limite do Firestore
+    for (let i = 0; i < ops.length; i += BATCH_OPS) {
+      const batch = fb.fs.writeBatch(fbDb);
+      for (const op of ops.slice(i, i + BATCH_OPS)) {
+        const ref = fb.fs.doc(fbDb, 'academico_sync', uid, 'chunks', op.id);
+        if (op.type === 'set') batch.set(ref, op.data); else batch.delete(ref);
+      }
+      await batch.commit();
+    }
+    // manifesto por último (marca a versão como pronta)
+    const manRef = fb.fs.doc(fbDb, 'academico_sync', uid, 'data', 'manifest');
+    await fb.fs.setDoc(manRef, manifest);
+
+    return { updatedAt: updatedAt, total: total };
+  }
 
   /* ---------- Baixar (pull) ---------- */
   async function doPull(force) {
-    if (!enabled || !TOKEN || !OWNER || !REPO || applying || busy || !dbReady()) return false;
+    if (!enabled || !fbReady || !fbUser || applying || busy || !dbReady()) return false;
     busy = true; setStatus('Verificando nuvem…'); renderPanel();
     let ok = false, changed = false;
     try {
-      await ensureBranch();
-      const head = await ghGetRef();
-      if (!head) { setStatus('Sincronizado'); ok = true; lastError = ''; }
+      const man = await fsGetManifest();
+      if (!man) { setStatus('Sincronizado'); ok = true; lastError = ''; }
       else {
-        const map = await ghGetTreeMap(head);
-        const manSha = map.files[MANIFEST];
-        if (!manSha) { setStatus('Sincronizado'); ok = true; lastError = ''; }
-        else {
-          const man = JSON.parse(await ghReadBlobText(manSha));
-          const isNewer = force || !lastPulledAt || (man.updatedAt && man.updatedAt > lastPulledAt);
-          const isOurs = man.device === DEVICE && man.updatedAt === lastPushedAt;
-          if (isNewer && !isOurs) {
-            setStatus('Baixando…'); renderPanel();
-            const stores = Object.assign({}, man.stores || {});
-            const heavy = man.heavy || [];
-            for (const h of heavy) {
-              const parts = h.parts || 1;
-              const chunks = [];
-              for (let p = 0; p < parts; p++) {
-                const path = STORE_DIR + h.name + '.part' + p + '.json';
-                const sha = map.files[path];
-                if (!sha) continue;
-                try { chunks.push(await ghReadBlobBytes(sha)); } catch (e) {}
-              }
-              let recs = [];
-              try {
-                let totalLen = 0; chunks.forEach(c => totalLen += c.length);
-                const merged = new Uint8Array(totalLen); let off = 0;
-                chunks.forEach(c => { merged.set(c, off); off += c.length; });
-                const arr = JSON.parse(bytesToStr(merged));
-                if (Array.isArray(arr)) recs = arr;
-              } catch (e) {}
-              stores[h.name] = recs;
+        const isNewer = force || !lastPulledAt || (man.updatedAt && man.updatedAt > lastPulledAt);
+        const isOurs = man.device === DEVICE && man.updatedAt === lastPushedAt;
+        if (isNewer && !isOurs) {
+          setStatus('Baixando…'); renderPanel();
+          const meta = man.stores || {};
+          const stores = {}; let ls = {};
+          for (const name in meta) {
+            const parts = await fsReadChunks(name, meta[name] || 1);
+            if (name === '__ls__') {
+              const arr = chunksToRecs(parts);
+              ls = (arr && arr[0]) ? arr[0] : {};
+            } else {
+              stores[name] = chunksToRecs(parts);
             }
-            await applyData(stores, man.ls || {});
-            changed = true; syncedHeavy = heavy.map(h => h.name);
           }
-          lastPulledAt = man.updatedAt; cfgSet('lastPulledAt', man.updatedAt);
-          conflict = false; setStatus('Sincronizado'); ok = true; lastError = '';
+          await applyData(stores, ls);
+          changed = true;
         }
+        lastPulledAt = man.updatedAt; cfgSet('lastPulledAt', man.updatedAt || '');
+        setStatus('Sincronizado'); ok = true; lastError = '';
       }
-    } catch (e) { console.warn(e); lastError = e.message; setStatus('Erro: ' + e.message); toast('Sincronização: ' + e.message, 'error'); }
+    } catch (e) { console.warn(e); lastError = e.message || String(e); setStatus('Erro: ' + lastError); toast('Sincronização: ' + lastError, 'error'); }
     finally { busy = false; renderPanel(); }
     if (changed) { toast('Dados atualizados da nuvem ✅', 'success'); await refreshApp(); }
     return ok;
   }
 
   /* ---------- Enviar (push) ---------- */
-  async function doPush(forceOverwrite) {
-    if (!enabled || !TOKEN || !OWNER || !REPO || applying || busy || !dbReady()) return;
+  async function doPush() {
+    if (!enabled || !fbReady || !fbUser || applying || busy || !dbReady()) return;
     busy = true; pendingPush = false; setStatus('Enviando…'); renderPanel();
     try {
-      await ensureBranch();
-      let head = await ghGetRef();
-      if (!head) { await ghEnsureRepo(); head = await ghGetRef(); }
-      if (!head) throw new Error('Repositório sem branch principal');
-      const map = await ghGetTreeMap(head);
-
-      if (!forceOverwrite && map.files[MANIFEST]) {
-        try {
-          const r = JSON.parse(await ghReadBlobText(map.files[MANIFEST]));
-          if (r.updatedAt && lastPulledAt && r.updatedAt > lastPulledAt && r.device !== DEVICE) {
-            conflict = true; setStatus('Conflito detectado');
-            toast('A nuvem tem alterações de outro aparelho. Resolva o conflito.', 'error'); return;
-          }
-        } catch (e) {}
-      }
-
-      const collected = await collectStores();
+      const stores = await collectStores();
       const ls = collectLS();
-      const updatedAt = new Date().toISOString();
-      const heavyMeta = []; const files = []; let total = 0;
-      for (const name in collected.heavy) {
-        const parts = chunkStoreBytes(collected.heavy[name]);
-        heavyMeta.push({ name: name, parts: parts.length });
-        parts.forEach((bytes, idx) => {
-          total += bytes.length;
-          files.push({ path: STORE_DIR + name + '.part' + idx + '.json', bytes: bytes });
-        });
-      }
-      const manifest = { v: 2, app: 'academicopro', updatedAt: updatedAt, device: DEVICE, stores: collected.light, ls: ls, heavy: heavyMeta };
-      const manBytes = strToBytes(JSON.stringify(manifest)); total += manBytes.length;
-      files.push({ path: MANIFEST, bytes: manBytes });
-      lastSize = total;
-      console.log('[sync] enviando ' + (total / 1048576).toFixed(2) + ' MB em ' + files.length + ' arquivo(s)');
-
-      await ghCommitFiles(files, head, map.files || {});
-
-      lastPushedAt = updatedAt; lastPulledAt = updatedAt;
-      cfgSet('lastPushedAt', updatedAt); cfgSet('lastPulledAt', updatedAt);
-      syncedHeavy = heavyMeta.map(h => h.name);
-      dirty = false; conflict = false; lastError = ''; setStatus('Sincronizado');
+      const res = await fsWriteAll(stores, ls);
+      lastPushedAt = res.updatedAt; lastPulledAt = res.updatedAt;
+      cfgSet('lastPushedAt', res.updatedAt); cfgSet('lastPulledAt', res.updatedAt);
+      dirty = false; lastError = ''; setStatus('Sincronizado');
+      console.log('[sync] enviado ' + (res.total / 1048576).toFixed(2) + ' MB (base64) para o Firestore');
     } catch (e) {
-      console.warn(e); lastError = e.message; setStatus('Erro: ' + e.message);
-      toast('Falha ao enviar: ' + e.message, 'error'); pendingPush = true;
+      console.warn(e); lastError = e.message || String(e); setStatus('Erro: ' + lastError);
+      toast('Falha ao enviar: ' + lastError, 'error'); pendingPush = true;
     } finally {
       busy = false; renderPanel();
-      if (pendingPush && enabled && !conflict) { pendingPush = false; clearTimeout(pushTimer); pushTimer = setTimeout(() => doPush(false), PUSH_DELAY); }
+      if (pendingPush && enabled) { pendingPush = false; clearTimeout(pushTimer); pushTimer = setTimeout(() => doPush(), PUSH_DELAY); }
     }
   }
 
-  async function syncNow() { await doPull(false); if (!conflict) await doPush(false); }
+  async function syncNow() { await doPull(false); await doPush(); }
 
   function markDirty() {
-    if (!enabled || applying || !booted) return;
+    if (!enabled || applying || !booted || !fbReady) return;
     dirty = true; setStatus('Alterações pendentes…');
     if (busy) { pendingPush = true; return; }
-    clearTimeout(pushTimer); pushTimer = setTimeout(() => doPush(false), PUSH_DELAY);
+    clearTimeout(pushTimer); pushTimer = setTimeout(() => doPush(), PUSH_DELAY);
   }
 
-  /* ---------- Conectar / pausar / esquecer ---------- */
-  async function connect(token) {
-    if (!token) { toast('Cole o token', 'error'); return; }
-    if (!dbReady()) { toast('Aguarde o app carregar e tente de novo', 'error'); return; }
-    busy = true; setStatus('Conectando…'); renderPanel();
+  /* ---------- Conectar (entrar / criar conta) / pausar / esquecer ---------- */
+  function parseConfig(raw) {
+    if (!raw) return null;
+    let txt = String(raw).trim();
+    // aceita o objeto colado como "const firebaseConfig = {...};" ou só "{...}"
+    const m = txt.match(/\{[\s\S]*\}/);
+    if (m) txt = m[0];
+    // remove vírgula final e converte chaves sem aspas em JSON válido
+    try { return JSON.parse(txt); } catch (e) {}
     try {
-      TOKEN = token.trim(); cfgSet('token', TOKEN);
-      setStatus('Identificando conta…'); renderPanel();
-      OWNER = await ghWhoAmI(); cfgSet('owner', OWNER);
-      REPO = cfgGet('repo') || REPO_DEFAULT; cfgSet('repo', REPO);
-      setStatus('Preparando repositório…'); renderPanel();
-      await ghEnsureRepo();
-      const head = await ghGetRef();
-      let hasRemote = false;
-      if (head) { const map = await ghGetTreeMap(head); hasRemote = !!map.files[MANIFEST]; }
-      enabled = true; cfgSet('enabled', '1'); busy = false;
-      if (hasRemote) { await doPull(true); }   // entra numa sincronização existente: a nuvem manda
-      else { await doPush(true); }              // primeiro aparelho: envia o que já existe local
-      setStatus('Sincronizado'); toast('Sincronização ativada ✅', 'success'); renderPanel();
-    } catch (e) { busy = false; console.warn(e); setStatus('Erro: ' + e.message); toast('Falha: ' + e.message, 'error'); renderPanel(); }
+      // tenta avaliar com segurança um literal de objeto JS simples
+      // eslint-disable-next-line no-new-func
+      const obj = (new Function('return (' + txt + ')'))();
+      return (obj && obj.apiKey && obj.projectId) ? obj : null;
+    } catch (e) { return null; }
   }
-  function disconnect() { enabled = false; cfgSet('enabled', '0'); setStatus('Pausada'); toast('Sincronização pausada'); renderPanel(); }
-  function forget() {
+
+  async function saveConfig(rawConfig) {
+    const cfg = parseConfig(rawConfig);
+    if (!cfg || !cfg.apiKey || !cfg.projectId) { toast('Configuração do Firebase inválida. Cole o objeto firebaseConfig completo.', 'error'); return false; }
+    FBCONFIG = cfg; cfgSet('fbconfig', JSON.stringify(cfg));
+    fbReady = false; fbApp = null;
+    setStatus('Inicializando Firebase…'); renderPanel();
+    try { await initFirebase(); toast('Firebase configurado. Agora entre com e-mail e senha.', 'success'); renderPanel(); return true; }
+    catch (e) { lastError = e.message || String(e); toast('Falha ao inicializar Firebase: ' + lastError, 'error'); renderPanel(); return false; }
+  }
+
+  async function signIn(email, pass, create) {
+    if (!FBCONFIG) { toast('Configure o Firebase primeiro.', 'error'); return; }
+    if (!email || !pass) { toast('Informe e-mail e senha.', 'error'); return; }
+    if (!dbReady()) { toast('Aguarde o app carregar e tente de novo.', 'error'); return; }
+    busy = true; setStatus(create ? 'Criando conta…' : 'Entrando…'); renderPanel();
+    try {
+      await initFirebase();
+      const fb = _fb;
+      if (create) await fb.auth.createUserWithEmailAndPassword(fbAuth, email.trim(), pass);
+      else        await fb.auth.signInWithEmailAndPassword(fbAuth, email.trim(), pass);
+      fbUser = fbAuth.currentUser; EMAIL = fbUser ? fbUser.email : email.trim();
+      cfgSet('email', EMAIL || ''); enabled = true; cfgSet('enabled', '1');
+      busy = false;
+
+      // Há dados na nuvem para esta conta?
+      let hasRemote = false;
+      try { hasRemote = !!(await fsGetManifest()); } catch (e) {}
+      if (hasRemote) { await doPull(true); }   // entra numa sincronização existente: a nuvem manda
+      else { await doPush(); }                  // primeira vez: envia o que já existe local
+      setStatus('Sincronizado'); toast('Sincronização ativada ✅', 'success'); renderPanel();
+    } catch (e) {
+      busy = false; const code = e && e.code ? e.code : '';
+      let msg = e.message || String(e);
+      if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') msg = 'E-mail ou senha incorretos (ou conta inexistente — use "Criar conta").';
+      else if (code === 'auth/email-already-in-use') msg = 'Este e-mail já tem conta. Use "Entrar".';
+      else if (code === 'auth/weak-password') msg = 'Senha muito fraca (mínimo 6 caracteres).';
+      else if (code === 'auth/operation-not-allowed') msg = 'Ative o provedor "E-mail/Senha" em Authentication no console do Firebase.';
+      lastError = msg; setStatus('Erro: ' + msg); toast(msg, 'error'); renderPanel();
+    }
+  }
+
+  async function disconnect() { enabled = false; cfgSet('enabled', '0'); setStatus('Pausada'); toast('Sincronização pausada'); renderPanel(); }
+  async function forget() {
     enabled = false;
-    ['token', 'owner', 'repo', 'enabled', 'lastPulledAt', 'lastPushedAt'].forEach(cfgDel);
-    TOKEN = null; OWNER = null; REPO = null; lastPulledAt = null; lastPushedAt = null;
-    branchResolved = false;
+    try { if (fbAuth && _fb) await _fb.auth.signOut(fbAuth); } catch (e) {}
+    ['fbconfig', 'email', 'enabled', 'lastPulledAt', 'lastPushedAt'].forEach(cfgDel);
+    FBCONFIG = null; EMAIL = null; fbUser = null; fbReady = false; fbApp = null;
+    lastPulledAt = null; lastPushedAt = null;
     setStatus('Não configurado'); toast('Credenciais removidas deste aparelho'); renderPanel();
   }
 
   /* ---------- Interface (Bootstrap, painel Configurações) ---------- */
   function fmtWhen(iso) { if (!iso) return '—'; try { return new Date(iso).toLocaleString('pt-BR'); } catch (e) { return iso; } }
-
+  function esc(s) { return String(s == null ? '' : s).replace(/</g, '&lt;'); }
   function errHtml() {
     let h = '';
-    if (lastError) h += '<div class="alert alert-danger mt-3 mb-0" style="font-size:0.78rem;"><strong>Último erro:</strong> ' + String(lastError).replace(/</g, '&lt;') + '</div>';
-    h += '<div id="sync-diag-out" style="font-size:0.76rem;color:#6c757d;margin-top:8px;white-space:pre-line;"></div>';
-    h += '<button class="btn btn-sm btn-link p-0 mt-1" id="sync-diag-btn" style="font-size:0.76rem;"><i class="fas fa-stethoscope me-1"></i>Testar conexão / diagnóstico</button>';
+    if (lastError) h += '<div class="alert alert-danger mt-3 mb-0" style="font-size:0.78rem;"><strong>Último erro:</strong> ' + esc(lastError) + '</div>';
     return h;
-  }
-  async function runDiag() {
-    const out = document.getElementById('sync-diag-out');
-    const log = (m) => { if (out) out.textContent += m + '\n'; };
-    if (out) out.textContent = '';
-    log('Banco de dados pronto: ' + (dbReady() ? 'sim' : 'NÃO'));
-    log('Login concluído: ' + (loginDone() ? 'sim' : 'não'));
-    log('Token informado: ' + (TOKEN ? 'sim' : 'NÃO'));
-    log('Testando alcance do GitHub (sem token)…');
-    try {
-      const r0 = await fetch('https://api.github.com/zen', { cache: 'no-store' });
-      log('GitHub alcançável: sim (' + r0.status + ')');
-    } catch (e0) {
-      log('GitHub BLOQUEADO pelo navegador/rede: ' + e0.message);
-      log('→ Causa provável: extensão do navegador (bloqueador/privacidade) ou rede filtrando api.github.com.');
-      log('→ Teste numa janela anônima (sem extensões) ou em outra rede / dados móveis.');
-      return;
-    }
-    if (!TOKEN) { log('→ Cole o token e conecte primeiro.'); return; }
-    log('Testando conta e permissão (escopo repo)…');
-    try { const who = await ghWhoAmI(); OWNER = OWNER || who; log('Conta: ' + who + ' ✓'); }
-    catch (e) { log('Falha: ' + e.message); return; }
-    REPO = REPO || cfgGet('repo') || REPO_DEFAULT;
-    try { const head = await ghGetRef(); log('Repositório "' + REPO + '": ' + (head ? 'pronto ✓' : 'ainda não criado (será criado ao conectar)')); }
-    catch (e) { log('Repositório: ' + e.message); }
-    try {
-      if (dbReady()) {
-        const a = acad(); const sizes = []; let total = 0;
-        for (const s of storeNames()) { try { const recs = await a.readAllFromStore(s); const sz = JSON.stringify(recs || []).length; sizes.push([s, sz]); total += sz; } catch (e) {} }
-        sizes.sort((x, y) => y[1] - x[1]);
-        log('Tamanho total: ' + (total / 1048576).toFixed(2) + ' MB (o repositório suporta arquivos grandes)');
-        log('Maiores categorias:');
-        sizes.slice(0, 6).forEach(([s, sz]) => { if (sz > 1024) log('  • ' + s + ': ' + (sz / 1048576).toFixed(2) + ' MB' + (sz > LIGHT_STORE_LIMIT ? ' → vai como arquivo próprio' : '')); });
-      }
-    } catch (e) { log('Erro ao medir dados: ' + e.message); }
-    log('Otimização de envio (SHA local): ' + ((window.crypto && crypto.subtle) ? 'disponível (não reenvia arquivos que não mudaram)' : 'indisponível neste contexto'));
   }
 
   function renderPanel() {
     const host = document.getElementById('sync-panel');
     if (!host) return;
     const on = (id, fn) => { const e = document.getElementById(id); if (e) e.onclick = fn; };
-    if (!enabled) {
+
+    // 1) Sem configuração do Firebase → formulário de configuração
+    if (!FBCONFIG) {
       host.innerHTML =
         '<div class="card card-dashboard mb-4"><div class="card-body">'
-        + '<h4 class="card-title"><i class="fas fa-cloud me-2 text-info"></i>Sincronização na nuvem</h4>'
-        + '<p class="text-muted mb-3" style="font-size:0.85rem;">Mantém todos os seus dados iguais em todos os aparelhos usando um <strong>repositório privado do GitHub</strong> (grátis). Agora <strong>inclusive PDFs, imagens e documentos</strong> são sincronizados. Baixa ao abrir e envia automaticamente a cada alteração.</p>'
+        + '<h4 class="card-title"><i class="fas fa-cloud me-2 text-info"></i>Sincronização na nuvem (Firebase)</h4>'
+        + '<p class="text-muted mb-3" style="font-size:0.85rem;">Mantém todos os seus dados iguais em todos os aparelhos usando o <strong>Firebase (Cloud Firestore)</strong> — grátis no plano Spark. Inclui <strong>PDFs, imagens e documentos</strong> (divididos automaticamente). Baixa ao abrir e envia a cada alteração.</p>'
         + '<ol style="font-size:0.82rem;color:#6c757d;padding-left:18px;line-height:1.7;">'
-        + '<li>Tenha uma conta no <strong>github.com</strong>.</li>'
-        + '<li>Abra <a href="https://github.com/settings/tokens/new?scopes=repo&description=AcademicoPro" target="_blank" rel="noopener">este link</a> para gerar um <strong>token</strong> (escopo <em>repo</em> já marcado) e clique em <em>Generate token</em>.</li>'
-        + '<li>Copie o token (começa com <code>ghp_</code>) e cole abaixo.</li>'
-        + '<li>Nos <strong>outros aparelhos</strong>, cole o <strong>mesmo token</strong>.</li>'
+        + '<li>Acesse <a href="https://console.firebase.google.com/" target="_blank" rel="noopener">console.firebase.google.com</a> e crie um projeto.</li>'
+        + '<li>Em <strong>Build → Firestore Database</strong>, clique em <em>Create database</em> (pode iniciar em modo de produção).</li>'
+        + '<li>Em <strong>Build → Authentication → Sign-in method</strong>, ative <strong>E-mail/senha</strong>.</li>'
+        + '<li>Em <strong>Project settings → Your apps</strong>, registre um app <em>Web</em> (&lt;/&gt;) e copie o objeto <code>firebaseConfig</code>.</li>'
+        + '<li>Cole o objeto abaixo. Use a <strong>mesma conta de e-mail/senha</strong> em todos os aparelhos.</li>'
         + '</ol>'
-        + '<div class="input-group mt-2">'
-        + '<input type="password" class="form-control" id="sync-token" placeholder="ghp_..." autocomplete="off" style="font-family:monospace;font-size:0.82rem;">'
-        + '<button class="btn btn-outline-secondary" type="button" id="sync-token-eye"><i class="fas fa-eye"></i></button>'
-        + '</div>'
-        + '<button class="btn btn-info w-100 mt-3 text-white" id="sync-connect-btn"><i class="fas fa-plug me-1"></i> Conectar e sincronizar</button>'
-        + '<div class="alert alert-warning mt-3 mb-0" style="font-size:0.78rem;"><i class="fas fa-triangle-exclamation me-1"></i> Ao conectar a uma sincronização que já existe, os dados da nuvem <strong>substituem</strong> os locais. Conecte primeiro o aparelho com os dados certos. Um repositório privado <code>' + REPO_DEFAULT + '</code> será criado automaticamente na sua conta.</div>'
+        + '<label class="form-label mt-1" style="font-size:0.8rem;font-weight:600;">Objeto firebaseConfig</label>'
+        + '<textarea class="form-control" id="sync-fbconfig" rows="7" placeholder="{ apiKey: \'...\', authDomain: \'...\', projectId: \'...\', ... }" style="font-family:monospace;font-size:0.78rem;"></textarea>'
+        + '<button class="btn btn-info w-100 mt-3 text-white" id="sync-save-cfg-btn"><i class="fas fa-save me-1"></i> Salvar configuração</button>'
+        + '<div class="alert alert-secondary mt-3 mb-0" style="font-size:0.76rem;"><i class="fas fa-shield-halved me-1"></i> Para proteger seus dados, em <strong>Firestore → Rules</strong> use regras que só permitam o dono ler/escrever. Exemplo: <code>match /academico_sync/{uid}/{document=**} { allow read, write: if request.auth.uid == uid; }</code></div>'
         + errHtml()
         + '</div></div>';
-      on('sync-connect-btn', () => connect((document.getElementById('sync-token') || {}).value || ''));
-      on('sync-token-eye', () => { const i = document.getElementById('sync-token'); if (i) i.type = i.type === 'password' ? 'text' : 'password'; });
-      on('sync-diag-btn', runDiag);
+      on('sync-save-cfg-btn', () => saveConfig((document.getElementById('sync-fbconfig') || {}).value || ''));
       return;
     }
+
+    // 2) Config OK, mas sem login → formulário de login/criação
+    if (!fbUser) {
+      host.innerHTML =
+        '<div class="card card-dashboard mb-4"><div class="card-body">'
+        + '<h4 class="card-title"><i class="fas fa-cloud me-2 text-info"></i>Sincronização na nuvem (Firebase)</h4>'
+        + '<p class="text-muted mb-2" style="font-size:0.84rem;">Firebase configurado ✓. Entre com a <strong>mesma conta</strong> em todos os aparelhos para compartilhar os dados.</p>'
+        + (fbLoading ? '<p class="text-muted" style="font-size:0.8rem;"><i class="fas fa-spinner fa-spin me-1"></i>Conectando ao Firebase…</p>' : '')
+        + '<div class="mb-2"><input type="email" class="form-control" id="sync-email" placeholder="seu@email.com" autocomplete="username" value="' + esc(EMAIL || '') + '"></div>'
+        + '<div class="input-group mb-3"><input type="password" class="form-control" id="sync-pass" placeholder="senha (mín. 6)" autocomplete="current-password"><button class="btn btn-outline-secondary" type="button" id="sync-pass-eye"><i class="fas fa-eye"></i></button></div>'
+        + '<div class="d-flex gap-2">'
+        + '<button class="btn btn-info text-white flex-fill" id="sync-login-btn"' + (busy ? ' disabled' : '') + '><i class="fas fa-right-to-bracket me-1"></i> Entrar</button>'
+        + '<button class="btn btn-outline-info flex-fill" id="sync-create-btn"' + (busy ? ' disabled' : '') + '><i class="fas fa-user-plus me-1"></i> Criar conta</button>'
+        + '</div>'
+        + '<button class="btn btn-sm btn-link text-danger p-0 mt-3" id="sync-forget-btn"><i class="fas fa-trash me-1"></i>Remover configuração deste aparelho</button>'
+        + errHtml()
+        + '</div></div>';
+      on('sync-login-btn', () => signIn((document.getElementById('sync-email') || {}).value, (document.getElementById('sync-pass') || {}).value, false));
+      on('sync-create-btn', () => signIn((document.getElementById('sync-email') || {}).value, (document.getElementById('sync-pass') || {}).value, true));
+      on('sync-pass-eye', () => { const i = document.getElementById('sync-pass'); if (i) i.type = i.type === 'password' ? 'text' : 'password'; });
+      on('sync-forget-btn', forget);
+      return;
+    }
+
+    // 3) Logado e (em geral) sincronizando
     host.innerHTML =
       '<div class="card card-dashboard mb-4"><div class="card-body">'
-      + '<h4 class="card-title"><i class="fas fa-cloud me-2 text-info"></i>Sincronização na nuvem</h4>'
-      + (conflict
-        ? '<div class="alert alert-danger" style="font-size:0.85rem;"><strong><i class="fas fa-triangle-exclamation me-1"></i>Conflito.</strong> A nuvem foi alterada por outro aparelho depois da sua última sincronização. Escolha qual versão vale:'
-          + '<div class="d-flex gap-2 mt-2"><button class="btn btn-sm btn-primary" id="sync-resolve-pull">Usar a da nuvem</button><button class="btn btn-sm btn-outline-danger" id="sync-resolve-push">Usar a deste aparelho</button></div></div>'
-        : '')
+      + '<h4 class="card-title"><i class="fas fa-cloud me-2 text-info"></i>Sincronização na nuvem (Firebase)</h4>'
       + '<div class="d-flex justify-content-between align-items-center p-2 rounded mb-3" style="background:rgba(0,0,0,0.04);">'
-      + '<div><div style="font-size:0.7rem;color:#95a5a6;text-transform:uppercase;letter-spacing:.05em;">Status</div><div id="sync-status" style="font-weight:700;">' + statusText + '</div></div>'
+      + '<div><div style="font-size:0.7rem;color:#95a5a6;text-transform:uppercase;letter-spacing:.05em;">Status</div><div id="sync-status" style="font-weight:700;">' + esc(statusText) + '</div></div>'
       + '<div class="text-end"><div style="font-size:0.7rem;color:#95a5a6;text-transform:uppercase;letter-spacing:.05em;">Último envio</div><div style="font-weight:600;font-size:0.85rem;">' + fmtWhen(lastPushedAt) + '</div></div>'
       + '</div>'
-      + ((OWNER && REPO) ? '<p class="text-muted mb-2" style="font-size:0.74rem;"><i class="fas fa-database me-1"></i>Repositório: <code>' + OWNER + '/' + REPO + '</code> (privado)</p>' : '')
+      + '<p class="text-muted mb-2" style="font-size:0.74rem;"><i class="fas fa-user me-1"></i>Conta: <code>' + esc(EMAIL || (fbUser && fbUser.email) || '') + '</code>' + (FBCONFIG && FBCONFIG.projectId ? ' &nbsp;·&nbsp; <i class="fas fa-database me-1"></i>Projeto: <code>' + esc(FBCONFIG.projectId) + '</code>' : '') + '</p>'
       + '<button class="btn btn-info w-100 text-white" id="sync-now-btn"' + (busy ? ' disabled' : '') + '><i class="fas fa-arrows-rotate me-1"></i> Sincronizar agora</button>'
-      + '<p class="text-muted mt-3 mb-0" style="font-size:0.78rem;">Envio automático e imediato a cada alteração, e baixa automática ao abrir o app ou voltar para ele. Resolução por "último a salvar vence".</p>'
-      + (syncedHeavy && syncedHeavy.length ? '<div class="alert alert-success mt-2 mb-0" style="font-size:0.76rem;"><i class="fas fa-file-arrow-up me-1"></i> Arquivos grandes sincronizando (' + syncedHeavy.join(', ') + ') — agora vão para a nuvem junto com o resto.</div>' : '')
+      + '<p class="text-muted mt-3 mb-0" style="font-size:0.78rem;">Envio automático a cada alteração e baixa automática ao abrir o app. Resolução por "último a salvar vence". Ao restaurar um backup, os dados restaurados são enviados para a nuvem.</p>'
       + '<div class="d-flex gap-2 mt-3">'
-      + '<button class="btn btn-sm btn-outline-secondary flex-fill" id="sync-pause-btn"><i class="fas fa-pause me-1"></i>Pausar</button>'
-      + '<button class="btn btn-sm btn-outline-danger flex-fill" id="sync-forget-btn"><i class="fas fa-trash me-1"></i>Remover token</button>'
+      + '<button class="btn btn-sm btn-outline-secondary flex-fill" id="sync-pause-btn"><i class="fas fa-pause me-1"></i>' + (enabled ? 'Pausar' : 'Retomar') + '</button>'
+      + '<button class="btn btn-sm btn-outline-danger flex-fill" id="sync-forget-btn"><i class="fas fa-right-from-bracket me-1"></i>Sair / Remover</button>'
       + '</div>'
       + errHtml()
       + '</div></div>';
     on('sync-now-btn', syncNow);
-    on('sync-pause-btn', disconnect);
+    on('sync-pause-btn', () => { if (enabled) disconnect(); else { enabled = true; cfgSet('enabled', '1'); setStatus('Sincronizado'); syncNow(); renderPanel(); } });
     on('sync-forget-btn', forget);
-    on('sync-diag-btn', runDiag);
-    on('sync-resolve-pull', async () => { conflict = false; await doPull(true); });
-    on('sync-resolve-push', async () => { conflict = false; await doPush(true); });
   }
 
   function injectUI() {
@@ -23541,20 +23521,43 @@ IMPORTANTE: Só inclua URLs reais que você encontrou na pesquisa. Não invente 
     _booting = true;
     loadCfg();
     injectUI();
-    setStatus(enabled ? 'Sincronizado' : (TOKEN ? 'Pausada' : 'Não configurado'));
-    renderPanel();
     booted = true;
-    if (enabled && TOKEN && OWNER && REPO) { await doPull(false); }   // baixa automática ao entrar
+
+    if (FBCONFIG) {
+      try { await initFirebase(); } catch (e) { console.warn('initFirebase', e); lastError = e.message || String(e); }
+    }
+    setStatus(enabled ? (fbUser ? 'Sincronizado' : 'Aguardando login') : (FBCONFIG ? 'Pausada' : 'Não configurado'));
+    renderPanel();
+
+    if (enabled && fbReady && fbUser) {
+      // ── CORREÇÃO DO BUG DE RESTAURAÇÃO ──
+      // Se acabamos de restaurar um backup, ENVIA os dados restaurados para a
+      // nuvem em vez de baixar (que sobrescreveria a restauração).
+      let restorePending = false;
+      try { restorePending = !!localStorage.getItem('__sync_restore_pending'); } catch (e) {}
+      if (restorePending) {
+        try { _lsRemove('__sync_restore_pending'); } catch (e) {}
+        await doPush();
+        toast('Backup restaurado e enviado para a nuvem ✅', 'success');
+      } else {
+        await doPull(false);   // baixa automática ao entrar
+      }
+    } else {
+      // Sync inativo neste aparelho: a restauração já valeu localmente, então
+      // apenas descarta o aviso para não disparar um envio antigo depois.
+      try { _lsRemove('__sync_restore_pending'); } catch (e) {}
+    }
+    _booting = false;
   }
 
   const _bootTimer = setInterval(() => { tryBoot().catch(e => console.warn('sync boot', e)); if (booted) clearInterval(_bootTimer); }, 800);
 
   document.addEventListener('visibilitychange', () => {
-    if (!enabled || !booted) return;
-    if (document.hidden) { if (dirty && !busy) doPush(false); }
+    if (!enabled || !booted || !fbReady || !fbUser) return;
+    if (document.hidden) { if (dirty && !busy) doPush(); }
     else if (!busy) doPull(false);
   });
-  setInterval(() => { if (enabled && booted && !document.hidden && !busy && !dirty) doPull(false); }, 180000);
+  setInterval(() => { if (enabled && booted && fbReady && fbUser && !document.hidden && !busy && !dirty) doPull(false); }, 180000);
 
 })();
 </script>
